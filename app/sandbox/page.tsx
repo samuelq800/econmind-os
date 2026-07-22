@@ -46,7 +46,6 @@ const format = (value: number) => new Intl.NumberFormat("en", { maximumFractionD
 export default function SandboxPage() {
   const { user, openAuth } = useAuth();
   const [draft, setDraft] = usePersistentState<SandboxParameters>("econmind:sandbox:draft", BASELINE_PARAMETERS);
-  const [applied, setApplied] = usePersistentState<SandboxParameters>("econmind:sandbox:applied", BASELINE_PARAMETERS);
   const [timeline, setTimeline] = usePersistentState<SandboxTimelineEntry[]>("econmind:sandbox:timeline", []);
   const [scenarioName, setScenarioName] = useState("");
   const [activePreset, setActivePreset] = useState("custom");
@@ -54,9 +53,8 @@ export default function SandboxPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const result = useMemo(() => simulateSandbox(applied), [applied]);
+  const result = useMemo(() => simulateSandbox(draft), [draft]);
   const interpretation = useMemo(() => interpretSandbox(result), [result]);
-  const dirty = JSON.stringify(draft) !== JSON.stringify(applied);
 
   useEffect(() => {
     if (!user) return;
@@ -68,13 +66,12 @@ export default function SandboxPage() {
         if (!active || !run || run.model_key !== "sandbox") return;
         const parameters = sanitizeParameters(run.parameters as Partial<SandboxParameters>);
         setDraft(parameters);
-        setApplied(parameters);
         setScenarioName(run.name);
-        setMessage(`Loaded “${run.name}”.`);
+        setMessage(`Loaded “${run.name}”. Results updated live.`);
       })
       .catch((caught) => { if (active) setError(caught instanceof Error ? caught.message : "Could not load the scenario."); });
     return () => { active = false; };
-  }, [user, setDraft, setApplied]);
+  }, [user, setDraft]);
 
   const radarData = [
     ["Growth", 100, result.radar.growth],
@@ -101,15 +98,14 @@ export default function SandboxPage() {
     if (!preset) return;
     setDraft({ ...preset.parameters });
     setActivePreset(id);
-    setMessage(`${preset.name} loaded. Click Run Simulation to apply it.`);
+    setMessage(`${preset.name} loaded. Results updated live.`);
   }
 
   async function runSimulation() {
     const parameters = sanitizeParameters(draft);
     const next = simulateSandbox(parameters);
-    setApplied(parameters);
     setTimeline((current) => [{ id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, label: SANDBOX_PRESETS.find((item) => item.id === activePreset)?.name ?? "Custom Scenario", runAt: new Date().toISOString(), parameters, indicators: next.indicators }, ...current].slice(0, 10));
-    setMessage("Simulation run recorded in this browser.");
+    setMessage("Current live scenario recorded in this browser.");
     setError("");
     if (user) {
       try {
@@ -136,7 +132,7 @@ export default function SandboxPage() {
         userId: user.id,
         modelKey: "sandbox",
         name: scenarioName.trim(),
-        parameters: applied,
+        parameters: result.parameters,
         results: result.indicators,
         metadata: { scenario_type: activePreset, interpretation_summary: interpretation.summary },
       });
@@ -165,13 +161,13 @@ export default function SandboxPage() {
 
       <div className="mx-auto grid max-w-[1600px] gap-5 p-4 sm:p-6 xl:grid-cols-[320px_minmax(0,1fr)_340px] xl:items-start">
         <aside className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto">
-          <div className="flex items-center justify-between border-b border-[var(--line)] pb-3"><div><h2 className="text-sm font-bold">Policy controls</h2><p className="text-[10px] text-[var(--ink-muted)]">Edit draft, then run</p></div><Button variant="ghost" size="sm" onClick={() => { setDraft(BASELINE_PARAMETERS); setActivePreset("custom"); }}><RotateCcw size={13} />Reset</Button></div>
+          <div className="flex items-center justify-between border-b border-[var(--line)] pb-3"><div><h2 className="text-sm font-bold">Policy controls</h2><p className="text-[10px] text-[var(--ink-muted)]">Every change calculates instantly</p></div><Button variant="ghost" size="sm" onClick={() => { setDraft(BASELINE_PARAMETERS); setActivePreset("custom"); setMessage("Baseline restored. Results updated live."); }}><RotateCcw size={13} />Reset</Button></div>
           <div className="mt-4"><p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-[var(--ink-faint)]">Presets</p><div className="grid grid-cols-2 gap-2">{SANDBOX_PRESETS.map((preset) => <button key={preset.id} type="button" onClick={() => loadPreset(preset.id)} className={`rounded-lg border p-2 text-left text-[10px] font-bold ${activePreset === preset.id ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]" : "border-[var(--line)] bg-[var(--canvas)]"}`}><span>{preset.name}</span><span className="mt-1 block font-normal leading-4 text-[var(--ink-muted)]">{preset.description}</span></button>)}</div></div>
           {categories.map((category) => <section key={category} className="mt-5"><h3 className="sticky top-0 z-10 border-b border-[var(--line)] bg-[var(--surface)] py-2 text-[10px] font-extrabold uppercase tracking-wider text-[var(--accent)]">{category}</h3>{POLICY_DEFINITIONS.filter((definition) => definition.category === category).map((definition) => <ParameterControl key={definition.key} parameter={{ id: definition.key, label: definition.label, symbol: definition.unit.trim() || "index", description: definition.description, min: definition.min, max: definition.max, step: definition.step, defaultValue: BASELINE_PARAMETERS[definition.key] } satisfies ModelParameter} value={draft[definition.key]} onChange={(value) => update(definition.key, value)} />)}</section>)}
         </aside>
 
         <section className="min-w-0 space-y-5">
-          <div className="flex flex-col justify-between gap-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4 sm:flex-row sm:items-center"><div><p className="text-xs font-bold">Current system state</p><p className="mt-1 text-[10px] text-[var(--ink-muted)]">{dirty ? "Draft changes are waiting to be applied." : "Results match the current policy controls."}</p></div><Button onClick={() => void runSimulation()}><Play size={14} />Run Simulation</Button></div>
+          <div className="flex flex-col justify-between gap-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4 sm:flex-row sm:items-center"><div><p className="flex items-center gap-2 text-xs font-bold"><span className="size-2 rounded-full bg-[var(--accent)]" />Live system state</p><p className="mt-1 text-[10px] text-[var(--ink-muted)]">Indicators, charts, and interpretation update with every control change. Record only when you want a timeline snapshot.</p></div><Button onClick={() => void runSimulation()}><Play size={14} />Record Run</Button></div>
 
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{(Object.keys(result.indicators) as IndicatorKey[]).map((key) => <IndicatorCard key={key} indicatorKey={key} value={result.indicators[key]} baseline={BASELINE_INDICATORS[key]} />)}</div>
 
@@ -180,7 +176,7 @@ export default function SandboxPage() {
             <ChartPanel title="Policy impact contributions" subtitle="Direct standardized contributions; interactions remain simplified"><div className="h-[340px]"><ResponsiveContainer width="100%" height="100%"><BarChart data={impactData} layout="vertical" margin={{ top: 8, right: 12, left: 22, bottom: 8 }}><CartesianGrid stroke="var(--line)" strokeDasharray="3 4" horizontal={false} /><XAxis type="number" tick={{ fill: "var(--ink-muted)", fontSize: 9 }} /><YAxis dataKey="policy" type="category" width={86} tick={{ fill: "var(--ink-muted)", fontSize: 9 }} /><Tooltip contentStyle={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, fontSize: 10 }} /><Legend wrapperStyle={{ fontSize: 10 }} /><Bar dataKey="GDP" fill="var(--blue)" /><Bar dataKey="Revenue" fill="var(--accent)" /><Bar dataKey="Emissions" fill="var(--amber)" /></BarChart></ResponsiveContainer></div></ChartPanel>
           </div>
 
-          <ChartPanel title="Scenario timeline" subtitle="Only explicit Run Simulation actions are kept; the latest 10 remain in this browser"><div className="divide-y divide-[var(--line)]">{timeline.length === 0 && <p className="py-7 text-center text-xs text-[var(--ink-muted)]">Run a scenario to begin the timeline.</p>}{timeline.map((entry, index) => <div key={entry.id} className="grid gap-2 py-3 text-xs sm:grid-cols-[32px_1fr_auto] sm:items-center"><span className="grid size-7 place-items-center rounded-full bg-[var(--surface-subtle)] text-[10px] font-bold">{index + 1}</span><div><p className="font-bold">{entry.label}</p><p className="mt-1 text-[10px] text-[var(--ink-faint)]">{new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(new Date(entry.runAt))}</p></div><div className="flex gap-3 text-[10px] text-[var(--ink-muted)]"><span>GDP {entry.indicators.gdpIndex}</span><span>Infl. {entry.indicators.inflationRate}%</span><span>Emissions {entry.indicators.carbonEmissions}</span></div></div>)}</div></ChartPanel>
+          <ChartPanel title="Scenario timeline" subtitle="Only explicit Record Run actions are kept; the latest 10 remain in this browser"><div className="divide-y divide-[var(--line)]">{timeline.length === 0 && <p className="py-7 text-center text-xs text-[var(--ink-muted)]">Record the current live scenario to begin the timeline.</p>}{timeline.map((entry, index) => <div key={entry.id} className="grid gap-2 py-3 text-xs sm:grid-cols-[32px_1fr_auto] sm:items-center"><span className="grid size-7 place-items-center rounded-full bg-[var(--surface-subtle)] text-[10px] font-bold">{index + 1}</span><div><p className="font-bold">{entry.label}</p><p className="mt-1 text-[10px] text-[var(--ink-faint)]">{new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(new Date(entry.runAt))}</p></div><div className="flex gap-3 text-[10px] text-[var(--ink-muted)]"><span>GDP {entry.indicators.gdpIndex}</span><span>Infl. {entry.indicators.inflationRate}%</span><span>Emissions {entry.indicators.carbonEmissions}</span></div></div>)}</div></ChartPanel>
         </section>
 
         <aside className="space-y-5 xl:sticky xl:top-20">

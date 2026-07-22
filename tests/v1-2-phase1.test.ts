@@ -86,6 +86,14 @@ describe("economic sandbox", () => {
     expect(result.indicators.carbonEmissions).toBeLessThan(100);
     expect(result.indicators.governmentRevenue).toBeGreaterThan(100);
   });
+
+  it("recalculates directly from the current control values without an applied-state step", () => {
+    const baseline = simulateSandbox(BASELINE_PARAMETERS);
+    const livePreview = simulateSandbox({ ...BASELINE_PARAMETERS, governmentSpending: 130 });
+    expect(livePreview.indicators).not.toEqual(baseline.indicators);
+    expect(livePreview.indicators.gdpIndex).toBeGreaterThan(baseline.indicators.gdpIndex);
+    expect(livePreview.contributions.some((item) => item.policy === "governmentSpending")).toBe(true);
+  });
 });
 
 describe("recommendations", () => {
