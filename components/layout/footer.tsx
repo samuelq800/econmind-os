@@ -1,0 +1,1 @@
+export function Footer(){return<footer className="border-t border-[var(--line)] px-5 py-8 text-xs text-[var(--ink-faint)]"><div className="mx-auto flex max-w-[1440px] flex-col justify-between gap-3 sm:flex-row"><p>© 2026 EconMind OS. Built for economic intuition.</p><p>Models are simplified educational representations.</p></div></footer>}

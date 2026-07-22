@@ -1,0 +1,1 @@
+import{Sidebar}from"@/components/layout/sidebar";export default function ModelsLayout({children}:{children:React.ReactNode}){return<div className="mx-auto flex max-w-[1440px] flex-col md:flex-row"><Sidebar/><main className="min-w-0 flex-1">{children}</main></div>}

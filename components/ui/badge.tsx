@@ -1,0 +1,1 @@
+import type{HTMLAttributes}from"react";export function Badge({className="",...props}:HTMLAttributes<HTMLSpanElement>){return<span className={`inline-flex items-center rounded-md border border-[var(--line)] bg-[var(--surface-subtle)] px-2 py-1 text-[10px] font-bold uppercase tracking-[.12em] text-[var(--ink-muted)] ${className}`} {...props}/>}

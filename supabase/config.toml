@@ -1,0 +1,14 @@
+project_id = "econmind-os"
+[api]
+enabled = true
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/**"]
+enable_signup = true
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
