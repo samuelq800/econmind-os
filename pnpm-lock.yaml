@@ -9,53 +9,53 @@ importers:
   .:
     dependencies:
       '@supabase/supabase-js':
-        specifier: ^2.97.0
+        specifier: 2.110.7
         version: 2.110.7
       lucide-react:
-        specifier: ^0.545.0
+        specifier: 0.545.0
         version: 0.545.0(react@19.2.7)
       next:
-        specifier: ^16.2.0
+        specifier: 16.2.10
         version: 16.2.10(@babel/core@7.29.7)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       react:
-        specifier: ^19.2.0
+        specifier: 19.2.7
         version: 19.2.7
       react-dom:
-        specifier: ^19.2.0
+        specifier: 19.2.7
         version: 19.2.7(react@19.2.7)
       recharts:
-        specifier: ^3.7.0
+        specifier: 3.10.0
         version: 3.10.0(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react-is@16.13.1)(react@19.2.7)(redux@5.0.1)
     devDependencies:
       '@tailwindcss/postcss':
-        specifier: ^4.1.0
+        specifier: 4.3.3
         version: 4.3.3
       '@types/node':
-        specifier: ^22.0.0
+        specifier: 22.20.1
         version: 22.20.1
       '@types/react':
-        specifier: ^19.0.0
+        specifier: 19.2.17
         version: 19.2.17
       '@types/react-dom':
-        specifier: ^19.0.0
+        specifier: 19.2.3
         version: 19.2.3(@types/react@19.2.17)
       eslint:
-        specifier: ^9.0.0
+        specifier: 9.39.5
         version: 9.39.5(jiti@2.7.0)
       eslint-config-next:
-        specifier: ^16.2.0
+        specifier: 16.2.10
         version: 16.2.10(@typescript-eslint/parser@8.65.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
       prettier:
-        specifier: ^3.6.0
+        specifier: 3.9.5
         version: 3.9.5
       tailwindcss:
-        specifier: ^4.1.0
+        specifier: 4.3.3
         version: 4.3.3
       typescript:
-        specifier: ^5.9.0
+        specifier: 5.9.3
         version: 5.9.3
       vitest:
-        specifier: ^3.2.0
+        specifier: 3.2.7
         version: 3.2.7(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)
 
 packages:

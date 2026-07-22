@@ -3,11 +3,11 @@ Interactive economics learning and simulation platform.
 
 ## Run
 ```bash
-npm install
+pnpm install --frozen-lockfile
 cp .env.example .env.local
-npm run dev
+pnpm dev
 ```
-Supabase variables are optional in this local-first release. Quality checks: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`.
+Supabase variables are optional in this local-first release. Quality checks: `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`.
 
 ## Architecture
 - Next.js App Router, strict TypeScript, Tailwind CSS, Recharts
@@ -23,7 +23,7 @@ No service-role key is used or expected in the frontend.
 The repository includes a GitHub Actions workflow that verifies and exports the
 site on every push to `main`. It deploys to:
 
-`https://<github-username>.github.io/econmind-os/`
+`https://samuelq800.github.io/econmind-os/`
 
 The `GITHUB_PAGES=true` build flag adds the `/econmind-os` base path only during
 the Pages build, so ordinary local development continues to use `/`.
