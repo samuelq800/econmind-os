@@ -5,6 +5,7 @@ import { BadgeDollarSign, CircleDollarSign, Factory, Leaf, Scale, Target } from 
 import { ChartContainer } from "@/components/models/chart-container";
 import { EconomicExplanation } from "@/components/models/economic-explanation";
 import { MetricCard } from "@/components/models/metric-card";
+import { ModelAssumptions } from "@/components/models/model-assumptions";
 import { ModelHeader } from "@/components/models/model-header";
 import { ModelWorkspace } from "@/components/models/model-workspace";
 import { ParameterControl } from "@/components/models/parameter-control";
@@ -12,6 +13,7 @@ import { ScenarioComparison } from "@/components/models/scenario-comparison";
 import { calculateExternality, DEFAULT_EXTERNALITY, externalityChartData, externalityExplanation, type ExternalityParameters } from "@/lib/economics/externalities";
 import type { ModelParameter } from "@/lib/economics/types";
 import { usePersistentState } from "@/lib/hooks/use-persistent-state";
+import { MODEL_ASSUMPTIONS } from "@/lib/models/assumptions";
 
 const controls: ModelParameter[] = [
   { id: "demandIntercept", label: "Demand intercept", symbol: "a", description: "Market size on the buyer side.", min: 60, max: 160, step: 5, defaultValue: 100 },
@@ -54,7 +56,7 @@ export default function ExternalitiesPage() {
         <MetricCard label="External impact" value={outcome.externalImpactAtMarket} note="At unregulated output" icon={Leaf} tone={outcome.externalImpactAtMarket > 0 ? "red" : "green"} />
         <MetricCard label="Efficient welfare" value={outcome.socialWelfareEfficient} note="Net of external effects" icon={CircleDollarSign} tone="blue" />
       </>}
-      explanation={<EconomicExplanation principle="Efficiency requires marginal social benefit to equal marginal social cost, even when private decision-makers ignore spillovers.">{externalityExplanation(parameters, outcome)}</EconomicExplanation>}
+      explanation={<><EconomicExplanation principle="Efficiency requires marginal social benefit to equal marginal social cost, even when private decision-makers ignore spillovers.">{externalityExplanation(parameters, outcome)}</EconomicExplanation><ModelAssumptions assumptions={MODEL_ASSUMPTIONS.externalities} /></>}
       comparison={<ScenarioComparison storageKey="econmind:scenarios:externalities" modelKey="externalities" parameters={parameters} results={{ marketPrice: outcome.marketPrice, marketQuantity: outcome.marketQuantity, efficientQuantity: outcome.efficientQuantity, correctivePolicy: outcome.correctivePolicy, externalImpact: outcome.externalImpactAtMarket, welfareGain: outcome.welfareGain, socialWelfare: outcome.socialWelfareEfficient }} metrics={["marketQuantity", "efficientQuantity", "correctivePolicy", "externalImpact", "welfareGain", "socialWelfare"]} onLoadParameters={(saved) => setParameters((current) => ({ ...current, ...saved }))} />}
     />
   </>;

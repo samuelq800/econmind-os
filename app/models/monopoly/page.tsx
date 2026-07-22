@@ -5,6 +5,7 @@ import { BadgeDollarSign, Boxes, CircleDollarSign, Percent, Scale, TriangleAlert
 import { ChartContainer } from "@/components/models/chart-container";
 import { EconomicExplanation } from "@/components/models/economic-explanation";
 import { MetricCard } from "@/components/models/metric-card";
+import { ModelAssumptions } from "@/components/models/model-assumptions";
 import { ModelHeader } from "@/components/models/model-header";
 import { ModelWorkspace } from "@/components/models/model-workspace";
 import { ParameterControl } from "@/components/models/parameter-control";
@@ -12,6 +13,7 @@ import { ScenarioComparison } from "@/components/models/scenario-comparison";
 import { calculateMonopoly, DEFAULT_MONOPOLY, monopolyChartData, monopolyExplanation, type MonopolyParameters } from "@/lib/economics/monopoly";
 import type { ModelParameter } from "@/lib/economics/types";
 import { usePersistentState } from "@/lib/hooks/use-persistent-state";
+import { MODEL_ASSUMPTIONS } from "@/lib/models/assumptions";
 
 const controls: ModelParameter[] = [
   { id: "demandIntercept", label: "Demand intercept", symbol: "a", description: "Quantity demanded when price is zero.", min: 60, max: 180, step: 5, defaultValue: 100 },
@@ -52,7 +54,7 @@ export default function MonopolyPage() {
         <MetricCard label="Consumer surplus" value={outcome.consumerSurplus} note="Under monopoly pricing" icon={Scale} tone="blue" />
         <MetricCard label="Deadweight loss" value={outcome.deadweightLoss} note="Lost gains from restricted output" icon={TriangleAlert} tone="red" />
       </>}
-      explanation={<EconomicExplanation principle="A single-price monopoly chooses output where marginal revenue equals marginal cost, then charges the demand price for that quantity.">{monopolyExplanation(parameters, outcome)}</EconomicExplanation>}
+      explanation={<><EconomicExplanation principle="A single-price monopoly chooses output where marginal revenue equals marginal cost, then charges the demand price for that quantity.">{monopolyExplanation(parameters, outcome)}</EconomicExplanation><ModelAssumptions assumptions={MODEL_ASSUMPTIONS.monopoly} /></>}
       comparison={<ScenarioComparison storageKey="econmind:scenarios:monopoly" modelKey="monopoly" parameters={parameters} results={{ monopolyPrice: outcome.monopolyPrice, monopolyQuantity: outcome.monopolyQuantity, competitiveQuantity: outcome.competitiveQuantity, profit: outcome.profit, markup: outcome.markup, lernerIndex: outcome.lernerIndex, deadweightLoss: outcome.deadweightLoss }} metrics={["monopolyPrice", "monopolyQuantity", "competitiveQuantity", "profit", "markup", "deadweightLoss"]} onLoadParameters={(saved) => setParameters((current) => ({ ...current, ...saved }))} />}
     />
   </>;

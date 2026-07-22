@@ -1,6 +1,14 @@
-import{clamp,round,type MarketOutcome,type MarketParameters}from"./types";
+import{clamp,round,type EquationStep,type MarketOutcome,type MarketParameters}from"./types";
 export const DEFAULT_MARKET:MarketParameters={demandIntercept:100,demandSlope:2,supplyIntercept:20,supplySlope:2};
 /** Solves Qd = a - bP and Qs = c + dP for a competitive equilibrium. */
 export function calculateMarketEquilibrium(p:MarketParameters):MarketOutcome{const{demandIntercept:a,demandSlope:b,supplyIntercept:c,supplySlope:d}=p,den=b+d;if(b<=0||d<=0||den<=0)return{price:0,quantity:0,consumerSurplus:0,producerSurplus:0,totalSurplus:0,valid:false};const rawP=(a-c)/den,rawQ=a-b*rawP;if(!Number.isFinite(rawP)||!Number.isFinite(rawQ)||rawP<0||rawQ<0)return{price:0,quantity:0,consumerSurplus:0,producerSurplus:0,totalSurplus:0,valid:false};const price=clamp(rawP),quantity=clamp(rawQ),cs=clamp(.5*(a/b-price)*quantity),ps=clamp(.5*(price+c/d)*quantity);return{price:round(price),quantity:round(quantity),consumerSurplus:round(cs),producerSurplus:round(ps),totalSurplus:round(cs+ps),valid:true}}
 export function marketChartData(p:MarketParameters,points=51){const{demandIntercept:a,demandSlope:b,supplyIntercept:c,supplySlope:d}=p,maxQ=Math.max(a*1.08,c*1.2,10);return Array.from({length:points},(_,i)=>{const quantity=maxQ*i/(points-1);return{quantity:round(quantity),demand:round(clamp((a-quantity)/b)),supply:round(clamp((quantity-c)/d))}})}
 export function supplyDemandExplanation(p:MarketParameters){const r=calculateMarketEquilibrium(p);if(!r.valid)return"These parameters do not produce a feasible non-negative market equilibrium.";const demand=p.demandIntercept>100?"stronger":p.demandIntercept<100?"weaker":"at its baseline",supply=p.supplyIntercept>20?"more abundant":p.supplyIntercept<20?"more constrained":"at its baseline";return`Demand is ${demand} and supply is ${supply}. At a price of ${r.price}, quantity demanded exactly equals quantity supplied at ${r.quantity} units. The combined consumer and producer surplus is ${r.totalSurplus}.`}
+const formatEquationNumber=(value:number)=>new Intl.NumberFormat("en-US",{maximumFractionDigits:2}).format(value);
+export function marketEquationSteps(p:MarketParameters):EquationStep[]{const r=calculateMarketEquilibrium(p),{demandIntercept:a,demandSlope:b,supplyIntercept:c,supplySlope:d}=p,f=formatEquationNumber;if(!r.valid)return[{label:"No feasible solution",expression:"Qd = Qs",detail:"The selected parameters do not produce a non-negative equilibrium."}];return[
+  {label:"Demand",expression:`Qd = a − bP = ${f(a)} − ${f(b)}P`},
+  {label:"Supply",expression:`Qs = c + dP = ${f(c)} + ${f(d)}P`},
+  {label:"Set Qd = Qs",expression:`${f(a)} − ${f(b)}P = ${f(c)} + ${f(d)}P`},
+  {label:"Solve price",expression:`P* = (a − c) / (b + d) = (${f(a)} − ${f(c)}) / (${f(b)} + ${f(d)}) = ${f(r.price)}`},
+  {label:"Solve quantity",expression:`Q* = a − bP* = ${f(a)} − ${f(b)} × ${f(r.price)} = ${f(r.quantity)}`},
+]}

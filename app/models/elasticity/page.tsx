@@ -22,6 +22,7 @@ import {
 import { ChartContainer } from "@/components/models/chart-container";
 import { EconomicExplanation } from "@/components/models/economic-explanation";
 import { MetricCard } from "@/components/models/metric-card";
+import { ModelAssumptions } from "@/components/models/model-assumptions";
 import { ModelHeader } from "@/components/models/model-header";
 import { ModelWorkspace } from "@/components/models/model-workspace";
 import { ParameterControl } from "@/components/models/parameter-control";
@@ -34,6 +35,7 @@ import {
 } from "@/lib/economics/elasticity";
 import type { ModelParameter } from "@/lib/economics/types";
 import { usePersistentState } from "@/lib/hooks/use-persistent-state";
+import { MODEL_ASSUMPTIONS } from "@/lib/models/assumptions";
 const DEFAULT: ElasticityParameters = {
   demandIntercept: 100,
   demandSlope: 2,
@@ -84,7 +86,7 @@ export default function ElasticityPage() {
     <>
       <ModelHeader
         modelKey="elasticity"
-        eyebrow="Model 03 · Buyer responsiveness"
+        eyebrow="Model 04 · Buyer responsiveness"
         title="Elasticity & Total Revenue"
         description="Move along a linear demand curve to see why the same curve can be elastic at high prices and inelastic at low prices."
         tags={["Demand", "Point elasticity", "Revenue"]}
@@ -297,9 +299,12 @@ export default function ElasticityPage() {
           </>
         }
         explanation={
-          <EconomicExplanation principle="On a linear demand curve, elasticity varies by location even though slope is constant.">
-            {elasticityExplanation(params)}
-          </EconomicExplanation>
+          <>
+            <EconomicExplanation principle="On a linear demand curve, elasticity varies by location even though slope is constant.">
+              {elasticityExplanation(params)}
+            </EconomicExplanation>
+            <ModelAssumptions assumptions={MODEL_ASSUMPTIONS.elasticity} />
+          </>
         }
         comparison={
           <ScenarioComparison

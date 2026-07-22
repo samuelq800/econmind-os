@@ -5,6 +5,7 @@ import { ArrowUpRight, CircleGauge, Factory, Scale, Target, TrendingUp } from "l
 import { ChartContainer } from "@/components/models/chart-container";
 import { EconomicExplanation } from "@/components/models/economic-explanation";
 import { MetricCard } from "@/components/models/metric-card";
+import { ModelAssumptions } from "@/components/models/model-assumptions";
 import { ModelHeader } from "@/components/models/model-header";
 import { ModelWorkspace } from "@/components/models/model-workspace";
 import { ParameterControl } from "@/components/models/parameter-control";
@@ -12,6 +13,7 @@ import { ScenarioComparison } from "@/components/models/scenario-comparison";
 import { calculatePpf, DEFAULT_PPF, ppfChartData, ppfExplanation, type PpfParameters } from "@/lib/economics/ppf";
 import type { ModelParameter } from "@/lib/economics/types";
 import { usePersistentState } from "@/lib/hooks/use-persistent-state";
+import { MODEL_ASSUMPTIONS } from "@/lib/models/assumptions";
 
 const controls: ModelParameter[] = [
   { id: "capacityX", label: "Maximum Good X", symbol: "Xmax", description: "Output of Good X if all resources specialize in X.", min: 50, max: 200, step: 5, defaultValue: 100 },
@@ -54,7 +56,7 @@ export default function PpfPage() {
         <MetricCard label="Capacity gap" value={outcome.capacityGap} note="Positive means spare capacity" icon={CircleGauge} tone={outcome.capacityGap >= 0 ? "blue" : "red"} />
         <MetricCard label="Capacity shift" value={`${parameters.growthRate > 0 ? "+" : ""}${parameters.growthRate}%`} note="Technology/resources" icon={parameters.growthRate >= 0 ? TrendingUp : ArrowUpRight} tone={parameters.growthRate >= 0 ? "green" : "red"} />
       </>}
-      explanation={<EconomicExplanation principle="Moving along a bowed-out PPF reallocates scarce resources, while shifts of the frontier change the economy's productive capacity.">{ppfExplanation(parameters, outcome)}</EconomicExplanation>}
+      explanation={<><EconomicExplanation principle="Moving along a bowed-out PPF reallocates scarce resources, while shifts of the frontier change the economy's productive capacity.">{ppfExplanation(parameters, outcome)}</EconomicExplanation><ModelAssumptions assumptions={MODEL_ASSUMPTIONS.ppf} /></>}
       comparison={<ScenarioComparison storageKey="econmind:scenarios:ppf" modelKey="ppf" parameters={parameters} results={{ outputX: outcome.outputX, outputY: outcome.outputY, opportunityCost: outcome.opportunityCost, capacityGap: outcome.capacityGap, capacityX: outcome.shiftedCapacityX, capacityY: outcome.shiftedCapacityY }} metrics={["outputX", "outputY", "opportunityCost", "capacityGap", "capacityX", "capacityY"]} onLoadParameters={(saved) => setParameters((current) => ({ ...current, ...saved }))} />}
     />
   </>;

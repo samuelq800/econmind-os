@@ -16,9 +16,12 @@ export function ParameterControl({ parameter, value, onChange }: { parameter: Mo
           </div>
           <p className="mt-1 text-[11px] leading-4 text-[var(--ink-muted)]">{parameter.description}</p>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           <button type="button" aria-label={`Reset ${parameter.label}`} onClick={() => onChange(parameter.defaultValue)} disabled={value === parameter.defaultValue} className="grid size-8 place-items-center rounded-md text-[var(--ink-faint)] hover:bg-[var(--surface-subtle)] disabled:opacity-25"><RotateCcw size={12} /></button>
-          <input aria-label={`${parameter.label} number input`} type="number" min={parameter.min} max={parameter.max} step={parameter.step} value={value} onChange={(event) => commit(Number(event.target.value))} className="h-8 w-20 rounded-md border border-[var(--line)] bg-[var(--canvas)] px-2 text-right text-xs font-semibold tabular-nums outline-none focus:border-[var(--accent)]" />
+          <label className="flex h-9 items-center rounded-lg border border-[var(--accent)] bg-[var(--accent-soft)] pl-2 text-[8px] font-extrabold uppercase tracking-wider text-[var(--accent)]">
+            Live
+            <input aria-label={`${parameter.label} live value`} type="number" min={parameter.min} max={parameter.max} step={parameter.step} value={value} onChange={(event) => commit(Number(event.target.value))} className="h-8 w-16 bg-transparent px-2 text-right text-sm font-bold tabular-nums text-[var(--ink)] outline-none" />
+          </label>
         </div>
       </div>
       <div className="flex items-center gap-3">

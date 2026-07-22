@@ -18,17 +18,21 @@ import {
 } from "lucide-react";
 import { ChartContainer } from "@/components/models/chart-container";
 import { EconomicExplanation } from "@/components/models/economic-explanation";
+import { EquationView } from "@/components/models/equation-view";
 import { MetricCard } from "@/components/models/metric-card";
+import { ModelAssumptions } from "@/components/models/model-assumptions";
 import { ModelHeader } from "@/components/models/model-header";
 import { ModelWorkspace } from "@/components/models/model-workspace";
 import { ParameterControl } from "@/components/models/parameter-control";
 import { ScenarioComparison } from "@/components/models/scenario-comparison";
 import { Button } from "@/components/ui/button";
 import { usePersistentState } from "@/lib/hooks/use-persistent-state";
+import { MODEL_ASSUMPTIONS } from "@/lib/models/assumptions";
 import {
   calculateMarketEquilibrium,
   DEFAULT_MARKET,
   marketChartData,
+  marketEquationSteps,
   supplyDemandExplanation,
 } from "@/lib/economics/supply-demand";
 import type { MarketParameters, ModelParameter } from "@/lib/economics/types";
@@ -249,9 +253,13 @@ export default function SupplyDemandPage() {
           </>
         }
         explanation={
-          <EconomicExplanation principle="Competitive equilibrium maximizes total surplus without market failures.">
-            {supplyDemandExplanation(params)}
-          </EconomicExplanation>
+          <>
+            <EconomicExplanation principle="Competitive equilibrium maximizes total surplus without market failures.">
+              {supplyDemandExplanation(params)}
+            </EconomicExplanation>
+            <EquationView steps={marketEquationSteps(params)} />
+            <ModelAssumptions assumptions={MODEL_ASSUMPTIONS["supply-demand"]} />
+          </>
         }
         comparison={
           <ScenarioComparison

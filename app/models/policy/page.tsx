@@ -22,7 +22,9 @@ import {
 } from "lucide-react";
 import { ChartContainer } from "@/components/models/chart-container";
 import { EconomicExplanation } from "@/components/models/economic-explanation";
+import { EquationView } from "@/components/models/equation-view";
 import { MetricCard } from "@/components/models/metric-card";
+import { ModelAssumptions } from "@/components/models/model-assumptions";
 import { ModelHeader } from "@/components/models/model-header";
 import { ModelWorkspace } from "@/components/models/model-workspace";
 import { ParameterControl } from "@/components/models/parameter-control";
@@ -31,12 +33,14 @@ import { Button } from "@/components/ui/button";
 import {
   calculatePolicyOutcome,
   policyChartData,
+  policyEquationSteps,
   policyExplanation,
   type PolicyParameters,
 } from "@/lib/economics/policy";
 import { DEFAULT_MARKET } from "@/lib/economics/supply-demand";
 import type { ModelParameter } from "@/lib/economics/types";
 import { usePersistentState } from "@/lib/hooks/use-persistent-state";
+import { MODEL_ASSUMPTIONS } from "@/lib/models/assumptions";
 const DEFAULT_POLICY: PolicyParameters = { ...DEFAULT_MARKET, wedge: 10 };
 const controls: ModelParameter[] = [
   {
@@ -328,9 +332,13 @@ export default function PolicyPage() {
           </>
         }
         explanation={
-          <EconomicExplanation principle="The less price-responsive side receives the larger share of a tax burden or subsidy benefit.">
-            {policyExplanation(params)}
-          </EconomicExplanation>
+          <>
+            <EconomicExplanation principle="The less price-responsive side bears more of a tax burden or receives more of a subsidy benefit.">
+              {policyExplanation(params)}
+            </EconomicExplanation>
+            <EquationView steps={policyEquationSteps(params)} />
+            <ModelAssumptions assumptions={MODEL_ASSUMPTIONS.policy} />
+          </>
         }
         comparison={
           <ScenarioComparison
