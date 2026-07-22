@@ -2,6 +2,7 @@ import { BASELINE_INDICATORS, BASELINE_PARAMETERS, INDICATOR_LIMITS, POLICY_DEFI
 import { environmentalContributions } from "@/lib/economics/sandbox/environment";
 import { fiscalContributions } from "@/lib/economics/sandbox/fiscal";
 import { laborContributions } from "@/lib/economics/sandbox/labor";
+import { interactionContributions as calculateInteractions } from "@/lib/economics/sandbox/interactions";
 import { monetaryContributions } from "@/lib/economics/sandbox/monetary";
 import { tradeContributions } from "@/lib/economics/sandbox/trade";
 import type { IndicatorKey, PolicyContribution, RadarScores, SandboxIndicators, SandboxParameters, SandboxResult } from "@/lib/economics/sandbox/types";
@@ -30,13 +31,15 @@ function radarScores(indicators: SandboxIndicators): RadarScores {
 
 export function simulateSandbox(input: Partial<SandboxParameters>): SandboxResult {
   const parameters = sanitizeParameters(input);
-  const contributions: PolicyContribution[] = [
+  const directContributions: PolicyContribution[] = [
     ...fiscalContributions(parameters),
     ...monetaryContributions(parameters),
     ...laborContributions(parameters),
     ...environmentalContributions(parameters),
     ...tradeContributions(parameters),
   ].filter((contribution) => Object.values(contribution.values).some((value) => Math.abs(value ?? 0) > 0.001));
+  const interactionContributions = calculateInteractions(parameters).filter((contribution) => Object.values(contribution.values).some((value) => Math.abs(value ?? 0) > 0.001));
+  const contributions: PolicyContribution[] = [...directContributions, ...interactionContributions];
 
   const indicators = { ...BASELINE_INDICATORS };
   for (const contribution of contributions) {
@@ -54,6 +57,8 @@ export function simulateSandbox(input: Partial<SandboxParameters>): SandboxResul
     parameters,
     baseline: { ...BASELINE_INDICATORS },
     indicators,
+    directContributions,
+    interactionContributions,
     contributions,
     radar: radarScores(indicators),
   };

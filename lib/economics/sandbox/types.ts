@@ -4,6 +4,7 @@ export type SandboxParameters = {
   incomeTaxRate: number;
   corporateTaxRate: number;
   governmentSpending: number;
+  demandStimulus: number;
   subsidyRate: number;
   interestRate: number;
   moneySupplyGrowth: number;
@@ -13,6 +14,7 @@ export type SandboxParameters = {
   carbonTax: number;
   greenSubsidy: number;
   tariffRate: number;
+  domesticProductionSubsidy: number;
   importQuotaIntensity: number;
 };
 
@@ -43,7 +45,11 @@ export type PolicyDefinition = {
 
 export type PolicyContribution = {
   policy: PolicyKey;
+  policies?: PolicyKey[];
   label: string;
+  kind?: "direct" | "interaction";
+  formula?: string;
+  rule?: string;
   values: Partial<SandboxIndicators>;
 };
 
@@ -60,6 +66,8 @@ export type SandboxResult = {
   parameters: SandboxParameters;
   baseline: SandboxIndicators;
   indicators: SandboxIndicators;
+  directContributions: PolicyContribution[];
+  interactionContributions: PolicyContribution[];
   contributions: PolicyContribution[];
   radar: RadarScores;
 };
@@ -76,12 +84,4 @@ export type SandboxPreset = {
   name: string;
   description: string;
   parameters: SandboxParameters;
-};
-
-export type SandboxTimelineEntry = {
-  id: string;
-  label: string;
-  runAt: string;
-  parameters: SandboxParameters;
-  indicators: SandboxIndicators;
 };

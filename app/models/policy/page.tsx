@@ -23,6 +23,7 @@ import {
 import { ChartContainer } from "@/components/models/chart-container";
 import { EconomicExplanation } from "@/components/models/economic-explanation";
 import { EquationView } from "@/components/models/equation-view";
+import { MechanismChain } from "@/components/models/mechanism-chain";
 import { MetricCard } from "@/components/models/metric-card";
 import { ModelAssumptions } from "@/components/models/model-assumptions";
 import { ModelHeader } from "@/components/models/model-header";
@@ -33,7 +34,6 @@ import { Button } from "@/components/ui/button";
 import {
   calculatePolicyOutcome,
   policyChartData,
-  policyEquationSteps,
   policyExplanation,
   type PolicyParameters,
 } from "@/lib/economics/policy";
@@ -336,7 +336,8 @@ export default function PolicyPage() {
             <EconomicExplanation principle="The less price-responsive side bears more of a tax burden or receives more of a subsidy benefit.">
               {policyExplanation(params)}
             </EconomicExplanation>
-            <EquationView steps={policyEquationSteps(params)} />
+            <MechanismChain modelKey="policy" parameters={params} />
+            <EquationView modelKey="policy" parameters={params} />
             <ModelAssumptions assumptions={MODEL_ASSUMPTIONS.policy} />
           </>
         }

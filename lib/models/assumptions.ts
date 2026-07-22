@@ -1,50 +1,50 @@
-export const MODEL_ASSUMPTIONS = {
-  "supply-demand": [
-    "Demand and supply are linear over the displayed range.",
-    "Many price-taking buyers and sellers trade a homogeneous good.",
-    "Other determinants of demand and supply are held constant when one parameter changes.",
-    "There are no taxes, price controls, externalities, transaction costs, or information failures.",
-  ],
-  policy: [
-    "Demand and supply are linear, and the policy is a constant amount per unit traded.",
-    "The wedge is fully enforced with no evasion, administrative cost, or delayed adjustment.",
-    "Economic incidence depends on relative price responsiveness, not on who legally remits the tax or receives the subsidy.",
-    "Government revenue or spending is reported separately; no additional social value of public funds is modeled.",
-  ],
-  "price-controls": [
-    "The legal ceiling or floor is perfectly enforced and applies to every unit in the market.",
-    "Quantity traded is limited by the short side of the market.",
-    "Consumer surplus under a binding control assumes scarce units are allocated to the highest-value buyers.",
-    "Search costs, queues, quality changes, black markets, and government purchases are excluded.",
-  ],
-  elasticity: [
-    "Demand follows the linear equation Q = a − bP over the displayed range.",
-    "Point elasticity measures a local response at the selected price, holding other demand factors constant.",
-    "Total revenue equals price times quantity; production cost and profit are not modeled.",
-    "The exercise describes movement along one demand curve, not a shift of demand.",
-  ],
-  externalities: [
-    "The external cost or benefit is constant for every additional unit.",
-    "Buyers and sellers ignore the spillover when making private decisions.",
-    "A corrective per-unit tax or subsidy can be targeted exactly and enforced without administrative cost.",
-    "Distributional effects and how policy revenue is used are outside the welfare comparison.",
-  ],
-  monopoly: [
-    "One firm serves the market, charges a single price, and faces no current or potential entry.",
-    "Market demand is linear and marginal cost is constant.",
-    "The firm maximizes profit by choosing output where marginal revenue equals marginal cost.",
-    "Fixed cost changes profit but not the simplified output choice; price discrimination and strategic rivalry are excluded.",
-  ],
-  ppf: [
-    "The economy produces only two composite goods with a fixed resource stock at a point in time.",
-    "The curved frontier represents increasing opportunity cost as resources move toward Good X.",
-    "Capacity use scales the selected bundle; points outside the frontier are not currently attainable.",
-    "The capacity-shift control changes both axis limits proportionally, abstracting from sector-specific growth.",
-  ],
-  "ad-as": [
-    "AD and SRAS are stylized linear relationships expressed as teaching indices.",
-    "Potential output is a fixed benchmark during each comparison, and shocks are treated as exogenous.",
-    "The equilibrium is short-run; wage adjustment, expectations, and long-run return dynamics are not simulated.",
-    "The unemployment-gap relationship is an illustrative Okun-style rule, not an empirical estimate or forecast.",
-  ],
-} as const;
+import type { FocusedModelKey } from "@/lib/experiments/model-runtime";
+
+export type AssumptionSections = {
+  structural: readonly string[];
+  parameters: readonly string[];
+  limitations: readonly string[];
+};
+
+export const MODEL_ASSUMPTIONS: Record<FocusedModelKey, AssumptionSections> = {
+  "supply-demand": {
+    structural: ["Many price-taking buyers and sellers trade a homogeneous good.", "Demand and supply are linear over the displayed range."],
+    parameters: ["Intercept changes shift a curve; slope changes rotate it.", "All other determinants are held constant when one parameter changes."],
+    limitations: ["The model cannot establish real-world demand or supply without data.", "It excludes taxes, controls, externalities, transaction costs, and information failures."],
+  },
+  policy: {
+    structural: ["Demand and supply are linear, and the policy is a constant per-unit wedge.", "The wedge is fully enforced without evasion or delayed adjustment."],
+    parameters: ["Positive wedge values are taxes; negative values are subsidies.", "Incidence follows relative price responsiveness, not legal remittance."],
+    limitations: ["The model cannot value how government funds are spent or raised.", "It excludes administrative cost, distributional objectives, and wider general-equilibrium effects."],
+  },
+  "price-controls": {
+    structural: ["The legal ceiling or floor is perfectly enforced for every unit.", "Quantity traded is limited by the short side of the market."],
+    parameters: ["A ceiling binds only below equilibrium; a floor binds only above it.", "Surplus calculations assume scarce units reach the highest-value buyers."],
+    limitations: ["The model cannot predict queues, black markets, quality changes, or search costs.", "It excludes government purchases and enforcement failures."],
+  },
+  elasticity: {
+    structural: ["Demand follows the linear equation Q = a − bP.", "The exercise describes movement along one demand curve."],
+    parameters: ["Point elasticity is local to the selected price and quantity.", "Total revenue equals price times quantity; cost is not a parameter."],
+    limitations: ["The model cannot infer causal price responses from observed data.", "It does not calculate profit, cross-price effects, income effects, or long-run adjustment."],
+  },
+  externalities: {
+    structural: ["The external cost or benefit is constant for each additional unit.", "Private decision-makers ignore the spillover."],
+    parameters: ["Positive externalCost represents harm; negative values represent a benefit.", "The corrective policy is assumed equal to the marginal spillover."],
+    limitations: ["The model cannot estimate an empirical social cost without evidence.", "It excludes administrative cost, distribution, uncertainty, and use of policy revenue."],
+  },
+  monopoly: {
+    structural: ["One single-price firm serves the market with no entry or strategic rivals.", "Demand is linear and marginal cost is constant."],
+    parameters: ["The firm chooses output where MR = MC and reads price from demand.", "Fixed cost changes profit but not the simplified output choice."],
+    limitations: ["The model cannot explain entry, innovation, regulation, or price discrimination.", "It does not represent multi-product costs or dynamic competition."],
+  },
+  ppf: {
+    structural: ["The economy produces two composite goods with a fixed resource stock.", "The curved frontier represents increasing opportunity cost."],
+    parameters: ["Capacity use scales the selected bundle relative to the frontier.", "The growth control shifts both axis limits proportionally."],
+    limitations: ["The model cannot identify actual production possibilities without data.", "It excludes trade, distribution, sector-specific growth, and adjustment costs."],
+  },
+  "ad-as": {
+    structural: ["AD and SRAS are stylized linear relationships expressed as indices.", "Potential output is fixed during each short-run comparison."],
+    parameters: ["Demand and supply shocks are exogenous horizontal displacements.", "Sensitivity values control movement along the two curves."],
+    limitations: ["The model cannot forecast GDP, inflation, or unemployment.", "It excludes expectations, wage dynamics, policy lags, and long-run adjustment paths."],
+  },
+};

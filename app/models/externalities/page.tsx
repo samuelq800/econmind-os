@@ -4,6 +4,8 @@ import { CartesianGrid, Legend, Line, LineChart, ReferenceDot, ResponsiveContain
 import { BadgeDollarSign, CircleDollarSign, Factory, Leaf, Scale, Target } from "lucide-react";
 import { ChartContainer } from "@/components/models/chart-container";
 import { EconomicExplanation } from "@/components/models/economic-explanation";
+import { EquationView } from "@/components/models/equation-view";
+import { MechanismChain } from "@/components/models/mechanism-chain";
 import { MetricCard } from "@/components/models/metric-card";
 import { ModelAssumptions } from "@/components/models/model-assumptions";
 import { ModelHeader } from "@/components/models/model-header";
@@ -56,7 +58,7 @@ export default function ExternalitiesPage() {
         <MetricCard label="External impact" value={outcome.externalImpactAtMarket} note="At unregulated output" icon={Leaf} tone={outcome.externalImpactAtMarket > 0 ? "red" : "green"} />
         <MetricCard label="Efficient welfare" value={outcome.socialWelfareEfficient} note="Net of external effects" icon={CircleDollarSign} tone="blue" />
       </>}
-      explanation={<><EconomicExplanation principle="Efficiency requires marginal social benefit to equal marginal social cost, even when private decision-makers ignore spillovers.">{externalityExplanation(parameters, outcome)}</EconomicExplanation><ModelAssumptions assumptions={MODEL_ASSUMPTIONS.externalities} /></>}
+      explanation={<><EconomicExplanation principle="Efficiency requires marginal social benefit to equal marginal social cost, even when private decision-makers ignore spillovers.">{externalityExplanation(parameters, outcome)}</EconomicExplanation><MechanismChain modelKey="externalities" parameters={parameters} /><EquationView modelKey="externalities" parameters={parameters} /><ModelAssumptions assumptions={MODEL_ASSUMPTIONS.externalities} /></>}
       comparison={<ScenarioComparison storageKey="econmind:scenarios:externalities" modelKey="externalities" parameters={parameters} results={{ marketPrice: outcome.marketPrice, marketQuantity: outcome.marketQuantity, efficientQuantity: outcome.efficientQuantity, correctivePolicy: outcome.correctivePolicy, externalImpact: outcome.externalImpactAtMarket, welfareGain: outcome.welfareGain, socialWelfare: outcome.socialWelfareEfficient }} metrics={["marketQuantity", "efficientQuantity", "correctivePolicy", "externalImpact", "welfareGain", "socialWelfare"]} onLoadParameters={(saved) => setParameters((current) => ({ ...current, ...saved }))} />}
     />
   </>;

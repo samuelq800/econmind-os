@@ -54,6 +54,7 @@ describe("economic sandbox", () => {
       incomeTaxRate: Number.POSITIVE_INFINITY,
       corporateTaxRate: -999,
       governmentSpending: 9999,
+      demandStimulus: 9999,
       subsidyRate: 9999,
       interestRate: 9999,
       moneySupplyGrowth: 9999,
@@ -63,6 +64,7 @@ describe("economic sandbox", () => {
       carbonTax: 9999,
       greenSubsidy: 9999,
       tariffRate: 9999,
+      domesticProductionSubsidy: 9999,
       importQuotaIntensity: 9999,
     });
     for (const [key, value] of Object.entries(result.indicators)) {
@@ -93,6 +95,28 @@ describe("economic sandbox", () => {
     expect(livePreview.indicators).not.toEqual(baseline.indicators);
     expect(livePreview.indicators.gdpIndex).toBeGreaterThan(baseline.indicators.gdpIndex);
     expect(livePreview.contributions.some((item) => item.policy === "governmentSpending")).toBe(true);
+  });
+
+  it("separates all four interaction effects from direct effects", () => {
+    const result = simulateSandbox({ ...BASELINE_PARAMETERS, governmentSpending: 130, interestRate: 8, carbonTax: 40, greenSubsidy: 20, tariffRate: 30, domesticProductionSubsidy: 20, priceCeiling: 25, demandStimulus: 20 });
+    expect(result.interactionContributions.map((item) => item.label)).toEqual([
+      "Spending × interest rate",
+      "Carbon tax × green subsidy",
+      "Tariff × domestic subsidy",
+      "Price ceiling × demand stimulus",
+    ]);
+    expect(result.directContributions.every((item) => item.kind !== "interaction")).toBe(true);
+    expect(result.interactionContributions.every((item) => item.kind === "interaction" && item.formula && item.rule)).toBe(true);
+  });
+
+  it("models complementary and offsetting interaction directions", () => {
+    const result = simulateSandbox({ ...BASELINE_PARAMETERS, carbonTax: 40, greenSubsidy: 20, tariffRate: 30, domesticProductionSubsidy: 20, priceCeiling: 25, demandStimulus: 20 });
+    const carbon = result.interactionContributions.find((item) => item.label.startsWith("Carbon"));
+    const tariff = result.interactionContributions.find((item) => item.label.startsWith("Tariff"));
+    const ceiling = result.interactionContributions.find((item) => item.label.startsWith("Price"));
+    expect(carbon?.values.carbonEmissions).toBeLessThan(0);
+    expect(tariff?.values.marketOutput).toBeGreaterThan(0);
+    expect(ceiling?.values.marketOutput).toBeLessThan(0);
   });
 });
 

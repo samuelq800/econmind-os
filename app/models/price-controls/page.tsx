@@ -4,6 +4,8 @@ import { CartesianGrid, Legend, Line, LineChart, ReferenceDot, ReferenceLine, Re
 import { CircleDollarSign, PackageOpen, Scale, ShoppingBasket, TriangleAlert } from "lucide-react";
 import { ChartContainer } from "@/components/models/chart-container";
 import { EconomicExplanation } from "@/components/models/economic-explanation";
+import { EquationView } from "@/components/models/equation-view";
+import { MechanismChain } from "@/components/models/mechanism-chain";
 import { MetricCard } from "@/components/models/metric-card";
 import { ModelAssumptions } from "@/components/models/model-assumptions";
 import { ModelHeader } from "@/components/models/model-header";
@@ -62,7 +64,7 @@ export default function PriceControlsPage() {
           <MetricCard label="Consumer surplus" value={outcome.consumerSurplus} note="Efficient rationing assumption" icon={Scale} tone="blue" />
           <MetricCard label="Producer surplus" value={outcome.producerSurplus} note="On units actually sold" icon={Scale} tone="green" />
         </>}
-        explanation={<><EconomicExplanation principle="A price control changes outcomes only when it prevents the market from reaching its equilibrium price.">{priceControlExplanation(parameters, outcome)}</EconomicExplanation><ModelAssumptions assumptions={MODEL_ASSUMPTIONS["price-controls"]} /></>}
+        explanation={<><EconomicExplanation principle="A price control changes outcomes only when it prevents the market from reaching its equilibrium price.">{priceControlExplanation(parameters, outcome)}</EconomicExplanation><MechanismChain modelKey="price-controls" parameters={{ ...parameters, controlType: parameters.controlType === "ceiling" ? 0 : 1 }} /><EquationView modelKey="price-controls" parameters={{ ...parameters, controlType: parameters.controlType === "ceiling" ? 0 : 1 }} /><ModelAssumptions assumptions={MODEL_ASSUMPTIONS["price-controls"]} /></>}
         comparison={<ScenarioComparison storageKey="econmind:scenarios:price-controls" modelKey="price-controls" parameters={{ demandIntercept: parameters.demandIntercept, demandSlope: parameters.demandSlope, supplyIntercept: parameters.supplyIntercept, supplySlope: parameters.supplySlope, controlPrice: parameters.controlPrice, controlType: parameters.controlType === "ceiling" ? 0 : 1 }} results={{ price: outcome.controlledPrice, quantityTraded: outcome.quantityTraded, shortage: outcome.shortage, surplus: outcome.surplus, deadweightLoss: outcome.deadweightLoss, totalSurplus: outcome.totalSurplus }} metrics={["price", "quantityTraded", "shortage", "surplus", "deadweightLoss", "totalSurplus"]} onLoadParameters={(saved) => setParameters((current) => ({ ...current, ...saved, controlType: saved.controlType === 1 ? "floor" : "ceiling" }))} />}
       />
     </>
