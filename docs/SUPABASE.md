@@ -20,8 +20,10 @@ Never add `SUPABASE_SERVICE_ROLE_KEY` to this frontend.
 
 All four tables use RLS. Every select/insert/update/delete policy requires `auth.uid() = user_id`.
 
-## Next-version Auth
-Use `getSupabaseBrowserClient()` from `lib/supabase/client.ts`, then add email `signUp`, `signInWithPassword`, and `signOut` screens. Supabase JS persists and refreshes sessions. After sign-in, upsert user-owned rows directly; RLS remains the security boundary.
+## Current Auth and sync
+The application now uses email `signUp`, `signInWithPassword`, and `signOut`. Supabase JS persists and refreshes sessions in the browser. Signed-in users can save named model runs, favorite models, and track learning progress. RLS remains the security boundary for every cloud query.
+
+The sliders and economic calculations never write to Supabase. Network requests happen only for authentication, opening a signed-in model, explicitly changing a favorite, explicitly saving a named run, or loading My Library.
 
 ## Adding a model
 Use a stable lowercase `model_key` such as `price-controls`. Save its parameter and result objects in the existing `jsonb` columns. No migration is required unless the model introduces shared relational data.

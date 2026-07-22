@@ -83,6 +83,7 @@ export default function ElasticityPage() {
   return (
     <>
       <ModelHeader
+        modelKey="elasticity"
         eyebrow="Model 03 · Buyer responsiveness"
         title="Elasticity & Total Revenue"
         description="Move along a linear demand curve to see why the same curve can be elastic at high prices and inelastic at low prices."
@@ -302,6 +303,7 @@ export default function ElasticityPage() {
         }
         comparison={
           <ScenarioComparison
+            modelKey="elasticity"
             storageKey="econmind:scenarios:elasticity"
             parameters={{ ...params }}
             results={{

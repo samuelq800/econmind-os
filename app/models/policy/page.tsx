@@ -104,6 +104,7 @@ export default function PolicyPage() {
   return (
     <>
       <ModelHeader
+        modelKey="policy"
         eyebrow="Model 02 · Policy analysis"
         title="Indirect Tax & Subsidy"
         description="Examine how a per-unit policy wedge changes prices on each side of the market, trade volume, incidence, and welfare."
@@ -333,6 +334,7 @@ export default function PolicyPage() {
         }
         comparison={
           <ScenarioComparison
+            modelKey="policy"
             storageKey="econmind:scenarios:policy"
             parameters={{ ...params }}
             results={{

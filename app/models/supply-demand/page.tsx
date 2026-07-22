@@ -91,6 +91,7 @@ export default function SupplyDemandPage() {
   return (
     <>
       <ModelHeader
+        modelKey="supply-demand"
         eyebrow="Model 01 · Market mechanics"
         title="Supply & Demand"
         description="Change the position and responsiveness of buyers and sellers to see how equilibrium and gains from trade emerge."
@@ -254,6 +255,7 @@ export default function SupplyDemandPage() {
         }
         comparison={
           <ScenarioComparison
+            modelKey="supply-demand"
             storageKey="econmind:scenarios:supply-demand"
             parameters={{ ...params }}
             results={{

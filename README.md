@@ -7,13 +7,14 @@ pnpm install --frozen-lockfile
 cp .env.example .env.local
 pnpm dev
 ```
-Supabase variables are optional in this local-first release. Quality checks: `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`.
+Supabase variables are required for accounts and cloud saves; the simulations still work locally without them. Quality checks: `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`.
 
 ## Architecture
 - Next.js App Router, strict TypeScript, Tailwind CSS, Recharts
 - Pure calculations in `lib/economics/`
 - localStorage for parameters and Scenario A/B
-- Optional Supabase browser client using only public environment variables
+- Supabase email Auth, persisted sessions, private cloud runs, favorites, and learning progress
+- Supabase browser client using only public environment variables
 - Full PostgreSQL migration, indexes, triggers, and RLS in `supabase/migrations/`
 
 No service-role key is used or expected in the frontend.
