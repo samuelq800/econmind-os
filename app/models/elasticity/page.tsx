@@ -313,6 +313,7 @@ export default function ElasticityPage() {
               totalRevenue: outcome.totalRevenue,
             }}
             metrics={["price", "quantity", "elasticity", "totalRevenue"]}
+            onLoadParameters={(saved) => setParams((current) => ({ ...current, ...saved }))}
           />
         }
       />

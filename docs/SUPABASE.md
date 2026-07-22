@@ -25,5 +25,9 @@ The application now uses email `signUp`, `signInWithPassword`, and `signOut`. Su
 
 The sliders and economic calculations never write to Supabase. Network requests happen only for authentication, opening a signed-in model, explicitly changing a favorite, explicitly saving a named run, or loading My Library.
 
+## V1.2 Phase 1
+
+Run `supabase/migrations/20260722010000_v1_2_phase1.sql` after the initial schema. It reuses `model_runs` for all named scenarios, adds `metadata jsonb`, and adds a bounded `recent_activity` aggregation table. Repeated visits and simulation runs increment counters in fixed rows rather than appending unlimited event history.
+
 ## Adding a model
 Use a stable lowercase `model_key` such as `price-controls`. Save its parameter and result objects in the existing `jsonb` columns. No migration is required unless the model introduces shared relational data.

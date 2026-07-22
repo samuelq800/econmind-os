@@ -1,1 +1,14 @@
-import{ArrowLeftRight,ChartNoAxesCombined,Landmark,type LucideIcon}from"lucide-react";export type ModelCatalogItem={slug:string;title:string;shortTitle:string;description:string;difficulty:string;concepts:string[];icon:LucideIcon;number:string};export const MODEL_CATALOG:ModelCatalogItem[]=[{slug:"/models/supply-demand",title:"Supply & Demand",shortTitle:"Market Equilibrium",description:"See how buyers and sellers jointly determine equilibrium price, quantity, and economic surplus.",difficulty:"Foundation",concepts:["Equilibrium","Welfare","Market shifts"],icon:ChartNoAxesCombined,number:"01"},{slug:"/models/policy",title:"Indirect Tax & Subsidy",shortTitle:"Policy Incidence",description:"Trace a policy wedge through buyer prices, seller prices, trade volume, public finance, and welfare.",difficulty:"Intermediate",concepts:["Tax incidence","Subsidies","Deadweight loss"],icon:Landmark,number:"02"},{slug:"/models/elasticity",title:"Elasticity & Revenue",shortTitle:"Price Sensitivity",description:"Move along a demand curve and discover how local price sensitivity governs total revenue.",difficulty:"Foundation",concepts:["Point elasticity","Total revenue","Pricing"],icon:ArrowLeftRight,number:"03"}];
+import { MODEL_ICONS } from "@/lib/models/icons";
+import { AVAILABLE_MODELS } from "@/lib/models/registry";
+
+// Compatibility adapter for existing pages. The single source of truth is MODEL_REGISTRY.
+export const MODEL_CATALOG = AVAILABLE_MODELS.map((model) => ({
+  slug: model.route,
+  title: model.title,
+  shortTitle: model.shortTitle,
+  description: model.description,
+  difficulty: model.difficulty,
+  concepts: [...model.concepts],
+  icon: MODEL_ICONS[model.icon],
+  number: model.number,
+}));

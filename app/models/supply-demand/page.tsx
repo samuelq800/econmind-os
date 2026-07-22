@@ -272,6 +272,7 @@ export default function SupplyDemandPage() {
               "producerSurplus",
               "totalSurplus",
             ]}
+            onLoadParameters={(saved) => setParams((current) => ({ ...current, ...saved }))}
           />
         }
       />

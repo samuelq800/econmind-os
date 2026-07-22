@@ -14,6 +14,10 @@ Supabase variables are required for accounts and cloud saves; the simulations st
 - Pure calculations in `lib/economics/`
 - localStorage for parameters and Scenario A/B
 - Supabase email Auth, persisted sessions, private cloud runs, favorites, and learning progress
+- Economist Workspace dashboard with compact activity aggregation
+- Economic Sandbox with deterministic policy-mix simulation and local run timeline
+- Interactive Price Controls model
+- Unified model registry for navigation, recommendations, and progress
 - Supabase browser client using only public environment variables
 - Full PostgreSQL migration, indexes, triggers, and RLS in `supabase/migrations/`
 

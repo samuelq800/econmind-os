@@ -10,6 +10,7 @@ import { useTheme } from "./theme-provider";
 const publicLinks = [
   { href: "/", label: "Home" },
   { href: "/models", label: "Models" },
+  { href: "/sandbox", label: "Sandbox" },
   { href: "/about", label: "About" },
 ];
 
@@ -20,7 +21,7 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const links = user
-    ? [...publicLinks, { href: "/library", label: "My Library" }]
+    ? [...publicLinks, { href: "/dashboard", label: "Dashboard" }]
     : publicLinks;
 
   return (
@@ -80,7 +81,10 @@ export function Navbar() {
                   <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--ink-faint)]">Signed in</p>
                   <p className="mt-1 truncate text-xs font-semibold">{user.email}</p>
                 </div>
-                <Link href="/library" onClick={() => setAccountOpen(false)} className="mt-1 flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold hover:bg-[var(--surface-subtle)]">
+                <Link href="/dashboard" onClick={() => setAccountOpen(false)} className="mt-1 flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold hover:bg-[var(--surface-subtle)]">
+                  <Cloud size={14} /> Economist Workspace
+                </Link>
+                <Link href="/library" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold hover:bg-[var(--surface-subtle)]">
                   <Cloud size={14} /> My cloud library
                 </Link>
                 <button

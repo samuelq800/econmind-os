@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BookmarkPlus, CheckCircle2, CloudUpload, GitCompareArrows, LoaderCircle } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { safePercentChange, type ScenarioSnapshot } from "@/lib/economics/types";
 import { usePersistentState } from "@/lib/hooks/use-persistent-state";
-import { recordSavedProgress, saveModelRun, type ModelKey } from "@/lib/supabase/data";
+import { getModelRun, saveModelRun, type ModelKey } from "@/lib/supabase/data";
 
 const pretty = (key: string) => key.replace(/([A-Z])/g, " $1").replace(/^./, (character) => character.toUpperCase());
 const format = (value: number) => new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value);
@@ -17,12 +17,14 @@ export function ScenarioComparison({
   parameters,
   results,
   metrics,
+  onLoadParameters,
 }: {
   storageKey: string;
   modelKey: ModelKey;
   parameters: Record<string, number>;
   results: Record<string, number>;
   metrics: string[];
+  onLoadParameters?: (parameters: Record<string, number>) => void;
 }) {
   const { user, openAuth } = useAuth();
   const [scenarios, setScenarios] = usePersistentState<{ A: ScenarioSnapshot | null; B: ScenarioSnapshot | null }>(storageKey, { A: null, B: null });
@@ -30,6 +32,31 @@ export function ScenarioComparison({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState("");
+  const loadRef = useRef(onLoadParameters);
+
+  useEffect(() => {
+    loadRef.current = onLoadParameters;
+  }, [onLoadParameters]);
+
+  useEffect(() => {
+    if (!user || !loadRef.current) return;
+    const runId = new URLSearchParams(window.location.search).get("run");
+    if (!runId) return;
+    let active = true;
+    void getModelRun(user.id, runId)
+      .then((run) => {
+        if (!active || !run || run.model_key !== modelKey) return;
+        const numericParameters = Object.fromEntries(
+          Object.entries(run.parameters).filter((entry): entry is [string, number] => typeof entry[1] === "number" && Number.isFinite(entry[1])),
+        );
+        loadRef.current?.(numericParameters);
+        setSaved(`Loaded “${run.name}”`);
+      })
+      .catch((caught) => {
+        if (active) setError(caught instanceof Error ? caught.message : "Could not open the saved run.");
+      });
+    return () => { active = false; };
+  }, [user, modelKey]);
 
   const saveLocal = (label: "A" | "B") =>
     setScenarios((current) => ({
@@ -50,8 +77,7 @@ export function ScenarioComparison({
     setError("");
     setSaved("");
     try {
-      await saveModelRun({ userId: user.id, modelKey, name: name.trim(), parameters, results });
-      await recordSavedProgress(user.id, modelKey, parameters);
+      await saveModelRun({ userId: user.id, modelKey, name: name.trim(), parameters, results, metadata: { scenario_type: "model" } });
       setSaved(name.trim());
       setName("");
     } catch (caught) {
@@ -112,7 +138,7 @@ export function ScenarioComparison({
           </Button>
         </div>
         {error && <p role="alert" className="mt-2 text-[11px] text-[var(--red)]">{error}</p>}
-        {saved && <p className="mt-2 flex items-center gap-1.5 text-[11px] font-semibold text-[var(--accent)]"><CheckCircle2 size={13} />“{saved}” is now in My Library.</p>}
+        {saved && <p className="mt-2 flex items-center gap-1.5 text-[11px] font-semibold text-[var(--accent)]"><CheckCircle2 size={13} />{saved.startsWith("Loaded") ? saved : `“${saved}” is now in My Library.`}</p>}
       </div>
     </section>
   );

@@ -6,7 +6,7 @@ export function ModelHeader({
   eyebrow,
   title,
   description,
-  difficulty = "Foundation",
+  difficulty = "Beginner",
   tags,
   modelKey,
 }: {

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { BookOpenCheck, Cloud, Heart, LoaderCircle, LogIn, Trash2 } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
+import { getModel } from "@/lib/models/registry";
 import {
   deleteModelRun,
   listFavorites,
@@ -12,15 +13,8 @@ import {
   listModelRuns,
   type FavoriteRow,
   type LearningProgressRow,
-  type ModelKey,
   type ModelRunRow,
 } from "@/lib/supabase/data";
-
-const models: Record<ModelKey, { title: string; href: string }> = {
-  "supply-demand": { title: "Supply & Demand", href: "/models/supply-demand" },
-  policy: { title: "Indirect Tax & Subsidy", href: "/models/policy" },
-  elasticity: { title: "Elasticity & Revenue", href: "/models/elasticity" },
-};
 
 const date = (value: string | null) => value
   ? new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value))
@@ -129,7 +123,7 @@ export default function LibraryPage() {
                 <article key={run.id} className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <Link href={models[run.model_key]?.href ?? "/models"} className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--accent)]">{models[run.model_key]?.title ?? run.model_key}</Link>
+                      <Link href={`${getModel(run.model_key)?.route ?? "/models"}?run=${run.id}`} className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--accent)]">{getModel(run.model_key)?.title ?? run.model_key}</Link>
                       <h3 className="mt-1 text-base font-bold">{run.name}</h3>
                       <p className="mt-1 text-[10px] text-[var(--ink-faint)]">Saved {date(run.created_at)}</p>
                     </div>
@@ -153,8 +147,8 @@ export default function LibraryPage() {
               <div className="mt-4 overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--surface)]">
                 {favorites.length === 0 && <EmptyState text="Use the favorite button at the top of a model." compact />}
                 {favorites.map((favorite) => (
-                  <Link key={favorite.id} href={models[favorite.model_key]?.href ?? "/models"} className="flex items-center justify-between border-b border-[var(--line)] px-4 py-4 text-sm font-semibold last:border-0">
-                    {models[favorite.model_key]?.title ?? favorite.model_key}<span className="text-[var(--accent)]">Open →</span>
+                  <Link key={favorite.id} href={getModel(favorite.model_key)?.route ?? "/models"} className="flex items-center justify-between border-b border-[var(--line)] px-4 py-4 text-sm font-semibold last:border-0">
+                    {getModel(favorite.model_key)?.title ?? favorite.model_key}<span className="text-[var(--accent)]">Open →</span>
                   </Link>
                 ))}
               </div>
@@ -166,7 +160,7 @@ export default function LibraryPage() {
                 {progress.length === 0 && <EmptyState text="Open a model while signed in to begin tracking progress." compact />}
                 {progress.map((item) => (
                   <div key={item.id} className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4">
-                    <div className="flex justify-between gap-3 text-xs font-bold"><span>{models[item.model_key]?.title ?? item.model_key}</span><span className="text-[var(--accent)]">{item.progress_percent}%</span></div>
+                    <div className="flex justify-between gap-3 text-xs font-bold"><span>{getModel(item.model_key)?.title ?? item.model_key}</span><span className="text-[var(--accent)]">{item.progress_percent}%</span></div>
                     <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--surface-strong)]"><div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${item.progress_percent}%` }} /></div>
                     <p className="mt-2 text-[10px] text-[var(--ink-faint)]">Last visited {date(item.last_visited_at)}</p>
                   </div>
@@ -184,12 +178,12 @@ function EmptyState({ text, compact = false }: { text: string; compact?: boolean
   return <p className={`rounded-xl border border-dashed border-[var(--line-strong)] bg-[var(--canvas)] text-center text-xs leading-5 text-[var(--ink-muted)] ${compact ? "p-5" : "p-8"}`}>{text}</p>;
 }
 
-function DataList({ title, data }: { title: string; data: Record<string, number> }) {
+function DataList({ title, data }: { title: string; data: Record<string, unknown> }) {
   return (
     <div>
       <p className="mb-2 text-[9px] font-bold uppercase tracking-wider text-[var(--ink-faint)]">{title}</p>
       <dl className="space-y-1.5">
-        {Object.entries(data).map(([key, value]) => <div key={key} className="flex justify-between gap-3"><dt className="truncate text-[var(--ink-muted)]">{key}</dt><dd className="font-semibold">{new Intl.NumberFormat("en", { maximumFractionDigits: 2 }).format(value)}</dd></div>)}
+        {Object.entries(data).filter((entry): entry is [string, number] => typeof entry[1] === "number").map(([key, value]) => <div key={key} className="flex justify-between gap-3"><dt className="truncate text-[var(--ink-muted)]">{key}</dt><dd className="font-semibold">{new Intl.NumberFormat("en", { maximumFractionDigits: 2 }).format(value)}</dd></div>)}
       </dl>
     </div>
   );

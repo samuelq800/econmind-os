@@ -351,6 +351,7 @@ export default function PolicyPage() {
               "governmentBalance",
               "deadweightLoss",
             ]}
+            onLoadParameters={(saved) => setParams((current) => ({ ...current, ...saved }))}
           />
         }
       />
