@@ -29,5 +29,19 @@ The sliders and economic calculations never write to Supabase. Network requests 
 
 Run `supabase/migrations/20260722010000_v1_2_phase1.sql` after the initial schema. It reuses `model_runs` for all named scenarios, adds `metadata jsonb`, and adds a bounded `recent_activity` aggregation table. Repeated visits and simulation runs increment counters in fixed rows rather than appending unlimited event history.
 
+## V1.3 Formal experiments
+
+After V1.2, run `supabase/migrations/20260722020000_experiment_system.sql` once. It adds student/teacher roles, experiment configuration, immutable attempt epochs, submissions, feedback, revocable report links, indexes, RLS, and validated RPCs. Hidden predictions, success thresholds, and scoring weights are available only through teacher-owned RPCs.
+
+New accounts remain students by default. Assign a teacher manually in the SQL Editor using the account email:
+
+```sql
+update public.profiles
+set role = 'teacher'
+where user_id = (select id from auth.users where email = 'YOUR_EMAIL');
+```
+
+Do not add a role selector to the public client. The migration removes authenticated permission to change the `role` column.
+
 ## Adding a model
 Use a stable lowercase `model_key` such as `price-controls`. Save its parameter and result objects in the existing `jsonb` columns. No migration is required unless the model introduces shared relational data.

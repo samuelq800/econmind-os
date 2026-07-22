@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import { ChartContainer } from "@/components/models/chart-container";
 import { EconomicExplanation } from "@/components/models/economic-explanation";
+import { EquationView } from "@/components/models/equation-view";
+import { MechanismChain } from "@/components/models/mechanism-chain";
 import { MetricCard } from "@/components/models/metric-card";
 import { ModelAssumptions } from "@/components/models/model-assumptions";
 import { ModelHeader } from "@/components/models/model-header";
@@ -303,6 +305,8 @@ export default function ElasticityPage() {
             <EconomicExplanation principle="On a linear demand curve, elasticity varies by location even though slope is constant.">
               {elasticityExplanation(params)}
             </EconomicExplanation>
+            <MechanismChain modelKey="elasticity" parameters={params} />
+            <EquationView modelKey="elasticity" parameters={params} />
             <ModelAssumptions assumptions={MODEL_ASSUMPTIONS.elasticity} />
           </>
         }

@@ -4,6 +4,8 @@ import { CartesianGrid, Legend, Line, LineChart, ReferenceDot, ReferenceLine, Re
 import { Activity, CircleGauge, Flame, Gauge, Target, Users } from "lucide-react";
 import { ChartContainer } from "@/components/models/chart-container";
 import { EconomicExplanation } from "@/components/models/economic-explanation";
+import { EquationView } from "@/components/models/equation-view";
+import { MechanismChain } from "@/components/models/mechanism-chain";
 import { MetricCard } from "@/components/models/metric-card";
 import { ModelAssumptions } from "@/components/models/model-assumptions";
 import { ModelHeader } from "@/components/models/model-header";
@@ -56,7 +58,7 @@ export default function AdAsPage() {
         <MetricCard label="Unemployment gap" value={`${outcome.unemploymentGap > 0 ? "+" : ""}${outcome.unemploymentGap}pp`} note="Simplified Okun-style estimate" icon={Users} tone={outcome.unemploymentGap > 0 ? "red" : "green"} />
         <MetricCard label="Shock balance" value={outcome.demandBase - outcome.supplyBase} note="AD base minus SRAS base" icon={CircleGauge} tone="neutral" />
       </>}
-      explanation={<><EconomicExplanation principle="In the short run, aggregate demand and aggregate supply jointly determine output and the price level; LRAS provides the potential-output benchmark.">{adAsExplanation(parameters, outcome)}</EconomicExplanation><ModelAssumptions assumptions={MODEL_ASSUMPTIONS["ad-as"]} /></>}
+      explanation={<><EconomicExplanation principle="In the short run, aggregate demand and aggregate supply jointly determine output and the price level; LRAS provides the potential-output benchmark.">{adAsExplanation(parameters, outcome)}</EconomicExplanation><MechanismChain modelKey="ad-as" parameters={parameters} /><EquationView modelKey="ad-as" parameters={parameters} /><ModelAssumptions assumptions={MODEL_ASSUMPTIONS["ad-as"]} /></>}
       comparison={<ScenarioComparison storageKey="econmind:scenarios:ad-as" modelKey="ad-as" parameters={parameters} results={{ output: outcome.output, priceLevel: outcome.priceLevel, outputGap: outcome.outputGap, inflationPressure: outcome.inflationPressure, unemploymentGap: outcome.unemploymentGap }} metrics={["output", "priceLevel", "outputGap", "inflationPressure", "unemploymentGap"]} onLoadParameters={(saved) => setParameters((current) => ({ ...current, ...saved }))} />}
     />
   </>;

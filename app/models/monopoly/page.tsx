@@ -4,6 +4,8 @@ import { CartesianGrid, Legend, Line, LineChart, ReferenceDot, ReferenceLine, Re
 import { BadgeDollarSign, Boxes, CircleDollarSign, Percent, Scale, TriangleAlert } from "lucide-react";
 import { ChartContainer } from "@/components/models/chart-container";
 import { EconomicExplanation } from "@/components/models/economic-explanation";
+import { EquationView } from "@/components/models/equation-view";
+import { MechanismChain } from "@/components/models/mechanism-chain";
 import { MetricCard } from "@/components/models/metric-card";
 import { ModelAssumptions } from "@/components/models/model-assumptions";
 import { ModelHeader } from "@/components/models/model-header";
@@ -54,7 +56,7 @@ export default function MonopolyPage() {
         <MetricCard label="Consumer surplus" value={outcome.consumerSurplus} note="Under monopoly pricing" icon={Scale} tone="blue" />
         <MetricCard label="Deadweight loss" value={outcome.deadweightLoss} note="Lost gains from restricted output" icon={TriangleAlert} tone="red" />
       </>}
-      explanation={<><EconomicExplanation principle="A single-price monopoly chooses output where marginal revenue equals marginal cost, then charges the demand price for that quantity.">{monopolyExplanation(parameters, outcome)}</EconomicExplanation><ModelAssumptions assumptions={MODEL_ASSUMPTIONS.monopoly} /></>}
+      explanation={<><EconomicExplanation principle="A single-price monopoly chooses output where marginal revenue equals marginal cost, then charges the demand price for that quantity.">{monopolyExplanation(parameters, outcome)}</EconomicExplanation><MechanismChain modelKey="monopoly" parameters={parameters} /><EquationView modelKey="monopoly" parameters={parameters} /><ModelAssumptions assumptions={MODEL_ASSUMPTIONS.monopoly} /></>}
       comparison={<ScenarioComparison storageKey="econmind:scenarios:monopoly" modelKey="monopoly" parameters={parameters} results={{ monopolyPrice: outcome.monopolyPrice, monopolyQuantity: outcome.monopolyQuantity, competitiveQuantity: outcome.competitiveQuantity, profit: outcome.profit, markup: outcome.markup, lernerIndex: outcome.lernerIndex, deadweightLoss: outcome.deadweightLoss }} metrics={["monopolyPrice", "monopolyQuantity", "competitiveQuantity", "profit", "markup", "deadweightLoss"]} onLoadParameters={(saved) => setParameters((current) => ({ ...current, ...saved }))} />}
     />
   </>;

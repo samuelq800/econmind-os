@@ -4,6 +4,8 @@ import { CartesianGrid, Legend, Line, LineChart, ReferenceDot, ResponsiveContain
 import { ArrowUpRight, CircleGauge, Factory, Scale, Target, TrendingUp } from "lucide-react";
 import { ChartContainer } from "@/components/models/chart-container";
 import { EconomicExplanation } from "@/components/models/economic-explanation";
+import { EquationView } from "@/components/models/equation-view";
+import { MechanismChain } from "@/components/models/mechanism-chain";
 import { MetricCard } from "@/components/models/metric-card";
 import { ModelAssumptions } from "@/components/models/model-assumptions";
 import { ModelHeader } from "@/components/models/model-header";
@@ -56,7 +58,7 @@ export default function PpfPage() {
         <MetricCard label="Capacity gap" value={outcome.capacityGap} note="Positive means spare capacity" icon={CircleGauge} tone={outcome.capacityGap >= 0 ? "blue" : "red"} />
         <MetricCard label="Capacity shift" value={`${parameters.growthRate > 0 ? "+" : ""}${parameters.growthRate}%`} note="Technology/resources" icon={parameters.growthRate >= 0 ? TrendingUp : ArrowUpRight} tone={parameters.growthRate >= 0 ? "green" : "red"} />
       </>}
-      explanation={<><EconomicExplanation principle="Moving along a bowed-out PPF reallocates scarce resources, while shifts of the frontier change the economy's productive capacity.">{ppfExplanation(parameters, outcome)}</EconomicExplanation><ModelAssumptions assumptions={MODEL_ASSUMPTIONS.ppf} /></>}
+      explanation={<><EconomicExplanation principle="Moving along a bowed-out PPF reallocates scarce resources, while shifts of the frontier change the economy's productive capacity.">{ppfExplanation(parameters, outcome)}</EconomicExplanation><MechanismChain modelKey="ppf" parameters={parameters} /><EquationView modelKey="ppf" parameters={parameters} /><ModelAssumptions assumptions={MODEL_ASSUMPTIONS.ppf} /></>}
       comparison={<ScenarioComparison storageKey="econmind:scenarios:ppf" modelKey="ppf" parameters={parameters} results={{ outputX: outcome.outputX, outputY: outcome.outputY, opportunityCost: outcome.opportunityCost, capacityGap: outcome.capacityGap, capacityX: outcome.shiftedCapacityX, capacityY: outcome.shiftedCapacityY }} metrics={["outputX", "outputY", "opportunityCost", "capacityGap", "capacityX", "capacityY"]} onLoadParameters={(saved) => setParameters((current) => ({ ...current, ...saved }))} />}
     />
   </>;

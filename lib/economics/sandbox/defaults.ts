@@ -4,6 +4,7 @@ export const BASELINE_PARAMETERS: SandboxParameters = {
   incomeTaxRate: 25,
   corporateTaxRate: 21,
   governmentSpending: 100,
+  demandStimulus: 0,
   subsidyRate: 5,
   interestRate: 4,
   moneySupplyGrowth: 3,
@@ -13,6 +14,7 @@ export const BASELINE_PARAMETERS: SandboxParameters = {
   carbonTax: 0,
   greenSubsidy: 0,
   tariffRate: 5,
+  domesticProductionSubsidy: 0,
   importQuotaIntensity: 0,
 };
 
@@ -42,6 +44,7 @@ export const POLICY_DEFINITIONS: PolicyDefinition[] = [
   { key: "incomeTaxRate", label: "Income Tax Rate", category: "Fiscal Policy", min: 0, max: 60, step: 1, unit: "%", description: "A simplified tax on household income." },
   { key: "corporateTaxRate", label: "Corporate Tax Rate", category: "Fiscal Policy", min: 0, max: 50, step: 1, unit: "%", description: "A simplified tax on firm earnings." },
   { key: "governmentSpending", label: "Government Spending", category: "Fiscal Policy", min: 60, max: 160, step: 2, unit: " index", description: "A standardized public-spending index, not currency." },
+  { key: "demandStimulus", label: "Demand Stimulus", category: "Fiscal Policy", min: 0, max: 50, step: 1, unit: "%", description: "A standardized temporary boost to household demand." },
   { key: "subsidyRate", label: "Subsidy Rate", category: "Fiscal Policy", min: 0, max: 30, step: 1, unit: "%", description: "Broad production support financed by the public sector." },
   { key: "interestRate", label: "Interest Rate", category: "Monetary Policy", min: 0, max: 15, step: 0.25, unit: "%", description: "A simplified policy interest rate." },
   { key: "moneySupplyGrowth", label: "Money Supply Growth", category: "Monetary Policy", min: -5, max: 20, step: 0.5, unit: "%", description: "A stylized monetary expansion rate." },
@@ -51,5 +54,6 @@ export const POLICY_DEFINITIONS: PolicyDefinition[] = [
   { key: "carbonTax", label: "Carbon Tax", category: "Environmental Policy", min: 0, max: 100, step: 2, unit: " index", description: "A standardized emissions-price index." },
   { key: "greenSubsidy", label: "Green Subsidy", category: "Environmental Policy", min: 0, max: 50, step: 1, unit: "%", description: "Support for cleaner production and investment." },
   { key: "tariffRate", label: "Tariff Rate", category: "Trade Policy", min: 0, max: 60, step: 1, unit: "%", description: "A simplified import tariff." },
+  { key: "domesticProductionSubsidy", label: "Domestic Production Subsidy", category: "Trade Policy", min: 0, max: 40, step: 1, unit: "%", description: "Targeted support for domestic production capacity." },
   { key: "importQuotaIntensity", label: "Import Quota Intensity", category: "Trade Policy", min: 0, max: 100, step: 2, unit: " index", description: "A standardized measure of quota restrictiveness." },
 ];

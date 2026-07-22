@@ -15,7 +15,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ArrowDownRight, ArrowRight, ArrowUpRight, CheckCircle2, CloudUpload, FlaskConical, LoaderCircle, Play, RotateCcw, TriangleAlert } from "lucide-react";
+import { ArrowDownRight, ArrowRight, ArrowUpRight, CheckCircle2, CloudUpload, FlaskConical, LoaderCircle, RotateCcw, TriangleAlert } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { FavoriteModelButton } from "@/components/models/favorite-model-button";
 import { ParameterControl } from "@/components/models/parameter-control";
@@ -24,10 +24,10 @@ import { BASELINE_INDICATORS, BASELINE_PARAMETERS, POLICY_DEFINITIONS } from "@/
 import { interpretSandbox } from "@/lib/economics/sandbox/interpretation";
 import { SANDBOX_PRESETS } from "@/lib/economics/sandbox/presets";
 import { sanitizeParameters, simulateSandbox } from "@/lib/economics/sandbox/simulation";
-import type { IndicatorKey, PolicyCategory, SandboxParameters, SandboxTimelineEntry } from "@/lib/economics/sandbox/types";
+import type { IndicatorKey, PolicyCategory, SandboxParameters, SandboxResult } from "@/lib/economics/sandbox/types";
 import type { ModelParameter } from "@/lib/economics/types";
 import { usePersistentState } from "@/lib/hooks/use-persistent-state";
-import { getModelRun, recordModuleActivity, saveModelRun } from "@/lib/supabase/data";
+import { getModelRun, saveModelRun } from "@/lib/supabase/data";
 
 const categories: PolicyCategory[] = ["Fiscal Policy", "Monetary Policy", "Market Regulation", "Environmental Policy", "Trade Policy"];
 const indicatorLabels: Record<IndicatorKey, string> = {
@@ -46,7 +46,6 @@ const format = (value: number) => new Intl.NumberFormat("en", { maximumFractionD
 export default function SandboxPage() {
   const { user, openAuth } = useAuth();
   const [draft, setDraft] = usePersistentState<SandboxParameters>("econmind:sandbox:draft", BASELINE_PARAMETERS);
-  const [timeline, setTimeline] = usePersistentState<SandboxTimelineEntry[]>("econmind:sandbox:timeline", []);
   const [scenarioName, setScenarioName] = useState("");
   const [activePreset, setActivePreset] = useState("custom");
   const [busy, setBusy] = useState(false);
@@ -85,7 +84,7 @@ export default function SandboxPage() {
   const impactData = [...result.contributions]
     .sort((a, b) => Object.values(b.values).reduce((sum, value) => sum + Math.abs(value ?? 0), 0) - Object.values(a.values).reduce((sum, value) => sum + Math.abs(value ?? 0), 0))
     .slice(0, 7)
-    .map((item) => ({ policy: item.label, GDP: item.values.gdpIndex ?? 0, Revenue: item.values.governmentRevenue ?? 0, Emissions: item.values.carbonEmissions ?? 0 }));
+    .map((item) => ({ policy: `${item.kind === "interaction" ? "↔ " : ""}${item.label}`, GDP: item.values.gdpIndex ?? 0, Revenue: item.values.governmentRevenue ?? 0, Emissions: item.values.carbonEmissions ?? 0 }));
 
   function update(key: keyof SandboxParameters, value: number) {
     setDraft((current) => sanitizeParameters({ ...current, [key]: value }));
@@ -99,21 +98,6 @@ export default function SandboxPage() {
     setDraft({ ...preset.parameters });
     setActivePreset(id);
     setMessage(`${preset.name} loaded. Results updated live.`);
-  }
-
-  async function runSimulation() {
-    const parameters = sanitizeParameters(draft);
-    const next = simulateSandbox(parameters);
-    setTimeline((current) => [{ id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, label: SANDBOX_PRESETS.find((item) => item.id === activePreset)?.name ?? "Custom Scenario", runAt: new Date().toISOString(), parameters, indicators: next.indicators }, ...current].slice(0, 10));
-    setMessage("Current live scenario recorded in this browser.");
-    setError("");
-    if (user) {
-      try {
-        await recordModuleActivity("sandbox", "simulation_run", { preset: activePreset });
-      } catch (caught) {
-        setError(caught instanceof Error ? caught.message : "The local run succeeded, but the cloud counter did not update.");
-      }
-    }
   }
 
   async function saveScenario() {
@@ -167,16 +151,17 @@ export default function SandboxPage() {
         </aside>
 
         <section className="min-w-0 space-y-5">
-          <div className="flex flex-col justify-between gap-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4 sm:flex-row sm:items-center"><div><p className="flex items-center gap-2 text-xs font-bold"><span className="size-2 rounded-full bg-[var(--accent)]" />Live system state</p><p className="mt-1 text-[10px] text-[var(--ink-muted)]">Indicators, charts, and interpretation update with every control change. Record only when you want a timeline snapshot.</p></div><Button onClick={() => void runSimulation()}><Play size={14} />Record Run</Button></div>
+          <div className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4"><p className="flex items-center gap-2 text-xs font-bold"><span className="size-2 animate-pulse rounded-full bg-[var(--accent)]" />Live system state</p><p className="mt-1 text-[10px] text-[var(--ink-muted)]">Indicators, charts, and interpretation recalculate locally with every control change. No snapshot or database write is created.</p></div>
+
+          <div className="grid items-stretch gap-2 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4 sm:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr]">{[`${result.directContributions.length} active policies`, "Direct effects", `${result.interactionContributions.length} active combinations`, "Total indicators"].map((label, index) => <div key={label} className="contents"><div className={`grid min-h-16 place-items-center rounded-lg p-3 text-center text-[10px] font-bold ${index === 3 ? "bg-[var(--accent)] text-white" : index === 2 ? "bg-[var(--amber-soft)] text-[var(--amber)]" : "bg-[var(--canvas)]"}`}>{label}</div>{index < 3 && <ArrowRight className="mx-auto self-center text-[var(--ink-faint)]" size={14} />}</div>)}</div>
 
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{(Object.keys(result.indicators) as IndicatorKey[]).map((key) => <IndicatorCard key={key} indicatorKey={key} value={result.indicators[key]} baseline={BASELINE_INDICATORS[key]} />)}</div>
 
           <div className="grid gap-5 lg:grid-cols-2">
             <ChartPanel title="Baseline vs current scenario" subtitle="Standardized performance scores; baseline = 100"><div className="h-[340px]"><ResponsiveContainer width="100%" height="100%"><RadarChart data={radarData} outerRadius="70%"><PolarGrid stroke="var(--line)" /><PolarAngleAxis dataKey="dimension" tick={{ fill: "var(--ink-muted)", fontSize: 9 }} /><Radar name="Baseline" dataKey="baseline" stroke="var(--ink-faint)" fill="var(--ink-faint)" fillOpacity={0.06} strokeDasharray="4 4" /><Radar name="Current" dataKey="current" stroke="var(--accent)" fill="var(--accent)" fillOpacity={0.16} /><Legend wrapperStyle={{ fontSize: 10 }} /><Tooltip contentStyle={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, fontSize: 10 }} /></RadarChart></ResponsiveContainer></div></ChartPanel>
-            <ChartPanel title="Policy impact contributions" subtitle="Direct standardized contributions; interactions remain simplified"><div className="h-[340px]"><ResponsiveContainer width="100%" height="100%"><BarChart data={impactData} layout="vertical" margin={{ top: 8, right: 12, left: 22, bottom: 8 }}><CartesianGrid stroke="var(--line)" strokeDasharray="3 4" horizontal={false} /><XAxis type="number" tick={{ fill: "var(--ink-muted)", fontSize: 9 }} /><YAxis dataKey="policy" type="category" width={86} tick={{ fill: "var(--ink-muted)", fontSize: 9 }} /><Tooltip contentStyle={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, fontSize: 10 }} /><Legend wrapperStyle={{ fontSize: 10 }} /><Bar dataKey="GDP" fill="var(--blue)" /><Bar dataKey="Revenue" fill="var(--accent)" /><Bar dataKey="Emissions" fill="var(--amber)" /></BarChart></ResponsiveContainer></div></ChartPanel>
+            <ChartPanel title="Policy impact contributions" subtitle="Direct and interaction contributions are shown before the clamped total"><div className="h-[340px]"><ResponsiveContainer width="100%" height="100%"><BarChart data={impactData} layout="vertical" margin={{ top: 8, right: 12, left: 22, bottom: 8 }}><CartesianGrid stroke="var(--line)" strokeDasharray="3 4" horizontal={false} /><XAxis type="number" tick={{ fill: "var(--ink-muted)", fontSize: 9 }} /><YAxis dataKey="policy" type="category" width={86} tick={{ fill: "var(--ink-muted)", fontSize: 9 }} /><Tooltip contentStyle={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, fontSize: 10 }} /><Legend wrapperStyle={{ fontSize: 10 }} /><Bar dataKey="GDP" fill="var(--blue)" /><Bar dataKey="Revenue" fill="var(--accent)" /><Bar dataKey="Emissions" fill="var(--amber)" /></BarChart></ResponsiveContainer></div></ChartPanel>
           </div>
-
-          <ChartPanel title="Scenario timeline" subtitle="Only explicit Record Run actions are kept; the latest 10 remain in this browser"><div className="divide-y divide-[var(--line)]">{timeline.length === 0 && <p className="py-7 text-center text-xs text-[var(--ink-muted)]">Record the current live scenario to begin the timeline.</p>}{timeline.map((entry, index) => <div key={entry.id} className="grid gap-2 py-3 text-xs sm:grid-cols-[32px_1fr_auto] sm:items-center"><span className="grid size-7 place-items-center rounded-full bg-[var(--surface-subtle)] text-[10px] font-bold">{index + 1}</span><div><p className="font-bold">{entry.label}</p><p className="mt-1 text-[10px] text-[var(--ink-faint)]">{new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(new Date(entry.runAt))}</p></div><div className="flex gap-3 text-[10px] text-[var(--ink-muted)]"><span>GDP {entry.indicators.gdpIndex}</span><span>Infl. {entry.indicators.inflationRate}%</span><span>Emissions {entry.indicators.carbonEmissions}</span></div></div>)}</div></ChartPanel>
+          <ContributionBreakdown result={result} />
         </section>
 
         <aside className="space-y-5 xl:sticky xl:top-20">
@@ -203,3 +188,11 @@ function ChartPanel({ title, subtitle, children }: { title: string; subtitle: st
 function InterpretationGroup({ title, items, warning = false }: { title: string; items: string[]; warning?: boolean }) {
   return <section className="mt-5"><h3 className={`text-[10px] font-extrabold uppercase tracking-wider ${warning ? "text-[var(--amber)]" : "text-[var(--ink-faint)]"}`}>{title}</h3><ul className="mt-2 space-y-2">{items.map((item) => <li key={item} className="flex gap-2 text-[11px] leading-5 text-[var(--ink-muted)]"><span aria-hidden="true">{warning ? "!" : "→"}</span><span>{item}</span></li>)}</ul></section>;
 }
+
+function ContributionBreakdown({ result }: { result: SandboxResult }) {
+  const totals = (key: IndicatorKey, source: SandboxResult["contributions"]) => source.reduce((sum, item) => sum + (item.values[key] ?? 0), 0);
+  return <ChartPanel title="Transparent calculation breakdown" subtitle="Standardized teaching coefficients — not estimated causal effects"><div className="grid gap-5 lg:grid-cols-2"><ContributionList title="Direct effects" items={result.directContributions} /><ContributionList title="Interaction effects" items={result.interactionContributions} /></div><div className="mt-5 overflow-x-auto"><table className="w-full min-w-[620px] border-collapse text-xs"><thead><tr className="border-b border-[var(--line)] text-left text-[9px] uppercase tracking-wider text-[var(--ink-faint)]"><th className="p-2">Indicator</th><th className="p-2 text-right">Baseline</th><th className="p-2 text-right">Direct</th><th className="p-2 text-right">Interaction</th><th className="p-2 text-right">Final total</th></tr></thead><tbody>{(Object.keys(result.indicators) as IndicatorKey[]).map((key) => <tr key={key} className="border-b border-[var(--line)] last:border-0"><td className="p-2 font-bold">{indicatorLabels[key]}</td><td className="p-2 text-right font-mono">{format(result.baseline[key])}</td><td className="p-2 text-right font-mono">{signed(totals(key, result.directContributions))}</td><td className="p-2 text-right font-mono text-[var(--amber)]">{signed(totals(key, result.interactionContributions))}</td><td className="p-2 text-right font-mono font-bold text-[var(--accent)]">{format(result.indicators[key])}</td></tr>)}</tbody></table></div></ChartPanel>;
+}
+
+function ContributionList({ title, items }: { title: string; items: SandboxResult["contributions"] }) { return <section><h3 className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--accent)]">{title}</h3><div className="mt-2 space-y-2">{items.length === 0 && <p className="rounded-lg bg-[var(--canvas)] p-3 text-[10px] text-[var(--ink-muted)]">No active contribution at the current baseline.</p>}{items.map((item) => <details key={item.label} className="rounded-lg border border-[var(--line)] bg-[var(--canvas)] p-3"><summary className="cursor-pointer text-xs font-bold">{item.label}</summary><p className="mt-2 font-mono text-[10px] text-[var(--accent)]">{item.formula ?? "Deterministic standardized coefficient rule"}</p><p className="mt-2 text-[10px] leading-5 text-[var(--ink-muted)]">{item.rule ?? "The displayed contributions are added to the baseline before the indicator safety bounds are applied."}</p><p className="mt-2 text-[9px] leading-4 text-[var(--ink-faint)]">Current contribution: {Object.entries(item.values).map(([key, value]) => `${key} ${signed(value ?? 0)}`).join(" · ")}</p></details>)}</div></section>; }
+function signed(value: number) { const rounded = Math.round(value * 100) / 100; return `${rounded > 0 ? "+" : ""}${format(rounded)}`; }

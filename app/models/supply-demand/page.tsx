@@ -19,6 +19,7 @@ import {
 import { ChartContainer } from "@/components/models/chart-container";
 import { EconomicExplanation } from "@/components/models/economic-explanation";
 import { EquationView } from "@/components/models/equation-view";
+import { MechanismChain } from "@/components/models/mechanism-chain";
 import { MetricCard } from "@/components/models/metric-card";
 import { ModelAssumptions } from "@/components/models/model-assumptions";
 import { ModelHeader } from "@/components/models/model-header";
@@ -32,7 +33,6 @@ import {
   calculateMarketEquilibrium,
   DEFAULT_MARKET,
   marketChartData,
-  marketEquationSteps,
   supplyDemandExplanation,
 } from "@/lib/economics/supply-demand";
 import type { MarketParameters, ModelParameter } from "@/lib/economics/types";
@@ -257,7 +257,8 @@ export default function SupplyDemandPage() {
             <EconomicExplanation principle="Competitive equilibrium maximizes total surplus without market failures.">
               {supplyDemandExplanation(params)}
             </EconomicExplanation>
-            <EquationView steps={marketEquationSteps(params)} />
+            <MechanismChain modelKey="supply-demand" parameters={params} />
+            <EquationView modelKey="supply-demand" parameters={params} />
             <ModelAssumptions assumptions={MODEL_ASSUMPTIONS["supply-demand"]} />
           </>
         }
