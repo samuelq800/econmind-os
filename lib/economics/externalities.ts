@@ -38,8 +38,13 @@ export function calculateExternality(parameters: ExternalityParameters): Externa
   const efficientConsumerPrice = clamp((a - efficientQuantity) / b);
   const efficientProducerPrice = clamp((efficientQuantity - c) / d);
   const externalImpactAtMarket = e * market.quantity;
-  const socialWelfareAtMarket = market.totalSurplus - externalImpactAtMarket;
-  const welfareGain = 0.5 * Math.abs(e) * Math.abs(market.quantity - efficientQuantity);
+  // Integrate marginal social benefit minus marginal social cost.  Calculating
+  // welfare directly keeps the result correct when a very large external cost
+  // makes the efficient corner solution Q = 0.
+  const socialWelfareAt = (quantity: number) => (a / b + c / d - e) * quantity - 0.5 * (1 / b + 1 / d) * quantity ** 2;
+  const socialWelfareAtMarket = socialWelfareAt(market.quantity);
+  const socialWelfareEfficient = socialWelfareAt(efficientQuantity);
+  const welfareGain = socialWelfareEfficient - socialWelfareAtMarket;
 
   return {
     marketPrice: market.price,
@@ -50,7 +55,7 @@ export function calculateExternality(parameters: ExternalityParameters): Externa
     correctivePolicy: round(e),
     externalImpactAtMarket: round(externalImpactAtMarket),
     socialWelfareAtMarket: round(socialWelfareAtMarket),
-    socialWelfareEfficient: round(socialWelfareAtMarket + welfareGain),
+    socialWelfareEfficient: round(socialWelfareEfficient),
     welfareGain: round(welfareGain),
     valid: true,
   };

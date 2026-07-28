@@ -33,6 +33,8 @@ Run `supabase/migrations/20260722010000_v1_2_phase1.sql` after the initial schem
 
 After V1.2, run `supabase/migrations/20260722020000_experiment_system.sql` once. It adds student/teacher roles, experiment configuration, immutable attempt epochs, submissions, feedback, revocable report links, indexes, RLS, and validated RPCs. Hidden predictions, success thresholds, and scoring weights are available only through teacher-owned RPCs.
 
+Then run `supabase/migrations/20260728000000_phase_f_report_completion.sql`. It completes the formal-experiment report flow by exposing each saved mechanism chain, recording attempt numbers for teacher review/export, and allowing either the report-owning student or the experiment-owning teacher to create a revocable read-only report link.
+
 New accounts remain students by default. Assign a teacher manually in the SQL Editor using the account email:
 
 ```sql

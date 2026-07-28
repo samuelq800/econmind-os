@@ -66,6 +66,8 @@ export type SandboxResult = {
   parameters: SandboxParameters;
   baseline: SandboxIndicators;
   indicators: SandboxIndicators;
+  unclampedIndicators: SandboxIndicators;
+  clampAdjustments: Partial<SandboxIndicators>;
   directContributions: PolicyContribution[];
   interactionContributions: PolicyContribution[];
   contributions: PolicyContribution[];

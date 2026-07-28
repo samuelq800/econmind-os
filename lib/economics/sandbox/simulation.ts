@@ -48,15 +48,21 @@ export function simulateSandbox(input: Partial<SandboxParameters>): SandboxResul
     }
   }
 
+  const unclampedIndicators = { ...indicators };
+  const clampAdjustments: Partial<SandboxIndicators> = {};
   for (const key of Object.keys(indicators) as IndicatorKey[]) {
     const [minimum, maximum] = INDICATOR_LIMITS[key];
     indicators[key] = round(clampValue(indicators[key], minimum, maximum));
+    const adjustment = round(indicators[key] - unclampedIndicators[key]);
+    if (Math.abs(adjustment) > 0.0001) clampAdjustments[key] = adjustment;
   }
 
   return {
     parameters,
     baseline: { ...BASELINE_INDICATORS },
     indicators,
+    unclampedIndicators,
+    clampAdjustments,
     directContributions,
     interactionContributions,
     contributions,

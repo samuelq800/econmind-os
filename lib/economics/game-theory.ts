@@ -76,6 +76,8 @@ export function analyzePrisonersDilemma(p: PrisonersDilemmaParameters) {
     bStrictDominant: actions.filter((action) => strictlyDominant("b", action)),
     aWeakDominant: actions.filter((action) => weaklyDominant("a", action)),
     bWeakDominant: actions.filter((action) => weaklyDominant("b", action)),
+    aDominated: actions.filter((action) => strictlyDominant("a", action === "C" ? "D" : "C")),
+    bDominated: actions.filter((action) => strictlyDominant("b", action === "C" ? "D" : "C")),
     pareto: cells.filter((cell) => cell.pareto).map((cell) => cell.id),
     jointMaximum: cells.filter((cell) => cell.a + cell.b === bestJoint).map((cell) => cell.id),
     socialDilemma,
@@ -93,15 +95,27 @@ export const DEFAULT_REPEATED_GAME: RepeatedGameParameters = {
   strategyA: "tit-for-tat", strategyB: "always-defect",
 };
 
-function proposedAction(strategy: Strategy, ownHistory: Action[], opponentHistory: Action[]): Action {
+function ownPayoff(p: PrisonersDilemmaParameters, player: "a" | "b", ownAction: Action, opponentAction: Action) {
+  return player === "a" ? payoff(p, ownAction, opponentAction).a : payoff(p, opponentAction, ownAction).b;
+}
+
+function proposedAction(strategy: Strategy, ownHistory: Action[], opponentHistory: Action[], payoffs: PrisonersDilemmaParameters, player: "a" | "b"): Action {
   if (strategy === "always-cooperate") return "C";
   if (strategy === "always-defect") return "D";
   if (strategy === "tit-for-tat") return opponentHistory.length ? opponentHistory[opponentHistory.length - 1] : "C";
   if (strategy === "grim-trigger") return opponentHistory.includes("D") ? "D" : "C";
   if (!ownHistory.length) return "C";
   const previous = ownHistory.length - 1;
-  const received = payoff(DEFAULT_PRISONERS_DILEMMA, ownHistory[previous], opponentHistory[previous]).a;
-  return received >= 3 ? ownHistory[previous] : (ownHistory[previous] === "C" ? "D" : "C");
+  const ownAction = ownHistory[previous];
+  const opponentAction = opponentHistory[previous];
+  const alternative = ownAction === "C" ? "D" : "C";
+  // Generalise Pavlov/Win-Stay, Lose-Shift to an edited payoff matrix: stay
+  // after an action that was a best response to the observed opponent action;
+  // otherwise switch.  A fixed payoff threshold only works for one canonical
+  // Prisoner's Dilemma matrix.
+  const received = ownPayoff(payoffs, player, ownAction, opponentAction);
+  const alternativePayoff = ownPayoff(payoffs, player, alternative, opponentAction);
+  return received >= alternativePayoff ? ownAction : alternative;
 }
 
 function deterministicMistake(round: number, player: number, probability: number) {
@@ -115,8 +129,8 @@ export function simulateRepeatedGame(p: RepeatedGameParameters) {
   let payoffA = 0; let payoffB = 0; let discountedA = 0; let discountedB = 0;
   const rounds = Array.from({ length: Math.max(1, Math.round(p.rounds)) }, (_, index) => {
     const round = index + 1;
-    let a = proposedAction(p.strategyA, historyA, historyB);
-    let b = proposedAction(p.strategyB, historyB, historyA);
+    let a = proposedAction(p.strategyA, historyA, historyB, p, "a");
+    let b = proposedAction(p.strategyB, historyB, historyA, p, "b");
     if (deterministicMistake(round, 1, p.mistakeProbability)) a = a === "C" ? "D" : "C";
     if (deterministicMistake(round, 2, p.mistakeProbability)) b = b === "C" ? "D" : "C";
     const values = payoff(p, a, b);

@@ -41,14 +41,14 @@ export function calculateMonopoly(parameters: MonopolyParameters): MonopolyOutco
   const markup = clamp(monopolyPrice - mc);
   const operatingProfit = markup * monopolyQuantity;
   const consumerSurplus = 0.5 * clamp(chokePrice - monopolyPrice) * monopolyQuantity;
-  const totalSurplus = consumerSurplus + operatingProfit;
-  const competitiveSurplus = 0.5 * clamp(chokePrice - mc) * competitiveQuantity;
+  const totalSurplus = consumerSurplus + operatingProfit - fixedCost;
+  const competitiveSurplus = 0.5 * clamp(chokePrice - mc) * competitiveQuantity - fixedCost;
   const deadweightLoss = clamp(competitiveSurplus - totalSurplus);
 
   return {
     monopolyPrice: round(monopolyPrice),
     monopolyQuantity: round(monopolyQuantity),
-    competitivePrice: round(mc),
+    competitivePrice: round(competitiveQuantity > 0 ? mc : chokePrice),
     competitiveQuantity: round(competitiveQuantity),
     profit: round(operatingProfit - fixedCost),
     consumerSurplus: round(consumerSurplus),

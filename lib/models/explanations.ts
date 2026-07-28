@@ -2,6 +2,15 @@ import type { EquationStep } from "@/lib/economics/types";
 import { MODEL_PARAMETER_DEFINITIONS, defaultModelParameters, runFocusedModel, sanitizeModelParameters, type FocusedModelKey } from "@/lib/experiments/model-runtime";
 
 export type MechanismStep = { stage: string; text: string };
+export type ModelStakeholder = {
+  stakeholder: string;
+  direction: "Gains" | "Loses" | "Mixed" | "Depends";
+  magnitude?: string;
+  shortRun: string;
+  longRun?: string;
+  equity?: string;
+  reason: string;
+};
 const f = (value: number) => new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value);
 
 function changeContext(modelKey: FocusedModelKey, parameters: Record<string, unknown>, changedKey?: string | null) {
@@ -105,6 +114,52 @@ export function modelMechanismChain(modelKey: FocusedModelKey, parameters: Recor
     case "monopoly": return chain(change, key === "fixedCost" ? "The profit level changes without shifting MR or MC." : key === "marginalCost" ? "The marginal-cost line shifts." : "Demand and marginal revenue shift or rotate.", `The MR = MC output target becomes ${f(r.monopolyQuantity)}.`, "The firm restricts output and reads the corresponding price from demand.", `The monopoly sets P = ${f(r.monopolyPrice)} and Q = ${f(r.monopolyQuantity)}.`, `Profit is ${f(r.profit)}, markup is ${f(r.markup)}, and deadweight loss is ${f(r.deadweightLoss)}.`);
     case "ppf": return chain(change, key === "growthRate" || key.startsWith("capacity") ? "The production frontier shifts." : key === "curvature" ? "The frontier changes curvature." : "The selected production point moves relative to the frontier.", `The candidate bundle is X = ${f(r.outputX)}, Y = ${f(r.outputY)}.`, r.statusCode === 1 ? "Resources are fully employed on the frontier." : r.statusCode === 0 ? "Unused capacity leaves the bundle inside the frontier." : "The bundle exceeds current productive capacity.", `The model classifies the point as ${r.statusCode === 1 ? "efficient" : r.statusCode === 0 ? "inefficient" : "unattainable"}.`, `Local opportunity cost is ${f(r.opportunityCost)} units of Y per additional X.`);
     case "ad-as": return chain(change, key.includes("demand") ? "Aggregate demand shifts or changes slope." : key.includes("supply") ? "Short-run aggregate supply shifts or changes slope." : "The potential-output benchmark moves.", "At the old price level, planned spending and short-run production differ.", "Firms adjust output and prices; labor demand responds with the output gap.", `Short-run equilibrium becomes output ${f(r.output)} and price index ${f(r.priceLevel)}.`, `The output gap is ${f(r.outputGap)}%, inflation pressure ${f(r.inflationPressure)}, and unemployment gap ${f(r.unemploymentGap)}pp.`);
+  }
+}
+
+/** A report-safe, deterministic stakeholder summary for the eight formal-experiment models. */
+export function modelStakeholderImpacts(modelKey: FocusedModelKey, parameters: Record<string, unknown>): ModelStakeholder[] {
+  const { clean: p, result: r } = changeContext(modelKey, parameters);
+  switch (modelKey) {
+    case "supply-demand": return [
+      { stakeholder: "Consumers", direction: "Depends", magnitude: `Consumer surplus ${f(r.consumerSurplus)}`, shortRun: `Buyers trade ${f(r.quantity)} units at price ${f(r.price)}.`, reason: "Demand determines willingness to pay for the traded units." },
+      { stakeholder: "Producers", direction: "Depends", magnitude: `Producer surplus ${f(r.producerSurplus)}`, shortRun: "Sellers receive the market-clearing price for the supplied quantity.", reason: "Supply determines the marginal cost schedule." },
+      { stakeholder: "Market efficiency", direction: "Mixed", magnitude: `Total surplus ${f(r.totalSurplus)}`, shortRun: "The model clears the competitive market.", longRun: "Entry, innovation, and adjustment are outside the model.", reason: "The reported surplus is conditional on linear curves and price-taking behaviour." },
+    ];
+    case "policy": return [
+      { stakeholder: "Consumers", direction: p.wedge > 0 ? "Loses" : p.wedge < 0 ? "Gains" : "Mixed", magnitude: `Buyer price ${f(r.consumerPrice)}`, shortRun: "Buyers face the policy-adjusted price.", reason: "A positive wedge raises the buyer price; a negative wedge lowers it." },
+      { stakeholder: "Producers", direction: p.wedge > 0 ? "Loses" : p.wedge < 0 ? "Gains" : "Mixed", magnitude: `Seller price ${f(r.producerPrice)}`, shortRun: "Sellers receive the policy-adjusted net price.", reason: "Tax or subsidy incidence is governed by the two curve slopes." },
+      { stakeholder: "Government / taxpayers", direction: r.governmentBalance >= 0 ? "Gains" : "Loses", magnitude: `Balance ${f(r.governmentBalance)}`, shortRun: "The policy creates revenue or requires funding.", equity: "Use of revenue and its distribution are not modelled.", reason: "Government balance equals the per-unit wedge times traded quantity." },
+    ];
+    case "price-controls": return [
+      { stakeholder: "Consumers", direction: r.shortage > 0 ? "Mixed" : r.binding ? "Loses" : "Depends", magnitude: `Shortage ${f(r.shortage)}`, shortRun: "A binding ceiling can lower the posted price but ration available units.", reason: "Trade is limited by the short side of the market." },
+      { stakeholder: "Producers", direction: r.surplus > 0 ? "Mixed" : r.binding ? "Loses" : "Depends", magnitude: `Surplus ${f(r.surplus)}`, shortRun: "A binding floor can leave output unsold.", reason: "The legal price changes desired supply relative to demand." },
+      { stakeholder: "Market efficiency", direction: r.binding ? "Loses" : "Mixed", magnitude: `DWL ${f(r.deadweightLoss)}`, shortRun: "The reported welfare calculation assumes efficient rationing.", reason: "The model omits queues, black markets, and enforcement costs." },
+    ];
+    case "elasticity": return [
+      { stakeholder: "Consumers", direction: "Depends", magnitude: `Quantity ${f(r.quantity)}`, shortRun: "Demand response is measured at the saved price point.", reason: "Point elasticity is local to the linear demand curve." },
+      { stakeholder: "Firm revenue", direction: "Depends", magnitude: `Revenue ${f(r.totalRevenue)}`, shortRun: r.elasticity > 1 ? "At this point, a price reduction would raise revenue." : "At this point, a price increase would raise revenue.", reason: "Revenue changes with the elasticity of demand." },
+    ];
+    case "externalities": return [
+      { stakeholder: "Consumers and producers", direction: "Mixed", magnitude: `Private quantity ${f(r.marketQuantity)}`, shortRun: "Private agents trade at the uncorrected market outcome.", reason: "They do not internalise the stated spillover in this model." },
+      { stakeholder: "Affected third parties", direction: p.externalCost > 0 ? "Loses" : p.externalCost < 0 ? "Gains" : "Mixed", magnitude: `External impact ${f(r.externalImpact)}`, shortRun: "The spillover is proportional to market quantity.", equity: "The distribution of harm or benefit is not separately modelled.", reason: "The external cost parameter enters marginal social cost directly." },
+      { stakeholder: "Policymakers", direction: "Depends", magnitude: `Corrective policy ${f(r.correctivePolicy)}`, shortRun: `Efficiency calls for quantity ${f(r.efficientQuantity)}.`, reason: "A Pigouvian instrument equals the constant per-unit spillover under these assumptions." },
+    ];
+    case "monopoly": return [
+      { stakeholder: "Consumers", direction: "Loses", magnitude: `Price ${f(r.monopolyPrice)}, quantity ${f(r.monopolyQuantity)}`, shortRun: "The monopoly restricts output relative to the competitive benchmark.", reason: "The firm sets marginal revenue equal to marginal cost." },
+      { stakeholder: "Monopolist", direction: r.profit >= 0 ? "Gains" : "Loses", magnitude: `Profit ${f(r.profit)}`, shortRun: "Markup is earned on the chosen quantity.", reason: "Fixed cost changes profit but not the simplified MR = MC output rule." },
+      { stakeholder: "Society", direction: "Loses", magnitude: `DWL ${f(r.deadweightLoss)}`, shortRun: "Some mutually beneficial trades do not occur.", reason: "Price exceeds marginal cost in the single-price monopoly model." },
+    ];
+    case "ppf": return [
+      { stakeholder: "Consumers of Good X", direction: "Depends", magnitude: `Output X ${f(r.outputX)}`, shortRun: "Resources are allocated to the selected X output.", reason: "Producing more X uses productive capacity represented by the frontier." },
+      { stakeholder: "Consumers of Good Y", direction: "Depends", magnitude: `Output Y ${f(r.outputY)}`, shortRun: "Y output follows the frontier at the saved allocation and capacity use.", reason: "Opportunity cost rises along the bowed-out frontier." },
+      { stakeholder: "Economy", direction: r.statusCode === 1 ? "Gains" : r.statusCode === -1 ? "Loses" : "Mixed", magnitude: `Capacity gap ${f(r.capacityGap)}`, shortRun: "The selected bundle is classified against current productive capacity.", reason: "Efficiency here means lying on the modelled frontier, not a complete welfare judgement." },
+    ];
+    case "ad-as": return [
+      { stakeholder: "Households", direction: r.outputGap >= 0 ? "Mixed" : "Loses", magnitude: `Price index ${f(r.priceLevel)}`, shortRun: "Purchasing power and employment pressure move with the short-run equilibrium.", reason: "AD and SRAS jointly determine output and prices in the model." },
+      { stakeholder: "Workers", direction: r.unemploymentGap <= 0 ? "Gains" : "Loses", magnitude: `Unemployment gap ${f(r.unemploymentGap)}pp`, shortRun: "The employment reading follows the simplified Okun-style mapping.", reason: "A positive output gap corresponds to a negative unemployment gap here." },
+      { stakeholder: "Firms", direction: r.outputGap >= 0 ? "Gains" : "Loses", magnitude: `Output ${f(r.output)}`, shortRun: "Firms adjust production and prices in response to the aggregate-demand/supply balance.", reason: "Expectations, capacity constraints, and long-run adjustment are outside the model." },
+    ];
   }
 }
 

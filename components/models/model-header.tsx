@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { FavoriteModelButton } from "@/components/models/favorite-model-button";
 import type { ModelKey } from "@/lib/supabase/data";
+import { ModelIntroduction } from "@/components/models/model-introduction";
 
 export function ModelHeader({
   eyebrow,
@@ -31,6 +32,7 @@ export function ModelHeader({
         </div>
         <FavoriteModelButton modelKey={modelKey} />
       </div>
+      <div className="mt-7 max-w-5xl"><ModelIntroduction modelKey={modelKey} modelLabel={title} /></div>
     </div>
   );
 }

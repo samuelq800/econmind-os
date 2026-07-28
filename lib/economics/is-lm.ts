@@ -28,18 +28,28 @@ export const DEFAULT_IS_LM: IsLmParameters = {
 
 const round = (value: number, digits = 2) => Math.round((value + Number.EPSILON) * 10 ** digits) / 10 ** digits;
 
-export function calculateIsLm(input: IsLmParameters) {
-  const p = input;
-  const realMoneyBalances = p.moneySupply / Math.max(0.1, p.priceLevel);
+function solveIsLm(p: IsLmParameters) {
+  const realMoneyBalances = p.moneySupply / p.priceLevel;
   const autonomousSpending = p.autonomousConsumption - p.marginalPropensityToConsume * p.taxation + p.autonomousInvestment + p.governmentSpending;
   const denominator = 1 - p.marginalPropensityToConsume + (p.investmentSensitivity * p.incomeMoneySensitivity) / p.interestMoneySensitivity;
   const output = (autonomousSpending + (p.investmentSensitivity * realMoneyBalances) / p.interestMoneySensitivity) / denominator;
   const interestRate = (p.incomeMoneySensitivity * output - realMoneyBalances) / p.interestMoneySensitivity;
   const consumption = p.autonomousConsumption + p.marginalPropensityToConsume * (output - p.taxation);
   const investment = p.autonomousInvestment - p.investmentSensitivity * interestRate;
+  return { realMoneyBalances, autonomousSpending, denominator, output, interestRate, consumption, investment };
+}
+
+export function calculateIsLm(input: IsLmParameters) {
+  const p = input;
+  const inputsValid = Object.values(p).every(Number.isFinite)
+    && p.priceLevel > 0 && p.marginalPropensityToConsume >= 0 && p.marginalPropensityToConsume < 1
+    && p.investmentSensitivity > 0 && p.interestMoneySensitivity > 0 && p.incomeMoneySensitivity >= 0;
+  if (!inputsValid) return { valid: false, output: 0, interestRate: 0, consumption: 0, investment: 0, realMoneyBalances: 0, autonomousSpending: 0, fiscalMultiplier: 0, crowdingOut: 0, moneyMarketGap: 0 };
+  const solved = solveIsLm(p);
+  const { realMoneyBalances, autonomousSpending, denominator, output, interestRate, consumption, investment } = solved;
   const fiscalMultiplier = 1 / denominator;
-  const simpleKeynesianMultiplier = 1 / (1 - p.marginalPropensityToConsume);
-  const crowdingOut = Math.max(0, simpleKeynesianMultiplier - fiscalMultiplier) * p.governmentSpending;
+  const noGovernment = solveIsLm({ ...p, governmentSpending: 0 });
+  const crowdingOut = Math.max(0, noGovernment.investment - investment);
   return {
     valid: Number.isFinite(output) && Number.isFinite(interestRate) && denominator > 0,
     output: round(output),

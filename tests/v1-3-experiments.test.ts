@@ -5,7 +5,7 @@ import { canPerformExperimentAction, canViewPrivateReport, enforceParameterPermi
 import { evaluateCondition, evaluatePrediction, scoreExperiment } from "../lib/experiments/scoring";
 import { runExperimentAttempt, submitLatestAttempt } from "../lib/experiments/workflow";
 import { MODEL_ASSUMPTIONS } from "../lib/models/assumptions";
-import { modelEquationSteps, modelMechanismChain } from "../lib/models/explanations";
+import { modelEquationSteps, modelMechanismChain, modelStakeholderImpacts } from "../lib/models/explanations";
 
 function config(overrides: Partial<ExperimentConfig> = {}): ExperimentConfig {
   const modelKey = overrides.modelKey ?? "supply-demand";
@@ -28,6 +28,12 @@ describe("shared explanations for all eight focused models", () => {
     const first = MODEL_PARAMETER_DEFINITIONS[modelKey][0]; const parameters = { ...defaultModelParameters(modelKey), [first.key]: first.defaultValue + first.step };
     expect(modelEquationSteps(modelKey, parameters, first.key).some((step) => step.affectedTerms?.includes(first.key))).toBe(true);
     expect(modelMechanismChain(modelKey, parameters, first.key)[0].text).toContain(first.label);
+  });
+
+  it.each(FOCUSED_MODEL_KEYS)("produces an evidence-based stakeholder reading for %s", (modelKey) => {
+    const stakeholders = modelStakeholderImpacts(modelKey, defaultModelParameters(modelKey));
+    expect(stakeholders.length).toBeGreaterThan(1);
+    expect(stakeholders.every((item) => item.stakeholder && item.shortRun && item.reason)).toBe(true);
   });
 });
 
