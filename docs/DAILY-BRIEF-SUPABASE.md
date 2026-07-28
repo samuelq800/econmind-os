@@ -30,6 +30,19 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 
 The collector accepts either a teacher’s authenticated manual request from `/admin/daily-brief` or the cron secret. It fetches the feed XML with a timeout, reads at most 20 entries per source, deduplicates by stable fingerprint, and never fetches full news article pages.
 
+### CLI commands
+
+From the `econmind-os` folder, run the following. Replace `YOUR_LONG_RANDOM_SECRET` with a newly generated long random value, and keep it private.
+
+```bash
+npx supabase login
+npx supabase link --project-ref vimksjrhaxdpnkvgsavz
+npx supabase functions deploy collect-daily-economic-brief
+npx supabase secrets set DAILY_BRIEF_CRON_SECRET=YOUR_LONG_RANDOM_SECRET
+```
+
+Use the **same** `YOUR_LONG_RANDOM_SECRET` for the Vault step below. The function has access to the Supabase service-role key only inside its protected server runtime; it is not copied into the website.
+
 ## 3. Create Vault secrets and schedule 07:00 Singapore
 
 In the SQL editor, create two Vault secrets before applying `20260728011000_daily_brief_cron.sql`:
