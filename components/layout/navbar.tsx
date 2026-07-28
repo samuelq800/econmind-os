@@ -14,6 +14,8 @@ const publicLinks = [
   { href: "/policy-lab", label: "Policy Lab" },
   { href: "/workspace", label: "Integrated Workspace" },
   { href: "/experiments", label: "Experiments" },
+  { href: "/cases", label: "Cases" },
+  { href: "/daily-brief", label: "Daily Brief" },
   { href: "/about", label: "About" },
 ];
 
