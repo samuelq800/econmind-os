@@ -22,6 +22,8 @@ import { ParameterControl } from "@/components/models/parameter-control";
 import { PolicyTransmissionMap } from "@/components/models/policy-transmission-map";
 import { ExpandableAnalysisPanel } from "@/components/models/expandable-analysis-panel";
 import { ModelIntroduction } from "@/components/models/model-introduction";
+import { MechanismChain } from "@/components/models/mechanism-chain";
+import { OutcomeComparison } from "@/components/models/outcome-comparison";
 import { Button } from "@/components/ui/button";
 import { BASELINE_INDICATORS, BASELINE_PARAMETERS, POLICY_DEFINITIONS } from "@/lib/economics/sandbox/defaults";
 import { interpretSandbox } from "@/lib/economics/sandbox/interpretation";
@@ -30,6 +32,8 @@ import { sanitizeParameters, simulateSandbox } from "@/lib/economics/sandbox/sim
 import type { IndicatorKey, PolicyCategory, SandboxParameters, SandboxResult } from "@/lib/economics/sandbox/types";
 import type { ModelParameter } from "@/lib/economics/types";
 import { usePersistentState } from "@/lib/hooks/use-persistent-state";
+import { useParameterChange } from "@/lib/hooks/use-recent-parameter";
+import { parameterLabel } from "@/lib/models/change-tracking";
 import { getModelRun, saveModelRun } from "@/lib/supabase/data";
 
 const categories: PolicyCategory[] = ["Fiscal Policy", "Monetary Policy", "Market Regulation", "Environmental Policy", "Trade Policy"];
@@ -57,6 +61,10 @@ export default function SandboxPage() {
 
   const result = useMemo(() => simulateSandbox(draft), [draft]);
   const interpretation = useMemo(() => interpretSandbox(result), [result]);
+  const latestChange = useParameterChange(draft, "sandbox");
+  const mechanism = latestChange
+    ? [{ stage: "Latest policy change", text: `${parameterLabel("sandbox", latestChange.parameterKey)} ${latestChange.direction} from ${String(latestChange.previousValue)} to ${String(latestChange.currentValue)}.` }, { stage: "Contribution ledger", text: `The local Sandbox recalculates ${latestChange.affectedEquations.join(", ")}.` }, { stage: "Transmission", text: `${latestChange.affectedCurves.join(", ") || "The relevant policy channel"} updates before direct and interaction effects are combined.` }, { stage: "Indicators", text: `Affected outputs include ${latestChange.affectedOutputs.join(", ")}.` }, { stage: "Reconciliation", text: "Direct effects, interaction effects, and any safety-bound adjustment reconcile to the displayed indicators." }, { stage: "Interpretation", text: "The indicators are standardised teaching values, not an empirical forecast." }]
+    : [{ stage: "Baseline", text: "The Sandbox starts from its declared baseline indicator set." }, { stage: "Contribution ledger", text: "Policy controls add deterministic direct and interaction contributions." }, { stage: "Indicators", text: "Each indicator remains in its own declared scale." }, { stage: "Reconciliation", text: "The displayed calculation table reconciles all contributions." }, { stage: "Interpretation", text: "This is a stylised educational system, not a forecast." }];
 
   useEffect(() => {
     if (!user) return;
@@ -167,6 +175,8 @@ export default function SandboxPage() {
           </div>
           <PolicyTransmissionMap result={result} />
           <ContributionBreakdown result={result} />
+          <MechanismChain modelKey="sandbox" parameters={draft} steps={mechanism} modelLabel="Economic Sandbox" />
+          <OutcomeComparison current={result.indicators} defaultBaseline={BASELINE_INDICATORS} metrics={Object.keys(result.indicators)} modelLabel="Economic Sandbox" />
         </section>
 
         <aside className="space-y-5 xl:sticky xl:top-20">

@@ -29,7 +29,8 @@ export function giniCoefficient(incomes: number[]) {
 
 export function lorenzPoints(incomes: number[]) {
   const sorted = [...incomes].map((value) => Math.max(0, value)).sort((a, b) => a - b);
-  const total = sorted.reduce((sum, value) => sum + value, 0) || 1;
+  const total = sorted.reduce((sum, value) => sum + value, 0);
+  if (!total) return Array.from({ length: sorted.length + 1 }, (_, index) => ({ population: r(index / Math.max(1, sorted.length) * 100, 1), income: r(index / Math.max(1, sorted.length) * 100, 1) }));
   let cumulative = 0;
   return [{ population: 0, income: 0 }, ...sorted.map((value, index) => {
     cumulative += value;
@@ -38,6 +39,14 @@ export function lorenzPoints(incomes: number[]) {
 }
 
 export function calculateLorenz(p: LorenzParameters) {
+  const rawIncomes = [p.quintile1, p.quintile2, p.quintile3, p.quintile4, p.quintile5];
+  const valid = Object.values(p).filter((value): value is number => typeof value === "number").every(Number.isFinite)
+    && rawIncomes.every((value) => value >= 0) && rawIncomes.some((value) => value > 0)
+    && p.taxRate >= 0 && p.taxRate <= 100 && p.transfer >= 0 && p.minimumIncome >= 0;
+  if (!valid) {
+    const equality = lorenzPoints([0, 0, 0, 0, 0]);
+    return { valid: false, validationMessage: "Income values must be finite and non-negative with at least one positive income; tax and transfer inputs must be non-negative.", preTax: [0, 0, 0, 0, 0], afterTax: [0, 0, 0, 0, 0], preGini: 0, postGini: 0, giniChange: 0, revenue: 0, transferCost: 0, netFiscalImpact: 0, prePoints: equality, postPoints: equality, povertyBefore: 0, povertyAfter: 0 };
+  }
   const preTax = [p.quintile1, p.quintile2, p.quintile3, p.quintile4, p.quintile5].map((value) => Math.max(0, value));
   const average = preTax.reduce((sum, value) => sum + value, 0) / preTax.length || 1;
   const tax = preTax.map((income) => {
@@ -52,6 +61,7 @@ export function calculateLorenz(p: LorenzParameters) {
   const prePoints = lorenzPoints(preTax);
   const postPoints = lorenzPoints(afterTax);
   return {
+    valid: true, validationMessage: "",
     preTax, afterTax: afterTax.map((value) => r(value)), preGini, postGini, giniChange: r(postGini - preGini),
     revenue: r(revenue), transferCost: r(transferCost), netFiscalImpact: r(revenue - transferCost),
     prePoints, postPoints,

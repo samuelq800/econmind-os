@@ -24,7 +24,8 @@ import { calculatePhillips, DEFAULT_PHILLIPS, phillipsChartData, type PhillipsPa
 import { calculateSolow, DEFAULT_SOLOW, solowDiagramData, type SolowParameters } from "@/lib/economics/solow";
 import { calculateLorenz, DEFAULT_LORENZ, type LorenzParameters } from "@/lib/economics/lorenz";
 import { usePersistentState } from "@/lib/hooks/use-persistent-state";
-import { useRecentParameter } from "@/lib/hooks/use-recent-parameter";
+import { useParameterChange } from "@/lib/hooks/use-recent-parameter";
+import { parameterLabel } from "@/lib/models/change-tracking";
 import type { AssumptionSections } from "@/lib/models/assumptions";
 import type { MechanismStep } from "@/lib/models/explanations";
 import type { ModelKey } from "@/lib/supabase/data";
@@ -149,7 +150,7 @@ const numericControls: Record<NewLabKey, ModelParameter[]> = {
 };
 
 function asNumbers(values: Values) {
-  return Object.fromEntries(Object.entries(values).map(([key, value]) => [key, Number(value)])) as Record<string, number>;
+  return Object.fromEntries(Object.entries(values).filter((entry): entry is [string, number] => typeof entry[1] === "number" && Number.isFinite(entry[1]))) as Record<string, number>;
 }
 
 function commonEvaluation(): EvaluationItem[] {
@@ -168,13 +169,12 @@ export function NewModelLab({ model }: { model: NewLabKey }) {
   const [values, setValues] = usePersistentState<Values>("econmind:parameters:" + model, initial);
   const update = (key: string, value: Value) => setValues((current) => ({ ...current, [key]: value }));
   const definition = buildDefinition(model, values);
-  const lastChanged = useRecentParameter(values);
+  const lastChanged = useParameterChange(values, model);
   if (lastChanged) {
-    definition.mechanism[0] = { stage: "Latest parameter change", text: lastChanged + " changed. The live model recalculates the affected relationship below." };
-    definition.equations[0] = { ...definition.equations[0], affectedTerms: [lastChanged] };
+    definition.mechanism[0] = { stage: "Latest parameter change", text: `${parameterLabel(model, lastChanged.parameterKey)} ${lastChanged.direction} from ${String(lastChanged.previousValue)} to ${String(lastChanged.currentValue)}. ${lastChanged.affectedCurves.join(", ") || "The strategic or dynamic relationship"} updates before the new outcome is calculated.` };
+    definition.equations[0] = { ...definition.equations[0], affectedTerms: [lastChanged.parameterKey] };
   }
   const info = labels[model];
-  const supportsComparison = ["is-lm", "cournot", "phillips-curve", "solow-growth", "lorenz-gini"].includes(model);
 
   return <>
     <ModelHeader modelKey={model as ModelKey} eyebrow={info.eyebrow} title={info.title} description={info.description} difficulty={info.difficulty} tags={info.tags} />
@@ -189,14 +189,14 @@ export function NewModelLab({ model }: { model: NewLabKey }) {
       metrics={<>{definition.metrics.map((metric) => <MetricCard key={metric.label} label={metric.label} value={metric.value} note={metric.note} icon={metric.icon} tone={metric.tone} />)}</>}
       explanation={<>
         <EconomicExplanation principle={definition.principle} modelLabel={info.title}>{definition.interpretation}</EconomicExplanation>
-        <MechanismChain steps={definition.mechanism} modelLabel={info.title} />
+        <MechanismChain modelKey={model} parameters={values} steps={definition.mechanism} modelLabel={info.title} />
         <EquationView steps={definition.equations} modelLabel={info.title} />
         <ModelAssumptions assumptions={assumptions[model]} modelLabel={info.title} />
         <StakeholderImpact items={definition.stakeholders} modelLabel={info.title} />
         {definition.shortRun && <ShortRunLongRun {...definition.shortRun} modelLabel={info.title} />}
         <EconomicEvaluation items={commonEvaluation()} modelLabel={info.title} />
       </>}
-      comparison={supportsComparison ? <ScenarioComparison storageKey={"econmind:scenarios:" + model} modelKey={model as ModelKey} parameters={asNumbers(values)} results={definition.results} metrics={Object.keys(definition.results).slice(0, 6)} onLoadParameters={(saved) => setValues((current) => ({ ...current, ...saved }))} /> : <></>}
+      comparison={<ScenarioComparison storageKey={"econmind:scenarios:" + model} modelKey={model as ModelKey} parameters={asNumbers(values)} results={definition.results} metrics={Object.keys(definition.results).slice(0, 6)} onLoadParameters={(saved) => setValues((current) => ({ ...current, ...saved }))} />}
     />
   </>;
 }

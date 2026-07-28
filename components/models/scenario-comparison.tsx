@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BookmarkPlus, CheckCircle2, CloudUpload, GitCompareArrows, LoaderCircle } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
+import { OutcomeComparison } from "@/components/models/outcome-comparison";
 import { safePercentChange, type ScenarioSnapshot } from "@/lib/economics/types";
 import { usePersistentState } from "@/lib/hooks/use-persistent-state";
+import { defaultModelResults } from "@/lib/models/default-results";
+import type { SupportedModelKey } from "@/lib/models/change-tracking";
 import { getModelRun, saveModelRun, type ModelKey } from "@/lib/supabase/data";
 
 const pretty = (key: string) => key.replace(/([A-Z])/g, " $1").replace(/^./, (character) => character.toUpperCase());
@@ -33,6 +36,7 @@ export function ScenarioComparison({
   const [error, setError] = useState("");
   const [saved, setSaved] = useState("");
   const loadRef = useRef(onLoadParameters);
+  const defaultResults = useMemo(() => defaultModelResults(modelKey as SupportedModelKey), [modelKey]);
 
   useEffect(() => {
     loadRef.current = onLoadParameters;
@@ -120,6 +124,8 @@ export function ScenarioComparison({
           );
         })}
       </div>
+
+      <div className="mt-5"><OutcomeComparison current={results} metrics={metrics} defaultBaseline={defaultResults} scenarioA={scenarios.A?.results ?? null} /></div>
 
       <div className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--canvas)] p-4">
         <div className="flex items-center gap-2 text-xs font-bold"><CloudUpload size={15} className="text-[var(--accent)]" />Save a named cloud run</div>

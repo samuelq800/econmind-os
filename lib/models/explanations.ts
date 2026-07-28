@@ -1,5 +1,6 @@
 import type { EquationStep } from "@/lib/economics/types";
 import { MODEL_PARAMETER_DEFINITIONS, defaultModelParameters, runFocusedModel, sanitizeModelParameters, type FocusedModelKey } from "@/lib/experiments/model-runtime";
+import type { ModelParameterChange } from "@/lib/models/change-tracking";
 
 export type MechanismStep = { stage: string; text: string };
 export type ModelStakeholder = {
@@ -13,13 +14,15 @@ export type ModelStakeholder = {
 };
 const f = (value: number) => new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value);
 
-function changeContext(modelKey: FocusedModelKey, parameters: Record<string, unknown>, changedKey?: string | null) {
+function changeContext(modelKey: FocusedModelKey, parameters: Record<string, unknown>, changedKey?: string | null, latestChange?: ModelParameterChange) {
   const clean = sanitizeModelParameters(modelKey, parameters);
   const defaults = defaultModelParameters(modelKey);
   const key = changedKey && keyExists(modelKey, changedKey) ? changedKey : MODEL_PARAMETER_DEFINITIONS[modelKey].find((item) => clean[item.key] !== defaults[item.key])?.key ?? MODEL_PARAMETER_DEFINITIONS[modelKey][0].key;
   const definition = MODEL_PARAMETER_DEFINITIONS[modelKey].find((item) => item.key === key)!;
-  const direction = clean[key] > defaults[key] ? "increased" : clean[key] < defaults[key] ? "decreased" : "is at its baseline";
-  return { clean, defaults, key, definition, direction, result: runFocusedModel(modelKey, clean) };
+  const direction = latestChange?.parameterKey === key
+    ? latestChange.direction === "increase" ? "increased" : latestChange.direction === "decrease" ? "decreased" : "changed"
+    : clean[key] > defaults[key] ? "increased from its default" : clean[key] < defaults[key] ? "decreased from its default" : "is at its default";
+  return { clean, defaults, key, definition, direction, latestChange, result: runFocusedModel(modelKey, clean) };
 }
 
 function keyExists(modelKey: FocusedModelKey, key: string) {
@@ -98,9 +101,11 @@ export function modelEquationSteps(modelKey: FocusedModelKey, parameters: Record
   }
 }
 
-export function modelMechanismChain(modelKey: FocusedModelKey, parameters: Record<string, unknown>, changedKey?: string | null): MechanismStep[] {
-  const { clean: p, key, definition, direction, result: r } = changeContext(modelKey, parameters, changedKey);
-  const change = `${definition.label} ${direction} to ${f(p[key])}.`;
+export function modelMechanismChain(modelKey: FocusedModelKey, parameters: Record<string, unknown>, changedKey?: string | null, latestChange?: ModelParameterChange): MechanismStep[] {
+  const { clean: p, key, definition, direction, latestChange: tracked, result: r } = changeContext(modelKey, parameters, changedKey, latestChange);
+  const change = tracked?.parameterKey === key
+    ? `${definition.label} ${direction} from ${f(Number(tracked.previousValue))} to ${f(Number(tracked.currentValue))}.`
+    : `${definition.label} ${direction} at ${f(p[key])}.`;
   switch (modelKey) {
     case "supply-demand": {
       const demand = key.startsWith("demand");

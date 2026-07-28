@@ -28,6 +28,10 @@ function payoff(p: PrisonersDilemmaParameters, a: Action, b: Action) {
 }
 
 export function analyzePrisonersDilemma(p: PrisonersDilemmaParameters) {
+  if (!Object.values(p).every(Number.isFinite)) {
+    const cells: PayoffCell[] = actions.flatMap((a) => actions.map((b) => ({ id: cellId(a, b), aAction: a, bAction: b, a: 0, b: 0, aBestResponse: false, bBestResponse: false, nash: false, pareto: false })));
+    return { valid: false, validationMessage: "Every payoff must be a finite number.", cells, nash: [] as PayoffCell["id"][], aStrictDominant: [] as Action[], bStrictDominant: [] as Action[], aWeakDominant: [] as Action[], bWeakDominant: [] as Action[], aDominated: [] as Action[], bDominated: [] as Action[], pareto: [] as PayoffCell["id"][], jointMaximum: [] as PayoffCell["id"][], socialDilemma: false };
+  }
   const aBest = new Set<string>();
   const bBest = new Set<string>();
   for (const b of actions) {
@@ -70,6 +74,7 @@ export function analyzePrisonersDilemma(p: PrisonersDilemmaParameters) {
   const dd = cells.find((cell) => cell.id === "DD")!;
   const socialDilemma = strictlyDominant("a", "D") && strictlyDominant("b", "D") && cc.a + cc.b > dd.a + dd.b;
   return {
+    valid: true, validationMessage: "",
     cells,
     nash: cells.filter((cell) => cell.nash).map((cell) => cell.id),
     aStrictDominant: actions.filter((action) => strictlyDominant("a", action)),
@@ -124,6 +129,9 @@ function deterministicMistake(round: number, player: number, probability: number
 }
 
 export function simulateRepeatedGame(p: RepeatedGameParameters) {
+  const valid = Object.entries(p).filter((entry): entry is [string, number] => typeof entry[1] === "number").every(([, value]) => Number.isFinite(value))
+    && p.rounds >= 1 && p.discountFactor >= 0 && p.discountFactor <= 1 && p.futureInteractionProbability >= 0 && p.futureInteractionProbability <= 1 && p.mistakeProbability >= 0 && p.mistakeProbability <= 1;
+  if (!valid) return { valid: false, validationMessage: "Rounds must be positive and probabilities must be finite values between zero and one.", rounds: [] as Array<{ round: number; a: Action; b: Action; payoffA: number; payoffB: number; cumulativeA: number; cumulativeB: number }>, cumulativeA: 0, cumulativeB: 0, discountedA: 0, discountedB: 0, cooperationRate: 0, defectionRate: 0, punishmentPeriods: 0, winner: "Tie" };
   const historyA: Action[] = [];
   const historyB: Action[] = [];
   let payoffA = 0; let payoffB = 0; let discountedA = 0; let discountedB = 0;
@@ -142,6 +150,7 @@ export function simulateRepeatedGame(p: RepeatedGameParameters) {
   const cooperation = rounds.filter((item) => item.a === "C" && item.b === "C").length;
   const punishmentPeriods = rounds.filter((item) => item.a === "D" && item.b === "D").length;
   return {
+    valid: true, validationMessage: "",
     rounds,
     cumulativeA: payoffA,
     cumulativeB: payoffB,

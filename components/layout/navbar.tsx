@@ -12,6 +12,7 @@ const publicLinks = [
   { href: "/models", label: "Models" },
   { href: "/sandbox", label: "Sandbox" },
   { href: "/policy-lab", label: "Policy Lab" },
+  { href: "/workspace", label: "Integrated Workspace" },
   { href: "/experiments", label: "Experiments" },
   { href: "/about", label: "About" },
 ];

@@ -14,6 +14,7 @@ import { PolicyTransmissionMap } from "@/components/models/policy-transmission-m
 import { ScenarioComparison } from "@/components/models/scenario-comparison";
 import { StakeholderImpact, type StakeholderImpactItem } from "@/components/models/stakeholder-impact";
 import { ModelIntroduction } from "@/components/models/model-introduction";
+import { CrossModelTransmissionView } from "@/components/models/cross-model-transmission-view";
 import { Button } from "@/components/ui/button";
 import { calculateIsLm, DEFAULT_IS_LM } from "@/lib/economics/is-lm";
 import { DEFAULT_REPEATED_GAME, simulateRepeatedGame } from "@/lib/economics/game-theory";
@@ -23,6 +24,9 @@ import { simulateSandbox } from "@/lib/economics/sandbox/simulation";
 import type { SandboxParameters } from "@/lib/economics/sandbox/types";
 import type { ModelParameter } from "@/lib/economics/types";
 import { usePersistentState } from "@/lib/hooks/use-persistent-state";
+import { useParameterChange } from "@/lib/hooks/use-recent-parameter";
+import { parameterLabel } from "@/lib/models/change-tracking";
+import { mapSandboxToMacro } from "@/lib/models/model-mapping";
 import type { AssumptionSections } from "@/lib/models/assumptions";
 import type { MechanismStep } from "@/lib/models/explanations";
 
@@ -76,6 +80,10 @@ export default function PolicyLabPage() {
   const config = scenarioConfig[scenario];
   const result = useMemo(() => simulateSandbox(parameters), [parameters]);
   const analysis = useMemo(() => scenarioAnalysis(scenario, priority, result), [scenario, priority, result]);
+  const latestChange = useParameterChange(parameters, "policy-lab");
+  const dynamicMechanism = latestChange
+    ? [{ stage: "Latest policy change", text: `${parameterLabel("policy-lab", latestChange.parameterKey)} ${latestChange.direction} from ${String(latestChange.previousValue)} to ${String(latestChange.currentValue)}.` }, ...analysis.mechanism.slice(1)]
+    : analysis.mechanism;
 
   function chooseScenario(next: ScenarioKey) {
     setScenario(next);
@@ -96,7 +104,7 @@ export default function PolicyLabPage() {
         controls={<>{config.controls.map((key) => <ParameterControl key={key} parameter={control(key)} value={parameters[key]} onChange={(value) => update(key, value)} />)}<div className="mt-4 rounded-lg bg-[var(--surface-subtle)] p-3 text-xs leading-5 text-[var(--ink-muted)]">Only the scenario’s listed controls are available. All calculations are immediate and remain in this browser until you deliberately save a result.</div></>}
         chart={<PolicyTransmissionMap result={result} modelLabel={config.title} />}
         metrics={<><MetricCard label="Priority score" value={analysis.score + "/100"} note={"Teaching score for " + priority} icon={Target} tone={analysis.score >= 70 ? "green" : analysis.score >= 45 ? "amber" : "red"} /><MetricCard label="Inflation" value={result.indicators.inflationRate + "%"} note="Sandbox indicator" icon={CircleGauge} tone={result.indicators.inflationRate <= 3 ? "green" : "red"} /><MetricCard label="Unemployment" value={result.indicators.unemploymentRate + "%"} note="Sandbox indicator" icon={Users} tone={result.indicators.unemploymentRate <= 5 ? "green" : "amber"} /><MetricCard label="GDP index" value={result.indicators.gdpIndex} note="Sandbox indicator" icon={Scale} tone="blue" /><MetricCard label="Emissions" value={result.indicators.carbonEmissions} note="Lower is cleaner" icon={Leaf} tone={result.indicators.carbonEmissions < 100 ? "green" : "red"} /><MetricCard label="Recommendation" value={analysis.recommendation} note="Conditional on your priority" icon={Target} tone="neutral" /></>}
-        explanation={<><EconomicExplanation principle="A policy package should be judged against explicitly selected objectives and constraints, not by a single outcome." modelLabel={config.title}>{analysis.interpretation}</EconomicExplanation><MechanismChain steps={analysis.mechanism} modelLabel={config.title} /><EquationView steps={analysis.equations} modelLabel={config.title} /><ModelAssumptions assumptions={policyAssumptions} modelLabel={config.title} /><StakeholderImpact items={analysis.stakeholders as StakeholderImpactItem[]} modelLabel={config.title} /><EconomicEvaluation items={analysis.evaluation} modelLabel={config.title} /></>}
+        explanation={<><EconomicExplanation principle="A policy package should be judged against explicitly selected objectives and constraints, not by a single outcome." modelLabel={config.title}>{analysis.interpretation}</EconomicExplanation>{scenario === "inflation" && <CrossModelTransmissionView state={mapSandboxToMacro(parameters)} modelLabel={config.title} />}<MechanismChain modelKey="policy-lab" parameters={parameters} steps={dynamicMechanism} modelLabel={config.title} /><EquationView steps={analysis.equations} modelLabel={config.title} /><ModelAssumptions assumptions={policyAssumptions} modelLabel={config.title} /><StakeholderImpact items={analysis.stakeholders as StakeholderImpactItem[]} modelLabel={config.title} /><EconomicEvaluation items={analysis.evaluation} modelLabel={config.title} /></>}
         comparison={<ScenarioComparison storageKey={"econmind:policy-lab:" + scenario} modelKey="policy-lab" parameters={parameters} results={{ score: analysis.score, inflation: result.indicators.inflationRate, unemployment: result.indicators.unemploymentRate, gdp: result.indicators.gdpIndex, emissions: result.indicators.carbonEmissions, consumerWelfare: result.indicators.consumerWelfare }} metrics={["score", "inflation", "unemployment", "gdp", "emissions", "consumerWelfare"]} onLoadParameters={(saved) => setParameters((current) => ({ ...current, ...saved }))} />}/>
     </div>
   </main>;
