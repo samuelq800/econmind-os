@@ -13,6 +13,14 @@ Run `supabase/migrations/20260728010000_real_world_cases_daily_brief.sql` in the
 
 All tables have RLS. The public can only read `published` items. Only the existing `teacher` role can manage sources, settings, or editorial status. Case runs remain owner-only.
 
+To grant your own signed-in account teacher access, open **Authentication → Users**, copy its UUID, and run this once in the SQL editor:
+
+```sql
+update public.profiles
+set role = 'teacher'
+where user_id = 'PASTE_YOUR_AUTH_USER_UUID_HERE';
+```
+
 ## 2. Deploy the Edge Function
 
 Deploy `supabase/functions/collect-daily-economic-brief/index.ts` from the Supabase CLI or Dashboard. Set the following server-side function secret:
