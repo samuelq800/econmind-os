@@ -61,13 +61,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const supabase = getSupabaseBrowserClient();
     if (!supabase || !user) { queueMicrotask(() => { setRole("guest"); setRoleLoading(false); }); return; }
     let active = true;
-    queueMicrotask(() => { if (active) setRoleLoading(true); });
-    void supabase.from("profiles").select("role").eq("user_id", user.id).maybeSingle().then(({ data }) => {
-      if (!active) return;
-      setRole(data?.role === "teacher" ? "teacher" : "student");
-      setRoleLoading(false);
-    });
-    return () => { active = false; };
+    const refreshRole = () => {
+      queueMicrotask(() => { if (active) setRoleLoading(true); });
+      void supabase.from("profiles").select("role").eq("user_id", user.id).maybeSingle().then(async ({ data }) => {
+        // Handles accounts created before a profile trigger was installed. The
+        // insert is allowed only for the authenticated user's own UUID by RLS.
+        if (!data) {
+          const displayName = typeof user.user_metadata.display_name === "string" ? user.user_metadata.display_name.slice(0, 80) : null;
+          const created = await supabase.from("profiles").insert({ user_id: user.id, display_name: displayName }).select("role").maybeSingle();
+          data = created.data;
+        }
+        if (!active) return;
+        setRole(data?.role === "teacher" ? "teacher" : "student");
+        setRoleLoading(false);
+      }, () => { if (active) { setRole("student"); setRoleLoading(false); } });
+    };
+    const refreshWhenVisible = () => { if (document.visibilityState === "visible") refreshRole(); };
+    refreshRole();
+    window.addEventListener("focus", refreshRole);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => { active = false; window.removeEventListener("focus", refreshRole); document.removeEventListener("visibilitychange", refreshWhenVisible); };
   }, [user]);
 
   const value = useMemo<AuthContextValue>(
