@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { MODEL_ICONS } from "@/lib/models/icons";
 import { MODEL_REGISTRY, type ModelCategory, type ModelDifficulty, type ModelStatus } from "@/lib/models/registry";
 
-const categories: Array<"All" | ModelCategory> = ["All", "Markets", "Policy", "Firms", "Macro", "Behavioral", "Sandbox"];
+const categories: Array<"All" | ModelCategory> = ["All", "Microeconomics", "Macroeconomics", "Strategic Interaction", "Policy Lab", "Sandbox"];
 const difficulties: Array<"All" | ModelDifficulty> = ["All", "Beginner", "Intermediate", "Advanced"];
 const statuses: Array<{ value: "all" | ModelStatus; label: string }> = [
   { value: "all", label: "All" },

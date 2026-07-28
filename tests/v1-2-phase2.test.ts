@@ -88,7 +88,7 @@ describe("aggregate demand and supply", () => {
 describe("phase two registry and recommendations", () => {
   it("registers all four phase two models as available", () => {
     for (const slug of ["externalities", "monopoly", "ppf", "ad-as"] as const) expect(getAvailableModel(slug)?.status).toBe("available");
-    expect(AVAILABLE_MODELS.length).toBe(9);
+    expect(AVAILABLE_MODELS.length).toBe(17);
   });
 
   it("never recommends a coming-soon model", () => {

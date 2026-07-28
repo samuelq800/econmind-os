@@ -19,6 +19,8 @@ import { ArrowDownRight, ArrowRight, ArrowUpRight, CheckCircle2, CloudUpload, Fl
 import { useAuth } from "@/components/auth/auth-provider";
 import { FavoriteModelButton } from "@/components/models/favorite-model-button";
 import { ParameterControl } from "@/components/models/parameter-control";
+import { PolicyTransmissionMap } from "@/components/models/policy-transmission-map";
+import { ExpandableAnalysisPanel } from "@/components/models/expandable-analysis-panel";
 import { Button } from "@/components/ui/button";
 import { BASELINE_INDICATORS, BASELINE_PARAMETERS, POLICY_DEFINITIONS } from "@/lib/economics/sandbox/defaults";
 import { interpretSandbox } from "@/lib/economics/sandbox/interpretation";
@@ -161,6 +163,7 @@ export default function SandboxPage() {
             <ChartPanel title="Baseline vs current scenario" subtitle="Standardized performance scores; baseline = 100"><div className="h-[340px]"><ResponsiveContainer width="100%" height="100%"><RadarChart data={radarData} outerRadius="70%"><PolarGrid stroke="var(--line)" /><PolarAngleAxis dataKey="dimension" tick={{ fill: "var(--ink-muted)", fontSize: 9 }} /><Radar name="Baseline" dataKey="baseline" stroke="var(--ink-faint)" fill="var(--ink-faint)" fillOpacity={0.06} strokeDasharray="4 4" /><Radar name="Current" dataKey="current" stroke="var(--accent)" fill="var(--accent)" fillOpacity={0.16} /><Legend wrapperStyle={{ fontSize: 10 }} /><Tooltip contentStyle={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, fontSize: 10 }} /></RadarChart></ResponsiveContainer></div></ChartPanel>
             <ChartPanel title="Policy impact contributions" subtitle="Direct and interaction contributions are shown before the clamped total"><div className="h-[340px]"><ResponsiveContainer width="100%" height="100%"><BarChart data={impactData} layout="vertical" margin={{ top: 8, right: 12, left: 22, bottom: 8 }}><CartesianGrid stroke="var(--line)" strokeDasharray="3 4" horizontal={false} /><XAxis type="number" tick={{ fill: "var(--ink-muted)", fontSize: 9 }} /><YAxis dataKey="policy" type="category" width={86} tick={{ fill: "var(--ink-muted)", fontSize: 9 }} /><Tooltip contentStyle={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, fontSize: 10 }} /><Legend wrapperStyle={{ fontSize: 10 }} /><Bar dataKey="GDP" fill="var(--blue)" /><Bar dataKey="Revenue" fill="var(--accent)" /><Bar dataKey="Emissions" fill="var(--amber)" /></BarChart></ResponsiveContainer></div></ChartPanel>
           </div>
+          <PolicyTransmissionMap result={result} />
           <ContributionBreakdown result={result} />
         </section>
 
@@ -182,7 +185,7 @@ function IndicatorCard({ indicatorKey, value, baseline }: { indicatorKey: Indica
 }
 
 function ChartPanel({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
-  return <section className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-5"><h2 className="text-sm font-bold">{title}</h2><p className="mt-1 text-[10px] text-[var(--ink-muted)]">{subtitle}</p><div className="mt-4">{children}</div></section>;
+  return <ExpandableAnalysisPanel title={title} subtitle={subtitle} modelLabel="Economic Sandbox"><div>{children}</div></ExpandableAnalysisPanel>;
 }
 
 function InterpretationGroup({ title, items, warning = false }: { title: string; items: string[]; warning?: boolean }) {

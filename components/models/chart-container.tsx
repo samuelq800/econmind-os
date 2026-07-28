@@ -1,1 +1,5 @@
-export function ChartContainer({title,subtitle,children,className=""}:{title:string;subtitle?:string;children:React.ReactNode;className?:string}){return<section className={`rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4 shadow-[var(--shadow)] sm:p-6 ${className}`}><div className="mb-5"><h2 className="text-sm font-bold">{title}</h2>{subtitle&&<p className="mt-1 text-[11px] leading-4 text-[var(--ink-muted)]">{subtitle}</p>}</div>{children}</section>}
+import { ExpandableAnalysisPanel } from "@/components/models/expandable-analysis-panel";
+
+export function ChartContainer({ title, subtitle, children, className = "", modelLabel }: { title: string; subtitle?: string; children: React.ReactNode; className?: string; modelLabel?: string }) {
+  return <ExpandableAnalysisPanel title={title} subtitle={subtitle} className={className} modelLabel={modelLabel}>{children}</ExpandableAnalysisPanel>;
+}

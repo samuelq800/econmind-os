@@ -22,7 +22,7 @@ import {
   type RecentActivityRow,
 } from "@/lib/supabase/data";
 
-const categories: ModelCategory[] = ["Markets", "Policy", "Firms", "Macro", "Behavioral", "Sandbox"];
+const categories: ModelCategory[] = ["Microeconomics", "Macroeconomics", "Strategic Interaction", "Policy Lab", "Sandbox"];
 const formatDate = (value: string | null | undefined) => value ? new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "No activity yet";
 const summary = (value: Record<string, unknown>) => Object.entries(value).filter(([, item]) => typeof item === "number").slice(0, 3);
 
