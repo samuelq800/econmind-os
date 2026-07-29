@@ -1,0 +1,15 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { BarChart3, LoaderCircle } from "lucide-react";
+import { useAuth } from "@/components/auth/auth-provider";
+import { Card } from "@/components/ui/card";
+import { getLeagueContext } from "@/lib/supabase/league";
+import { getCommandCentreAdminStats } from "@/lib/supabase/command-centre";
+
+export function AdminCommandCentreStats() {
+  const { user } = useAuth(); const [allowed, setAllowed] = useState(false); const [stats, setStats] = useState<Awaited<ReturnType<typeof getCommandCentreAdminStats>> | null>(null); const [error, setError] = useState("");
+  useEffect(() => { if (!user) return; queueMicrotask(() => { void getLeagueContext(user.id).then((context) => { if (context.profile?.platform_role !== "platform_admin") return; setAllowed(true); return getCommandCentreAdminStats().then(setStats); }).catch((caught) => setError(caught instanceof Error ? caught.message : "Could not load Command Centre statistics.")); }); }, [user]);
+  if (!allowed && !error) return null;
+  return <main className="mx-auto max-w-7xl px-5 pb-12 sm:px-8"><Card className="border-[var(--accent)] p-6"><div className="flex items-center gap-3"><BarChart3 className="text-[var(--accent)]" size={18} /><div><p className="text-[10px] font-bold uppercase tracking-[.16em] text-[var(--accent)]">Platform administration · Command Centre</p><h2 className="mt-1 text-xl font-bold">Sandbox status and learning signals</h2></div></div>{!stats && !error && <div className="mt-6 flex items-center gap-2 text-sm text-[var(--ink-muted)]"><LoaderCircle className="animate-spin" size={15} />Loading protected statistics…</div>}{error && <p role="alert" className="mt-5 text-sm text-[var(--red)]">{error}</p>}{stats && <><div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{[["Runs", stats.totalRuns], ["Completion", stats.completionRate === null ? "—" : `${stats.completionRate}%`], ["Average final score", stats.averageFinalScore ?? "—"], ["Active scenarios", stats.scenarios.filter((scenario) => scenario.is_active).length]].map(([label, value]) => <div key={String(label)} className="rounded-lg bg-[var(--surface-subtle)] p-4"><p className="text-[10px] font-bold uppercase tracking-wider text-[var(--ink-faint)]">{label}</p><p className="mt-2 text-xl font-bold">{value}</p></div>)}</div><div className="mt-5 grid gap-3 md:grid-cols-2"><div className="rounded-lg border border-[var(--line)] p-4"><p className="text-xs font-bold">Most common policy choice</p><p className="mt-2 text-sm text-[var(--ink-muted)]">{stats.mostCommonPolicy}</p></div><div className="rounded-lg border border-[var(--line)] p-4"><p className="text-xs font-bold">Most common result / failure pattern</p><p className="mt-2 text-sm text-[var(--ink-muted)]">{stats.mostCommonResult}</p></div></div><p className="mt-4 text-[10px] leading-5 text-[var(--ink-faint)]">Scenario parameters are controlled by code configuration and the migration seed. No demo-reset button is shown, preventing accidental removal of real records.</p></>}</Card></main>;
+}

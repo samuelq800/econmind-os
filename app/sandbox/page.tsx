@@ -24,6 +24,7 @@ import { ExpandableAnalysisPanel } from "@/components/models/expandable-analysis
 import { ModelIntroduction } from "@/components/models/model-introduction";
 import { MechanismChain } from "@/components/models/mechanism-chain";
 import { OutcomeComparison } from "@/components/models/outcome-comparison";
+import { PersonalPolicyLab } from "@/components/sandbox/personal-policy-lab";
 import { Button } from "@/components/ui/button";
 import { BASELINE_INDICATORS, BASELINE_PARAMETERS, POLICY_DEFINITIONS } from "@/lib/economics/sandbox/defaults";
 import { interpretSandbox } from "@/lib/economics/sandbox/interpretation";
@@ -146,14 +147,16 @@ export default function SandboxPage() {
         <div className="mx-auto flex max-w-[1500px] flex-col justify-between gap-5 sm:flex-row sm:items-start">
           <div className="max-w-3xl">
             <p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-[var(--accent)]">Policy mix laboratory</p>
-            <h1 className="mt-3 text-4xl font-bold tracking-[-.05em] sm:text-5xl">Economic Sandbox</h1>
-            <p className="mt-3 text-sm leading-6 text-[var(--ink-muted)] sm:text-base">Combine policy tools and observe how simplified economic indicators respond.</p>
+            <h1 className="mt-3 text-4xl font-bold tracking-[-.05em] sm:text-5xl">Economic Sandbox &amp; Policy Lab</h1>
+            <p className="mt-3 text-sm leading-6 text-[var(--ink-muted)] sm:text-base">Combine live policy controls with guided economic briefs, then observe how simplified indicators respond.</p>
             <p className="mt-4 rounded-lg border border-[var(--amber)] bg-[var(--amber-soft)] p-3 text-xs leading-5 text-[var(--amber)]"><TriangleAlert className="mr-2 inline" size={14} />This sandbox uses simplified economic relationships for educational simulation. It should not be interpreted as a real-world forecast.</p>
           </div>
           <FavoriteModelButton modelKey="sandbox" />
         </div>
         <div className="mx-auto mt-7 max-w-[1500px]"><ModelIntroduction modelKey="sandbox" modelLabel="Economic Sandbox" /></div>
       </header>
+
+      <PersonalPolicyLab onApply={(parameters) => { setDraft((current) => sanitizeParameters({ ...current, ...parameters })); setActivePreset("custom"); setMessage("Policy Lab brief applied. Results updated live."); }} />
 
       <div className="mx-auto grid max-w-[1600px] gap-5 p-4 sm:p-6 xl:grid-cols-[320px_minmax(0,1fr)_340px] xl:items-start">
         <aside className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto">
