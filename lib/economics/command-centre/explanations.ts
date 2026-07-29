@@ -1,5 +1,5 @@
-import { SECTOR_LABELS } from "./config";
-import type { CommandCentreState, PendingEffect, PolicyPackage, QuarterExplanation, ShockRecord } from "./types";
+import { SECTOR_LABELS } from "./config.ts";
+import type { CommandCentreState, PendingEffect, PolicyPackage, QuarterExplanation, ShockRecord } from "./types.ts";
 
 const change = (after: number, before: number, digits = 1) => `${after - before >= 0 ? "+" : ""}${(after - before).toFixed(digits)}`;
 

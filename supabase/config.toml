@@ -17,3 +17,6 @@ enable_confirmations = true
 # inside the function. The scheduled call uses the latter, which is not a JWT.
 [functions.collect-daily-economic-brief]
 verify_jwt = false
+
+[functions.process-league-world-round]
+verify_jwt = false

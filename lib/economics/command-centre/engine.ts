@@ -1,10 +1,10 @@
-import { COEFFICIENTS, MACRO_BOUNDS, RESOURCE_BOUNDS, SECTOR_BOUNDS } from "./config";
-import { assertPolicyPackage, calculateFiscalConstraint, clamp, policyCapitalCost, round } from "./constraints";
-import { generateDeterministicExplanation } from "./explanations";
-import { applyPolicyInteractions } from "./interactions";
-import { calculateScores } from "./scoring";
-import { applyShock, shockForQuarter } from "./shocks";
-import type { AdvanceQuarterResult, CommandCentreState, FiscalAllocation, PendingEffect, PendingTarget, PolicyPackage, Quarter, SectorKey } from "./types";
+import { COEFFICIENTS, MACRO_BOUNDS, RESOURCE_BOUNDS, SECTOR_BOUNDS } from "./config.ts";
+import { assertPolicyPackage, calculateFiscalConstraint, clamp, policyCapitalCost, round } from "./constraints.ts";
+import { generateDeterministicExplanation } from "./explanations.ts";
+import { applyPolicyInteractions } from "./interactions.ts";
+import { calculateScores } from "./scoring.ts";
+import { applyShock, shockForQuarter } from "./shocks.ts";
+import type { AdvanceQuarterResult, CommandCentreState, FiscalAllocation, PendingEffect, PendingTarget, PolicyPackage, Quarter, SectorKey, ShockRecord } from "./types.ts";
 
 function addTarget(state: CommandCentreState, target: PendingTarget, magnitude: number) {
   const [group, firstKey, secondKey] = target.split(".");
@@ -130,11 +130,17 @@ function reconcileEconomy(state: CommandCentreState): CommandCentreState {
   return normaliseState(next);
 }
 
-export function advanceQuarter(state: CommandCentreState, policy: PolicyPackage): AdvanceQuarterResult {
+/**
+ * Advances the reusable domestic engine. League world clearing passes
+ * `scheduledShock: null` because its globally coordinated shock is applied
+ * once before all countries are processed; standalone Command Centre keeps
+ * its existing deterministic quarterly shocks by default.
+ */
+export function advanceQuarter(state: CommandCentreState, policy: PolicyPackage, options?: { scheduledShock?: ShockRecord | null }): AdvanceQuarterResult {
   if (state.completed) throw new Error("Completed runs cannot advance further.");
   assertPolicyPackage(policy);
   const stateBefore = structuredClone(state); const roundNumber = state.quarter;
-  const pending = applyPendingEffects(state); const shock = shockForQuarter(roundNumber);
+  const pending = applyPendingEffects(state); const shock = options?.scheduledShock === undefined ? shockForQuarter(roundNumber) : options.scheduledShock;
   const shocked = applyShock(pending.state, shock); const appliedPolicy = applyPolicyPackage(shocked, policy);
   const interaction = applyPolicyInteractions(appliedPolicy.state, policy, stateBefore.lastPolicy);
   const withInteractions = structuredClone(appliedPolicy.state);

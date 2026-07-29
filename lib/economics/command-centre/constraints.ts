@@ -1,5 +1,5 @@
-import { DEFAULT_ALLOCATION, RESOURCE_BOUNDS } from "./config";
-import type { FiscalAllocation, PolicyPackage } from "./types";
+import { DEFAULT_ALLOCATION, RESOURCE_BOUNDS } from "./config.ts";
+import type { FiscalAllocation, PolicyPackage } from "./types.ts";
 
 export const clamp = (value: number, [minimum, maximum]: readonly [number, number]) => Math.min(maximum, Math.max(minimum, value));
 export const round = (value: number, digits = 1) => Number(value.toFixed(digits));

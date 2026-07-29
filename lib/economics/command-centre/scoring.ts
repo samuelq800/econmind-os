@@ -1,5 +1,5 @@
-import { clamp, round } from "./constraints";
-import type { CommandCentreResultType, CommandCentreScores, CommandCentreState, ScoreKey } from "./types";
+import { clamp, round } from "./constraints.ts";
+import type { CommandCentreResultType, CommandCentreScores, CommandCentreState, ScoreKey } from "./types.ts";
 
 export const SCORE_WEIGHTS: Record<ScoreKey, number> = { macroeconomicStability: 0.18, growthProductivity: 0.15, employment: 0.12, fiscalSustainability: 0.15, socialWelfare: 0.15, environmentalTransition: 0.1, crisisResilience: 0.1, policyCoherence: 0.05 };
 const bounded = (value: number) => round(clamp(value, [0, 100]));
