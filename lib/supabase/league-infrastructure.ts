@@ -17,7 +17,7 @@ export async function getLeagueCompetition(competitionId: string): Promise<Compe
   fail(error); if (!competition) return null;
   const [{ data: countries, error: countriesError }, { data: roles, error: rolesError }, { data: rounds, error: roundsError }, { data: drafts, error: draftsError }, { data: submissions, error: submissionsError }, { data: agreements, error: agreementsError }, { data: results, error: resultsError }, { data: tradeFlows, error: tradeFlowsError }, { data: events, error: eventsError }] = await Promise.all([
     supabase.from("competition_countries").select("*, template:country_templates(*), school:schools(id,name), team:teams(id,name,school_id)").eq("competition_id", competitionId).order("display_name"),
-    supabase.from("competition_roles").select("*, profile:profiles(user_id,display_name)").eq("competition_id", competitionId).order("assigned_at"),
+    supabase.from("competition_roles").select("*, profile:profiles!competition_roles_user_id_fkey(user_id,display_name)").eq("competition_id", competitionId).order("assigned_at"),
     supabase.from("competition_rounds").select("*").eq("competition_id", competitionId).order("round_number"),
     supabase.from("institution_drafts").select("*").eq("competition_id", competitionId).order("updated_at", { ascending: false }),
     supabase.from("country_submissions").select("*").eq("competition_id", competitionId).order("updated_at", { ascending: false }),
