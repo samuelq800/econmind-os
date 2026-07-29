@@ -1,5 +1,7 @@
 import type { FeedCandidate, ScoredCandidate } from "./types";
 
+export const DAILY_BRIEF_MAX_ITEMS_PER_RUN = 4;
+
 const caseRules: Array<{ slug: string; tags: string[]; keywords: string[] }> = [
   { slug: "oil-price-shock", tags: ["energy", "inflation", "macroeconomics"], keywords: ["oil", "energy", "opec", "crude", "fuel", "supply shock"] },
   { slug: "carbon-tax", tags: ["climate", "externalities", "policy"], keywords: ["carbon", "emissions", "climate", "greenhouse", "ets"] },
@@ -28,5 +30,9 @@ export function scoreCandidate(candidate: FeedCandidate): ScoredCandidate {
   const source = 20; const specific = /\d|policy|market|price|tax|wage|trade|inflation|emission/i.test(`${cleanedTitle} ${cleanedSummary}`) ? 12 : 5;
   const score = Math.min(100, hasSummary + topical + source + specific + (cleanedTitle.length >= 20 ? 8 : 3));
   return { ...candidate, title: cleanedTitle, summary: cleanedSummary.slice(0, 5000), tags: linked.tags, caseSlugs: linked.caseSlugs, score, breakdown: { summary: hasSummary, topical, source, specificity: specific, title: cleanedTitle.length >= 20 ? 8 : 3 }, fingerprint: stableFingerprint(cleanedTitle, candidate.canonicalUrl) };
+}
+export function selectBriefsForReview(candidates: ScoredCandidate[], minimumScore: number) {
+  const publishedAt = (item: ScoredCandidate) => Date.parse(item.publishedSourceAt ?? "") || 0;
+  return candidates.filter((item) => item.score >= minimumScore).sort((left, right) => right.score - left.score || publishedAt(right) - publishedAt(left) || left.fingerprint.localeCompare(right.fingerprint)).slice(0, DAILY_BRIEF_MAX_ITEMS_PER_RUN);
 }
 export function slugForBrief(candidate: ScoredCandidate) { const date = (candidate.publishedSourceAt ?? new Date(0).toISOString()).slice(0, 10); return `${date}-${candidate.fingerprint.slice(0, 16)}`; }

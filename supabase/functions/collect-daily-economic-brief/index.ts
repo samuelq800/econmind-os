@@ -1,5 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { scoreCandidate, slugForBrief } from "../../../lib/daily-brief/rules.ts";
+import { scoreCandidate, selectBriefsForReview, slugForBrief } from "../../../lib/daily-brief/rules.ts";
 import type { FeedCandidate } from "../../../lib/daily-brief/types.ts";
 
 type SourceRow = { id: string; name: string; feed_url: string; source_type: "rss" | "atom"; priority: number; enabled: boolean };
@@ -51,7 +51,7 @@ Deno.serve(async (request) => {
   try {
     const [{ data: sources, error: sourcesError }, { data: settings }] = await Promise.all([
       admin.from("daily_brief_sources").select("id,name,feed_url,source_type,priority,enabled").eq("enabled", true).order("priority", { ascending: false }).limit(12),
-      admin.from("daily_brief_settings").select("publication_mode,minimum_score").eq("id", true).maybeSingle(),
+      admin.from("daily_brief_settings").select("minimum_score").eq("id", true).maybeSingle(),
     ]);
     if (sourcesError) throw new Error(sourcesError.message);
     const rows = (sources ?? []) as SourceRow[];
@@ -66,14 +66,14 @@ Deno.serve(async (request) => {
     const seen = new Set<string>();
     const candidates = fetched.flat().map(scoreCandidate).filter((item) => item.title.length > 8 && item.summary.length > 30).filter((item) => { if (seen.has(item.fingerprint)) return false; seen.add(item.fingerprint); return true; });
     const threshold = Number(settings?.minimum_score ?? 55);
-    const rowsToInsert = candidates.filter((item) => item.score >= threshold).slice(0, 20).map((item) => ({
+    const rowsToInsert = selectBriefsForReview(candidates, threshold).map((item) => ({
       slug: slugForBrief(item), source_id: item.sourceId, source_name: item.sourceName, source_url: item.sourceUrl, canonical_url: item.canonicalUrl, title: item.title, summary: item.summary,
       published_source_at: item.publishedSourceAt, topic_tags: item.tags, case_slugs: item.caseSlugs, teaching_score: item.score, score_breakdown: item.breakdown, fingerprint: item.fingerprint,
-      status: settings?.publication_mode === "automatic" ? "published" : "candidate", published_at: settings?.publication_mode === "automatic" ? new Date().toISOString() : null,
+      status: "candidate", published_at: null,
     }));
     let inserted = 0;
     if (rowsToInsert.length) { const { data, error } = await admin.from("daily_brief_items").upsert(rowsToInsert, { onConflict: "fingerprint", ignoreDuplicates: true }).select("id"); if (error) throw new Error(error.message); inserted = data?.length ?? 0; }
-    await admin.from("daily_brief_jobs").update({ status: "completed", finished_at: new Date().toISOString(), sources_checked: rows.length, candidates_found: candidates.length, items_inserted: inserted, metadata: { threshold, publicationMode: settings?.publication_mode ?? "review" } }).eq("id", job.id);
+    await admin.from("daily_brief_jobs").update({ status: "completed", finished_at: new Date().toISOString(), sources_checked: rows.length, candidates_found: candidates.length, items_inserted: inserted, metadata: { threshold, publicationMode: "review", maximumItems: 4 } }).eq("id", job.id);
     return new Response(JSON.stringify({ ok: true, sourcesChecked: rows.length, candidatesFound: candidates.length, itemsInserted: inserted }), { headers: cors });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown collection error";

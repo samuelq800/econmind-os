@@ -8,11 +8,138 @@ import { Card } from "@/components/ui/card";
 import type { DailyBriefItem, DailyBriefJob, DailyBriefSettings, DailyBriefSource } from "@/lib/daily-brief/types";
 import { addBriefSource, getBriefSettings, listBriefItemsForReview, listBriefJobs, listBriefSources, reviewBriefItem, setBriefSourceEnabled, triggerBriefCollection, updateBriefSettings } from "@/lib/supabase/daily-brief";
 
-export function AdminDailyBrief() { const { user, role, roleLoading, openAuth } = useAuth(); const [items, setItems] = useState<DailyBriefItem[]>([]); const [sources, setSources] = useState<DailyBriefSource[]>([]); const [jobs, setJobs] = useState<DailyBriefJob[]>([]); const [settings, setSettings] = useState<DailyBriefSettings | null>(null); const [message, setMessage] = useState(""); const [name, setName] = useState(""); const [url, setUrl] = useState(""); const [priority, setPriority] = useState(50);
-  const load = () => { void Promise.all([listBriefItemsForReview(), listBriefSources(), listBriefJobs(), getBriefSettings()]).then(([nextItems, nextSources, nextJobs, nextSettings]) => { setItems(nextItems); setSources(nextSources); setJobs(nextJobs); setSettings(nextSettings); }).catch((caught) => setMessage(caught instanceof Error ? caught.message : "Could not load Daily Brief administration.")); };
+const pending = (item: DailyBriefItem) => item.status === "candidate" || item.status === "selected";
+
+export function AdminDailyBrief() {
+  const { user, role, roleLoading, openAuth } = useAuth();
+  const [items, setItems] = useState<DailyBriefItem[]>([]);
+  const [sources, setSources] = useState<DailyBriefSource[]>([]);
+  const [jobs, setJobs] = useState<DailyBriefJob[]>([]);
+  const [settings, setSettings] = useState<DailyBriefSettings | null>(null);
+  const [message, setMessage] = useState("");
+  const [name, setName] = useState("");
+  const [url, setUrl] = useState("");
+  const [priority, setPriority] = useState(50);
+
+  const load = () => {
+    void Promise.all([listBriefItemsForReview(), listBriefSources(), listBriefJobs(), getBriefSettings()])
+      .then(([nextItems, nextSources, nextJobs, nextSettings]) => {
+        setItems(nextItems);
+        setSources(nextSources);
+        setJobs(nextJobs);
+        setSettings(nextSettings);
+      })
+      .catch((caught) => setMessage(caught instanceof Error ? caught.message : "Could not load Daily Brief administration."));
+  };
+
   useEffect(() => { if (user && role === "teacher") load(); }, [user, role]);
-  if (!user && !roleLoading) return <Gate title="Sign in as a teacher" action={() => openAuth("sign-in")} />; if (roleLoading) return <main className="mx-auto min-h-[60vh] max-w-5xl px-5 py-12"><p className="text-sm text-[var(--ink-muted)]">Checking access…</p></main>; if (role !== "teacher") return <Gate title="Teacher access required" text="You are signed in, but your account is not a teacher account. The database will also enforce this restriction." />;
-  const collect = async () => { setMessage("Collecting configured public feeds…"); try { const response = await triggerBriefCollection(); setMessage(response.ok ? `Collection complete. ${response.itemsInserted ?? 0} candidates inserted.` : response.message ?? "Collection did not finish."); load(); } catch (error) { setMessage(error instanceof Error ? error.message : "Could not start collection."); } };
-  return <main className="mx-auto min-h-screen max-w-6xl px-5 py-12 sm:px-8"><header className="flex flex-wrap items-end justify-between gap-5"><div><p className="text-[10px] font-bold uppercase tracking-[.18em] text-[var(--accent)]">Teacher administration</p><h1 className="mt-2 text-4xl font-bold">Daily Brief review</h1><p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--ink-muted)]">The collector reads only configured public RSS/Atom feeds and saves structured records. Choose review or automatic publication below; no AI API is called.</p></div><Button onClick={() => void collect()}><Play size={15} /> Collect now</Button></header>{message && <p className="mt-5 rounded-lg bg-[var(--accent-soft)] p-4 text-sm text-[var(--accent)]">{message}</p>}<section className="mt-8 grid gap-5 lg:grid-cols-[1fr_1fr]"><Card className="p-5"><h2 className="text-lg font-bold">Publication controls</h2>{settings ? <div className="mt-4 space-y-4"><label className="block text-xs font-bold">Mode<select className="mt-2 h-10 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 text-sm" value={settings.publication_mode} onChange={(event) => { const publication_mode = event.target.value as DailyBriefSettings["publication_mode"]; setSettings({ ...settings, publication_mode }); void updateBriefSettings({ publication_mode, minimum_score: settings.minimum_score }).catch((caught) => setMessage(caught instanceof Error ? caught.message : "Could not save settings.")); }}><option value="review">Review mode (recommended)</option><option value="automatic">Automatic publication</option></select></label><label className="block text-xs font-bold">Minimum teaching score <output className="ml-2 text-[var(--accent)]">{settings.minimum_score}</output><input className="mt-3 w-full" type="range" min="0" max="100" step="5" value={settings.minimum_score} onChange={(event) => { const minimum_score = Number(event.target.value); setSettings({ ...settings, minimum_score }); }} onMouseUp={() => void updateBriefSettings({ publication_mode: settings.publication_mode, minimum_score: settings.minimum_score }).catch((caught) => setMessage(caught instanceof Error ? caught.message : "Could not save settings."))} /></label><p className="text-xs leading-5 text-[var(--ink-muted)]">Daily 07:00 Singapore scheduling is configured in Supabase. Use review mode when you want to check new sources before publishing.</p></div> : <p className="mt-3 text-sm text-[var(--ink-muted)]">No settings row found. Run the migration first.</p>}</Card><Card className="p-5"><h2 className="text-lg font-bold">Add official source</h2><div className="mt-4 grid gap-3"><input value={name} onChange={(event) => setName(event.target.value)} className="h-10 rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 text-sm" placeholder="Source name (e.g. IEA)" /><input value={url} onChange={(event) => setUrl(event.target.value)} className="h-10 rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 text-sm" placeholder="Official https RSS/Atom feed URL" /><label className="text-xs font-bold">Priority <output className="ml-2 text-[var(--accent)]">{priority}</output><input className="mt-2 w-full" type="range" min="0" max="100" value={priority} onChange={(event) => setPriority(Number(event.target.value))} /></label><Button disabled={!name.trim() || !url.startsWith("https://")} onClick={() => void addBriefSource({ name: name.trim(), feed_url: url.trim(), source_type: "rss", priority }).then(() => { setName(""); setUrl(""); load(); }).catch((caught) => setMessage(caught instanceof Error ? caught.message : "Could not add source."))}><Plus size={15} /> Add source</Button></div></Card></section><section className="mt-8"><h2 className="text-2xl font-bold">Candidate queue</h2><div className="mt-4 space-y-3">{items.filter((item) => item.status === "candidate" || item.status === "selected").map((item) => <Card key={item.id} className="p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div className="max-w-3xl"><p className="text-[10px] font-bold uppercase tracking-wider text-[var(--ink-faint)]">{item.source_name} · score {Math.round(item.teaching_score)} · {item.case_slugs.join(", ") || "No case link"}</p><h3 className="mt-2 text-lg font-bold">{item.title}</h3><p className="mt-2 text-sm leading-6 text-[var(--ink-muted)]">{item.summary.slice(0, 500)}{item.summary.length > 500 ? "…" : ""}</p></div><div className="flex gap-2"><Button size="sm" onClick={() => void reviewBriefItem(item.id, "published").then(load).catch((caught) => setMessage(caught instanceof Error ? caught.message : "Could not publish."))}><Check size={14} /> Publish</Button><Button size="sm" variant="danger" onClick={() => void reviewBriefItem(item.id, "rejected").then(load).catch((caught) => setMessage(caught instanceof Error ? caught.message : "Could not reject."))}><X size={14} /> Reject</Button></div></div></Card>)}{items.filter((item) => item.status === "candidate" || item.status === "selected").length === 0 && <p className="rounded-xl border border-dashed border-[var(--line)] p-10 text-center text-sm text-[var(--ink-muted)]">No candidate briefs waiting for review.</p>}</div></section><section className="mt-8 grid gap-5 lg:grid-cols-2"><Card className="p-5"><h2 className="text-lg font-bold">Sources</h2><div className="mt-4 space-y-3">{sources.map((source) => <div key={source.id} className="flex items-center justify-between gap-4 border-b border-[var(--line)] pb-3 last:border-0"><div className="min-w-0"><p className="truncate text-sm font-bold">{source.name}</p><p className="truncate text-[10px] text-[var(--ink-faint)]">{source.feed_url} · priority {source.priority}</p></div><button type="button" onClick={() => void setBriefSourceEnabled(source.id, !source.enabled).then(load).catch((caught) => setMessage(caught instanceof Error ? caught.message : "Could not update source."))} className={`rounded px-2 py-1 text-[10px] font-bold ${source.enabled ? "bg-[var(--accent-soft)] text-[var(--accent)]" : "bg-[var(--surface-subtle)] text-[var(--ink-faint)]"}`}>{source.enabled ? "Enabled" : "Disabled"}</button></div>)}{sources.length === 0 && <p className="text-sm text-[var(--ink-muted)]">No source configured.</p>}</div></Card><Card className="p-5"><h2 className="text-lg font-bold">Recent jobs</h2><div className="mt-4 space-y-3">{jobs.map((job) => <div key={job.id} className="border-b border-[var(--line)] pb-3 last:border-0"><p className="text-sm font-bold capitalize">{job.status} · {job.trigger_type}</p><p className="mt-1 text-[10px] text-[var(--ink-faint)]">{new Date(job.started_at).toLocaleString()} · {job.sources_checked} sources · {job.items_inserted} inserted{job.error_message ? ` · ${job.error_message}` : ""}</p></div>)}{jobs.length === 0 && <p className="text-sm text-[var(--ink-muted)]">No jobs recorded.</p>}</div></Card></section></main>;
+
+  if (!user && !roleLoading) return <Gate title="Sign in as a teacher" action={() => openAuth("sign-in")} />;
+  if (roleLoading) return <main className="mx-auto min-h-[60vh] max-w-5xl px-5 py-12"><p className="text-sm text-[var(--ink-muted)]">Checking access…</p></main>;
+  if (role !== "teacher") return <Gate title="Teacher access required" text="You are signed in, but your account is not a teacher account. The database will also enforce this restriction." />;
+
+  const collect = async () => {
+    setMessage("Collecting configured public feeds…");
+    try {
+      const response = await triggerBriefCollection();
+      setMessage(response.ok ? `Collection complete. ${response.itemsInserted ?? 0} review candidates added.` : response.message ?? "Collection did not finish.");
+      load();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not start collection.");
+    }
+  };
+
+  const saveMinimumScore = () => {
+    if (!settings) return;
+    void updateBriefSettings({ publication_mode: "review", minimum_score: settings.minimum_score })
+      .catch((caught) => setMessage(caught instanceof Error ? caught.message : "Could not save settings."));
+  };
+
+  const candidates = items.filter(pending);
+
+  return <main className="mx-auto min-h-screen max-w-6xl px-5 py-12 sm:px-8">
+    <header className="flex flex-wrap items-end justify-between gap-5">
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[var(--accent)]">Teacher administration</p>
+        <h1 className="mt-2 text-4xl font-bold">Daily Brief review</h1>
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--ink-muted)]">The collector reads only configured public RSS/Atom feeds. It saves at most four high-scoring candidates per run, and every candidate requires teacher review before publication.</p>
+      </div>
+      <Button onClick={() => void collect()}><Play size={15} /> Collect now</Button>
+    </header>
+
+    {message && <p className="mt-5 rounded-lg bg-[var(--accent-soft)] p-4 text-sm text-[var(--accent)]">{message}</p>}
+
+    <section className="mt-8 grid gap-5 lg:grid-cols-[1fr_1fr]">
+      <Card className="p-5">
+        <h2 className="text-lg font-bold">Publication controls</h2>
+        {settings ? <div className="mt-4 space-y-4">
+          <div className="rounded-lg bg-[var(--surface-subtle)] p-3">
+            <p className="text-xs font-bold">Publication mode</p>
+            <p className="mt-1 text-sm text-[var(--ink-muted)]">Teacher review required</p>
+          </div>
+          <label className="block text-xs font-bold">Minimum teaching score <output className="ml-2 text-[var(--accent)]">{settings.minimum_score}</output>
+            <input className="mt-3 w-full" type="range" min="0" max="100" step="5" value={settings.minimum_score} onChange={(event) => setSettings({ ...settings, minimum_score: Number(event.target.value), publication_mode: "review" })} onMouseUp={saveMinimumScore} />
+          </label>
+          <p className="text-xs leading-5 text-[var(--ink-muted)]">Daily 07:00 Singapore scheduling is configured in Supabase. Each run retains only the four highest-scoring eligible items for review.</p>
+        </div> : <p className="mt-3 text-sm text-[var(--ink-muted)]">No settings row found. Run the migration first.</p>}
+      </Card>
+
+      <Card className="p-5">
+        <h2 className="text-lg font-bold">Add official source</h2>
+        <div className="mt-4 grid gap-3">
+          <input value={name} onChange={(event) => setName(event.target.value)} className="h-10 rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 text-sm" placeholder="Source name (e.g. IEA)" />
+          <input value={url} onChange={(event) => setUrl(event.target.value)} className="h-10 rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 text-sm" placeholder="Official https RSS/Atom feed URL" />
+          <label className="text-xs font-bold">Priority <output className="ml-2 text-[var(--accent)]">{priority}</output>
+            <input className="mt-2 w-full" type="range" min="0" max="100" value={priority} onChange={(event) => setPriority(Number(event.target.value))} />
+          </label>
+          <Button disabled={!name.trim() || !url.startsWith("https://")} onClick={() => void addBriefSource({ name: name.trim(), feed_url: url.trim(), source_type: "rss", priority }).then(() => { setName(""); setUrl(""); load(); }).catch((caught) => setMessage(caught instanceof Error ? caught.message : "Could not add source."))}><Plus size={15} /> Add source</Button>
+        </div>
+      </Card>
+    </section>
+
+    <section className="mt-8">
+      <h2 className="text-2xl font-bold">Candidate queue</h2>
+      <div className="mt-4 space-y-3">
+        {candidates.map((item) => <Card key={item.id} className="p-5">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="max-w-3xl">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--ink-faint)]">{item.source_name} · score {Math.round(item.teaching_score)} · {item.case_slugs.join(", ") || "No case link"}</p>
+              <h3 className="mt-2 text-lg font-bold">{item.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-[var(--ink-muted)]">{item.summary.slice(0, 500)}{item.summary.length > 500 ? "…" : ""}</p>
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={() => void reviewBriefItem(item.id, "published").then(load).catch((caught) => setMessage(caught instanceof Error ? caught.message : "Could not publish."))}><Check size={14} /> Publish</Button>
+              <Button size="sm" variant="danger" onClick={() => void reviewBriefItem(item.id, "rejected").then(load).catch((caught) => setMessage(caught instanceof Error ? caught.message : "Could not reject."))}><X size={14} /> Reject</Button>
+            </div>
+          </div>
+        </Card>)}
+        {candidates.length === 0 && <p className="rounded-xl border border-dashed border-[var(--line)] p-10 text-center text-sm text-[var(--ink-muted)]">No candidate briefs waiting for review.</p>}
+      </div>
+    </section>
+
+    <section className="mt-8 grid gap-5 lg:grid-cols-2">
+      <Card className="p-5">
+        <h2 className="text-lg font-bold">Sources</h2>
+        <div className="mt-4 space-y-3">
+          {sources.map((source) => <div key={source.id} className="flex items-center justify-between gap-4 border-b border-[var(--line)] pb-3 last:border-0">
+            <div className="min-w-0"><p className="truncate text-sm font-bold">{source.name}</p><p className="truncate text-[10px] text-[var(--ink-faint)]">{source.feed_url} · priority {source.priority}</p></div>
+            <button type="button" onClick={() => void setBriefSourceEnabled(source.id, !source.enabled).then(load).catch((caught) => setMessage(caught instanceof Error ? caught.message : "Could not update source."))} className={`rounded px-2 py-1 text-[10px] font-bold ${source.enabled ? "bg-[var(--accent-soft)] text-[var(--accent)]" : "bg-[var(--surface-subtle)] text-[var(--ink-faint)]"}`}>{source.enabled ? "Enabled" : "Disabled"}</button>
+          </div>)}
+          {sources.length === 0 && <p className="text-sm text-[var(--ink-muted)]">No source configured.</p>}
+        </div>
+      </Card>
+
+      <Card className="p-5">
+        <h2 className="text-lg font-bold">Recent jobs</h2>
+        <div className="mt-4 space-y-3">
+          {jobs.map((job) => <div key={job.id} className="border-b border-[var(--line)] pb-3 last:border-0"><p className="text-sm font-bold capitalize">{job.status} · {job.trigger_type}</p><p className="mt-1 text-[10px] text-[var(--ink-faint)]">{new Date(job.started_at).toLocaleString()} · {job.sources_checked} sources · {job.items_inserted} inserted{job.error_message ? ` · ${job.error_message}` : ""}</p></div>)}
+          {jobs.length === 0 && <p className="text-sm text-[var(--ink-muted)]">No jobs recorded.</p>}
+        </div>
+      </Card>
+    </section>
+  </main>;
 }
-function Gate({ title, text, action }: { title: string; text?: string; action?: () => void }) { return <main className="mx-auto grid min-h-[65vh] max-w-xl place-items-center px-5 text-center"><div><h1 className="text-3xl font-bold">{title}</h1>{text && <p className="mt-3 text-sm text-[var(--ink-muted)]">{text}</p>}{action && <Button className="mt-5" onClick={action}>Sign in</Button>}</div></main>; }
+
+function Gate({ title, text, action }: { title: string; text?: string; action?: () => void }) {
+  return <main className="mx-auto grid min-h-[65vh] max-w-xl place-items-center px-5 text-center"><div><h1 className="text-3xl font-bold">{title}</h1>{text && <p className="mt-3 text-sm text-[var(--ink-muted)]">{text}</p>}{action && <Button className="mt-5" onClick={action}>Sign in</Button>}</div></main>;
+}
