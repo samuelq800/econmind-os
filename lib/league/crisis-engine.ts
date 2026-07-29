@@ -8,8 +8,9 @@ export type ScoreKey = "growth" | "priceStability" | "employment" | "fiscalSusta
 export type CrisisScores = Record<ScoreKey, number>;
 export type CrisisResultType = "Balanced Economy" | "Inflation Fighter" | "Growth at All Costs" | "Socially Protective" | "Fiscal Conservative" | "Stable but Slow" | "Crisis Mismanagement";
 
-export const CRISIS_SCENARIO_ID = "energy-inflation-dilemma";
-export const CRISIS_INITIAL_METRICS: CrisisMetrics = { growth: 1.4, inflation: 5.2, unemployment: 6.8, debt: 72, approval: 55, emissions: 100 };
+const commandCentreBaseline = createInitialCommandCentreState().macro;
+export const CRISIS_SCENARIO_ID = COMMAND_CENTRE_SCENARIO.id;
+export const CRISIS_INITIAL_METRICS: CrisisMetrics = { growth: commandCentreBaseline.growth, inflation: commandCentreBaseline.inflation, unemployment: commandCentreBaseline.unemployment, debt: commandCentreBaseline.debt, approval: commandCentreBaseline.approval, emissions: commandCentreBaseline.emissions };
 export const CRISIS_SCORE_WEIGHTS: Record<ScoreKey, number> = { growth: 0.2, priceStability: 0.2, employment: 0.15, fiscalSustainability: 0.15, socialWelfare: 0.2, environmentalSustainability: 0.1 };
 
 type Delta = Partial<CrisisMetrics>;
@@ -140,3 +141,4 @@ export function buildCrisisReflection(metrics: CrisisMetrics, policies: CrisisPo
 export function labelScoreKey(key: ScoreKey | string) {
   return ({ growth: "Growth", priceStability: "Price Stability", employment: "Employment", fiscalSustainability: "Fiscal Sustainability", socialWelfare: "Social Welfare", environmentalSustainability: "Environmental Sustainability" } as Record<string, string>)[key] ?? key;
 }
+import { COMMAND_CENTRE_SCENARIO, createInitialCommandCentreState } from "@/lib/economics/command-centre";
