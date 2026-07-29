@@ -62,7 +62,7 @@ export function AdminDailyBrief() {
       <div>
         <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[var(--accent)]">Teacher administration</p>
         <h1 className="mt-2 text-4xl font-bold">Daily Brief review</h1>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--ink-muted)]">The collector reads only configured public RSS/Atom feeds. It saves at most four high-scoring candidates per run, and every candidate requires teacher review before publication.</p>
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--ink-muted)]">The collector reads only configured public RSS/Atom feeds. It saves at most four high-scoring candidates per Singapore day, and every candidate requires teacher review before publication.</p>
       </div>
       <Button onClick={() => void collect()}><Play size={15} /> Collect now</Button>
     </header>
@@ -80,7 +80,7 @@ export function AdminDailyBrief() {
           <label className="block text-xs font-bold">Minimum teaching score <output className="ml-2 text-[var(--accent)]">{settings.minimum_score}</output>
             <input className="mt-3 w-full" type="range" min="0" max="100" step="5" value={settings.minimum_score} onChange={(event) => setSettings({ ...settings, minimum_score: Number(event.target.value), publication_mode: "review" })} onMouseUp={saveMinimumScore} />
           </label>
-          <p className="text-xs leading-5 text-[var(--ink-muted)]">Daily 07:00 Singapore scheduling is configured in Supabase. Each run retains only the four highest-scoring eligible items for review.</p>
+          <p className="text-xs leading-5 text-[var(--ink-muted)]">Daily 07:00 Singapore scheduling is configured in Supabase. No more than four eligible items can be collected in one Singapore day, including manual collection.</p>
         </div> : <p className="mt-3 text-sm text-[var(--ink-muted)]">No settings row found. Run the migration first.</p>}
       </Card>
 
