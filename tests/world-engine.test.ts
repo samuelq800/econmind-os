@@ -42,15 +42,17 @@ describe("League Infrastructure world engine", () => {
     expect(agritania.external.productionCapacity.food).toBeGreaterThan(Math.max(...peers.map((country) => country.external.productionCapacity.food)));
   });
 
-  it("blocks real shared-resource overspend and flags policy contradictions", () => {
+  it("allows fiscal deficits but blocks real non-fiscal overspend and flags policy contradictions", () => {
     const country = createWorldState().countries[0];
     const decisions = defaultInstitutionDecisions();
     decisions.economic_policy_minister.governmentSpending = 90;
     decisions.economic_policy_minister.welfare = 80;
     decisions.investment_resources_minister.infrastructure = 90;
+    decisions.investment_resources_minister.landAllocation = 110;
     decisions.central_bank_governor.policyRate = 7;
     const report = detectInstitutionConstraints(country, decisions);
     expect(report.blocking.length).toBeGreaterThan(0);
+    expect(report.blocking.some((warning) => warning.includes("fiscalCapacity"))).toBe(false);
     expect(report.warnings.some((warning) => warning.includes("Tight monetary"))).toBe(true);
   });
 

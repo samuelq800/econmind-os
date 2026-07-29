@@ -11,6 +11,7 @@ import {
   DEFAULT_WORLD_SCENARIO,
   EMPTY_GLOBAL_INDICATORS,
   createCountryFromTemplate,
+  resolveCountryTemplate,
 } from "./config.ts";
 import type {
   AgreementType,
@@ -63,7 +64,7 @@ export const defaultInstitutionDecisions = (): InstitutionDecisions => ({
 export function createWorldState(config: ScenarioConfig = DEFAULT_WORLD_SCENARIO): WorldState {
   const countries = config.countryTemplates.slice(0, config.numberOfCountries).map(createCountryFromTemplate);
   return {
-    scenarioId: "global-league-four",
+    scenarioId: config.numberOfCountries === 12 ? "global-league-twelve" : "global-league-four",
     round: 1,
     countries,
     markets: config.markets.map((market) => ({ ...market })),
@@ -79,21 +80,45 @@ export function createWorldState(config: ScenarioConfig = DEFAULT_WORLD_SCENARIO
 export function validateScenario(config: ScenarioConfig): ScenarioValidation {
   const errors: string[] = [];
   const warnings: string[] = [];
+  const templates = config.countryTemplates.map(resolveCountryTemplate);
   const totalWeight = Object.values(config.scoringWeights).reduce((sum, value) => sum + value, 0);
   if (totalWeight !== 100) errors.push("Scoring weights must total exactly 100.");
-  if (config.numberOfCountries < 3 || config.numberOfCountries > 6) errors.push("A league world scenario needs between three and six countries.");
+  if (config.numberOfCountries < 3 || config.numberOfCountries > 12) errors.push("A league world scenario needs between three and twelve countries.");
+  if (templates.length !== config.numberOfCountries) errors.push("The scenario must contain exactly its declared number of country templates.");
   if (config.numberOfRounds < 3) errors.push("At least three rounds are required for delayed policies to matter.");
   if (config.markets.length !== 4) errors.push("The first world-economy version requires all four commodity markets.");
-  const power = config.countryTemplates.map((template) => template.balanceScore);
-  const fiscal = config.countryTemplates.map((template) => template.config.fiscalModifier);
+  const power = templates.map((template) => template.balanceScore);
+  const fiscal = templates.map((template) => template.config.fiscalModifier);
   const powerGap = Math.max(...power) - Math.min(...power);
   const fiscalGap = Math.max(...fiscal) - Math.min(...fiscal);
-  const advantages = config.countryTemplates.flatMap((template) => [...Object.values(template.config.sectorAdvantages), ...Object.values(template.config.commodityAdvantages ?? {})]);
-  if (powerGap > 12) errors.push("Country starting-power gap exceeds the 12% balance threshold.");
+  const advantages = templates.flatMap((template) => [...Object.values(template.config.sectorAdvantages), ...Object.values(template.config.commodityAdvantages ?? {})]);
+  const commodityConcentrations: number[] = [];
+  const producerCounts: number[] = [];
+  for (const commodity of ["energy", "food", "manufactured_goods", "technology_services"] as const) {
+    const capacities = templates.map((template) => template.config.commodityCapacity[commodity]);
+    const total = capacities.reduce((sum, value) => sum + value, 0);
+    const sorted = [...capacities].sort((left, right) => right - left);
+    const topOne = (sorted[0] ?? 0) / Math.max(total, 1) * 100;
+    const topThree = sorted.slice(0, 3).reduce((sum, value) => sum + value, 0) / Math.max(total, 1) * 100;
+    commodityConcentrations.push(topOne, topThree);
+    producerCounts.push(capacities.filter((value) => value > 0).length);
+    if (config.numberOfCountries === 12 && topOne > 15) errors.push(`${commodity} has an opening supplier above the 15% concentration limit.`);
+    if (config.numberOfCountries === 12 && topThree > 45) errors.push(`${commodity} has a top-three supplier concentration above 45%.`);
+    if (config.numberOfCountries === 12 && capacities.filter((value) => value > 0).length < 4) errors.push(`${commodity} needs at least four effective producers.`);
+  }
+  if (config.numberOfCountries === 12 && power.some((value) => value < 96 || value > 104)) errors.push("Every twelve-country power index must remain within 96–104.");
+  if (config.numberOfCountries === 12 && powerGap > 8) errors.push("Country starting-power gap exceeds the twelve-country fairness band.");
   if (fiscalGap > 12) warnings.push("Fiscal starting-space gap should remain within the 12% balance band.");
   if (!config.shocks.some((shock) => shock.triggerRound === 2) || !config.shocks.some((shock) => shock.triggerRound === 3)) warnings.push("Default teaching pacing expects one shock in round two and one in round three.");
-  if (config.countryTemplates.some((template) => Object.keys(template.config.sectorAdvantages).length === 0)) errors.push("Every country needs at least one structural strength.");
-  return { status: errors.length ? "invalid" : "ready_for_test", errors, warnings, metrics: { powerGap, fiscalGap, averageAdvantage: round(average(advantages)), viableStrategies: config.countryTemplates.length * 2 } };
+  for (const template of templates) {
+    const shareTotal = Object.values(template.config.sectorShares).reduce((sum, value) => sum + value, 0);
+    if (shareTotal !== 100) errors.push(`${template.name} sector shares must total exactly 100.`);
+    if (Object.values(template.config.commodityCapacity).some((value) => value <= 0)) errors.push(`${template.name} requires positive commodity capacity in every market.`);
+    if (Object.keys(template.config.sectorAdvantages).length === 0) errors.push(`${template.name} needs at least one structural strength.`);
+    if (Object.keys(template.config.vulnerabilities).length < 2) errors.push(`${template.name} needs two explicit vulnerabilities.`);
+    if (template.config.viableStrategies.length < 2) errors.push(`${template.name} needs at least two viable strategies.`);
+  }
+  return { status: errors.length ? "invalid" : "ready_for_test", errors, warnings, metrics: { powerGap, fiscalGap, averageAdvantage: round(average(advantages)), viableStrategies: templates.reduce((sum, template) => sum + template.config.viableStrategies.length, 0), commodityConcentration: round(commodityConcentrations.length ? Math.max(...commodityConcentrations) : 0), minimumCommodityProducers: producerCounts.length ? Math.min(...producerCounts) : 0 } };
 }
 
 function requestedResources(decisions: InstitutionDecisions) {
@@ -109,16 +134,21 @@ export function detectInstitutionConstraints(country: WorldCountryState, decisio
   const requested = requestedResources(decisions);
   const blocking: string[] = [];
   const warnings: string[] = [];
+  const fiscalDeficit = round(Math.max(0, requested.fiscalCapacity - country.resources.fiscalCapacity));
+  const taxCapacityChange = (decisions.economic_policy_minister.incomeTax - 20) * 0.75 + (decisions.economic_policy_minister.businessTax - 25) * 0.45;
+  const nextQuarterFiscalCapacity = round(clamp(country.resources.fiscalCapacity + taxCapacityChange - fiscalDeficit * 0.18, 55, 135));
   for (const [resource, value] of Object.entries(requested) as Array<[keyof typeof requested, number]>) {
-    if (value > country.resources[resource]) blocking.push(`${resource} is over-committed (${round(value)} requested; ${round(country.resources[resource])} available).`);
+    if (resource !== "fiscalCapacity" && value > country.resources[resource]) blocking.push(`${resource} is over-committed (${round(value)} requested; ${round(country.resources[resource])} available).`);
   }
+  if (fiscalDeficit > 0) warnings.push(`Planned fiscal deficit: ${fiscalDeficit} points. Debt, interest pressure and confidence risks increase next quarter.`);
+  if (fiscalDeficit > 20) warnings.push("Large deficit financing substantially raises debt-sustainability and currency-risk exposure.");
   if (decisions.central_bank_governor.policyRate >= 6 && decisions.economic_policy_minister.governmentSpending >= 50) warnings.push("Tight monetary policy conflicts with an extreme fiscal expansion.");
   if (decisions.economic_policy_minister.businessTax <= 14 && decisions.economic_policy_minister.governmentSpending >= 48) warnings.push("Large spending with a deep business-tax cut weakens fiscal sustainability.");
   if (decisions.economic_policy_minister.energySupport >= 35 && decisions.investment_resources_minister.renewableInvestment <= 8) warnings.push("High energy support without green investment increases dependency risk.");
   if (decisions.trade_minister.tariff >= 25 && decisions.trade_minister.exportSupport <= 3) warnings.push("Protection without productivity or export support risks higher domestic costs.");
   if (decisions.central_bank_governor.currencyIntervention >= 25 && country.external.tradeBalance < -12) warnings.push("Reserve intervention cannot indefinitely offset a large trade deficit.");
-  const coherence = clamp(100 - warnings.length * 12 - Math.max(0, requested.administrativeCapacity - country.resources.administrativeCapacity) * 0.7, 0, 100);
-  return { blocking, warnings, requestedResources: requested, coherence: round(coherence) };
+  const coherence = clamp(100 - warnings.length * 9 - fiscalDeficit * 0.22 - Math.max(0, requested.administrativeCapacity - country.resources.administrativeCapacity) * 0.7, 0, 100);
+  return { blocking, warnings, requestedResources: requested, fiscalDeficit, nextQuarterFiscalCapacity, coherence: round(coherence) };
 }
 
 function fullDecisions(submission: CountrySubmission): InstitutionDecisions {
@@ -158,15 +188,17 @@ function applyWorldShock(country: WorldCountryState, shocks: WorldShock[]): Worl
     if (shock.affectedCountries.length && !shock.affectedCountries.includes(next.countryId)) continue;
     if (shock.id === "global-energy-shock") next.domestic.activeShockIds = [...new Set([...next.domestic.activeShockIds, "global-energy-shock"])] as CommandCentreState["activeShockIds"];
     if (shock.id === "global-capital-outflow") next.domestic.activeShockIds = [...new Set([...next.domestic.activeShockIds, "capital-outflow"])] as CommandCentreState["activeShockIds"];
-    next.domestic.macro.inflation += shock.domesticEffects.inflation ?? 0;
-    next.domestic.macro.growth += shock.domesticEffects.growth ?? 0;
-    next.domestic.resources.foreignReserves += shock.domesticEffects.reserves ?? 0;
-    next.resources.foreignReserves += shock.domesticEffects.reserves ?? 0;
-    next.external.exchangePressure += shock.domesticEffects.capitalPressure ?? 0;
-    for (const [sector, effect] of Object.entries(shock.sectorEffects)) next.domestic.sectors[sector as SectorKey].output_index += effect ?? 0;
+    const shockSensitivity = next.templateConfig.shockSensitivities[shock.scope] ?? next.templateConfig.shockSensitivities[shock.id] ?? 0;
+    const exposure = 1 + shockSensitivity / 100;
+    next.domestic.macro.inflation += (shock.domesticEffects.inflation ?? 0) * exposure;
+    next.domestic.macro.growth += (shock.domesticEffects.growth ?? 0) * exposure;
+    next.domestic.resources.foreignReserves += (shock.domesticEffects.reserves ?? 0) * exposure;
+    next.resources.foreignReserves += (shock.domesticEffects.reserves ?? 0) * exposure;
+    next.external.exchangePressure += (shock.domesticEffects.capitalPressure ?? 0) * exposure;
+    for (const [sector, effect] of Object.entries(shock.sectorEffects)) next.domestic.sectors[sector as SectorKey].output_index += (effect ?? 0) * exposure;
     for (const commodity of shock.affectedCommodities) {
       const supplyReduction = shock.id === "global-energy-shock" ? 0.14 : 0.04;
-      next.external.productionCapacity[commodity] *= 1 - supplyReduction;
+      next.external.productionCapacity[commodity] *= 1 - supplyReduction * exposure;
     }
   }
   return next;
@@ -177,18 +209,34 @@ function applyRoleSpecificEffects(country: WorldCountryState, decisions: Institu
   const investment = decisions.investment_resources_minister;
   const trade = decisions.trade_minister;
   const bank = decisions.central_bank_governor;
-  next.domestic.macro.productivity += investment.researchAndDevelopment * 0.045 + investment.infrastructure * 0.025 + investment.industrialZones * 0.018;
-  next.domestic.macro.emissions -= investment.renewableInvestment * 0.035;
-  next.domestic.sectors.energy.investment_index += investment.energyCapacityInvestment * 0.12 + investment.renewableInvestment * 0.12;
-  next.domestic.sectors.manufacturing.output_index += investment.industrialZones * 0.08 + trade.exportSupport * 0.05;
-  next.domestic.sectors.technology.investment_index += investment.researchAndDevelopment * 0.1;
+  const policy = next.templateConfig.policySensitivities;
+  const researchMultiplier = 1 + (policy.researchEfficiency ?? policy.technologyImportProductivity ?? 0) / 100;
+  const infrastructureMultiplier = 1 + (policy.infrastructureEfficiency ?? policy.infrastructureMultiplier ?? 0) / 100;
+  const greenMultiplier = 1 + (policy.greenInvestmentReturn ?? 0) / 100;
+  const tradeMultiplier = 1 + (next.templateConfig.tradeModifier + (policy.transportEfficiency ?? 0) * 0.35) / 100;
+  next.domestic.macro.productivity += investment.researchAndDevelopment * 0.045 * researchMultiplier + investment.infrastructure * 0.025 * infrastructureMultiplier + investment.industrialZones * 0.018;
+  next.domestic.macro.emissions -= investment.renewableInvestment * 0.035 * greenMultiplier;
+  next.domestic.sectors.energy.investment_index += investment.energyCapacityInvestment * 0.12 * greenMultiplier + investment.renewableInvestment * 0.12 * greenMultiplier;
+  next.domestic.sectors.manufacturing.output_index += investment.industrialZones * 0.08 * infrastructureMultiplier + trade.exportSupport * 0.05 * tradeMultiplier;
+  next.domestic.sectors.technology.investment_index += investment.researchAndDevelopment * 0.1 * researchMultiplier;
   next.domestic.macro.inflation += trade.tariff * 0.018 + trade.importRestriction * 0.012;
   next.external.exchangePressure -= bank.currencyIntervention * 0.18;
   next.resources.foreignReserves = clamp(next.resources.foreignReserves - bank.reserveDeployment - bank.currencyIntervention * 0.35, 0, 200);
   next.domestic.resources.foreignReserves = next.resources.foreignReserves;
-  next.external.productionCapacity.energy += investment.energyCapacityInvestment * 0.18 + investment.renewableInvestment * 0.2;
-  next.external.productionCapacity.manufactured_goods += investment.industrialZones * 0.14;
-  next.external.productionCapacity.technology_services += investment.researchAndDevelopment * 0.16;
+  next.external.productionCapacity.energy += (investment.energyCapacityInvestment * 0.18 + investment.renewableInvestment * 0.2) * greenMultiplier;
+  next.external.productionCapacity.manufactured_goods += investment.industrialZones * 0.14 * infrastructureMultiplier;
+  next.external.productionCapacity.technology_services += investment.researchAndDevelopment * 0.16 * researchMultiplier;
+  const fiscal = decisions.economic_policy_minister;
+  const constraint = detectInstitutionConstraints(country, decisions);
+  const taxCapacityChange = (fiscal.incomeTax - 20) * 0.75 + (fiscal.businessTax - 25) * 0.45;
+  // Tax settings are decided now but feed the available fiscal space carried
+  // into the next quarter. Deficits are allowed; their financing has a
+  // transparent cost rather than being an artificial hard stop.
+  next.resources.fiscalCapacity = constraint.nextQuarterFiscalCapacity;
+  next.domestic.macro.debt = round(clamp(next.domestic.macro.debt + constraint.fiscalDeficit * 0.16 - Math.max(0, taxCapacityChange) * 0.025, 0, 220));
+  next.external.investorConfidence = round(clamp(next.external.investorConfidence - constraint.fiscalDeficit * 0.28 - Math.max(0, next.domestic.macro.debt - 90) * 0.12, 0, 100));
+  next.external.exchangePressure = round(clamp(next.external.exchangePressure + constraint.fiscalDeficit * 0.22 + Math.max(0, next.domestic.macro.debt - 100) * 0.08, -50, 80));
+  next.domestic.stakeholders.investors.debt_concern = round(clamp(next.domestic.stakeholders.investors.debt_concern + constraint.fiscalDeficit * 0.32, 0, 100));
   return next;
 }
 
@@ -223,7 +271,9 @@ function clearMarkets(countries: WorldCountryState[], markets: CommodityMarket[]
         if (!quantity) continue;
         const tariff = clamp((tariffs.get(importer.countryId) ?? 5) - (agreement?.terms.tariffReduction ?? 0), 0, 40);
         const fulfilmentRatio = round(quantity / Math.max(importNeed.get(importer.countryId) ?? 1, 1), 3);
-        flows.push({ exporterCountryId: exporter.countryId, importerCountryId: importer.countryId, commodity, quantity, basePrice: market.globalPrice, tariff, transportCost: market.transportCost, agreementId: agreement?.id ?? null, duration: agreement ? agreement.endsRound - roundNumber + 1 : 1, status: fulfilmentRatio < 0.999 ? "partial" : "fulfilled", fulfilmentRatio });
+        const transportEfficiency = exporter.templateConfig.policySensitivities.transportEfficiency ?? 0;
+        const transportCost = round(market.transportCost * (1 - Math.min(0.35, (exporter.templateConfig.tradeModifier + transportEfficiency) / 100)));
+        flows.push({ exporterCountryId: exporter.countryId, importerCountryId: importer.countryId, commodity, quantity, basePrice: market.globalPrice, tariff, transportCost, agreementId: agreement?.id ?? null, duration: agreement ? agreement.endsRound - roundNumber + 1 : 1, status: fulfilmentRatio < 0.999 ? "partial" : "fulfilled", fulfilmentRatio });
         availability.set(exporter.countryId, available - quantity);
         remaining -= quantity;
       }
@@ -258,7 +308,7 @@ function applyTradeFlows(countries: WorldCountryState[], flows: TradeFlow[]) {
 
 function applyCapitalAndExchange(countries: WorldCountryState[]) {
   const next = countries.map((country) => structuredClone(country));
-  const attractiveness = next.map((country) => country.domestic.macro.growth * 1.4 + country.domestic.lastPolicy.interestRate * 1.1 - country.domestic.macro.inflation * 0.9 - country.domestic.macro.debt * 0.045 + country.external.investorConfidence * 0.12 - country.external.exchangePressure * 0.16);
+  const attractiveness = next.map((country) => country.domestic.macro.growth * 1.4 + country.domestic.lastPolicy.interestRate * 1.1 - country.domestic.macro.inflation * 0.9 - country.domestic.macro.debt * 0.045 + country.external.investorConfidence * 0.12 - country.external.exchangePressure * 0.16 + country.templateConfig.capitalAttractionModifier * 0.45);
   const mean = average(attractiveness);
   const averageInflation = average(next.map((country) => country.domestic.macro.inflation));
   const averageRate = average(next.map((country) => country.domestic.lastPolicy.interestRate));
