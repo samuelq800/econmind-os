@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 const migration = readFileSync("supabase/migrations/20260729020000_league_infrastructure_2.sql", "utf8");
 const twelveNationMigration = readFileSync("supabase/migrations/20260729040000_twelve_country_world_league.sql", "utf8");
 const rlsFixMigration = readFileSync("supabase/migrations/20260729030000_fix_agreement_participant_rls_recursion.sql", "utf8");
+const teacherAdminMigration = readFileSync("supabase/migrations/20260729050000_teacher_administrator_operation.sql", "utf8");
 const edgeFunction = readFileSync("supabase/functions/process-league-world-round/index.ts", "utf8");
 const browserData = readFileSync("lib/supabase/league-infrastructure.ts", "utf8");
 
@@ -61,5 +62,14 @@ describe("League Infrastructure 2.0 persistence and settlement boundary", () => 
     expect(rlsFixMigration).toContain("create or replace function public.can_view_agreement");
     expect(rlsFixMigration).toContain("public.can_view_agreement");
     expect(browserData).not.toContain("SUPABASE_SERVICE_ROLE_KEY");
+  });
+
+  it("lets teacher administrators operate every country panel without weakening ordinary role boundaries", () => {
+    expect(teacherAdminMigration).toContain("create or replace function public.can_edit_institution_draft");
+    expect(teacherAdminMigration).toContain("public.is_competition_director(p_competition_id, p_user_id)");
+    expect(teacherAdminMigration).toContain("role.role_type = p_institution");
+    expect(teacherAdminMigration).toContain("create or replace function public.approve_agreement_participant");
+    expect(teacherAdminMigration).toContain("create or replace function public.propose_international_agreement");
+    expect(teacherAdminMigration).toContain("teacher administrator can approve this agreement");
   });
 });
