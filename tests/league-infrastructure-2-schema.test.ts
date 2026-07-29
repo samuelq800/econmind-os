@@ -42,4 +42,8 @@ describe("League Infrastructure 2.0 persistence and settlement boundary", () => 
     expect(migration).toContain("create policy trade_flows_member_or_published");
     expect(browserData).toContain("subscribeToLeagueCompetition");
   });
+
+  it("uses the role holder foreign key when embedding profiles", () => {
+    expect(browserData).toContain("profiles!competition_roles_user_id_fkey(user_id,display_name)");
+  });
 });
