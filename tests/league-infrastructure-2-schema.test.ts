@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const migration = readFileSync("supabase/migrations/20260729020000_league_infrastructure_2.sql", "utf8");
+const twelveNationMigration = readFileSync("supabase/migrations/20260729040000_twelve_country_world_league.sql", "utf8");
+const rlsFixMigration = readFileSync("supabase/migrations/20260729030000_fix_agreement_participant_rls_recursion.sql", "utf8");
 const edgeFunction = readFileSync("supabase/functions/process-league-world-round/index.ts", "utf8");
 const browserData = readFileSync("lib/supabase/league-infrastructure.ts", "utf8");
 
@@ -45,5 +47,19 @@ describe("League Infrastructure 2.0 persistence and settlement boundary", () => 
 
   it("uses the role holder foreign key when embedding profiles", () => {
     expect(browserData).toContain("profiles!competition_roles_user_id_fkey(user_id,display_name)");
+  });
+
+  it("adds a versioned, immutable twelve-country world without replacing the legacy world", () => {
+    expect(twelveNationMigration).toContain("Twelve Nations: Interconnected World Economy");
+    expect(twelveNationMigration).toContain("immutable_template_snapshot");
+    expect(twelveNationMigration).toContain("openIndividualRegistration");
+    expect(twelveNationMigration).toContain("Fiscal deficits are permitted");
+    for (const country of ["techoria", "meditoria", "culturia", "manufactura", "materia", "agritania", "greenovia", "energea", "constructa", "financora", "logistica", "centravia"]) expect(twelveNationMigration).toContain(`\"slug\":\"${country}\"`);
+  });
+
+  it("removes mutual agreement-policy recursion and keeps browser code free of service keys", () => {
+    expect(rlsFixMigration).toContain("create or replace function public.can_view_agreement");
+    expect(rlsFixMigration).toContain("public.can_view_agreement");
+    expect(browserData).not.toContain("SUPABASE_SERVICE_ROLE_KEY");
   });
 });

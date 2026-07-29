@@ -103,12 +103,58 @@ export type CountrySpecialisation = {
   capitalAttractionModifier: number;
 };
 
+/**
+ * The full country profile is data, not component logic.  The compact
+ * specialisation fields retain compatibility with the original four-country
+ * world while the nested fields power the configurable twelve-country world.
+ */
+export type CountryProfileConfig = CountrySpecialisation & {
+  version: number;
+  shortCode: string;
+  category: string;
+  tagline: string;
+  description: string;
+  primarySpecialisation: string;
+  secondarySpecialisation: string;
+  primaryStrength: string;
+  secondaryStrength: string;
+  primaryVulnerability: string;
+  secondaryVulnerability: string;
+  macroBaseline: {
+    populationIndex: number;
+    realGdpIndex: number;
+    productivityIndex: number;
+    inflationRate: number;
+    unemploymentRate: number;
+    governmentDebtPctGdp: number;
+    fiscalBalancePctGdp: number;
+    publicApproval: number;
+    inequalityIndex: number;
+    emissionsIndex: number;
+    foreignReservesIndex: number;
+    institutionalCapacity: number;
+    politicalCapital: number;
+    administrativeCapacity: number;
+    landCapacity: number;
+    energyCapacity: number;
+    investorConfidence: number;
+    currencyIndex: number;
+  };
+  sectorShares: Record<"manufacturing" | "technology" | "services" | "energy" | "agriculture", number>;
+  commodityCapacity: Record<Commodity, number>;
+  policySensitivities: Record<string, number>;
+  shockSensitivities: Record<string, number>;
+  viableStrategies: string[];
+  visualIdentity: { primary: string; secondary: string; symbol: string; flag: string; alt: string };
+  configHash: string;
+};
+
 export type CountryTemplate = {
   id: string;
   slug: string;
   name: string;
   specialisation: string;
-  config: CountrySpecialisation;
+  config: CountryProfileConfig;
   balanceScore: number;
 };
 
@@ -181,6 +227,7 @@ export type WorldCountryState = {
   countryId: string;
   countryName: string;
   templateId: string;
+  templateConfig: CountryProfileConfig;
   domestic: CommandCentreState;
   resources: NationalResources;
   external: CountryExternalState;
@@ -319,6 +366,8 @@ export type ConstraintReport = {
   blocking: string[];
   warnings: string[];
   requestedResources: Partial<NationalResources>;
+  fiscalDeficit: number;
+  nextQuarterFiscalCapacity: number;
   coherence: number;
 };
 
@@ -326,5 +375,5 @@ export type ScenarioValidation = {
   status: "invalid" | "ready_for_test";
   errors: string[];
   warnings: string[];
-  metrics: { powerGap: number; fiscalGap: number; averageAdvantage: number; viableStrategies: number };
+  metrics: { powerGap: number; fiscalGap: number; averageAdvantage: number; viableStrategies: number; commodityConcentration: number; minimumCommodityProducers: number };
 };

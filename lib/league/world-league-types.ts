@@ -8,14 +8,18 @@ export type LeagueScenario = {
   status: ScenarioLifecycle; config: Record<string, unknown>; created_by: string | null; published_at: string | null; archived_at: string | null; created_at: string; updated_at: string;
 };
 
-export type LeagueCountryTemplate = { id: string; scenario_id: string; slug: string; name: string; specialisation: string; config: Record<string, unknown>; balance_score: number; created_at: string; updated_at: string };
+export type LeagueCountryTemplate = {
+  id: string; scenario_id: string; slug: string; name: string; display_name: string; short_code: string; category: string; tagline: string; description: string; specialisation: string;
+  config: Record<string, unknown>; sector_shares: Record<string, number>; macro_modifiers: Record<string, number>; commodity_capacity: Record<string, number>; policy_sensitivities: Record<string, number>; shock_sensitivities: Record<string, number>; viable_strategies: string[]; visual_identity: Record<string, string>;
+  balance_score: number; version: number; status: "draft" | "published" | "archived"; published_at: string | null; config_hash: string; is_active: boolean; created_at: string; updated_at: string;
+};
 export type LeagueCompetition = {
   id: string; scenario_id: string; name: string; description: string; status: CompetitionStatus; current_round: number; round_duration_seconds: number | null;
   leaderboard_visibility: "hidden" | "after_round" | "always"; config: Record<string, unknown>; created_by: string | null; started_at: string | null; completed_at: string | null; state_changed_at: string; created_at: string; updated_at: string;
   scenario?: LeagueScenario | null;
 };
 export type LeagueCompetitionRound = { id: string; competition_id: string; round_number: number; status: CompetitionRoundStatus; opens_at: string | null; locks_at: string | null; processing_started_at: string | null; processed_at: string | null; published_at: string | null; processing_error: string | null; created_at: string; updated_at: string };
-export type LeagueCompetitionCountry = { id: string; competition_id: string; country_template_id: string; assigned_school_id: string | null; assigned_team_id: string | null; display_name: string; status: "unassigned" | "assigned" | "ready" | "active" | "completed"; template?: LeagueCountryTemplate | null; school?: { id: string; name: string } | null; team?: { id: string; name: string; school_id: string } | null };
+export type LeagueCompetitionCountry = { id: string; competition_id: string; country_template_id: string; template_version: number; immutable_template_snapshot: Record<string, unknown>; assigned_school_id: string | null; assigned_team_id: string | null; display_name: string; status: "unassigned" | "assigned" | "ready" | "active" | "completed"; template?: LeagueCountryTemplate | null; school?: { id: string; name: string } | null; team?: { id: string; name: string; school_id: string } | null };
 export type LeagueCompetitionRole = { id: string; competition_id: string; country_id: string | null; user_id: string; role_type: CompetitionRole; is_captain: boolean; assigned_at: string; assigned_by: string | null; profile?: { user_id: string; display_name: string | null } | null };
 export type LeagueInstitutionDraft = { id: string; competition_id: string; round_id: string; country_id: string; institution_type: InstitutionType; created_by: string; draft_state: Record<string, unknown>; locked_state: Record<string, unknown> | null; status: "draft" | "locked" | "unlocked"; locked_at: string | null; updated_at: string; created_at: string };
 export type LeagueCountrySubmission = { id: string; competition_id: string; round_id: string; country_id: string; policy_package: Record<string, unknown>; agreement_actions: string[]; status: "draft" | "finalised" | "locked" | "processed"; finalised_by: string | null; finalised_at: string | null; updated_at: string };

@@ -1,5 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { DEFAULT_WORLD_SCENARIO, createWorldState, settleWorldRound } from "../../../lib/economics/world/index.ts";
+import { DEFAULT_WORLD_SCENARIO, TWELVE_COUNTRY_WORLD_SCENARIO, createWorldState, settleWorldRound } from "../../../lib/economics/world/index.ts";
 import type { CountrySubmission, InternationalAgreement, ScenarioConfig, WorldState } from "../../../lib/economics/world/types.ts";
 
 const cors = {
@@ -20,10 +20,13 @@ const asArray = <T>(value: unknown) => Array.isArray(value) ? value as T[] : [];
 
 function scenarioConfig(scenario: { id: string; config: unknown }, templates: DbTemplate[]): ScenarioConfig {
   const saved = asRecord(scenario.config);
+  const baseline = Number(saved.numberOfCountries ?? DEFAULT_WORLD_SCENARIO.numberOfCountries) === 12
+    ? TWELVE_COUNTRY_WORLD_SCENARIO
+    : DEFAULT_WORLD_SCENARIO;
   return {
-    ...DEFAULT_WORLD_SCENARIO,
+    ...baseline,
     ...saved,
-    version: Number(saved.version ?? DEFAULT_WORLD_SCENARIO.version),
+    version: Number(saved.version ?? baseline.version),
     type: "league_world",
     countryTemplates: templates.map((template) => ({
       id: template.id,
@@ -33,9 +36,9 @@ function scenarioConfig(scenario: { id: string; config: unknown }, templates: Db
       config: template.config as ScenarioConfig["countryTemplates"][number]["config"],
       balanceScore: Number(template.balance_score),
     })),
-    markets: asArray<ScenarioConfig["markets"][number]>(saved.markets).length ? asArray(saved.markets) : DEFAULT_WORLD_SCENARIO.markets,
-    shocks: asArray<ScenarioConfig["shocks"][number]>(saved.shocks).length ? asArray(saved.shocks) : DEFAULT_WORLD_SCENARIO.shocks,
-    scoringWeights: { ...DEFAULT_WORLD_SCENARIO.scoringWeights, ...asRecord(saved.scoringWeights) } as ScenarioConfig["scoringWeights"],
+    markets: asArray<ScenarioConfig["markets"][number]>(saved.markets).length ? asArray(saved.markets) : baseline.markets,
+    shocks: asArray<ScenarioConfig["shocks"][number]>(saved.shocks).length ? asArray(saved.shocks) : baseline.shocks,
+    scoringWeights: { ...baseline.scoringWeights, ...asRecord(saved.scoringWeights) } as ScenarioConfig["scoringWeights"],
   };
 }
 
@@ -112,13 +115,19 @@ Deno.serve(async (request) => {
     }
 
     const [{ data: competition, error: competitionError }, { data: round, error: roundError }, { data: countries, error: countriesError }, { data: submissions, error: submissionsError }] = await Promise.all([
-      admin.from("competitions").select("id,scenario_id,current_round,status").eq("id", competitionId).single(),
+      admin.from("competitions").select("id,scenario_id,current_round,status,config").eq("id", competitionId).single(),
       admin.from("competition_rounds").select("id,round_number,status").eq("id", roundId).eq("competition_id", competitionId).single(),
       admin.from("competition_countries").select("id,country_template_id,display_name,assigned_team_id").eq("competition_id", competitionId).order("id"),
       admin.from("country_submissions").select("country_id,policy_package,agreement_actions,status,finalised_by").eq("competition_id", competitionId).eq("round_id", roundId).eq("status", "finalised"),
     ]);
     if (competitionError || roundError || countriesError || submissionsError || !competition || !round) throw new Error(competitionError?.message ?? roundError?.message ?? countriesError?.message ?? submissionsError?.message ?? "Competition data could not be loaded.");
-    if ((countries as DbCountry[]).length !== 4 || (countries as DbCountry[]).some((country) => !country.assigned_team_id) || (submissions ?? []).length !== 4) throw new Error("Exactly four assigned countries must each finalise a submission before clearing.");
+    const { data: scenarioMeta, error: scenarioMetaError } = await admin.from("scenario_definitions").select("config").eq("id", competition.scenario_id).single();
+    if (scenarioMetaError || !scenarioMeta) throw new Error(scenarioMetaError?.message ?? "Scenario configuration could not be loaded.");
+    const expectedCountries = Number(asRecord(scenarioMeta.config).numberOfCountries ?? 4);
+    const isOpenIndividualWorld = Boolean(asRecord(competition.config).openIndividualRegistration);
+    if ((countries as DbCountry[]).length !== expectedCountries || (!isOpenIndividualWorld && (countries as DbCountry[]).some((country) => !country.assigned_team_id)) || (submissions ?? []).length !== expectedCountries) {
+      throw new Error(`All ${expectedCountries} countries must have finalised a submission before clearing.`);
+    }
 
     const [{ data: scenario, error: scenarioError }, { data: templates, error: templatesError }, { data: prior }, { data: agreements }] = await Promise.all([
       admin.from("scenario_definitions").select("id,config").eq("id", competition.scenario_id).single(),

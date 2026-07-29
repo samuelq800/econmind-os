@@ -36,6 +36,11 @@ export async function listLeagueScenarios(includeArchived = false) {
   fail(error); return (data ?? []) as LeagueScenario[];
 }
 
+export async function listMyScenarioEditorAccess(userId: string) {
+  const { data, error } = await client().from("scenario_editor_access").select("scenario_id").eq("user_id", userId);
+  fail(error); return new Set((data ?? []).map((item) => item.scenario_id as string));
+}
+
 export async function getLeagueScenario(scenarioId: string) {
   const [{ data: scenario, error }, { data: templates, error: templatesError }] = await Promise.all([
     client().from("scenario_definitions").select("*").eq("id", scenarioId).maybeSingle(),
@@ -60,7 +65,7 @@ export async function saveCountryTemplate(template: Partial<LeagueCountryTemplat
   fail(error); return data as LeagueCountryTemplate;
 }
 
-export async function createLeagueCompetition(input: { scenarioId: string; name: string; description: string; assignmentMethod: "manual" | "random" | "balanced_random" }) {
+export async function createLeagueCompetition(input: { scenarioId: string; name: string; description: string; assignmentMethod: "manual" | "random" | "balanced_random" | "snake_draft" }) {
   const { data, error } = await client().rpc("create_league_competition", { p_scenario_id: input.scenarioId, p_name: input.name, p_description: input.description, p_assignment_method: input.assignmentMethod });
   fail(error); return data as LeagueCompetition;
 }
