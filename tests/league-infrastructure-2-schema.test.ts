@@ -5,6 +5,7 @@ const migration = readFileSync("supabase/migrations/20260729020000_league_infras
 const twelveNationMigration = readFileSync("supabase/migrations/20260729040000_twelve_country_world_league.sql", "utf8");
 const rlsFixMigration = readFileSync("supabase/migrations/20260729030000_fix_agreement_participant_rls_recursion.sql", "utf8");
 const teacherAdminMigration = readFileSync("supabase/migrations/20260729050000_teacher_administrator_operation.sql", "utf8");
+const alwaysOpenMigration = readFileSync("supabase/migrations/20260729060000_always_open_manual_league.sql", "utf8");
 const edgeFunction = readFileSync("supabase/functions/process-league-world-round/index.ts", "utf8");
 const browserData = readFileSync("lib/supabase/league-infrastructure.ts", "utf8");
 
@@ -71,5 +72,16 @@ describe("League Infrastructure 2.0 persistence and settlement boundary", () => 
     expect(teacherAdminMigration).toContain("create or replace function public.approve_agreement_participant");
     expect(teacherAdminMigration).toContain("create or replace function public.propose_international_agreement");
     expect(teacherAdminMigration).toContain("teacher administrator can approve this agreement");
+  });
+
+  it("keeps country work always open while preserving locked history and manual settlement", () => {
+    for (const fn of ["can_edit_institution_draft", "claim_competition_role", "save_institution_draft", "finalise_country_submission", "propose_international_agreement", "claim_world_processing", "publish_competition_round"]) {
+      expect(alwaysOpenMigration).toContain(`create or replace function public.${fn}`);
+    }
+    expect(alwaysOpenMigration).not.toContain("competition.status in");
+    expect(alwaysOpenMigration).toContain("A locked or settled draft cannot be changed");
+    expect(alwaysOpenMigration).toContain("All % countries must finalise a submission before manual settlement");
+    expect(alwaysOpenMigration).toContain("'manual_settlement', true");
+    expect(alwaysOpenMigration).toContain("current_round = coalesce(next_round, current_round)");
   });
 });
