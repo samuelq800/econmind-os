@@ -7,6 +7,7 @@ const schools = [
   "Beijing Academy International Department",
   "Chongqing Nankai Secondary School",
   "HD Shanghai School",
+  "HT Nanjing Impact Academy",
   "Nanjing Foreign Language School, Xianlin Campus",
   "SUZHOU SCIENCE&TECHNOLOGY TOWN FOREIGN LANGUAGE SCHOOL",
 ] as const;
@@ -27,7 +28,7 @@ export function InterschoolNetworkHero() {
         <div className="relative z-10 max-w-3xl self-start">
           <div className="flex flex-wrap items-center gap-3 text-[10px] font-extrabold uppercase tracking-[.18em] text-blue-100">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1.5 backdrop-blur-sm"><Network size={13} /> Inter-school network</span>
-            <span>Seven schools · one economic world</span>
+            <span>Eight schools · one economic world</span>
           </div>
           <h1 className="mt-7 text-[clamp(3.2rem,5.4vw,6rem)] font-bold leading-[.86] tracking-[-.075em]">EconMind<br />OS League.</h1>
           <p className="mt-6 max-w-xl text-base leading-7 text-blue-100/85 sm:text-lg">A shared economics workspace where schools test policies, connect markets and run one persistent world together.</p>
@@ -45,7 +46,7 @@ export function InterschoolNetworkHero() {
 
         <div className="inter-school-lanes" aria-label="Participating schools">
           {schools.map((school, index) => (
-            <p key={school} className="inter-school-lane" style={{ "--school-index": index } as React.CSSProperties}>
+            <p key={school} className={`inter-school-lane${index === 0 ? " inter-school-lane-featured" : ""}`} style={{ "--school-index": index } as React.CSSProperties}>
               {school}
             </p>
           ))}
