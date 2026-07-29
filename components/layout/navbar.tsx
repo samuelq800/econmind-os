@@ -15,6 +15,7 @@ const publicLinks = [
   { href: "/workspace", label: "Integrated Workspace" },
   { href: "/experiments", label: "Experiments" },
   { href: "/cases", label: "Cases" },
+  { href: "/league", label: "League" },
   { href: "/daily-brief", label: "Daily Brief" },
   { href: "/about", label: "About" },
 ];
