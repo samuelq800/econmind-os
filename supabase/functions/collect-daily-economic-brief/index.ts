@@ -1,8 +1,15 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { scoreCandidate, selectBriefsForReview, slugForBrief } from "../../../lib/daily-brief/rules.ts";
+import { DAILY_BRIEF_MAX_ITEMS_PER_DAY, remainingDailyBriefSlots, scoreCandidate, selectBriefsForReview, slugForBrief } from "../../../lib/daily-brief/rules.ts";
 import type { FeedCandidate } from "../../../lib/daily-brief/types.ts";
 
 type SourceRow = { id: string; name: string; feed_url: string; source_type: "rss" | "atom"; priority: number; enabled: boolean };
+const singaporeDayRange = () => {
+  const localDate = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const [year, month, day] = localDate.split("-").map(Number);
+  const start = new Date(Date.UTC(year, month - 1, day - 1, 16)).toISOString();
+  const end = new Date(Date.UTC(year, month - 1, day, 16)).toISOString();
+  return { start, end };
+};
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Content-Type": "application/json" };
 const plain = (value = "") => value.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/\s+/g, " ").trim();
 const match = (block: string, tag: string) => new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i").exec(block)?.[1] ?? "";
@@ -55,6 +62,9 @@ Deno.serve(async (request) => {
     ]);
     if (sourcesError) throw new Error(sourcesError.message);
     const rows = (sources ?? []) as SourceRow[];
+    const day = singaporeDayRange();
+    const { count: collectedToday, error: collectedTodayError } = await admin.from("daily_brief_items").select("id", { count: "exact", head: true }).gte("created_at", day.start).lt("created_at", day.end);
+    if (collectedTodayError) throw new Error(collectedTodayError.message);
     const fetched = await Promise.all(rows.map(async (source) => {
       const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), 9000);
       try {
@@ -66,14 +76,15 @@ Deno.serve(async (request) => {
     const seen = new Set<string>();
     const candidates = fetched.flat().map(scoreCandidate).filter((item) => item.title.length > 8 && item.summary.length > 30).filter((item) => { if (seen.has(item.fingerprint)) return false; seen.add(item.fingerprint); return true; });
     const threshold = Number(settings?.minimum_score ?? 55);
-    const rowsToInsert = selectBriefsForReview(candidates, threshold).map((item) => ({
+    const remainingSlots = remainingDailyBriefSlots(collectedToday ?? 0);
+    const rowsToInsert = selectBriefsForReview(candidates, threshold, remainingSlots).map((item) => ({
       slug: slugForBrief(item), source_id: item.sourceId, source_name: item.sourceName, source_url: item.sourceUrl, canonical_url: item.canonicalUrl, title: item.title, summary: item.summary,
       published_source_at: item.publishedSourceAt, topic_tags: item.tags, case_slugs: item.caseSlugs, teaching_score: item.score, score_breakdown: item.breakdown, fingerprint: item.fingerprint,
       status: "candidate", published_at: null,
     }));
     let inserted = 0;
     if (rowsToInsert.length) { const { data, error } = await admin.from("daily_brief_items").upsert(rowsToInsert, { onConflict: "fingerprint", ignoreDuplicates: true }).select("id"); if (error) throw new Error(error.message); inserted = data?.length ?? 0; }
-    await admin.from("daily_brief_jobs").update({ status: "completed", finished_at: new Date().toISOString(), sources_checked: rows.length, candidates_found: candidates.length, items_inserted: inserted, metadata: { threshold, publicationMode: "review", maximumItems: 4 } }).eq("id", job.id);
+    await admin.from("daily_brief_jobs").update({ status: "completed", finished_at: new Date().toISOString(), sources_checked: rows.length, candidates_found: candidates.length, items_inserted: inserted, metadata: { threshold, publicationMode: "review", maximumItemsPerDay: DAILY_BRIEF_MAX_ITEMS_PER_DAY, collectedToday: collectedToday ?? 0 } }).eq("id", job.id);
     return new Response(JSON.stringify({ ok: true, sourcesChecked: rows.length, candidatesFound: candidates.length, itemsInserted: inserted }), { headers: cors });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown collection error";

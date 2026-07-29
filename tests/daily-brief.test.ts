@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DAILY_BRIEF_MAX_ITEMS_PER_RUN, linkCases, normaliseText, scoreCandidate, selectBriefsForReview, slugForBrief, stableFingerprint } from "@/lib/daily-brief/rules";
+import { DAILY_BRIEF_MAX_ITEMS_PER_DAY, linkCases, normaliseText, remainingDailyBriefSlots, scoreCandidate, selectBriefsForReview, slugForBrief, stableFingerprint } from "@/lib/daily-brief/rules";
 
 describe("Daily Brief deterministic rules", () => {
   const candidate = { sourceId: "source-1", sourceName: "Official source", sourceUrl: "https://example.org/feed.xml", canonicalUrl: "https://example.org/article?utm=ignored", title: "Carbon tax reform and emissions trading", summary: "A public policy update explains carbon pricing, emissions reductions, and the distribution of revenue across households.", publishedSourceAt: "2026-07-28T00:00:00.000Z" };
@@ -29,7 +29,14 @@ describe("Daily Brief deterministic rules", () => {
   it("limits each collection to four highest-scoring review candidates", () => {
     const candidates = [92, 81, 76, 73, 69].map((score, index) => ({ ...scoreCandidate({ ...candidate, canonicalUrl: `https://example.org/${index}`, publishedSourceAt: `2026-07-${String(index + 1).padStart(2, "0")}T00:00:00.000Z` }), score }));
     const selected = selectBriefsForReview(candidates, 55);
-    expect(DAILY_BRIEF_MAX_ITEMS_PER_RUN).toBe(4);
+    expect(DAILY_BRIEF_MAX_ITEMS_PER_DAY).toBe(4);
     expect(selected.map((item) => item.score)).toEqual([92, 81, 76, 73]);
+  });
+
+  it("does not exceed the daily collection limit across manual runs", () => {
+    expect(remainingDailyBriefSlots(0)).toBe(4);
+    expect(remainingDailyBriefSlots(3)).toBe(1);
+    expect(remainingDailyBriefSlots(4)).toBe(0);
+    expect(remainingDailyBriefSlots(10)).toBe(0);
   });
 });
