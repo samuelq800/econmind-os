@@ -1,4 +1,4 @@
-import type { CommandCentreState, PolicyPackage } from "./types";
+import type { CommandCentreState, PolicyPackage } from "./types.ts";
 
 export type InteractionOutcome = { coherencePenalty: number; macro: Partial<CommandCentreState["macro"]>; resource: Partial<CommandCentreState["resources"]>; sectorNotes: string[]; mechanisms: string[] };
 

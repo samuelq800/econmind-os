@@ -1,4 +1,4 @@
-import type { CommandCentreState, Quarter, ShockRecord } from "./types";
+import type { CommandCentreState, Quarter, ShockRecord } from "./types.ts";
 
 export function shockForQuarter(quarter: Quarter): ShockRecord | null {
   if (quarter === 2) return { id: "global-energy-shock", title: "Global Energy Shock", description: "Global oil prices rise by 40% following a major supply disruption.", mechanisms: ["Imported energy costs raise production and transport prices.", "Household purchasing power falls as energy bills increase.", "Manufacturing and energy sectors face the strongest cost and confidence pressure."] };

@@ -1,4 +1,4 @@
-import type { CommandCentreState, FiscalAllocation, MacroKey, PolicyPackage, SectorKey } from "./types";
+import type { CommandCentreState, FiscalAllocation, MacroKey, PolicyPackage, SectorKey } from "./types.ts";
 
 export const COMMAND_CENTRE_SCENARIO = {
   id: "energy-inflation-dilemma",
