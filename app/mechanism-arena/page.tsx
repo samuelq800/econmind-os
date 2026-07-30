@@ -1,5 +1,5 @@
-import { MechanismArenaLab } from "@/components/learning/mechanism-arena-lab";
+import { MechanismArenaLibrary } from "@/components/mechanism-arena/mechanism-library";
 
 export default function MechanismArenaPage() {
-  return <MechanismArenaLab />;
+  return <MechanismArenaLibrary />;
 }
