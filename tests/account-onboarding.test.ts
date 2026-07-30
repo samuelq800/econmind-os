@@ -18,4 +18,10 @@ describe("first-session school path", () => {
     expect(migration).toContain("complete_econmind_onboarding");
     expect(migration).toContain("grant execute on function public.complete_econmind_onboarding");
   });
+
+  it("remembers a completed choice per account so refresh does not reopen setup", () => {
+    expect(component).toContain("econmind.account-onboarding.completed.");
+    expect(component).toContain("localStorage");
+    expect(component).toContain("saveOnboardingChoice(userId)");
+  });
 });
