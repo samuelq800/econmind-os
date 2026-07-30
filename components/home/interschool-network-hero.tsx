@@ -2,15 +2,15 @@ import Link from "next/link";
 import { ArrowRight, Globe2, Network, Sparkles } from "lucide-react";
 
 const schools = [
-  "Suzhou High School-International Division",
-  "Basis International School Shenzhen",
-  "Beijing Academy International Department",
-  "Chongqing Nankai Secondary School",
-  "HD Shanghai School",
-  "HT Nanjing Impact Academy",
-  "Nanjing Foreign Language School, Xianlin Campus",
-  "Suzhou Industrial Park Xinghai Experimental Senior High School (Shenhu Road Campus)",
-  "SUZHOU SCIENCE&TECHNOLOGY TOWN FOREIGN LANGUAGE SCHOOL",
+  { lines: ["Suzhou High School-International Division"], position: 0 },
+  { lines: ["Basis International School Shenzhen"], position: 1 },
+  { lines: ["Beijing Academy International Department"], position: 2 },
+  { lines: ["Chongqing Nankai Secondary School"], position: 3 },
+  { lines: ["HD Shanghai School"], position: 4 },
+  { lines: ["HT Nanjing Impact Academy"], position: 5 },
+  { lines: ["Nanjing Foreign Language School, Xianlin Campus"], position: 6 },
+  { lines: ["Suzhou Industrial Park", "Xinghai Experimental Senior High School", "(Shenhu Road Campus)"], position: 7 },
+  { lines: ["SUZHOU SCIENCE&TECHNOLOGY TOWN", "FOREIGN LANGUAGE SCHOOL"], position: 10 },
 ] as const;
 
 export function InterschoolNetworkHero() {
@@ -47,8 +47,8 @@ export function InterschoolNetworkHero() {
 
         <div className="inter-school-lanes" aria-label="Participating schools">
           {schools.map((school, index) => (
-            <p key={school} className={`inter-school-lane${index === 0 ? " inter-school-lane-featured" : ""}${school.length > 48 ? " inter-school-lane-long" : ""}`} style={{ "--school-index": index, "--school-scale": school.length > 70 ? 0.54 : school.length > 48 ? 0.7 : 1 } as React.CSSProperties}>
-              {school}
+            <p key={school.lines.join(" ")} aria-label={school.lines.join(" ")} className={`inter-school-lane${index === 0 ? " inter-school-lane-featured" : ""}${school.lines.length > 1 ? " inter-school-lane-long inter-school-lane-multiline" : ""}`} style={{ "--school-index": school.position } as React.CSSProperties}>
+              {school.lines.map((line) => <span key={line}>{line}</span>)}
             </p>
           ))}
         </div>
