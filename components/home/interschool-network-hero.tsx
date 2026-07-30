@@ -10,7 +10,7 @@ const schools = [
   { lines: ["HT Nanjing Impact Academy"], position: 5 },
   { lines: ["Nanjing Foreign Language School, Xianlin Campus"], position: 6 },
   { lines: ["Suzhou Industrial Park", "Xinghai Experimental Senior High School", "(Shenhu Road Campus)"], position: 7 },
-  { lines: ["SUZHOU SCIENCE&TECHNOLOGY TOWN", "FOREIGN LANGUAGE SCHOOL"], position: 10 },
+  { lines: ["SUZHOU SCIENCE&TECHNOLOGY TOWN", "FOREIGN LANGUAGE SCHOOL"], position: 8 },
 ] as const;
 
 export function InterschoolNetworkHero() {
