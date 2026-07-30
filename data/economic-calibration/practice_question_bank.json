@@ -1,0 +1,155 @@
+{
+  "dataset_id": "econmind_practice_question_bank",
+  "version": "0.1.0",
+  "as_of": "2026-07-30",
+  "status": "synthetic_calibration",
+  "provenance_id": "SRC-CORE-2026",
+  "record_defaults": {
+    "status": "synthetic_calibration",
+    "frequency": "on_demand",
+    "scoring": "Binary Correct/Incorrect: evaluate answer_condition after applying only adjustable_variables; numbers use absolute tolerance unless stated otherwise.",
+    "tolerance": 0.01,
+    "source_url": "https://www.core-econ.org/the-economy/",
+    "confidence": "high",
+    "note": "Every question inherits these metadata; all states and target values are fictional teaching values."
+  },
+  "published_model_ids_at_release": ["supply-demand","policy","price-controls","elasticity","externalities","monopoly","ppf","ad-as","sandbox","is-lm","prisoners-dilemma","repeated-games","cournot","phillips-curve","solow-growth","lorenz-gini","policy-lab"],
+  "banks": [
+    {"model_id":"supply-demand","questions":[
+      {"id":"sd-1","initial_state":"Qd=100-2P; Qs=20+2P","adjustable_variables":["P"],"locked_variables":["curves"],"answer_condition":"P=20 and Qd=Qs=60","tolerance":0.01,"explanation":"Set demand equal to supply.","common_errors":["using 100-20","not checking Q"]},
+      {"id":"sd-2","initial_state":"Qd=120-2P; Qs=20+2P","adjustable_variables":["P"],"locked_variables":["curves"],"answer_condition":"P=25 and Q=70","tolerance":0.01,"explanation":"Higher demand intercept raises equilibrium.","common_errors":["holding Q at 60"]},
+      {"id":"sd-3","initial_state":"Qd=100-2P; Qs=30+2P","adjustable_variables":["P"],"locked_variables":["curves"],"answer_condition":"P=17.5 and Q=65","tolerance":0.01,"explanation":"Supply increase lowers price.","common_errors":["moving demand instead"]},
+      {"id":"sd-4","initial_state":"Qd=90-P; Qs=10+P","adjustable_variables":["P"],"locked_variables":["curves"],"answer_condition":"P=40 and Q=50","tolerance":0.01,"explanation":"Solve 90-P=10+P.","common_errors":["sign reversal"]},
+      {"id":"sd-5","initial_state":"Qd=100-2P; Qs=20+2P; price ceiling=15","adjustable_variables":["ceiling"],"locked_variables":["curves"],"answer_condition":"shortage=20","tolerance":0.01,"explanation":"At 15, demand 70 exceeds supply 50.","common_errors":["calling shortage 10"]},
+      {"id":"sd-6","initial_state":"Qd=100-2P; Qs=20+2P; price floor=25","adjustable_variables":["floor"],"locked_variables":["curves"],"answer_condition":"surplus=20","tolerance":0.01,"explanation":"At 25, supply 70 exceeds demand 50.","common_errors":["using equilibrium price"]}
+    ]},
+    {"model_id":"policy","questions":[
+      {"id":"pol-1","initial_state":"Qd=100-2Pb; Qs=20+2Ps; tax=10","adjustable_variables":["tax"],"locked_variables":["curves"],"answer_condition":"Pb=25 and Ps=15 and Q=50","tolerance":0.01,"explanation":"Buyer price equals seller price plus tax.","common_errors":["putting tax on both prices"]},
+      {"id":"pol-2","initial_state":"Tax example pol-1","adjustable_variables":["tax"],"locked_variables":["curves"],"answer_condition":"tax_revenue=500","tolerance":0.01,"explanation":"Revenue is tax times traded quantity.","common_errors":["tax times old Q"]},
+      {"id":"pol-3","initial_state":"Tax example pol-1; pre-tax Q=60","adjustable_variables":["tax"],"locked_variables":["curves"],"answer_condition":"DWL=50","tolerance":0.01,"explanation":"Triangle=.5*10*(60-50).","common_errors":["rectangle tax revenue"]},
+      {"id":"pol-4","initial_state":"Qd=100-2Pb; Qs=20+2Ps; subsidy=10","adjustable_variables":["subsidy"],"locked_variables":["curves"],"answer_condition":"Pb=15 and Ps=25 and Q=70","tolerance":0.01,"explanation":"Subsidy makes seller price exceed buyer price.","common_errors":["tax sign"]},
+      {"id":"pol-5","initial_state":"Demand slope -1; supply slope +3; tax=8","adjustable_variables":["tax"],"locked_variables":["curves"],"answer_condition":"buyer_share=0.75","tolerance":0.01,"explanation":"Buyer incidence is supply slope/(absolute demand+supply slopes).","common_errors":["using demand slope share"]},
+      {"id":"pol-6","initial_state":"Tax=0; Q*=60","adjustable_variables":["tax"],"locked_variables":["curves"],"answer_condition":"tax=0 implies DWL=0","tolerance":0,"explanation":"A nonbinding zero wedge creates no distortion.","common_errors":["assuming all taxes create revenue"]}
+    ]},
+    {"model_id":"price-controls","questions":[
+      {"id":"pc-1","initial_state":"P*=20; ceiling=15","adjustable_variables":["ceiling"],"locked_variables":["P*"],"answer_condition":"binding=true","tolerance":0,"explanation":"Ceiling below equilibrium binds.","common_errors":["reversing inequality"]},
+      {"id":"pc-2","initial_state":"P*=20; ceiling=24","adjustable_variables":["ceiling"],"locked_variables":["P*"],"answer_condition":"binding=false","tolerance":0,"explanation":"A high ceiling is nonbinding.","common_errors":["confusing ceiling with floor"]},
+      {"id":"pc-3","initial_state":"Qd=100-2P; Qs=20+2P; ceiling=15","adjustable_variables":["ceiling"],"locked_variables":["curves"],"answer_condition":"rationed_quantity=50","tolerance":0.01,"explanation":"Actual trades cannot exceed supply.","common_errors":["using demanded 70"]},
+      {"id":"pc-4","initial_state":"Qd=100-2P; Qs=20+2P; floor=25","adjustable_variables":["floor"],"locked_variables":["curves"],"answer_condition":"surplus=20","tolerance":0.01,"explanation":"Supply exceeds demand at a binding floor.","common_errors":["negative surplus"]},
+      {"id":"pc-5","initial_state":"P*=20; floor=18","adjustable_variables":["floor"],"locked_variables":["P*"],"answer_condition":"binding=false","tolerance":0,"explanation":"Floor below equilibrium does not bind.","common_errors":["assuming every floor reduces Q"]},
+      {"id":"pc-6","initial_state":"ceiling shortage=20; public stock release=8","adjustable_variables":["stock_release"],"locked_variables":["curves"],"answer_condition":"remaining_shortage=12","tolerance":0.01,"explanation":"Release adds to available supply one-for-one here.","common_errors":["subtracting from demand"]}
+    ]},
+    {"model_id":"elasticity","questions":[
+      {"id":"el-1","initial_state":"Q=100-2P; P=20; Q=60","adjustable_variables":["P"],"locked_variables":["dQdP"],"answer_condition":"elasticity=-0.667","tolerance":0.01,"explanation":"Point elasticity=(-2)*(20/60).","common_errors":["dropping negative sign"]},
+      {"id":"el-2","initial_state":"elasticity=-1.5","adjustable_variables":["price"],"locked_variables":["elasticity"],"answer_condition":"price_increase decreases total_revenue","tolerance":0,"explanation":"Elastic demand loses revenue after price rise.","common_errors":["always saying revenue rises"]},
+      {"id":"el-3","initial_state":"elasticity=-0.4","adjustable_variables":["price"],"locked_variables":["elasticity"],"answer_condition":"price_increase increases total_revenue","tolerance":0,"explanation":"Inelastic demand raises revenue after price rise.","common_errors":["using absolute value wrong"]},
+      {"id":"el-4","initial_state":"P rises 10%; elasticity=-0.6","adjustable_variables":["P"],"locked_variables":["elasticity"],"answer_condition":"approx_quantity_change_pct=-6","tolerance":0.01,"explanation":"Percentage approximation ε times price change.","common_errors":["adding 10"]},
+      {"id":"el-5","initial_state":"P=50; Q=25; dQ/dP=-1","adjustable_variables":["P"],"locked_variables":["slope"],"answer_condition":"elasticity=-2","tolerance":0.01,"explanation":"-1*50/25.","common_errors":["using Q/P"]},
+      {"id":"el-6","initial_state":"P=10; Q=100; dQ/dP=-5","adjustable_variables":["P"],"locked_variables":["slope"],"answer_condition":"elasticity=-0.5","tolerance":0.01,"explanation":"Local slope matters with price and quantity.","common_errors":["answering -5"]}
+    ]},
+    {"model_id":"externalities","questions":[
+      {"id":"ex-1","initial_state":"MB=100-Q; MPC=20+Q; MD=10","adjustable_variables":["tax"],"locked_variables":["curves"],"answer_condition":"efficient_Q=35","tolerance":0.01,"explanation":"Set MB=MPC+MD.","common_errors":["using private Q=40"]},
+      {"id":"ex-2","initial_state":"MD is constant 10","adjustable_variables":["pigou_tax"],"locked_variables":["curves"],"answer_condition":"pigou_tax=10","tolerance":0.01,"explanation":"Corrective tax equals marginal damage.","common_errors":["tax equals total damage"]},
+      {"id":"ex-3","initial_state":"private Q=40; efficient Q=35; tax=10","adjustable_variables":["tax"],"locked_variables":["curves"],"answer_condition":"tax_revenue=350","tolerance":0.01,"explanation":"Tax applies at corrected quantity.","common_errors":["using 400"]},
+      {"id":"ex-4","initial_state":"MPC=20+Q; marginal external benefit=8","adjustable_variables":["subsidy"],"locked_variables":["curves"],"answer_condition":"subsidy=8","tolerance":0.01,"explanation":"A positive externality warrants marginal benefit subsidy.","common_errors":["taxing benefit"]},
+      {"id":"ex-5","initial_state":"MD rises from 5 to 15","adjustable_variables":["tax"],"locked_variables":["MB,MPC"],"answer_condition":"tax_change=10","tolerance":0.01,"explanation":"Constant marginal-damage tax tracks damage.","common_errors":["keeping tax unchanged"]},
+      {"id":"ex-6","initial_state":"emissions unobservable","adjustable_variables":["policy_type"],"locked_variables":["monitoring"],"answer_condition":"permit_or_tax_requires_measurement=true","tolerance":0,"explanation":"Corrective pricing needs a measurable base.","common_errors":["claiming perfect implementation"]}
+    ]},
+    {"model_id":"monopoly","questions":[
+      {"id":"mo-1","initial_state":"P=100-Q; MC=20","adjustable_variables":["Q"],"locked_variables":["demand,MC"],"answer_condition":"Q=40 and P=60","tolerance":0.01,"explanation":"MR=100-2Q equals MC.","common_errors":["setting P=MC"]},
+      {"id":"mo-2","initial_state":"P=100-Q; MC=20","adjustable_variables":["Q"],"locked_variables":["demand,MC"],"answer_condition":"competitive_Q=80","tolerance":0.01,"explanation":"Competition sets P=MC.","common_errors":["using MR=MC"]},
+      {"id":"mo-3","initial_state":"monopoly Q=40; P=60; MC=20; FC=0","adjustable_variables":["Q"],"locked_variables":["cost"],"answer_condition":"profit=1600","tolerance":0.01,"explanation":"(P-MC)Q.","common_errors":["revenue only"]},
+      {"id":"mo-4","initial_state":"P=100-Q; Qm=40; Qc=80","adjustable_variables":["Q"],"locked_variables":["curves"],"answer_condition":"DWL=800","tolerance":0.01,"explanation":".5*(80-40)*(60-20).","common_errors":["using profit"]},
+      {"id":"mo-5","initial_state":"P=100-Q; MC increases to 40","adjustable_variables":["Q"],"locked_variables":["demand"],"answer_condition":"Q=30","tolerance":0.01,"explanation":"100-2Q=40.","common_errors":["Q=60"]},
+      {"id":"mo-6","initial_state":"P=100-Q; MC=20; fixed cost=1700","adjustable_variables":["operate"],"locked_variables":["Qm"],"answer_condition":"operate=false","tolerance":0,"explanation":"Operating profit 1600 is below avoidable fixed cost.","common_errors":["ignoring fixed cost"]}
+    ]},
+    {"model_id":"ppf","questions":[
+      {"id":"ppf-1","initial_state":"L=100; aX=1; aY=2","adjustable_variables":["QX,QY"],"locked_variables":["L,a"],"answer_condition":"QX=60 and QY=20 is efficient","tolerance":0,"explanation":"60+40=100.","common_errors":["calling any interior point efficient"]},
+      {"id":"ppf-2","initial_state":"aX=1; aY=2","adjustable_variables":["specialization"],"locked_variables":["technology"],"answer_condition":"opportunity_cost_X=0.5 Y","tolerance":0.01,"explanation":"One X costs 1/2 Y.","common_errors":["answering 2"]},
+      {"id":"ppf-3","initial_state":"L=100; aX=1; aY=2","adjustable_variables":["QX,QY"],"locked_variables":["L,a"],"answer_condition":"QX=80 and QY=20 is unattainable","tolerance":0,"explanation":"80+40 exceeds 100.","common_errors":["not checking labor"]},
+      {"id":"ppf-4","initial_state":"L=100; aX=1; aY=2","adjustable_variables":["QX,QY"],"locked_variables":["L,a"],"answer_condition":"QX=40 and QY=20 is inefficient","tolerance":0,"explanation":"Uses 80 labor, leaving 20 idle.","common_errors":["calling it unattainable"]},
+      {"id":"ppf-5","initial_state":"A aX/aY=1/2; B aX/aY=3/3","adjustable_variables":["specialization"],"locked_variables":["labor"],"answer_condition":"A_specializes_in=X","tolerance":0,"explanation":"A has lower X opportunity cost.","common_errors":["absolute productivity only"]},
+      {"id":"ppf-6","initial_state":"L rises from 100 to 120","adjustable_variables":["PPF"],"locked_variables":["aX,aY"],"answer_condition":"max_X=120","tolerance":0.01,"explanation":"More labor shifts PPF outward.","common_errors":["changing slope"]}
+    ]},
+    {"model_id":"ad-as","questions":[
+      {"id":"adas-1","initial_state":"pi_e=2; x=2; kappa=.5; supply_shock=0","adjustable_variables":["x"],"locked_variables":["pi_e,kappa"],"answer_condition":"inflation=3","tolerance":0.01,"explanation":"π=πe+κx.","common_errors":["adding 2 not 1"]},
+      {"id":"adas-2","initial_state":"pi_e=2; x=0; supply_shock=3","adjustable_variables":["supply_shock"],"locked_variables":["pi_e,x"],"answer_condition":"inflation=5","tolerance":0.01,"explanation":"Adverse supply shock raises inflation at zero gap.","common_errors":["calling it demand shock"]},
+      {"id":"adas-3","initial_state":"potential Y=100; actual Y=95","adjustable_variables":["Y"],"locked_variables":["potential"],"answer_condition":"output_gap_pct=-5","tolerance":0.01,"explanation":"(95-100)/100.","common_errors":["positive sign"]},
+      {"id":"adas-4","initial_state":"x=-3; kappa=.4; pi_e=2","adjustable_variables":["x"],"locked_variables":["kappa,pi_e"],"answer_condition":"inflation=0.8","tolerance":0.01,"explanation":"2-.4*3.","common_errors":["using unemployment"]},
+      {"id":"adas-5","initial_state":"demand shock raises x from 0 to 1","adjustable_variables":["x"],"locked_variables":["SRAS"],"answer_condition":"short_run_output_direction=up","tolerance":0,"explanation":"Positive AD shift raises gap under this model.","common_errors":["long-run claim"]},
+      {"id":"adas-6","initial_state":"capacity constrained; x=5","adjustable_variables":["policy"],"locked_variables":["potential"],"answer_condition":"large_multiplier_not_assumed=true","tolerance":0,"explanation":"Near capacity, supply and inflation limits bind.","common_errors":["linear extrapolation"]}
+    ]},
+    {"model_id":"sandbox","questions":[
+      {"id":"sb-1","initial_state":"output_gap=-2; inflation=2; debt=65","adjustable_variables":["transfer_pct_gdp"],"locked_variables":["policy_lag"],"answer_condition":"transfer_between_0_and_2=true","tolerance":0,"explanation":"Use bounded targeted support under slack.","common_errors":["unbounded spending"]},
+      {"id":"sb-2","initial_state":"inflation=10; output_gap=1","adjustable_variables":["policy_rate_bp"],"locked_variables":["supply"],"answer_condition":"rate_change_direction=up","tolerance":0,"explanation":"Demand restraint is directionally consistent.","common_errors":["claiming exact effect"]},
+      {"id":"sb-3","initial_state":"food shortage; imports taxed 20%","adjustable_variables":["food_tariff"],"locked_variables":["supply"],"answer_condition":"food_tariff_direction=down","tolerance":0,"explanation":"Temporary tariff relief can lower a wedge.","common_errors":["assuming domestic output instant"]},
+      {"id":"sb-4","initial_state":"debt=100; interest cost=6; growth=1","adjustable_variables":["investment_pct_gdp"],"locked_variables":["financing"],"answer_condition":"debt_risk_flag=true","tolerance":0,"explanation":"Investment must include financing and lag.","common_errors":["ignoring r-g"]},
+      {"id":"sb-5","initial_state":"capital outflow; reserves=2 months","adjustable_variables":["fx_intervention"],"locked_variables":["reserves"],"answer_condition":"intervention_not_unbounded=true","tolerance":0,"explanation":"Low reserves constrain intervention.","common_errors":["spending unlimited reserves"]},
+      {"id":"sb-6","initial_state":"carbon price increases; low-income burden high","adjustable_variables":["rebate_share"],"locked_variables":["carbon_price"],"answer_condition":"rebate_share>0","tolerance":0,"explanation":"Distributional mitigation must be explicit.","common_errors":["calling carbon price costless"]}
+    ]},
+    {"model_id":"is-lm","questions":[
+      {"id":"islm-1","initial_state":"Y=1200-5000i; 500=.5Y-2500i","adjustable_variables":["i,Y"],"locked_variables":["curves"],"answer_condition":"Y=1100 and i=0.02","tolerance":0.001,"explanation":"Solve IS and LM jointly.","common_errors":["using i=2"]},
+      {"id":"islm-2","initial_state":"IS shifts from 1200-5000i to 1250-5000i","adjustable_variables":["G"],"locked_variables":["LM"],"answer_condition":"Y_direction=up and i_direction=up","tolerance":0,"explanation":"Fiscal expansion shifts IS right.","common_errors":["holding interest fixed"]},
+      {"id":"islm-3","initial_state":"M/P rises from 500 to 550","adjustable_variables":["money_supply"],"locked_variables":["IS"],"answer_condition":"i_direction=down","tolerance":0,"explanation":"Higher real balances shift LM.","common_errors":["IS shift"]},
+      {"id":"islm-4","initial_state":"M/P=150; k=.25; Y=1000; h=5000","adjustable_variables":["i"],"locked_variables":["M,P,k,Y,h"],"answer_condition":"i=0.02","tolerance":0.001,"explanation":"150=250-5000i.","common_errors":["using nominal M"]},
+      {"id":"islm-5","initial_state":"b=5000; fiscal IS intercept +50","adjustable_variables":["fiscal_shift"],"locked_variables":["LM"],"answer_condition":"crowding_out_possible=true","tolerance":0,"explanation":"Higher i can offset part of demand.","common_errors":["full multiplier certainty"]},
+      {"id":"islm-6","initial_state":"i at lower bound; LM nearly horizontal","adjustable_variables":["fiscal_policy"],"locked_variables":["monetary"],"answer_condition":"crowding_out_weaker=true","tolerance":0,"explanation":"This is a model state condition.","common_errors":["universal claim"]}
+    ]},
+    {"model_id":"prisoners-dilemma","questions":[
+      {"id":"pd-1","initial_state":"Payoffs: cooperate/cooperate=(3,3); defect/cooperate=(5,0); defect/defect=(1,1)","adjustable_variables":["A_action"],"locked_variables":["payoffs"],"answer_condition":"A_best_response_to_cooperate=defect","tolerance":0,"explanation":"5 exceeds 3.","common_errors":["choosing joint optimum"]},
+      {"id":"pd-2","initial_state":"Same matrix","adjustable_variables":["A_action,B_action"],"locked_variables":["payoffs"],"answer_condition":"Nash=(defect,defect)","tolerance":0,"explanation":"Defection is dominant for both.","common_errors":["cooperate/cooperate"]},
+      {"id":"pd-3","initial_state":"Same matrix","adjustable_variables":["social_choice"],"locked_variables":["payoffs"],"answer_condition":"joint_payoff_at_CC=6","tolerance":0.01,"explanation":"3+3.","common_errors":["using individual payoff"]},
+      {"id":"pd-4","initial_state":"T=5; R=3; P=1","adjustable_variables":["delta"],"locked_variables":["payoffs"],"answer_condition":"grim_threshold=0.5","tolerance":0.01,"explanation":"(T-R)/(T-P).","common_errors":["R/T"]},
+      {"id":"pd-5","initial_state":"Both choose cooperate","adjustable_variables":["actions"],"locked_variables":["matrix"],"answer_condition":"payoffs=[3,3]","tolerance":0,"explanation":"Read the matrix cell.","common_errors":["ordering players"]},
+      {"id":"pd-6","initial_state":"Both choose defect","adjustable_variables":["actions"],"locked_variables":["matrix"],"answer_condition":"Pareto_inefficient=true","tolerance":0,"explanation":"Both prefer 3 to 1.","common_errors":["equating Nash and efficient"]}
+    ]},
+    {"model_id":"repeated-games","questions":[
+      {"id":"rg-1","initial_state":"T=5; R=3; P=1","adjustable_variables":["delta"],"locked_variables":["payoffs"],"answer_condition":"cooperation_sustainable_if_delta>=0.5","tolerance":0.01,"explanation":"Grim-trigger condition.","common_errors":["using T-R only"]},
+      {"id":"rg-2","initial_state":"delta=.4; threshold=.5","adjustable_variables":["strategy"],"locked_variables":["delta"],"answer_condition":"grim_cooperation=false","tolerance":0,"explanation":"Future is not valued enough.","common_errors":["rounding .4 up"]},
+      {"id":"rg-3","initial_state":"delta=.8; threshold=.5","adjustable_variables":["strategy"],"locked_variables":["delta"],"answer_condition":"grim_cooperation=true","tolerance":0,"explanation":"Condition is met.","common_errors":["ignoring inequality"]},
+      {"id":"rg-4","initial_state":"Tit-for-tat; opponent cooperated last period","adjustable_variables":["action"],"locked_variables":["history"],"answer_condition":"action=cooperate","tolerance":0,"explanation":"TFT copies prior action.","common_errors":["using current action"]},
+      {"id":"rg-5","initial_state":"Tit-for-tat; opponent defected last period","adjustable_variables":["action"],"locked_variables":["history"],"answer_condition":"action=defect","tolerance":0,"explanation":"TFT retaliates once.","common_errors":["permanent punishment"]},
+      {"id":"rg-6","initial_state":"Noise probability=.2","adjustable_variables":["strategy"],"locked_variables":["noise"],"answer_condition":"forgiving_strategy_considered=true","tolerance":0,"explanation":"Noise can cause retaliatory spirals.","common_errors":["claiming TFT always optimal"]}
+    ]},
+    {"model_id":"cournot","questions":[
+      {"id":"co-1","initial_state":"P=100-(q1+q2); c=10","adjustable_variables":["q1,q2"],"locked_variables":["demand,c"],"answer_condition":"q1=30 and q2=30","tolerance":0.01,"explanation":"Symmetric Cournot quantities.","common_errors":["using monopoly Q=45"]},
+      {"id":"co-2","initial_state":"a=100;b=1;c=10;q2=20","adjustable_variables":["q1"],"locked_variables":["q2"],"answer_condition":"q1_best_response=35","tolerance":0.01,"explanation":"(a-c-bq2)/(2b).","common_errors":["subtracting q1"]},
+      {"id":"co-3","initial_state":"q1=q2=30; P=40; c=10","adjustable_variables":["q1"],"locked_variables":["q2,P,c"],"answer_condition":"profit1=900","tolerance":0.01,"explanation":"(40-10)*30.","common_errors":["total industry profit"]},
+      {"id":"co-4","initial_state":"a=100;b=1;c=10","adjustable_variables":["market_structure"],"locked_variables":["parameters"],"answer_condition":"competitive_total_Q=90","tolerance":0.01,"explanation":"P=MC gives Q=90.","common_errors":["two firms each 90"]},
+      {"id":"co-5","initial_state":"a=100;b=1;c1=20;c2=10","adjustable_variables":["q1,q2"],"locked_variables":["costs"],"answer_condition":"q1=30 and q2=40","tolerance":0.01,"explanation":"Solve two best responses.","common_errors":["forcing symmetry"]},
+      {"id":"co-6","initial_state":"q1=30;q2=30","adjustable_variables":["q1"],"locked_variables":["q2"],"answer_condition":"unilateral_q1=40 is_not_best_response","tolerance":0,"explanation":"Best response to 30 is 30.","common_errors":["confusing total Q"]}
+    ]},
+    {"model_id":"phillips-curve","questions":[
+      {"id":"ph-1","initial_state":"pi_e=2; u=4; un=6; k=.5; v=0","adjustable_variables":["u"],"locked_variables":["parameters"],"answer_condition":"pi=3","tolerance":0.01,"explanation":"2-.5*(4-6).","common_errors":["negative inflation"]},
+      {"id":"ph-2","initial_state":"pi_e=2; u=6; un=6; k=.5; v=0","adjustable_variables":["u"],"locked_variables":["parameters"],"answer_condition":"pi=2","tolerance":0.01,"explanation":"No unemployment gap.","common_errors":["adding k"]},
+      {"id":"ph-3","initial_state":"pi_e=2; u=6; un=6; v=3","adjustable_variables":["v"],"locked_variables":["parameters"],"answer_condition":"pi=5","tolerance":0.01,"explanation":"Adverse supply shock shifts curve.","common_errors":["calling movement along curve"]},
+      {"id":"ph-4","initial_state":"u=8; un=6; pi_e=2; k=.4","adjustable_variables":["u"],"locked_variables":["parameters"],"answer_condition":"pi=1.2","tolerance":0.01,"explanation":"2-.4*2.","common_errors":["wrong sign"]},
+      {"id":"ph-5","initial_state":"pi_e rises from 2 to 4","adjustable_variables":["expectations"],"locked_variables":["u,un"],"answer_condition":"curve_shift_direction=up","tolerance":0,"explanation":"Higher expected inflation shifts SRPC.","common_errors":["movement along"]},
+      {"id":"ph-6","initial_state":"long-run expectations adjust","adjustable_variables":["policy"],"locked_variables":["un"],"answer_condition":"permanent_inflation_unemployment_tradeoff_not_assumed=true","tolerance":0,"explanation":"Short-run equation is not long-run menu.","common_errors":["permanent tradeoff"]}
+    ]},
+    {"model_id":"solow-growth","questions":[
+      {"id":"so-1","initial_state":"s=.2; alpha=.5; n+g+delta=.1","adjustable_variables":["k"],"locked_variables":["parameters"],"answer_condition":"k_star=4","tolerance":0.01,"explanation":"[.2/.1]^(1/.5).","common_errors":["using y=4"]},
+      {"id":"so-2","initial_state":"k_star=4; alpha=.5","adjustable_variables":["k"],"locked_variables":["alpha"],"answer_condition":"y_star=2","tolerance":0.01,"explanation":"sqrt(4).","common_errors":["saving rate in y"]},
+      {"id":"so-3","initial_state":"s rises .2 to .3; other parameters fixed","adjustable_variables":["s"],"locked_variables":["alpha,delta"],"answer_condition":"k_star_direction=up","tolerance":0,"explanation":"More saving raises steady capital.","common_errors":["permanent growth claim"]},
+      {"id":"so-4","initial_state":"delta rises .05 to .10","adjustable_variables":["delta"],"locked_variables":["s,alpha"],"answer_condition":"k_star_direction=down","tolerance":0,"explanation":"More depreciation lowers capital.","common_errors":["output increases"]},
+      {"id":"so-5","initial_state":"k=1; s=.2; alpha=.5; n+g+delta=.1","adjustable_variables":["k"],"locked_variables":["parameters"],"answer_condition":"dot_k=0.1","tolerance":0.01,"explanation":".2*1-.1*1.","common_errors":["forgetting dilution"]},
+      {"id":"so-6","initial_state":"technology growth g increases","adjustable_variables":["g"],"locked_variables":["s"],"answer_condition":"long_run_output_per_worker_can_grow=true","tolerance":0,"explanation":"Exogenous technology drives per-worker growth in Solow.","common_errors":["capital alone sustains it"]}
+    ]},
+    {"model_id":"lorenz-gini","questions":[
+      {"id":"gi-1","initial_state":"income shares=[.1,.2,.3,.4]","adjustable_variables":["shares"],"locked_variables":["population_quartiles"],"answer_condition":"shares_sum=1","tolerance":0.001,"explanation":"Income shares must exhaust total income.","common_errors":["summing cumulative shares"]},
+      {"id":"gi-2","initial_state":"cumulative population=[0,.5,1]; cumulative income=[0,.2,1]","adjustable_variables":["lorenz"],"locked_variables":["grid"],"answer_condition":"gini=0.3","tolerance":0.01,"explanation":"Area under Lorenz=.35; Gini=1-2*.35.","common_errors":["using .35"]},
+      {"id":"gi-3","initial_state":"equal income shares","adjustable_variables":["shares"],"locked_variables":["population"],"answer_condition":"gini=0","tolerance":0.001,"explanation":"Lorenz equals equality line.","common_errors":["answering 1"]},
+      {"id":"gi-4","initial_state":"top share falls; bottom share rises","adjustable_variables":["transfer"],"locked_variables":["total_income"],"answer_condition":"gini_direction=down","tolerance":0,"explanation":"Progressive transfer bends Lorenz upward.","common_errors":["confusing growth with equality"]},
+      {"id":"gi-5","initial_state":"Gini=.42; tax transfer lowers it to .38","adjustable_variables":["policy"],"locked_variables":["definition"],"answer_condition":"gini_change=-0.04","tolerance":0.001,"explanation":"Use index-point difference.","common_errors":["percent change"]},
+      {"id":"gi-6","initial_state":"income survey year differs from consumption survey year","adjustable_variables":["comparison"],"locked_variables":["definitions"],"answer_condition":"direct_rank_not_allowed=true","tolerance":0,"explanation":"Welfare concepts and years differ.","common_errors":["treating Gini as fully comparable"]}
+    ]},
+    {"model_id":"policy-lab","questions":[
+      {"id":"pl-1","initial_state":"goal=reduce inflation; x=1; pi=9","adjustable_variables":["policy_rate_bp"],"locked_variables":["goal"],"answer_condition":"rate_direction=up","tolerance":0,"explanation":"State the intended demand channel.","common_errors":["guaranteeing outcome"]},
+      {"id":"pl-2","initial_state":"goal=reduce poverty; food burden high","adjustable_variables":["transfer_pct_gdp"],"locked_variables":["budget"],"answer_condition":"targeting_required=true","tolerance":0,"explanation":"Transfers require eligibility design.","common_errors":["universal effect claim"]},
+      {"id":"pl-3","initial_state":"debt high; r-g positive","adjustable_variables":["primary_balance"],"locked_variables":["debt"],"answer_condition":"debt_stabilization_considered=true","tolerance":0,"explanation":"Use debt dynamics before recommendation.","common_errors":["only current deficit"]},
+      {"id":"pl-4","initial_state":"energy shock; reserves low","adjustable_variables":["subsidy,fx_intervention"],"locked_variables":["reserves"],"answer_condition":"tradeoff_logged=true","tolerance":0,"explanation":"Fiscal and FX tools have side effects.","common_errors":["free intervention"]},
+      {"id":"pl-5","initial_state":"infrastructure proposal; import content=60%","adjustable_variables":["project_scale"],"locked_variables":["import_content"],"answer_condition":"external_financing_risk_flag=true","tolerance":0,"explanation":"Imported capex affects FX/CA.","common_errors":["only multiplier"]},
+      {"id":"pl-6","initial_state":"recommended package has no source status","adjustable_variables":["publication"],"locked_variables":["audit_rule"],"answer_condition":"publish=false","tolerance":0,"explanation":"Every result needs status and provenance.","common_errors":["publishing untraceable claim"]}
+    ]}
+  ]
+}

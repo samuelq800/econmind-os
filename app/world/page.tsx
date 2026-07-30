@@ -1,3 +1,3 @@
-import { CompetitionSurface } from "@/components/league/competition-pages";
+import { WorldExperience } from "@/components/world/world-experience";
 import { Suspense } from "react";
-export default function WorldPage() { return <Suspense fallback={null}><CompetitionSurface surface="world" /></Suspense>; }
+export default function WorldPage() { return <Suspense fallback={null}><WorldExperience /></Suspense>; }

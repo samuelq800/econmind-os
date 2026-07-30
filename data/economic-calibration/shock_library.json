@@ -1,0 +1,84 @@
+{
+  "dataset_id": "econmind_shock_library",
+  "version": "0.1.0",
+  "status": "synthetic_calibration",
+  "provenance_id": "CAL-STAB-01",
+  "probability_note": "Probabilities are annual scenario priors for gameplay variety, not empirical forecasts or estimated event frequencies. Draws are conditional on the stated trigger and may be overridden by authored news.",
+  "shocks": [
+    {
+      "id": "energy_supply_disruption", "category": "commodity", "status": "synthetic_calibration", "provenance_id": "CAL-MKT-01",
+      "trigger": "Exporting-market outage or corridor capacity loss", "annual_probability_prior": 0.10, "direct_duration_days": [14, 120], "recovery": "logistic, 30–240 days after disruption ends",
+      "scope": {"energy_price_index_pct": [15, 45, 120], "energy_supply_pct": [-18, -7, -2], "transport_insurance_pp": [0.5, 2.0, 6.0]},
+      "transmission": ["energy import bill", "CPI pass-through", "industrial output", "fiscal subsidy cost", "FX pressure"],
+      "mitigations": ["draw inventories", "demand restraint", "temporary targeted transfer", "diversify routes"],
+      "source": {"url": "https://www.worldbank.org/en/research/commodity-markets", "coverage": "monthly Pink Sheet and Commodity Markets Outlook", "conversion": "price index shock from external anchor; physical shortage is synthetic", "confidence": "medium"}
+    },
+    {
+      "id": "food_harvest_or_blockade", "category": "food", "status": "synthetic_calibration", "provenance_id": "CAL-MKT-01",
+      "trigger": "Crop failure, export restriction, or corridor blockage", "annual_probability_prior": 0.12, "direct_duration_days": [30, 240], "recovery": "seasonal; next harvest plus inventory rebuild",
+      "scope": {"food_price_index_pct": [10, 35, 90], "food_supply_pct": [-20, -8, -3], "food_energy_burden_pp": [1, 5, 15]},
+      "transmission": ["real income", "poverty", "inflation expectations", "social stability", "current account of food importers"],
+      "mitigations": ["release public stocks", "targeted food transfers", "temporary tariff cut", "contract diversification"],
+      "source": {"url": "https://www.fao.org/worldfoodsituation/foodpricesindex/en/", "coverage": "monthly FFPI; 1990–latest monthly data", "conversion": "observed food-price index informs range only", "confidence": "medium"}
+    },
+    {
+      "id": "capital_outflow", "category": "financial", "status": "synthetic_calibration", "provenance_id": "CAL-STAB-01",
+      "trigger": "Risk-premium repricing, external-rate surprise, or confidence loss", "annual_probability_prior": 0.12, "direct_duration_days": [7, 180], "recovery": "confidence-sensitive exponential, 45–540 days",
+      "scope": {"net_capital_inflows_pct_gdp": [-8, -3, -0.8], "currency_pressure_index": [8, 22, 55], "policy_rate_bp": [25, 125, 400], "bank_stability_points": [-12, -4, -1]},
+      "transmission": ["FX depreciation", "reserve loss", "debt refinancing", "credit contraction", "inflation pass-through"],
+      "mitigations": ["credible fiscal/monetary package", "temporary liquidity support", "measured FX intervention", "time-bound capital-flow measures"],
+      "source": {"url": "https://data.bis.org/topics/EER", "coverage": "monthly/daily EER series", "conversion": "BIS data supports indicators, not the fictional draw probability", "confidence": "low"}
+    },
+    {
+      "id": "climate_disaster", "category": "physical", "status": "synthetic_calibration", "provenance_id": "CAL-STAB-01",
+      "trigger": "Flood, drought, storm, wildfire or heat event", "annual_probability_prior": 0.09, "direct_duration_days": [7, 90], "recovery": "capital restoration, 90–1095 days",
+      "scope": {"affected_regional_output_pct": [-35, -12, -3], "agriculture_supply_pct": [-45, -15, -5], "infrastructure_capacity_pct": [-25, -8, -2], "fiscal_cost_pct_gdp": [0.2, 1.5, 6.0]},
+      "transmission": ["food supply", "transport capacity", "fiscal reconstruction", "internal displacement", "insurance cost"],
+      "mitigations": ["resilient infrastructure", "contingency budget", "disaster insurance pool", "trade rerouting"],
+      "source": {"url": "https://www.fao.org/faostat/en/#data", "coverage": "annual food/agricultural outcome series", "conversion": "physical impact is authored scenario, not a forecast", "confidence": "low"}
+    },
+    {
+      "id": "bank_run", "category": "banking", "status": "synthetic_calibration", "provenance_id": "CAL-STAB-01",
+      "trigger": "Deposit-confidence shock combined with low liquidity or unrealized losses", "annual_probability_prior": 0.05, "direct_duration_days": [1, 21], "recovery": "resolution-dependent; 7–365 days",
+      "scope": {"deposit_outflow_pct": [-35, -12, -3], "bank_stability_points": [-30, -12, -4], "credit_growth_pp": [-8, -3, -0.5], "fiscal_contingent_cost_pct_gdp": [0.0, 1.0, 8.0]},
+      "transmission": ["liquidity demand", "fire sales", "credit supply", "confidence spillover"],
+      "mitigations": ["deposit guarantee/bridge bank", "eligible collateral liquidity", "resolution of insolvent institutions", "clear communication"],
+      "source": {"url": "https://www.fdic.gov/news/press-releases/2023/pr23019.html", "coverage": "SVB resolution, 2023-03-13", "conversion": "case informs mechanism; magnitude is synthetic", "confidence": "medium"}
+    },
+    {
+      "id": "trade_blockade", "category": "trade_logistics", "status": "synthetic_calibration", "provenance_id": "CAL-MKT-01",
+      "trigger": "Route closure, embargo, port disruption or sanctions escalation", "annual_probability_prior": 0.06, "direct_duration_days": [14, 180], "recovery": "route reopening then 14–180-day logistics normalization",
+      "scope": {"route_capacity_pct": [-100, -50, -20], "route_time_days": [5, 20, 45], "insurance_cost_pct_cif": [1.0, 4.0, 12.0], "target_trade_volume_pct": [-70, -30, -8]},
+      "transmission": ["contract non-performance", "inventory depletion", "goods price spike", "export revenue loss", "political pressure"],
+      "mitigations": ["pre-approved alternate routes", "force-majeure rules", "stock release", "temporary trade facilitation"],
+      "source": {"url": "https://comtradeplus.un.org/TradeFlow", "coverage": "annual/monthly goods trade", "conversion": "route-capacity loss is synthetic; trade value data aid calibration", "confidence": "low"}
+    },
+    {
+      "id": "supply_chain_interruption", "category": "production", "status": "synthetic_calibration", "provenance_id": "CAL-MKT-01",
+      "trigger": "Critical input shortage, supplier failure, cyber/transport interruption", "annual_probability_prior": 0.11, "direct_duration_days": [14, 180], "recovery": "inventory draw then supplier substitution, 30–365 days",
+      "scope": {"manufacturing_output_pct": [-30, -10, -3], "input_price_pct": [5, 20, 65], "delivery_delay_days": [7, 30, 90], "export_volume_pct": [-20, -7, -2]},
+      "transmission": ["intermediate inputs", "working capital", "employment", "export contracts", "inflation"],
+      "mitigations": ["multi-sourcing", "strategic inventory", "temporary input tariff relief", "working-capital facility"],
+      "source": {"url": "https://comtradeplus.un.org/TradeFlow", "coverage": "product-level annual/monthly trade", "conversion": "use HS product shares for a fictional input-dependency graph", "confidence": "low"}
+    }
+  ],
+  "case_anchors": [
+    {
+      "id": "case_food_price_2022", "title": "2022 global food-price spike", "status": "observed", "source_id": "SRC-FAO-FFPI-2022", "timeline": [
+        {"date":"2022-03-07","event":"FAO reported FFPI at 140.7 in February, then a record high.","indicator":"FFPI points","value":140.7,"unit":"index_2014_16_100","source_url":"https://www.fao.org/russian-federation/news/news-detail/-2022-Global-food-basket-prices-on-the-rise-/"},
+        {"date":"2022-04-08","event":"FAO reported March FFPI at 159.3, 12.6% month on month higher.","indicator":"FFPI points and monthly change","value":159.3,"unit":"index_2014_16_100","source_url":"https://www.fao.org/newsroom/detail/fao-food-price-index-posts-significant-leap-in-march/en"}
+      ], "model_mapping":["supply-demand with low short-run elasticities","inventory/rationing","food-energy burden and stability rule"], "caveat":"Observed global price index, not a food-insecurity or country-welfare estimate."
+    },
+    {
+      "id": "case_bank_run_2023", "title": "Silicon Valley Bank resolution", "status": "observed", "source_id": "SRC-FDIC-SVB-2023", "timeline": [
+        {"date":"2023-03-10","event":"California authority closed Silicon Valley Bank; FDIC appointed receiver.","indicator":"resolution event","value":null,"unit":"event","source_url":"https://www.fdic.gov/news/press-releases/2023/pr23019.html"},
+        {"date":"2023-03-13","event":"FDIC transferred deposits and substantially all assets to a bridge bank; all depositors were protected.","indicator":"resolution event","value":null,"unit":"event","source_url":"https://www.fdic.gov/news/press-releases/2023/pr23019.html"}
+      ], "model_mapping":["Diamond–Dybvig coordination run","liquidity facility","deposit guarantee and resolution"], "caveat":"A single U.S. resolution episode; not a parameter estimate for fictional banks."
+    },
+    {
+      "id": "case_trade_restrictions_2018", "title": "Increase in trade-restrictive measures", "status": "observed", "source_id": "SRC-WTO-TM-2018", "timeline": [
+        {"date":"2018-07-10","event":"WTO reported 75 new trade-restrictive measures from mid-October 2017 to mid-May 2018.","indicator":"new measures","value":75,"unit":"count","source_url":"https://www.wto.org/english/res_e/statis_e/wts2018_e/wts2018chapter06_e.pdf"}
+      ], "model_mapping":["tariff and quota wedge","retaliation state","trade diversion and welfare"], "caveat":"Count measures, not tariff-equivalent severity or causal impact."
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "package_id": "econmind-economic-data-formula-calibration-pack",
+  "version": "0.1.0",
+  "released_at": "2026-07-30",
+  "license_of_package_authorship": "CC BY 4.0 for original synthetic structure and prose; third-party sources retain their own terms.",
+  "scope": "Fictional twelve-country educational economy; public, citeable, free/open-access source registry only.",
+  "status_vocabulary": ["observed", "derived", "synthetic_calibration", "placeholder"],
+  "required_record_fields": ["status", "provenance_id", "source_url_or_resolvable_source_id", "published_or_coverage_period", "unit", "frequency", "definition", "transformation", "confidence"],
+  "files": {
+    "variable_dictionary.csv": "canonical variable definitions and units",
+    "model_formula_catalog.md": "formula cards, test cases, derivations and limits",
+    "world_country_calibration.json": "synthetic 2026-Q1 state for 12 fictional countries",
+    "policy_effect_library.json": "policy lifecycle parameter library",
+    "market_baselines.json": "market, logistics, project and contract schemas",
+    "shock_library.json": "scenario shocks and observed case anchors",
+    "stability_rules.md": "explicitly synthetic stability state machine",
+    "practice_question_bank.json": "binary-scored model practice questions",
+    "calibration_test_suite.json": "scenario and regression tests",
+    "sources.md": "source registry, access terms, versions and replacements"
+  },
+  "validation": {
+    "json": "parse every .json file as UTF-8 JSON",
+    "csv": "require unique variable_id and no unknown status",
+    "provenance": "all provenance IDs must resolve in sources.md or be a documented derived profile",
+    "units": "reject currency unit mixing and percent-versus-fraction ambiguity",
+    "country_checks": "run integrity_checks in world_country_calibration.json",
+    "policy_checks": "lag <= peak <= max duration; coefficient min <= central <= max",
+    "snapshot_rule": "never overwrite a released scenario's observed anchor or calibration version"
+  },
+  "replacement_policy": "Do not silently revise history. Add a new source record/version and retain prior scenario snapshots. Mark superseded source records with deprecated_at and replacement_id in the next package release.",
+  "deprecated": []
+}

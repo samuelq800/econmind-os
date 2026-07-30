@@ -20,3 +20,9 @@ verify_jwt = false
 
 [functions.process-league-world-round]
 verify_jwt = false
+
+# The continuous-world worker accepts either a league administrator session or
+# CONTINUOUS_WORLD_CRON_SECRET. The secret belongs only in Edge Function/cron
+# configuration, never in the public GitHub Pages build.
+[functions.process-continuous-world]
+verify_jwt = false
