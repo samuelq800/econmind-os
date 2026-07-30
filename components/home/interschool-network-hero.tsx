@@ -40,14 +40,14 @@ export function InterschoolNetworkHero() {
             <Link href="/league" className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-white px-5 text-sm font-bold text-[#0d2d80] transition hover:-translate-y-0.5 hover:bg-blue-50">Enter the League <ArrowRight size={16} /></Link>
             <Link href="/models" className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-white/35 bg-white/10 px-5 text-sm font-bold backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white/18">Explore models <Sparkles size={16} /></Link>
           </div>
-          <div className="max-w-sm rounded-2xl border border-white/20 bg-[#061e5d]/55 p-4 backdrop-blur-md">
+          <div className="inter-school-info-card hidden max-w-sm rounded-2xl border border-white/20 bg-[#061e5d]/55 p-4 backdrop-blur-md xl:block">
             <div className="flex items-center gap-3"><span className="grid size-9 place-items-center rounded-xl bg-yellow-300 text-[#08266f]"><Globe2 size={18} /></span><div><p className="text-xs font-bold">Interconnected by design</p><p className="mt-0.5 text-xs leading-5 text-blue-100/75">School identities remain distinct; every decision still reaches the same world economy.</p></div></div>
           </div>
         </div>
 
         <div className="inter-school-lanes" aria-label="Participating schools">
           {schools.map((school, index) => (
-            <p key={school} className={`inter-school-lane${index === 0 ? " inter-school-lane-featured" : ""}${school.length > 48 ? " inter-school-lane-long" : ""}`} style={{ "--school-index": index } as React.CSSProperties}>
+            <p key={school} className={`inter-school-lane${index === 0 ? " inter-school-lane-featured" : ""}${school.length > 48 ? " inter-school-lane-long" : ""}`} style={{ "--school-index": index, "--school-scale": school.length > 70 ? 0.54 : school.length > 48 ? 0.7 : 1 } as React.CSSProperties}>
               {school}
             </p>
           ))}
