@@ -13,6 +13,7 @@ describe("platform foundation", () => {
   });
 
   it("adapts every existing model to the common contract without inventing formulas", () => {
+    expect(MODEL_REGISTRY).toHaveLength(35);
     expect(STANDARD_MODEL_CATALOG).toHaveLength(MODEL_REGISTRY.length);
     for (const model of STANDARD_MODEL_CATALOG) {
       expect(model.id).toMatch(/^[a-z0-9-]+$/);

@@ -39,7 +39,6 @@ export const PLATFORM_NAVIGATION: readonly PlatformNavigationItem[] = [
   { href: "/sandbox", label: "Sandbox", system: "learning-research", feature: "sandbox" },
   { href: "/econbench", label: "EconBench", system: "learning-research", feature: "econBench" },
   { href: "/mechanism-arena", label: "Mechanism Arena", system: "learning-research", feature: "mechanismArena" },
-  { href: "/world", label: "World Economy", system: "world-economy", feature: "worldEconomy" },
   { href: "/league", label: "League", system: "world-economy", feature: "league" },
   { href: "/research", label: "Evidence Lab", system: "learning-research", feature: "evidenceLab" },
 ];

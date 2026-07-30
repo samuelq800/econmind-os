@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AuthDialog } from "@/components/auth/auth-dialog";
+import { AccountOnboarding } from "@/components/auth/account-onboarding";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { RegisteredAppGate } from "@/components/auth/registered-app-gate";
 import { Footer } from "@/components/layout/footer";
@@ -13,5 +14,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return <html lang="en" suppressHydrationWarning><body><ThemeProvider><AuthProvider><RegisteredAppGate><Navbar />{children}<Footer /></RegisteredAppGate><AuthDialog /></AuthProvider></ThemeProvider></body></html>;
+  return <html lang="en" suppressHydrationWarning><body><ThemeProvider><AuthProvider><RegisteredAppGate><Navbar />{children}<Footer /></RegisteredAppGate><AuthDialog /><AccountOnboarding /></AuthProvider></ThemeProvider></body></html>;
 }
