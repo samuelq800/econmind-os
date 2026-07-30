@@ -1,0 +1,17 @@
+{
+  "dataset_id": "econmind_idempotency_and_replay_tests",
+  "version": "0.1.0",
+  "status": "derived",
+  "idempotency_key": "sha256(source_version + entity_type + entity_id + event_type + effective_timestamp + client_action_uuid)",
+  "rules": ["store an immutable event before applying it", "same key returns prior result without recalculation", "amendment has new event type and UUID", "snapshot contains seed, event sequence, source versions and state hash", "replay sorts by timestamp then event sequence number"],
+  "tests": [
+    {"id":"IDEM-01","events":["policy uuid-a","policy uuid-a"],"expected":{"applications":1,"response_second":"duplicate"}},
+    {"id":"IDEM-02","events":["contract delivery uuid-b","contract delivery uuid-b"],"expected":{"accepted_quantity_postings":1}},
+    {"id":"IDEM-03","events":["project completion uuid-c","project completion amendment uuid-d"],"expected":{"completion_effects":1,"amendment_effects":"only defined incremental change"}},
+    {"id":"IDEM-04","given":{"seed":42,"events":"same ordered log","source_version":"0.1.0"},"expected":{"state_hash_original":"equals replay state hash"}},
+    {"id":"IDEM-05","given":{"seed":42,"events":"same log except reordered same-day sequence"},"expected":{"result":"may differ; test must fail if sequence number missing"}},
+    {"id":"IDEM-06","given":{"old_source_version":"0.1.0","new_source_version":"0.1.1"},"expected":{"result":"replay records version mismatch; no silent equivalence assertion"}},
+    {"id":"IDEM-07","given":{"state":"empty_state","new_policy_uuid":"p"},"expected":{"event_status":"rejected_no_actor","economic_effects":0}}
+  ],
+  "validation": ["all write paths require idempotency key", "hash excludes volatile UI fields", "replay event count equals original immutable log count"]
+}

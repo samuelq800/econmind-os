@@ -1,0 +1,25 @@
+{
+  "dataset_id": "econmind_policy_interactions",
+  "version": "0.1.0",
+  "status": "synthetic_calibration",
+  "provenance": ["FW-CAL-POL-01"],
+  "composition_rule": "Apply each scaled lifecycle-weighted direct effect once, then multiply named channels. Channel multiplier applies only to the listed outcome indices and is capped at the min/max of 0.25/1.75 unless an interaction says suppress.",
+  "interactions": [
+    {"id":"INT-001","policies":["POL-FIN-MEANS-TESTED-TRANSFER","POL-SOC-SAFETY-NET-COVERAGE"],"type":"complement","outcomes":["poverty_pp","public_support_pp","stability_points"],"multiplier":1.3,"condition":"coverage_percent >= 60"},
+    {"id":"INT-002","policies":["POL-SOC-FOOD-ENERGY-VOUCHER","POL-RES-STRATEGIC-RESERVE-RELEASE"],"type":"complement","outcomes":["inflation_pp","poverty_pp","stability_points"],"multiplier":1.25,"condition":"physical stocks available"},
+    {"id":"INT-003","policies":["POL-RES-STRATEGIC-RESERVE-RELEASE","POL-RES-STRATEGIC-RESERVE-ACCUMULATION"],"type":"conflict","outcomes":["inflation_pp","reserves_import_months"],"multiplier":0,"condition":"same commodity and 30-day window"},
+    {"id":"INT-004","policies":["POL-CB-COUNTERCYCLICAL-BUFFER","POL-CB-RESOLUTION-LIQUIDITY"],"type":"sequencing","outcomes":["growth_pp","unemployment_pp"],"multiplier":0.65,"condition":"liquidity action within 30 days; preserve stability channel at 1.0"},
+    {"id":"INT-005","policies":["POL-FIN-PAYROLL-TAX-CREDIT","POL-SOC-ACTIVE-LABOUR-MARKET"],"type":"complement","outcomes":["growth_pp","unemployment_pp"],"multiplier":1.2,"condition":"vacancy_rate >= 2 percent"},
+    {"id":"INT-006","policies":["POL-SOC-MINIMUM-WAGE-FLOOR","POL-FIN-PAYROLL-TAX-CREDIT"],"type":"complement","outcomes":["unemployment_pp","public_support_pp"],"multiplier":1.15,"condition":"minimum wage <= 65 percent median"},
+    {"id":"INT-007","policies":["POL-IND-TARGETED-SUBSIDY","POL-IND-RND-GRANT"],"type":"complement","outcomes":["growth_pp","productivity_percent","trade_gdp_pp"],"multiplier":1.25,"condition":"performance milestone verified"},
+    {"id":"INT-008","policies":["POL-IND-SPECIAL-ECONOMIC-ZONE","POL-RES-ENVIRONMENTAL-STANDARD"],"type":"conditional_complement","outcomes":["productivity_percent","emissions_percent","stability_points"],"multiplier":1.15,"condition":"zone power is low-emission; otherwise emissions effect multiplier=0.5"},
+    {"id":"INT-009","policies":["POL-RES-CARBON-TAX-RECYCLE","POL-SOC-FOOD-ENERGY-VOUCHER"],"type":"mitigation","outcomes":["poverty_pp","public_support_pp","stability_points"],"multiplier":1.25,"condition":"voucher funded from carbon revenue"},
+    {"id":"INT-010","policies":["POL-RES-CARBON-TAX-RECYCLE","POL-RES-CARBON-PERMIT-AUCTION"],"type":"exclusive","outcomes":["inflation_pp","emissions_percent","deficit_gdp_pp"],"multiplier":0,"condition":"same covered emissions; choose one primary price instrument"},
+    {"id":"INT-011","policies":["POL-TRADE-EXPORT-LICENCE","POL-TRADE-TRADE-FINANCE-GUARANTEE"],"type":"conflict","outcomes":["trade_gdp_pp","growth_pp"],"multiplier":0.5,"condition":"licensed good is guarantee-eligible"},
+    {"id":"INT-012","policies":["POL-TRADE-TEMPORARY-OUTFLOW-CONTROL","POL-CB-FX-SWAP"],"type":"substitution","outcomes":["fx_appreciation_percent","reserves_import_months"],"multiplier":0.75,"condition":"controls exceed 30 percent"},
+    {"id":"INT-013","policies":["POL-FIN-DEBT-RESTRUCTURING","POL-CB-RESOLUTION-LIQUIDITY"],"type":"complement","outcomes":["stability_points","debt_gdp_pp"],"multiplier":1.2,"condition":"domestic-bank recapitalization plan funded"},
+    {"id":"INT-014","policies":["POL-FIN-GOVERNMENT-LOAN-GUARANTEE","POL-FIN-DEBT-RESTRUCTURING"],"type":"conflict","outcomes":["debt_gdp_pp","fx_appreciation_percent"],"multiplier":0.65,"condition":"guarantee calls likely"},
+    {"id":"INT-015","policies":["POL-CAP-COMMUNICATION","POL-CAP-EMERGENCY-COORDINATION"],"type":"conditional_complement","outcomes":["public_support_pp","stability_points"],"multiplier":1.2,"condition":"published claims pass statistical review"}
+  ],
+  "idempotency_rule": "An interaction is identified by sorted(policy action IDs), territory, interaction id and effective date bucket; it is applied once only."
+}

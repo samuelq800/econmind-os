@@ -5,6 +5,7 @@ The persistent world is designed to stay within the free Supabase/GitHub Pages s
 ## What is already protected
 
 - `20260730000000_continuous_world_foundation.sql` adds versioned calibration packages, persistent world state, multi-role assignments, policy actions, snapshots, audit records, indexes, update triggers and RLS.
+- `20260730010000_continuous_world_long_running.sql` changes the experience from rounds to natural time: approved League Teams may claim one country, one person may hold several of the seven portfolios, policy actions can be amended or cancelled, contracts settle continuously, shocks are time-bounded, and country states can deteriorate and recover. It also adds RLS-protected Model Composer drafts and teacher/admin publication.
 - New platform role assignments are additive. Existing `profiles.role` and `profiles.platform_role` remain compatible with current experiments and League pages.
 - `process-continuous-world` is a protected Edge Function. It only accepts a league administrator session or `CONTINUOUS_WORLD_CRON_SECRET`, claims an atomic database lock, applies a deterministic tick, saves a replayable snapshot, and faults a world after five failed worker attempts.
 - `NEXT_PUBLIC_ENABLE_CONTINUOUS_WORLD` only controls navigation visibility. It is not permission control; RLS and server procedures are the security boundary.
@@ -28,11 +29,13 @@ Run **Deploy Supabase backend** manually with both options enabled. It applies m
 
 The checked-in package is deliberately rejected by strict launch validation until every file declared in `package_metadata.json` exists, including `calibration_test_suite.json`. Do not bypass this gate.
 
-When the package is complete, in a local server-only terminal session (not a browser `.env.local`), provide `SUPABASE_SERVICE_ROLE_KEY` temporarily and run:
+The baseline calibration package remains useful for the original twelve-country engine. The final teaching package adds the long-running world specification, contracts, Economic Bench, Mechanism Arena, Evidence Lab and extended model tests. Render and apply it only from a server-controlled terminal session:
 
 ```bash
 pnpm calibration:check
 pnpm world:launch -- --confirm-launch --start
+pnpm world:render-teaching-seed-sql > /private/tmp/econmind-final-world-teaching-seed.sql
+supabase db query --linked --file /private/tmp/econmind-final-world-teaching-seed.sql
 ```
 
 The command verifies the complete data package, stores immutable versioned calibration rows, activates those rows, creates exactly one initial 12-country world state, and starts it with an hourly tick. It refuses to overwrite an existing world.
@@ -71,7 +74,7 @@ select cron.schedule(
 );
 ```
 
-This uses Supabase `pg_cron`, `pg_net` and Vault—no paid server or external automation. Retain the hourly default until usage is observed; the worker claims at most four worlds per run.
+This uses Supabase `pg_cron`, `pg_net` and Vault—no paid server or external automation. Retain the hourly default until usage is observed; the worker claims at most four worlds per run. Policy lags, contract deadlines, shocks and recovery therefore expand gradually against real clock time; there are no Q1/Q2 locks, fixed rounds, or mandatory deadlines.
 
 ## Final release check
 

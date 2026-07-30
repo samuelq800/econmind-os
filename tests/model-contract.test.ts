@@ -4,10 +4,11 @@ import { STANDARD_MODEL_CATALOG } from "@/lib/models/standard-catalog";
 import { MODEL_REGISTRY } from "@/lib/models/registry";
 
 describe("platform foundation", () => {
-  it("keeps unfinished systems behind explicit feature flags", () => {
+  it("keeps the upload boundary closed while enabling completed learning systems", () => {
     expect(FEATURE_FLAGS.evidenceUpload).toBe(false);
-    expect(FEATURE_FLAGS.modelPractice).toBe(false);
-    expect(availableNavigation().some((item) => item.href === "/econbench")).toBe(false);
+    expect(FEATURE_FLAGS.modelPractice).toBe(true);
+    expect(FEATURE_FLAGS.modelComposer).toBe(true);
+    expect(availableNavigation().some((item) => item.href === "/econbench")).toBe(true);
     expect(PLATFORM_NAVIGATION.some((item) => item.href === "/econbench")).toBe(true);
   });
 

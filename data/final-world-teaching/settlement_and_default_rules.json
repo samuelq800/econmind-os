@@ -1,0 +1,33 @@
+{
+  "dataset_id": "econmind_settlement_and_default_rules",
+  "version": "0.1.0",
+  "status": "synthetic_calibration",
+  "provenance": ["FW-CAL-CONTRACT-01", "FW-SRC-IMF-RESTRUCTURE"],
+  "lifecycle": ["draft", "submitted", "approved", "funded_or_deposited", "scheduled", "in_transit_or_performing", "partially_delivered", "delivered", "invoice_due", "paid", "closed"],
+  "exception_states": ["late", "quality_dispute", "force_majeure_pending", "force_majeure_confirmed", "default_notice", "cure", "restructured", "terminated"],
+  "transition_rules": [
+    {"from":"draft","to":"submitted","when":"schema valid and idempotency key new"},
+    {"from":"submitted","to":"approved","when":"approvals and capacity reservation valid"},
+    {"from":"approved","to":"funded_or_deposited","when":"deposit or credit approval clears"},
+    {"from":"scheduled","to":"in_transit_or_performing","when":"start timestamp reached and route/project capacity exists"},
+    {"from":"in_transit_or_performing","to":"partially_delivered","when":"0 < accepted quantity < contractual quantity"},
+    {"from":"partially_delivered","to":"delivered","when":"accepted quantity meets adjusted obligation"},
+    {"from":"invoice_due","to":"late","when":"due time passed and unpaid balance > tolerance"},
+    {"from":"late","to":"default_notice","when":"grace days exhausted"},
+    {"from":"default_notice","to":"cure","when":"cure payment/collateral/alternative delivery accepted"},
+    {"from":"default_notice","to":"restructured","when":"authorized term sheet signed"},
+    {"from":"force_majeure_pending","to":"force_majeure_confirmed","when":"independent verification and mitigation evidence pass"}
+  ],
+  "settlement_formulae": {
+    "invoice": "accepted_quantity * unit_price + tariff + transport + insurance - deposit_applied",
+    "tariff": "customs_value * tariff_percent / 100",
+    "insurance": "customs_value * (route_insurance_surcharge_percent + contract_loading_percent) / 100",
+    "late_interest": "unpaid_balance * annual_penalty_rate * overdue_days / 365",
+    "default_loss": "max(0, unpaid_balance + accrued_interest - recoverable_collateral - insured_recovery)",
+    "partial_fulfilment": "obligation_remaining = contracted_quantity - accepted_quantity - force_majeure_excused_quantity",
+    "currency_conversion": "settlement_GCU = settlement_native * fx_midpoint(native_to_GCU, settlement_timestamp)"
+  },
+  "default_parameters": {"grace_days":[5,30],"annual_penalty_rate_percent":[4,18],"credit_haircut_percent":[0,60],"insured_recovery_percent":[0,90],"renegotiation_haircut_percent":[0,60],"status":"synthetic_calibration"},
+  "force_majeure": {"eligible_events":["route closure","declared disaster","verified physical production outage","legal prohibition"],"ineligible_events":["price regret","lack of financing","avoidable inventory error"],"effects":["suspend affected quantity only","retain payment for accepted delivery","extend delivery by verified disruption plus buffer","trigger mitigation and reroute search"]},
+  "ledger_invariants": ["sum(debit)=sum(credit) per currency", "accepted quantity never exceeds contracted quantity plus authorized amendment", "a close-out is posted once per contract event UUID", "no contract can return from terminated to active without a successor contract ID"]
+}

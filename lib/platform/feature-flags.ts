@@ -2,13 +2,13 @@ export const FEATURE_FLAGS = {
   dailyBrief: true,
   sandbox: true,
   modelWorkspace: true,
-  modelPractice: false,
-  modelComposer: false,
+  modelPractice: true,
+  modelComposer: true,
   modelCompare: false,
   modelValidation: false,
-  econBench: false,
-  mechanismArena: false,
-  evidenceLab: false,
+  econBench: true,
+  mechanismArena: true,
+  evidenceLab: true,
   evidenceUpload: false,
   // This is a public build flag, not a security mechanism. The database RLS
   // and server worker remain the authority. It keeps the route out of normal
@@ -41,7 +41,7 @@ export const PLATFORM_NAVIGATION: readonly PlatformNavigationItem[] = [
   { href: "/mechanism-arena", label: "Mechanism Arena", system: "learning-research", feature: "mechanismArena" },
   { href: "/world", label: "World Economy", system: "world-economy", feature: "worldEconomy" },
   { href: "/league", label: "League", system: "world-economy", feature: "league" },
-  { href: "/research", label: "Research", system: "learning-research", feature: "evidenceLab" },
+  { href: "/research", label: "Evidence Lab", system: "learning-research", feature: "evidenceLab" },
 ];
 
 export function isFeatureEnabled(feature: FeatureFlag | undefined) {

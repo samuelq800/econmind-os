@@ -1,0 +1,16 @@
+{
+  "dataset_id": "econmind_mechanism_result_metrics",
+  "version": "0.1.0",
+  "status": "derived",
+  "metrics": {
+    "allocative_efficiency":"realized social surplus / maximum feasible social surplus; 0..1 when denominator positive",
+    "fairness_gini":"Gini coefficient of participant payoff; 0 equal, 1 maximal inequality",
+    "stability":"scenario-specific survival/stable-match/cooperation probability or indicator",
+    "strategy_manipulation":"count or rate of profitable deviation attempts under recorded information set",
+    "revenue_or_cost":"seller/regulator revenue or total resource cost in declared GCU",
+    "participation_rate":"participants accepting or entering / eligible participants",
+    "constraint_violation":"boolean plus structured reason"
+  },
+  "result_schema":{"run_id":"UUID","scenario_id":"string","seed":"integer","parameters":{},"actions":{},"outcomes":{},"metrics":{},"event_log":[],"source_version":"0.1.0","state_hash":"sha256"},
+  "validation": ["efficiency denominator recorded", "payoffs sum to transfers plus exogenous surplus", "Gini handles negative payoffs using shifted-value disclosure", "metric unit carried in result"]
+}

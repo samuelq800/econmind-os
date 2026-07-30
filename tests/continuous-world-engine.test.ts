@@ -7,7 +7,7 @@ const action: ContinuousPolicyAction = { id: "action", countryId: "a", policyId:
 
 describe("continuous world engine", () => {
   it("is a no-op for a repeated processing timestamp", () => {
-    expect(advanceContinuousWorld(state, [action], { [definition.id]: definition }, state.lastProcessedAt)).toEqual({ state, appliedEffects: [], processedDays: 0 });
+    expect(advanceContinuousWorld(state, [action], { [definition.id]: definition }, state.lastProcessedAt)).toEqual({ state, appliedEffects: [], stateChanges: [], processedDays: 0 });
   });
 
   it("advances proportionally during sub-day server ticks", () => {
@@ -33,5 +33,26 @@ describe("continuous world engine", () => {
   it("ignores policy changes outside the calibrated range", () => {
     const result = advanceContinuousWorld(state, [{ ...action, change: 1201 }], { [definition.id]: definition }, "2026-01-04T00:00:00.000Z");
     expect(result.appliedEffects).toHaveLength(0);
+  });
+
+  it("applies an active shock once and clears it cleanly at expiry", () => {
+    const shocked = structuredClone(state);
+    shocked.activeShocks = [{ id: "s", shockId: "food", countryId: "a", startsAt: "2025-12-31T00:00:00.000Z", endsAt: "2026-01-03T00:00:00.000Z", status: "active", effects: { inflation_pp: 2, stability_points: -3 } }];
+    const active = advanceContinuousWorld(shocked, [], {}, "2026-01-02T00:00:00.000Z");
+    expect(active.state.countries[0].shockOutcomes?.inflation_pp).toBe(2);
+    const expired = advanceContinuousWorld(active.state, [], {}, "2026-01-04T00:00:00.000Z");
+    expect(expired.state.countries[0].shockOutcomes?.inflation_pp ?? 0).toBe(0);
+  });
+
+  it("supports a non-permanent collapse and recovery path", () => {
+    const stressed = structuredClone(state);
+    stressed.countries[0].baseline = { public_support: 10, institutional_trust: 10, social_protection_coverage: 10, food_energy_burden: 60, unemployment_rate: 18, public_debt: 130, interest_cost: 12, import_dependency: 70, cpi_inflation: 20, poverty_rate: 30 };
+    stressed.countries[0].dynamics = { governanceState: "normal", stability: 11, trust: 10, serviceCapacity: 10, costOfLivingPressure: 40, shortagePressure: 25, debtServiceStress: 30, daysBelow35: 61, daysBelow25: 61, daysBelow12: 61, recoveryDays: 0 };
+    const collapsed = advanceContinuousWorld(stressed, [], {}, "2026-01-02T00:00:00.000Z");
+    expect(collapsed.state.countries[0].dynamics?.governanceState).toBe("institutional_collapse");
+    collapsed.state.countries[0].baseline = { public_support: 70, institutional_trust: 70, social_protection_coverage: 60, food_energy_burden: 10, unemployment_rate: 3, public_debt: 40, interest_cost: 1, import_dependency: 10, cpi_inflation: 2, poverty_rate: 8 };
+    collapsed.state.countries[0].dynamics = { ...collapsed.state.countries[0].dynamics!, governanceState: "empty_state", stability: 31, trust: 40, serviceCapacity: 45, costOfLivingPressure: 0, shortagePressure: 0, debtServiceStress: 0, recoveryDays: 29 };
+    const recovered = advanceContinuousWorld(collapsed.state, [], {}, "2026-01-03T00:00:00.000Z");
+    expect(recovered.state.countries[0].dynamics?.governanceState).toBe("recovery");
   });
 });

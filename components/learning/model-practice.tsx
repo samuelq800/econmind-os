@@ -1,0 +1,41 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { CheckCircle2, Lightbulb, XCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { FINAL_WORLD_TEACHING, asArray, asRecord, numeric } from "@/lib/economics/final-world-teaching/catalog";
+
+type TestCase = { id: string; input: Record<string, unknown>; expected: Record<string, unknown>; tolerance: number };
+type Binding = { model_id: string; target_field: string; boolean_field: string; boolean_value: boolean; unit_claim: string; unit_claim_truth: boolean; assumption_claim: string; assumption_claim_truth: boolean; boundary_claim: string; boundary_claim_truth: boolean; assertion: string; assertion_truth: boolean };
+type Question = { id: number; prompt: string; binary?: boolean; expected: boolean | number; hint: string };
+const testCases = asArray<TestCase>(asRecord(FINAL_WORLD_TEACHING.extendedModelTestSuite).models);
+const bindings = asArray<Binding>(asRecord(FINAL_WORLD_TEACHING.extendedPracticeQuestionBank).model_bindings);
+const human = (value: string) => value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+function makeQuestions(binding: Binding, test: TestCase): Question[] {
+  const target = test.expected[binding.target_field]; const numericTarget = typeof target === "number" ? target : 0;
+  return [
+    { id: 1, prompt: `Using ${human(binding.model_id)} with the fixed test input, enter ${binding.target_field}.`, expected: numericTarget, hint: `Use the supplied input and the documented formula. The required output is ${binding.target_field}; the permitted numerical tolerance is ${test.tolerance}.` },
+    { id: 2, binary: true, prompt: `For this test input, is ${binding.boolean_field} = ${String(binding.boolean_value)}?`, expected: binding.boolean_value, hint: "Evaluate the stored condition from this model’s test case; do not substitute a policy opinion." },
+    { id: 3, binary: true, prompt: `Is this unit-compatible: “${binding.unit_claim}”?`, expected: binding.unit_claim_truth, hint: "Check whether the output is a stock, flow, rate, quantity, probability, or currency amount on the stated time basis." },
+    { id: 4, binary: true, prompt: `Does this claim satisfy the model assumptions: “${binding.assumption_claim}”?`, expected: binding.assumption_claim_truth, hint: "The formula only applies inside its declared assumptions and market structure." },
+    { id: 5, binary: true, prompt: `Can the model alone justify: “${binding.boundary_claim}”?`, expected: binding.boundary_claim_truth, hint: "A conditional model result is not automatically an unconditional prediction or causal claim." },
+    { id: 6, binary: true, prompt: `Does “${binding.assertion}” match the regression-test expectation?`, expected: binding.assertion_truth, hint: "Compare the assertion against the versioned expected output and tolerance." },
+  ];
+}
+
+export function ModelPractice() {
+  const [modelId, setModelId] = useState(bindings[0]?.model_id ?? ""); const binding = bindings.find((item) => item.model_id === modelId) ?? bindings[0]; const test = testCases.find((item) => item.id === modelId) ?? testCases[0];
+  const questions = useMemo(() => binding && test ? makeQuestions(binding, test) : [], [binding, test]); const [index, setIndex] = useState(0); const [answer, setAnswer] = useState(""); const [result, setResult] = useState<boolean | null>(null); const [showHint, setShowHint] = useState(false);
+  if (!binding || !test || !questions[index]) return null; const question = questions[index];
+  const chooseModel = (next: string) => { setModelId(next); setIndex(0); setAnswer(""); setResult(null); setShowHint(false); };
+  const check = () => { const correct = question.binary ? (answer === "true") === question.expected : Math.abs(Number(answer) - numeric(question.expected)) <= test.tolerance; setResult(correct); };
+  const move = (next: number) => { setIndex(next); setAnswer(""); setResult(null); setShowHint(false); };
+  return <main className="min-h-[calc(100vh-4rem)] p-5 sm:p-8 lg:p-10"><div className="max-w-4xl"><p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-[var(--accent)]">Model learning system · binary mastery</p><h1 className="mt-3 text-4xl font-bold tracking-[-.05em] sm:text-5xl">Model Practice</h1><p className="mt-4 max-w-3xl text-sm leading-6 text-[var(--ink-muted)]">222 versioned questions across 37 models. Answers are simply correct or incorrect: unlimited retries, optional step hints, no partial credit and no AI-generated evaluation.</p></div>
+    <div className="mt-8 grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)]"><aside className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4 xl:self-start"><label className="text-[10px] font-bold uppercase tracking-wider text-[var(--ink-faint)]">Choose a model<select value={modelId} onChange={(event) => chooseModel(event.target.value)} className="mt-3 h-10 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 text-sm text-[var(--ink)]">{bindings.map((item) => <option key={item.model_id} value={item.model_id}>{human(item.model_id)}</option>)}</select></label><p className="mt-5 text-xs leading-5 text-[var(--ink-muted)]">Fixed source input</p><pre className="mt-2 overflow-x-auto rounded-md bg-[var(--surface-subtle)] p-3 text-[10px] leading-5 text-[var(--ink-muted)]">{JSON.stringify(test.input, null, 2)}</pre><p className="mt-3 text-[10px] text-[var(--ink-faint)]">Formula catalogue and test suite version are locked for each question.</p></aside>
+      <section className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-7"><div className="flex flex-wrap items-center justify-between gap-3"><div className="flex flex-wrap gap-2"><Badge className="bg-[var(--accent-soft)] text-[var(--accent)]">{human(binding.model_id)}</Badge><Badge>Question {index + 1} of 6</Badge></div><div className="flex gap-1">{questions.map((item, itemIndex) => <button key={item.id} type="button" aria-label={`Question ${itemIndex + 1}`} onClick={() => move(itemIndex)} className={`size-7 rounded-full text-[10px] font-bold ${itemIndex === index ? "bg-[var(--accent)] text-white" : "bg-[var(--surface-subtle)] text-[var(--ink-muted)]"}`}>{itemIndex + 1}</button>)}</div></div><h2 className="mt-8 text-2xl font-bold tracking-[-.035em]">{question.prompt}</h2>
+        <div className="mt-8">{question.binary ? <div className="flex flex-wrap gap-3"><Button variant={answer === "true" ? "primary" : "secondary"} onClick={() => { setAnswer("true"); setResult(null); }}>Correct</Button><Button variant={answer === "false" ? "primary" : "secondary"} onClick={() => { setAnswer("false"); setResult(null); }}>Incorrect</Button></div> : <label className="block max-w-sm text-xs font-bold text-[var(--ink-muted)]">Your numerical answer<input inputMode="decimal" value={answer} onChange={(event) => { setAnswer(event.target.value); setResult(null); }} placeholder="Enter a number" className="mt-2 h-11 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 text-base text-[var(--ink)] outline-none focus:border-[var(--accent)]" /></label>}</div>
+        <div className="mt-6 flex flex-wrap gap-3"><Button onClick={check} disabled={answer === ""}>Check answer</Button><Button variant="ghost" onClick={() => setShowHint((current) => !current)}><Lightbulb size={15} />{showHint ? "Hide step hint" : "Show step hint"}</Button></div>{showHint && <p className="mt-4 rounded-lg bg-[var(--amber-soft)] p-4 text-sm leading-6 text-[var(--ink-muted)]">{question.hint}</p>}{result !== null && <div className={`mt-5 flex items-center gap-2 rounded-lg border p-4 text-sm font-bold ${result ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]" : "border-[var(--red)] bg-[var(--red-soft)] text-[var(--red)]"}`}>{result ? <><CheckCircle2 size={17} />Correct.</> : <><XCircle size={17} />Incorrect. Try again or use the optional step hint.</>}</div>}
+        <p className="mt-8 border-t border-[var(--line)] pt-5 text-xs leading-5 text-[var(--ink-faint)]">This exercise checks only the stored answer condition. It does not infer intent, award partial marks, or call any external AI service.</p></section></div></main>;
+}

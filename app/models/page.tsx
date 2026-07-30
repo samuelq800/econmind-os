@@ -37,6 +37,11 @@ export default function ModelsPage() {
       <p className="mt-5 text-base leading-7 text-[var(--ink-muted)]">Search by topic, category, or difficulty. Every available model calculates instantly in your browser.</p>
     </div>
 
+    <section className="mt-8 grid gap-3 sm:grid-cols-2">
+      <Link href="/models/practice" className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-5 transition-colors hover:border-[var(--accent)]"><p className="text-[10px] font-bold uppercase tracking-wider text-[var(--accent)]">Binary mastery</p><h2 className="mt-2 text-lg font-bold">Model Practice</h2><p className="mt-2 text-sm leading-6 text-[var(--ink-muted)]">Versioned, correct-or-incorrect questions with unlimited retries and optional step hints.</p></Link>
+      <Link href="/models/composer" className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-5 transition-colors hover:border-[var(--accent)]"><p className="text-[10px] font-bold uppercase tracking-wider text-[var(--accent)]">Structured chains</p><h2 className="mt-2 text-lg font-bold">Model Composer</h2><p className="mt-2 text-sm leading-6 text-[var(--ink-muted)]">Connect two to four existing models while keeping assumptions and units explicit.</p></Link>
+    </section>
+
     <section aria-label="Model filters" className="mt-10 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4 sm:p-5">
       <label className="relative block">
         <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ink-faint)]" />

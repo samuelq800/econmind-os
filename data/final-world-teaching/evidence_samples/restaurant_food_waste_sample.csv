@@ -1,0 +1,13 @@
+day,forecast_meals,actual_meals,order_qty,sold_qty,waste_qty,unit_cost,sale_price,salvage_value,status
+1,92,88,100,88,12,5,12,1,synthetic_calibration
+2,105,111,112,111,1,5,12,1,synthetic_calibration
+3,98,94,105,94,11,5,12,1,synthetic_calibration
+4,120,126,125,125,0,5,12,1,synthetic_calibration
+5,110,102,116,102,14,5,12,1,synthetic_calibration
+6,82,79,90,79,11,5,12,1,synthetic_calibration
+7,101,108,110,108,2,5,12,1,synthetic_calibration
+8,115,119,122,119,3,5,12,1,synthetic_calibration
+9,96,91,105,91,14,5,12,1,synthetic_calibration
+10,108,112,114,112,2,5,12,1,synthetic_calibration
+11,90,86,98,86,12,5,12,1,synthetic_calibration
+12,104,109,112,109,3,5,12,1,synthetic_calibration

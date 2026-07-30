@@ -1,0 +1,30 @@
+{
+  "dataset_id": "econmind_map_and_trade_validation",
+  "version": "0.1.0",
+  "status": "derived",
+  "validation_contract": {
+    "parser": "strict JSON; UTF-8; unique IDs",
+    "territories_required": ["Asterra", "Bellune", "Cyrenia", "Damaris", "Eryndor", "Falcrest", "Gavren", "Helion", "Iskara", "Jorvia", "Kordell", "Lumeria"],
+    "route_endpoint_rule": "Every from/to ID resolves to territory_network.json or to a declared virtual maritime node.",
+    "adjacency_rule": "Land adjacency is symmetric; island Iskara may have an empty land-neighbour list.",
+    "connectivity_rule": "The undirected route graph is connected when virtual maritime nodes are included.",
+    "matrix_rule": "For every market, export and import target shares each equal 100.0000 (+/-0.0001); all diagonal flows are zero; materialized global flow equals global_trade_units_index (+/-0.0001).",
+    "path_rule": "A positive non-domestic flow has at least one feasible path unless explicitly marked blocked.",
+    "non_mapping_rule": "No field names a real country, real port, or copied real bilateral flow."
+  },
+  "tests": [
+    {"id":"MAP-001","input":"territory count","expected":12,"status":"pass"},
+    {"id":"MAP-002","input":"land adjacency symmetry","expected":true,"status":"pass"},
+    {"id":"MAP-003","input":"route graph connected","expected":true,"status":"pass"},
+    {"id":"TRD-001","input":"energy export/import share totals","expected":[100,100],"status":"pass"},
+    {"id":"TRD-002","input":"food export/import share totals","expected":[100,100],"status":"pass"},
+    {"id":"TRD-003","input":"metals export/import share totals","expected":[100,100],"status":"pass"},
+    {"id":"TRD-004","input":"manufactures export/import share totals","expected":[100,100],"status":"pass"},
+    {"id":"TRD-005","input":"technology_services export/import share totals","expected":[100,100],"status":"pass"},
+    {"id":"TRD-006","input":"IPF max residual in share points","expected_max":0.0001,"status":"run_time"},
+    {"id":"TRD-007","input":"all own-country matrix cells","expected":0,"status":"run_time"},
+    {"id":"TRD-008","input":"route closure S-ORIAN","expected":"affected flows reroute or become unfilled; no extra global supply is created","status":"run_time"},
+    {"id":"TRD-009","input":"fictional-only audit","expected":true,"status":"pass"}
+  ],
+  "failure_actions": {"share_failure":"reject calibration build", "connectivity_failure":"mark affected contracts force-majeure eligible", "route_failure":"set route capacity to zero and recompute IPF with unmet-demand ledger"}
+}

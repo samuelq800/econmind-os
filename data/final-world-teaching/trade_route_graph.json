@@ -1,0 +1,27 @@
+{
+  "dataset_id":"econmind_trade_route_graph","version":"0.1.0","status":"synthetic_calibration","provenance_id":"FW-CAL-MAP-01","unit":"days; capacity index_2026Q1_100; insurance surcharge percent_of_CIF","route_rule":"A shipment uses the least expected-cost active path: base_days*(1+delay_multiplier)+tariff/inspection days; capacity is the minimum remaining edge capacity; insurance surcharges add across active edges.",
+  "routes":[
+    {"id":"RT-AST-ERY-R","from":"N-AST-RAILHUB","to":"N-ERY-RAILHUB","mode":"rail","base_days":3,"capacity_index":125,"risk":"low","insurance_surcharge_pct":0.3},
+    {"id":"RT-AST-JOR-R","from":"N-AST-RAILHUB","to":"N-JOR-RAILHUB","mode":"rail","base_days":2,"capacity_index":115,"risk":"low","insurance_surcharge_pct":0.3},
+    {"id":"RT-BEL-FAL-S","from":"P-BEL-AUREL","to":"P-FAL-CROWN","mode":"sea","base_days":2,"capacity_index":130,"risk":"low","insurance_surcharge_pct":0.4},
+    {"id":"RT-BEL-HEL-S","from":"P-BEL-AUREL","to":"P-HEL-ARC","mode":"sea","base_days":3,"capacity_index":105,"risk":"medium","insurance_surcharge_pct":0.8,"strait":"S-MERIDIAN"},
+    {"id":"RT-CYR-KOR-P","from":"N-CYR-PIPELINE","to":"N-KOR-PIPELINE","mode":"pipeline","base_days":2,"capacity_index":145,"risk":"medium","insurance_surcharge_pct":0.6},
+    {"id":"RT-CYR-LUM-R","from":"N-CYR-CAPITAL","to":"N-LUM-LOGISTICS","mode":"rail","base_days":4,"capacity_index":95,"risk":"medium","insurance_surcharge_pct":0.7},
+    {"id":"RT-DAM-GAV-R","from":"N-DAM-GRAINDEPOT","to":"N-GAV-DRYPORT","mode":"rail","base_days":5,"capacity_index":75,"risk":"medium","insurance_surcharge_pct":1.0},
+    {"id":"RT-DAM-LUM-S","from":"P-DAM-SUNCOAST","to":"P-LUM-RIVER","mode":"sea","base_days":3,"capacity_index":100,"risk":"medium","insurance_surcharge_pct":0.8},
+    {"id":"RT-ERY-CYR-R","from":"N-ERY-RAILHUB","to":"N-CYR-SMELTER","mode":"rail","base_days":4,"capacity_index":105,"risk":"medium","insurance_surcharge_pct":0.7},
+    {"id":"RT-ERY-LUM-R","from":"N-ERY-RAILHUB","to":"N-LUM-LOGISTICS","mode":"rail","base_days":2,"capacity_index":135,"risk":"low","insurance_surcharge_pct":0.3},
+    {"id":"RT-FAL-HEL-S","from":"P-FAL-CROWN","to":"P-HEL-ARC","mode":"sea","base_days":2,"capacity_index":115,"risk":"medium","insurance_surcharge_pct":0.8,"strait":"S-MERIDIAN"},
+    {"id":"RT-GAV-JOR-R","from":"N-GAV-DRYPORT","to":"N-JOR-RAILHUB","mode":"rail","base_days":4,"capacity_index":80,"risk":"medium","insurance_surcharge_pct":1.0},
+    {"id":"RT-GAV-LUM-R","from":"N-GAV-DRYPORT","to":"N-LUM-LOGISTICS","mode":"road","base_days":6,"capacity_index":60,"risk":"high","insurance_surcharge_pct":1.8},
+    {"id":"RT-ISK-LUM-S","from":"P-ISK-LAGOON","to":"P-LUM-CRESCENT","mode":"sea","base_days":4,"capacity_index":75,"risk":"high","insurance_surcharge_pct":1.6,"strait":"S-SOUTHGATE"},
+    {"id":"RT-JOR-LUM-R","from":"N-JOR-RAILHUB","to":"N-LUM-INDUSTRIAL","mode":"rail","base_days":2,"capacity_index":120,"risk":"low","insurance_surcharge_pct":0.3},
+    {"id":"RT-KOR-CYR-S","from":"P-KOR-EMBER","to":"P-CYR-ORION","mode":"sea","base_days":2,"capacity_index":155,"risk":"medium","insurance_surcharge_pct":0.7,"strait":"S-ORIAN"},
+    {"id":"RT-KOR-LUM-S","from":"P-KOR-EMBER","to":"P-LUM-CRESCENT","mode":"sea","base_days":7,"capacity_index":95,"risk":"high","insurance_surcharge_pct":1.8,"strait":"S-ORIAN"},
+    {"id":"RT-GLOBAL-RING-W","from":"P-FAL-CROWN","to":"P-LUM-CRESCENT","mode":"sea","base_days":12,"capacity_index":110,"risk":"medium","insurance_surcharge_pct":1.2,"strait":"S-MERIDIAN"},
+    {"id":"RT-GLOBAL-RING-E","from":"P-HEL-ARC","to":"P-KOR-EMBER","mode":"sea","base_days":10,"capacity_index":90,"risk":"high","insurance_surcharge_pct":1.8,"strait":"S-ORIAN"},
+    {"id":"RT-SOUTH-CROSS","from":"P-DAM-SUNCOAST","to":"P-ISK-LAGOON","mode":"sea","base_days":5,"capacity_index":65,"risk":"high","insurance_surcharge_pct":2.0,"strait":"S-SOUTHGATE"}
+  ],
+  "strategic_straits":[{"id":"S-MERIDIAN","base_capacity_multiplier":1,"closure_capacity_multiplier":0,"closure_insurance_add_pct":6},{"id":"S-ORIAN","base_capacity_multiplier":1,"closure_capacity_multiplier":0.15,"closure_insurance_add_pct":8},{"id":"S-SOUTHGATE","base_capacity_multiplier":1,"closure_capacity_multiplier":0,"closure_insurance_add_pct":10}],
+  "risk_scale":{"low":{"delay_multiplier_range":[1,1.1],"baseline_risk_score":2},"medium":{"delay_multiplier_range":[1,1.35],"baseline_risk_score":5},"high":{"delay_multiplier_range":[1,1.8],"baseline_risk_score":8}}
+}
