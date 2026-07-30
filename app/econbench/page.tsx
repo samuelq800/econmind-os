@@ -1,5 +1,5 @@
-import { EconBenchLab } from "@/components/learning/econbench-lab";
+import { EconBenchLibrary } from "@/components/learning/econbench/econbench-library";
 
 export default function EconBenchPage() {
-  return <EconBenchLab />;
+  return <EconBenchLibrary />;
 }
