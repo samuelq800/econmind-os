@@ -1,63 +1,223 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Activity, AlertTriangle, Banknote, BookOpenCheck, ChevronRight, CircleAlert, Clock3, FileClock, Globe2, Handshake, LoaderCircle, Map, Play, Radar, RefreshCw, ShieldAlert, SlidersHorizontal, Sparkles, UsersRound } from "lucide-react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import {
+  Activity,
+  AlertTriangle,
+  Banknote,
+  BookOpenCheck,
+  ChevronRight,
+  CircleAlert,
+  Clock3,
+  FileClock,
+  Globe2,
+  Handshake,
+  LoaderCircle,
+  Map,
+  Play,
+  Radar,
+  RefreshCw,
+  ShieldAlert,
+  SlidersHorizontal,
+  Sparkles,
+  UsersRound,
+} from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { FINAL_WORLD_ROLE_PORTFOLIOS, FINAL_WORLD_TEACHING, asArray, asRecord, numeric, policyPortfolio } from "@/lib/economics/final-world-teaching/catalog";
-import { amendContinuousWorldPolicy, approveContinuousWorldContract, cancelContinuousWorldAction, claimContinuousWorldCountry, claimContinuousWorldRole, createContinuousWorldContract, getActiveWorldPolicies, injectContinuousWorldShock, joinContinuousWorld, listContinuousWorldActions, listContinuousWorldContracts, listContinuousWorldCountryTeams, listContinuousWorldEvents, listContinuousWorldRoles, listContinuousWorlds, submitContinuousWorldPolicy, type ContinuousWorldAction, type ContinuousWorldContract, type ContinuousWorldCountryTeam, type ContinuousWorldEvent, type ContinuousWorldRecord, type ContinuousWorldRoleAssignment, type WorldPolicyDefinition } from "@/lib/supabase/continuous-world";
+import { WorldPredictedEffectsRadar } from "@/components/world/world-predicted-effects-radar";
+import type { PolicyEffectPreview } from "@/lib/economics/continuous-world/predicted-effects";
+import {
+  FINAL_WORLD_ROLE_PORTFOLIOS,
+  FINAL_WORLD_TEACHING,
+  asArray,
+  asRecord,
+  numeric,
+  policyPortfolio,
+} from "@/lib/economics/final-world-teaching/catalog";
+import {
+  amendContinuousWorldPolicy,
+  approveContinuousWorldContract,
+  cancelContinuousWorldAction,
+  claimContinuousWorldCountry,
+  claimContinuousWorldRole,
+  createContinuousWorldContract,
+  getActiveWorldPolicies,
+  injectContinuousWorldShock,
+  joinContinuousWorld,
+  listContinuousWorldActions,
+  listContinuousWorldContracts,
+  listContinuousWorldCountryTeams,
+  listContinuousWorldEvents,
+  listContinuousWorldRoles,
+  listContinuousWorlds,
+  submitContinuousWorldPolicy,
+  type ContinuousWorldAction,
+  type ContinuousWorldContract,
+  type ContinuousWorldCountryTeam,
+  type ContinuousWorldEvent,
+  type ContinuousWorldRecord,
+  type ContinuousWorldRoleAssignment,
+  type WorldPolicyDefinition,
+} from "@/lib/supabase/continuous-world";
 
-type CountryView = { id: string; baseline: Record<string, unknown>; outcomes: Record<string, unknown>; dynamics: Record<string, unknown> };
-type ViewMode = "Political" | "Trade" | "Resources" | "Finance" | "Infrastructure" | "Risk";
+type CountryView = {
+  id: string;
+  baseline: Record<string, unknown>;
+  outcomes: Record<string, unknown>;
+  dynamics: Record<string, unknown>;
+};
+type ViewMode =
+  "Political" | "Trade" | "Resources" | "Finance" | "Infrastructure" | "Risk";
 
-const codeToCountry: Record<string, string> = { AST: "asterra", BEL: "bellune", CYR: "cyrenia", DAM: "damaris", ERY: "eryndor", FAL: "falcrest", GAV: "gavren", HEL: "helion", ISK: "iskara", JOR: "jorvia", KOR: "kordell", LUM: "lumeria" };
-const governanceColor: Record<string, string> = { normal: "var(--accent)", protest: "var(--amber)", government_crisis: "var(--red)", institutional_collapse: "#8e5b8e", empty_state: "#606762", recovery: "var(--blue)" };
-const titleCase = (value: string) => value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
-const value = (record: Record<string, unknown>, key: string, fallback = 0) => numeric(record[key], fallback);
+const codeToCountry: Record<string, string> = {
+  AST: "asterra",
+  BEL: "bellune",
+  CYR: "cyrenia",
+  DAM: "damaris",
+  ERY: "eryndor",
+  FAL: "falcrest",
+  GAV: "gavren",
+  HEL: "helion",
+  ISK: "iskara",
+  JOR: "jorvia",
+  KOR: "kordell",
+  LUM: "lumeria",
+};
+const governanceColor: Record<string, string> = {
+  normal: "var(--accent)",
+  protest: "var(--amber)",
+  government_crisis: "var(--red)",
+  institutional_collapse: "#8e5b8e",
+  empty_state: "#606762",
+  recovery: "var(--blue)",
+};
+const titleCase = (value: string) =>
+  value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+const value = (record: Record<string, unknown>, key: string, fallback = 0) =>
+  numeric(record[key], fallback);
 
 function countriesOf(world: ContinuousWorldRecord | null): CountryView[] {
-  return asArray<Record<string, unknown>>(world?.current_state?.countries).flatMap((country) => {
+  return asArray<Record<string, unknown>>(
+    world?.current_state?.countries,
+  ).flatMap((country) => {
     const id = typeof country.id === "string" ? country.id : "";
-    return id ? [{ id, baseline: asRecord(country.baseline), outcomes: asRecord(country.outcomes), dynamics: asRecord(country.dynamics) }] : [];
+    return id
+      ? [
+          {
+            id,
+            baseline: asRecord(country.baseline),
+            outcomes: asRecord(country.outcomes),
+            dynamics: asRecord(country.dynamics),
+          },
+        ]
+      : [];
   });
 }
 
-function countryName(id: string) { return id ? `${id.slice(0, 1).toUpperCase()}${id.slice(1)}` : "Unknown"; }
-function metric(country: CountryView, base: string, effect: string) { return value(country.baseline, base) + value(country.outcomes, effect); }
-function governance(country: CountryView) { return typeof country.dynamics.governanceState === "string" ? country.dynamics.governanceState : "normal"; }
+function countryName(id: string) {
+  return id ? `${id.slice(0, 1).toUpperCase()}${id.slice(1)}` : "Unknown";
+}
+function metric(country: CountryView, base: string, effect: string) {
+  return value(country.baseline, base) + value(country.outcomes, effect);
+}
+function governance(country: CountryView) {
+  return typeof country.dynamics.governanceState === "string"
+    ? country.dynamics.governanceState
+    : "normal";
+}
 
 function countryScore(country: CountryView, actions: ContinuousWorldAction[]) {
-  const growth = metric(country, "real_gdp_growth", "growth_pp") || metric(country, "real_gdp_growth", "real_gdp_growth_pp");
+  const growth =
+    metric(country, "real_gdp_growth", "growth_pp") ||
+    metric(country, "real_gdp_growth", "real_gdp_growth_pp");
   const inflation = metric(country, "cpi_inflation", "inflation_pp");
   const unemployment = metric(country, "unemployment_rate", "unemployment_pp");
   const debt = metric(country, "public_debt", "debt_gdp_pp");
-  const stability = value(country.dynamics, "stability", (value(country.baseline, "public_support") + value(country.baseline, "institutional_trust")) / 2);
-  const trust = value(country.dynamics, "trust", value(country.baseline, "institutional_trust", 50));
-  const score = Math.max(0, Math.min(100,
-    (55 + growth * 5 - Math.max(0, inflation - 3) * 2) * .20
-    + (100 - Math.max(0, inflation - 2) * 5 - Math.max(0, unemployment - 4) * 5) * .15
-    + (100 - Math.max(0, debt - 55) * .7) * .15
-    + (stability + Math.max(0, 100 - value(country.baseline, "poverty_rate", 15) * 4)) / 2 * .15
-    + (100 - value(country.baseline, "gini", .4) * 100) * .10
-    + (value(country.baseline, "bank_stability", 60) + trust) / 2 * .10
-    + trust * .05
-    + Math.max(0, 100 - value(country.baseline, "import_dependency", 40) * 1.25) * .05
-    + Math.min(100, actions.filter((action) => action.country_key === country.id && action.status === "active").length * 20 + 40) * .05,
-  ));
+  const stability = value(
+    country.dynamics,
+    "stability",
+    (value(country.baseline, "public_support") +
+      value(country.baseline, "institutional_trust")) /
+      2,
+  );
+  const trust = value(
+    country.dynamics,
+    "trust",
+    value(country.baseline, "institutional_trust", 50),
+  );
+  const score = Math.max(
+    0,
+    Math.min(
+      100,
+      (55 + growth * 5 - Math.max(0, inflation - 3) * 2) * 0.2 +
+        (100 -
+          Math.max(0, inflation - 2) * 5 -
+          Math.max(0, unemployment - 4) * 5) *
+          0.15 +
+        (100 - Math.max(0, debt - 55) * 0.7) * 0.15 +
+        ((stability +
+          Math.max(0, 100 - value(country.baseline, "poverty_rate", 15) * 4)) /
+          2) *
+          0.15 +
+        (100 - value(country.baseline, "gini", 0.4) * 100) * 0.1 +
+        ((value(country.baseline, "bank_stability", 60) + trust) / 2) * 0.1 +
+        trust * 0.05 +
+        Math.max(
+          0,
+          100 - value(country.baseline, "import_dependency", 40) * 1.25,
+        ) *
+          0.05 +
+        Math.min(
+          100,
+          actions.filter(
+            (action) =>
+              action.country_key === country.id && action.status === "active",
+          ).length *
+            20 +
+            40,
+        ) *
+          0.05,
+    ),
+  );
   return { score, growth, inflation, unemployment, debt, stability };
 }
 
-function MapCanvas({ countries, claims, mode, setMode }: { countries: CountryView[]; claims: ContinuousWorldCountryTeam[]; mode: ViewMode; setMode: (value: ViewMode) => void }) {
-  const centroids = asRecord(FINAL_WORLD_TEACHING.fictionalWorldMap.territory_centroids) as Record<string, unknown>;
+function MapCanvas({
+  countries,
+  claims,
+  mode,
+  setMode,
+  selectedCountryId,
+  onSelectCountry,
+}: {
+  countries: CountryView[];
+  claims: ContinuousWorldCountryTeam[];
+  mode: ViewMode;
+  setMode: (value: ViewMode) => void;
+  selectedCountryId?: string;
+  onSelectCountry?: (countryId: string) => void;
+}) {
+  const centroids = asRecord(
+    FINAL_WORLD_TEACHING.fictionalWorldMap.territory_centroids,
+  ) as Record<string, unknown>;
   const position = (id: string) => {
     const point = asArray<unknown>(centroids[id]).map(Number);
     return { x: 64 + (point[0] ?? 5) * 57, y: 548 - (point[1] ?? 5) * 48 };
   };
-  const endpointCountry = (node: string) => codeToCountry[node.split("-")[1] ?? ""] ?? "";
-  const routes = asArray<Record<string, unknown>>(FINAL_WORLD_TEACHING.tradeRouteGraph.routes);
+  const endpointCountry = (node: string) =>
+    codeToCountry[node.split("-")[1] ?? ""] ?? "";
+  const routes = asArray<Record<string, unknown>>(
+    FINAL_WORLD_TEACHING.tradeRouteGraph.routes,
+  );
   const modeCopy: Record<ViewMode, string> = {
     Political: "Team ownership and country condition",
     Trade: "Baseline paths, route capacity and active economic links",
@@ -66,72 +226,2178 @@ function MapCanvas({ countries, claims, mode, setMode }: { countries: CountryVie
     Infrastructure: "Ports, rail, pipelines and strategic chokepoints",
     Risk: "Stability, shortages and active-shock exposure",
   };
-  return <Card className="min-h-[520px] overflow-hidden p-0"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] p-4"><div><div className="flex items-center gap-2"><Map size={16} className="text-[var(--accent)]" /><h2 className="text-sm font-bold">Fictional World Map</h2></div><p className="mt-1 text-xs text-[var(--ink-muted)]">{modeCopy[mode]}</p></div><div className="flex flex-wrap gap-1">{(["Political", "Trade", "Resources", "Finance", "Infrastructure", "Risk"] as ViewMode[]).map((item) => <button key={item} onClick={() => setMode(item)} className={`rounded-md px-2 py-1 text-[10px] font-bold ${mode === item ? "bg-[var(--accent)] text-white" : "bg-[var(--surface-subtle)] text-[var(--ink-muted)]"}`}>{item}</button>)}</div></div><div className="relative min-h-[440px] bg-[radial-gradient(circle_at_55%_45%,var(--accent-soft),transparent_46%),var(--surface-subtle)]"><svg viewBox="0 0 720 590" className="absolute inset-0 size-full" role="img" aria-label="Fictional twelve-country economic world map"><defs><pattern id="world-grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--line)" strokeWidth="1" /></pattern></defs><rect width="720" height="590" fill="url(#world-grid)" opacity=".7" />{routes.map((route) => { const source = endpointCountry(String(route.from)); const target = endpointCountry(String(route.to)); if (!source || !target || source === target) return null; const a = position(source); const b = position(target); const risk = String(route.risk); return <line key={String(route.id)} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={risk === "high" ? "var(--red)" : risk === "medium" ? "var(--amber)" : "var(--blue)"} strokeWidth={Math.max(1, Number(route.capacity_index) / 45)} strokeDasharray={mode === "Trade" ? "0" : "6 6"} opacity={mode === "Risk" && risk === "high" ? .95 : .42} />; })}{countries.map((country) => { const p = position(country.id); const claimed = claims.some((claim) => claim.country_key === country.id); const state = governance(country); return <g key={country.id}><circle cx={p.x} cy={p.y} r={claimed ? 25 : 20} fill={governanceColor[state] ?? "var(--ink-faint)"} opacity={claimed ? .95 : .42} stroke="var(--surface)" strokeWidth="3" /><text x={p.x} y={p.y + 4} textAnchor="middle" fill="white" fontSize="10" fontWeight="700">{country.id.slice(0, 3).toUpperCase()}</text><text x={p.x} y={p.y + 39} textAnchor="middle" fill="var(--ink-muted)" fontSize="10">{countryName(country.id)}</text></g>; })}</svg><div className="absolute bottom-3 left-3 rounded-lg border border-[var(--line)] bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] p-2 text-[10px] text-[var(--ink-muted)]"><p className="font-bold text-[var(--ink)]">Synthetic world only</p><p className="mt-1">No country, port, route or map element refers to a real place.</p></div></div></Card>;
+  return (
+    <Card className="min-h-[520px] overflow-hidden p-0">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] p-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <Map size={16} className="text-[var(--accent)]" />
+            <h2 className="text-sm font-bold">Fictional World Map</h2>
+          </div>
+          <p className="mt-1 text-xs text-[var(--ink-muted)]">
+            {modeCopy[mode]}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {(
+            [
+              "Political",
+              "Trade",
+              "Resources",
+              "Finance",
+              "Infrastructure",
+              "Risk",
+            ] as ViewMode[]
+          ).map((item) => (
+            <button
+              key={item}
+              onClick={() => setMode(item)}
+              className={`rounded-md px-2 py-1 text-[10px] font-bold ${mode === item ? "bg-[var(--accent)] text-white" : "bg-[var(--surface-subtle)] text-[var(--ink-muted)]"}`}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="relative min-h-[440px] bg-[radial-gradient(circle_at_55%_45%,var(--accent-soft),transparent_46%),var(--surface-subtle)]">
+        <svg
+          viewBox="0 0 720 590"
+          className="absolute inset-0 size-full"
+          role="img"
+          aria-label="Fictional twelve-country economic world map"
+        >
+          <defs>
+            <pattern
+              id="world-grid"
+              width="40"
+              height="40"
+              patternUnits="userSpaceOnUse"
+            >
+              <path
+                d="M 40 0 L 0 0 0 40"
+                fill="none"
+                stroke="var(--line)"
+                strokeWidth="1"
+              />
+            </pattern>
+          </defs>
+          <rect width="720" height="590" fill="url(#world-grid)" opacity=".7" />
+          {routes.map((route) => {
+            const source = endpointCountry(String(route.from));
+            const target = endpointCountry(String(route.to));
+            if (!source || !target || source === target) return null;
+            const a = position(source);
+            const b = position(target);
+            const risk = String(route.risk);
+            return (
+              <line
+                key={String(route.id)}
+                x1={a.x}
+                y1={a.y}
+                x2={b.x}
+                y2={b.y}
+                stroke={
+                  risk === "high"
+                    ? "var(--red)"
+                    : risk === "medium"
+                      ? "var(--amber)"
+                      : "var(--blue)"
+                }
+                strokeWidth={Math.max(1, Number(route.capacity_index) / 45)}
+                strokeDasharray={mode === "Trade" ? "0" : "6 6"}
+                opacity={mode === "Risk" && risk === "high" ? 0.95 : 0.42}
+              />
+            );
+          })}
+          {countries.map((country) => {
+            const p = position(country.id);
+            const claimed = claims.some(
+              (claim) => claim.country_key === country.id,
+            );
+            const state = governance(country);
+            return (
+              <g
+                key={country.id}
+                className={onSelectCountry ? "cursor-pointer" : undefined}
+                onClick={() => onSelectCountry?.(country.id)}
+                onKeyDown={(event) => {
+                  if (
+                    onSelectCountry &&
+                    (event.key === "Enter" || event.key === " ")
+                  ) {
+                    event.preventDefault();
+                    onSelectCountry(country.id);
+                  }
+                }}
+                role={onSelectCountry ? "button" : undefined}
+                tabIndex={onSelectCountry ? 0 : undefined}
+                aria-label={
+                  onSelectCountry
+                    ? `Open ${countryName(country.id)}`
+                    : undefined
+                }
+              >
+                <circle
+                  cx={p.x}
+                  cy={p.y}
+                  r={selectedCountryId === country.id ? 30 : claimed ? 25 : 20}
+                  fill={governanceColor[state] ?? "var(--ink-faint)"}
+                  opacity={claimed ? 0.95 : 0.42}
+                  stroke={
+                    selectedCountryId === country.id
+                      ? "var(--accent)"
+                      : "var(--surface)"
+                  }
+                  strokeWidth={selectedCountryId === country.id ? "5" : "3"}
+                />
+                <text
+                  x={p.x}
+                  y={p.y + 4}
+                  textAnchor="middle"
+                  fill="white"
+                  fontSize="10"
+                  fontWeight="700"
+                >
+                  {country.id.slice(0, 3).toUpperCase()}
+                </text>
+                <text
+                  x={p.x}
+                  y={p.y + 39}
+                  textAnchor="middle"
+                  fill="var(--ink-muted)"
+                  fontSize="10"
+                >
+                  {countryName(country.id)}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+        <div className="absolute bottom-3 left-3 rounded-lg border border-[var(--line)] bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] p-2 text-[10px] text-[var(--ink-muted)]">
+          <p className="font-bold text-[var(--ink)]">Synthetic world only</p>
+          <p className="mt-1">
+            No country, port, route or map element refers to a real place.
+          </p>
+        </div>
+      </div>
+    </Card>
+  );
 }
 
-function WorldHeader({ world, countries, events, onRefresh, loading }: { world: ContinuousWorldRecord; countries: CountryView[]; events: ContinuousWorldEvent[]; onRefresh: () => void; loading: boolean }) {
-  const shocks = events.filter((event) => event.event_type === "shock").slice(0, 2);
-  const alerts = countries.filter((country) => ["protest", "government_crisis", "institutional_collapse", "empty_state"].includes(governance(country)));
+function WorldHeader({
+  world,
+  countries,
+  events,
+  onRefresh,
+  loading,
+}: {
+  world: ContinuousWorldRecord;
+  countries: CountryView[];
+  events: ContinuousWorldEvent[];
+  onRefresh: () => void;
+  loading: boolean;
+}) {
+  const shocks = events
+    .filter((event) => event.event_type === "shock")
+    .slice(0, 2);
+  const alerts = countries.filter((country) =>
+    [
+      "protest",
+      "government_crisis",
+      "institutional_collapse",
+      "empty_state",
+    ].includes(governance(country)),
+  );
   const state = asRecord(world.current_state);
-  return <Card className="overflow-hidden"><div className="grid gap-px bg-[var(--line)] sm:grid-cols-2 xl:grid-cols-5"><HeaderCell icon={<Clock3 size={15} />} label="World time" value={state.lastProcessedAt ? new Date(String(state.lastProcessedAt)).toLocaleString() : "Launching"} /><HeaderCell icon={<Activity size={15} />} label="World status" value={titleCase(world.status)} /><HeaderCell icon={<Sparkles size={15} />} label="Primary shocks" value={shocks.length ? shocks.map((event) => String(event.payload.shock_key ?? event.payload.message ?? "Shock")).join(" · ") : "No active recorded shock"} /><HeaderCell icon={<ShieldAlert size={15} />} label="Alerts" value={alerts.length ? `${alerts.length} country risk alert${alerts.length === 1 ? "" : "s"}` : "No critical alert"} /><div className="bg-[var(--surface)] p-4"><p className="text-[9px] font-bold uppercase tracking-[.14em] text-[var(--ink-faint)]">Live state</p><div className="mt-1 flex items-center justify-between gap-2"><strong className="text-sm">Version {world.state_version}</strong><Button size="sm" variant="secondary" onClick={onRefresh} disabled={loading}>{loading ? <LoaderCircle size={13} className="animate-spin" /> : <RefreshCw size={13} />}Refresh</Button></div></div></div></Card>;
+  return (
+    <Card className="overflow-hidden">
+      <div className="grid gap-px bg-[var(--line)] sm:grid-cols-2 xl:grid-cols-5">
+        <HeaderCell
+          icon={<Clock3 size={15} />}
+          label="World time"
+          value={
+            state.lastProcessedAt
+              ? new Date(String(state.lastProcessedAt)).toLocaleString()
+              : "Launching"
+          }
+        />
+        <HeaderCell
+          icon={<Activity size={15} />}
+          label="World status"
+          value={titleCase(world.status)}
+        />
+        <HeaderCell
+          icon={<Sparkles size={15} />}
+          label="Primary shocks"
+          value={
+            shocks.length
+              ? shocks
+                  .map((event) =>
+                    String(
+                      event.payload.shock_key ??
+                        event.payload.message ??
+                        "Shock",
+                    ),
+                  )
+                  .join(" · ")
+              : "No active recorded shock"
+          }
+        />
+        <HeaderCell
+          icon={<ShieldAlert size={15} />}
+          label="Alerts"
+          value={
+            alerts.length
+              ? `${alerts.length} country risk alert${alerts.length === 1 ? "" : "s"}`
+              : "No critical alert"
+          }
+        />
+        <div className="bg-[var(--surface)] p-4">
+          <p className="text-[9px] font-bold uppercase tracking-[.14em] text-[var(--ink-faint)]">
+            Live state
+          </p>
+          <div className="mt-1 flex items-center justify-between gap-2">
+            <strong className="text-sm">Version {world.state_version}</strong>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={onRefresh}
+              disabled={loading}
+            >
+              {loading ? (
+                <LoaderCircle size={13} className="animate-spin" />
+              ) : (
+                <RefreshCw size={13} />
+              )}
+              Refresh
+            </Button>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
 }
 
-function HeaderCell({ icon, label, value }: { icon: ReactNode; label: string; value: string }) { return <div className="min-w-0 bg-[var(--surface)] p-4"><p className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[.14em] text-[var(--ink-faint)]">{icon}{label}</p><p className="mt-2 truncate text-xs font-bold" title={value}>{value}</p></div>; }
-
-function RankingPanel({ countries, actions }: { countries: CountryView[]; actions: ContinuousWorldAction[] }) {
-  const rankings = useMemo(() => countries.map((country) => ({ country, ...countryScore(country, actions) })).sort((left, right) => right.score - left.score), [countries, actions]);
-  return <Card className="p-4"><div className="flex items-center gap-2"><Radar size={16} className="text-[var(--accent)]" /><h2 className="text-sm font-bold">Rolling world ranking</h2></div><p className="mt-1 text-xs leading-5 text-[var(--ink-muted)]">A transparent rolling index: economy, stability, fiscal resilience, living standards, fairness, finance, cooperation, resource security and policy reasoning.</p><ol className="mt-4 space-y-2">{rankings.map((entry, index) => <li key={entry.country.id} className="grid grid-cols-[22px_1fr_auto] items-center gap-2 rounded-lg bg-[var(--surface-subtle)] p-2.5"><span className="text-xs font-bold text-[var(--ink-faint)]">{index + 1}</span><div><p className="text-xs font-bold">{countryName(entry.country.id)}</p><p className="mt-.5 text-[10px] text-[var(--ink-muted)]">GDP {entry.growth.toFixed(1)}% · CPI {entry.inflation.toFixed(1)}% · Stability {entry.stability.toFixed(0)}</p></div><strong className="text-sm text-[var(--accent)]">{entry.score.toFixed(1)}</strong></li>)}</ol></Card>;
+function HeaderCell({
+  icon,
+  label,
+  value,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="min-w-0 bg-[var(--surface)] p-4">
+      <p className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[.14em] text-[var(--ink-faint)]">
+        {icon}
+        {label}
+      </p>
+      <p className="mt-2 truncate text-xs font-bold" title={value}>
+        {value}
+      </p>
+    </div>
+  );
 }
 
-function CountryAndRolePanel({ world, countries, claims, roles, userRoles, onChange }: { world: ContinuousWorldRecord; countries: CountryView[]; claims: ContinuousWorldCountryTeam[]; roles: ContinuousWorldRoleAssignment[]; userRoles: ContinuousWorldRoleAssignment[]; onChange: () => Promise<void> }) {
-  const [busy, setBusy] = useState(false); const [message, setMessage] = useState(""); const [error, setError] = useState("");
-  const ownCountry = userRoles.find((role) => role.world_id === world.id)?.country_key ?? "";
-  const unclaimed = countries.filter((country) => !claims.some((claim) => claim.country_key === country.id));
-  const execute = async (task: () => Promise<unknown>, success: string) => { setBusy(true); setError(""); try { await task(); setMessage(success); await onChange(); } catch (caught) { setError(caught instanceof Error ? caught.message : "The requested League action could not be completed."); } finally { setBusy(false); } };
-  return <Card className="p-4"><div className="flex items-center gap-2"><UsersRound size={16} className="text-[var(--accent)]" /><h2 className="text-sm font-bold">Country & roles</h2></div>{ownCountry ? <><p className="mt-3 text-xs leading-5 text-[var(--ink-muted)]">Your approved League Team controls <strong className="text-[var(--ink)]">{countryName(ownCountry)}</strong>. One account may hold any number of its seven portfolios.</p><div className="mt-3 grid gap-2">{FINAL_WORLD_ROLE_PORTFOLIOS.map((portfolio) => { const assigned = roles.find((role) => role.world_id === world.id && role.country_key === ownCountry && role.role_type === portfolio.id); const own = userRoles.some((role) => role.world_id === world.id && role.country_key === ownCountry && role.role_type === portfolio.id); return <div key={portfolio.id} className="flex items-center justify-between gap-2 rounded-lg bg-[var(--surface-subtle)] p-2.5"><div><p className="text-xs font-bold">{portfolio.label}</p><p className="mt-.5 text-[10px] leading-4 text-[var(--ink-muted)]">{portfolio.description}</p></div>{own ? <Badge className="bg-[var(--accent-soft)] text-[var(--accent)]">Yours</Badge> : assigned ? <Badge>Filled</Badge> : <Button size="sm" variant="secondary" disabled={busy} onClick={() => void execute(() => claimContinuousWorldRole(world.id, ownCountry, portfolio.id), `${portfolio.label} claimed.`)}>Claim</Button>}</div>; })}</div></> : <><p className="mt-3 text-xs leading-5 text-[var(--ink-muted)]">World participation requires an approved League school Team. A Team captain may claim one unoccupied country; countries without a team remain on the fixed calibrated default.</p><div className="mt-3 flex flex-wrap gap-2"><Button size="sm" variant="secondary" disabled={busy} onClick={() => void execute(() => joinContinuousWorld(world.id), "League participation registered. A Team captain can now claim a country.")}>Join with League Team</Button><Link className="inline-flex h-8 items-center gap-1 rounded-lg px-2 text-xs font-bold text-[var(--accent)] hover:bg-[var(--accent-soft)]" href="/league/join">League registration <ChevronRight size={13} /></Link></div><div className="mt-3 grid gap-2">{unclaimed.map((country) => <div key={country.id} className="flex min-w-0 flex-col gap-3 rounded-lg bg-[var(--surface-subtle)] p-3 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><p className="text-sm font-bold">{countryName(country.id)}</p><p className="mt-0.5 text-xs leading-5 text-[var(--ink-muted)]">Default policy · no manual parameters</p></div><Button size="sm" className="h-10 w-full shrink-0 whitespace-nowrap px-4 !text-xs !leading-none sm:w-auto sm:min-w-[132px]" disabled={busy} onClick={() => void execute(() => claimContinuousWorldCountry(world.id, country.id), `${countryName(country.id)} is now controlled by your Team.`)}>Claim country</Button></div>)}</div></>}{error && <p className="mt-3 text-xs text-[var(--red)]">{error}</p>}{message && <p className="mt-3 text-xs text-[var(--accent)]">{message}</p>}</Card>;
+function RankingPanel({
+  countries,
+  actions,
+}: {
+  countries: CountryView[];
+  actions: ContinuousWorldAction[];
+}) {
+  const rankings = useMemo(
+    () =>
+      countries
+        .map((country) => ({ country, ...countryScore(country, actions) }))
+        .sort((left, right) => right.score - left.score),
+    [countries, actions],
+  );
+  return (
+    <Card className="p-4">
+      <div className="flex items-center gap-2">
+        <Radar size={16} className="text-[var(--accent)]" />
+        <h2 className="text-sm font-bold">Rolling world ranking</h2>
+      </div>
+      <p className="mt-1 text-xs leading-5 text-[var(--ink-muted)]">
+        A transparent rolling index: economy, stability, fiscal resilience,
+        living standards, fairness, finance, cooperation, resource security and
+        policy reasoning.
+      </p>
+      <ol className="mt-4 space-y-2">
+        {rankings.map((entry, index) => (
+          <li
+            key={entry.country.id}
+            className="grid grid-cols-[22px_1fr_auto] items-center gap-2 rounded-lg bg-[var(--surface-subtle)] p-2.5"
+          >
+            <span className="text-xs font-bold text-[var(--ink-faint)]">
+              {index + 1}
+            </span>
+            <div>
+              <p className="text-xs font-bold">
+                {countryName(entry.country.id)}
+              </p>
+              <p className="mt-.5 text-[10px] text-[var(--ink-muted)]">
+                GDP {entry.growth.toFixed(1)}% · CPI{" "}
+                {entry.inflation.toFixed(1)}% · Stability{" "}
+                {entry.stability.toFixed(0)}
+              </p>
+            </div>
+            <strong className="text-sm text-[var(--accent)]">
+              {entry.score.toFixed(1)}
+            </strong>
+          </li>
+        ))}
+      </ol>
+    </Card>
+  );
 }
 
-function PolicyDesk({ world, userRoles, policies, actions, onChange }: { world: ContinuousWorldRecord; userRoles: ContinuousWorldRoleAssignment[]; policies: WorldPolicyDefinition[]; actions: ContinuousWorldAction[]; onChange: () => Promise<void> }) {
-  const country = userRoles.find((role) => role.world_id === world.id)?.country_key ?? "";
-  const roleIds = new Set(userRoles.filter((role) => role.world_id === world.id && role.country_key === country).map((role) => role.role_type));
-  const available = policies.filter((policy) => roleIds.has("country_captain") || roleIds.has(policyPortfolio({ role: policy.role, policy_id: policy.id })));
-  const [policyId, setPolicyId] = useState(available[0]?.id ?? ""); const [change, setChange] = useState(0); const [busy, setBusy] = useState(false); const [error, setError] = useState(""); const [message, setMessage] = useState("");
-  const selected = available.find((policy) => policy.id === policyId) ?? available[0];
-  const bounded = selected ? Math.min(selected.allowed_range[1], Math.max(selected.allowed_range[0], change)) : 0;
-  const ownActions = actions.filter((action) => action.country_key === country && action.action_type === "policy" && ["scheduled", "active"].includes(action.status));
-  if (!country) return <Card className="p-4"><div className="flex items-center gap-2"><SlidersHorizontal size={16} className="text-[var(--accent)]" /><h2 className="text-sm font-bold">Policy desk</h2></div><p className="mt-3 text-xs leading-5 text-[var(--ink-muted)]">Claim a country role to preview and publish its calibrated policy instruments.</p></Card>;
-  const publish = async () => { if (!selected) return; setBusy(true); setError(""); try { await submitContinuousWorldPolicy({ worldId: world.id, countryKey: country, policyId: selected.id, change: bounded }); setMessage("Policy published. It will take effect gradually according to its calibrated natural-time lifecycle."); await onChange(); } catch (caught) { setError(caught instanceof Error ? caught.message : "Policy could not be published."); } finally { setBusy(false); } };
-  const revise = async (actionId: string, next: number) => { setBusy(true); setError(""); try { await amendContinuousWorldPolicy(actionId, next); setMessage("Policy amended from now; the previous version has been cancelled."); await onChange(); } catch (caught) { setError(caught instanceof Error ? caught.message : "Policy could not be amended."); } finally { setBusy(false); } };
-  return <Card className="p-4"><div className="flex items-center gap-2"><SlidersHorizontal size={16} className="text-[var(--accent)]" /><h2 className="text-sm font-bold">Policy desk</h2></div><p className="mt-1 text-xs leading-5 text-[var(--ink-muted)]">Move controls to preview locally. Only <strong className="text-[var(--ink)]">Publish policy</strong> writes one deliberate event; no slider movement calls Supabase.</p>{selected ? <><label className="mt-4 block text-[10px] font-bold uppercase tracking-wide text-[var(--ink-faint)]">Instrument<select value={selected.id} onChange={(event) => { setPolicyId(event.target.value); setChange(0); }} className="mt-1.5 h-9 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-2 text-xs text-[var(--ink)]">{available.map((policy) => <option key={policy.id} value={policy.id}>{titleCase(policy.instrument)} · {policy.role}</option>)}</select></label><div className="mt-3 rounded-lg bg-[var(--surface-subtle)] p-3"><div className="flex justify-between gap-3"><span className="text-xs font-bold">Live value</span><strong className="text-sm text-[var(--accent)]">{bounded} {selected.unit}</strong></div><input aria-label="Policy change" className="mt-3 w-full" type="range" min={selected.allowed_range[0]} max={selected.allowed_range[1]} step={(selected.allowed_range[1] - selected.allowed_range[0]) > 20 ? 1 : .1} value={bounded} onChange={(event) => setChange(Number(event.target.value))} /><p className="mt-3 text-[10px] leading-5 text-[var(--ink-muted)]">Lag {selected.lifecycleDays?.lag ?? 0}d · ramp {selected.lifecycleDays?.ramp ?? 0}d · peak {selected.lifecycleDays?.peak ?? 0}d · duration up to {selected.lifecycleDays?.duration ?? "—"}d.</p>{selected.preconditions.length > 0 && <p className="mt-2 text-[10px] leading-5 text-[var(--ink-muted)]">Preconditions: {selected.preconditions.join("; ")}</p>}{selected.sideEffects.length > 0 && <p className="mt-1 text-[10px] leading-5 text-[var(--amber)]">Trade-off: {selected.sideEffects.join("; ")}</p>}</div><Button className="mt-3 w-full" disabled={busy} onClick={() => void publish()}>{busy ? <LoaderCircle size={14} className="animate-spin" /> : <Play size={14} />} Publish policy</Button></> : <p className="mt-3 text-xs text-[var(--ink-muted)]">Your current portfolios do not own a policy instrument.</p>}{ownActions.length > 0 && <div className="mt-4 border-t border-[var(--line)] pt-3"><p className="text-[10px] font-bold uppercase tracking-wide text-[var(--ink-faint)]">Your live policies</p><div className="mt-2 space-y-2">{ownActions.slice(0, 4).map((action) => <PolicyActionRow key={action.id} action={action} busy={busy} onAmend={revise} onCancel={async (id) => { setBusy(true); try { await cancelContinuousWorldAction(id); await onChange(); } finally { setBusy(false); } }} />)}</div></div>}{error && <p className="mt-3 text-xs text-[var(--red)]">{error}</p>}{message && <p className="mt-3 text-xs text-[var(--accent)]">{message}</p>}</Card>;
+// Retained as the legacy single-panel fallback while the nested workspace is rolled out.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function CountryAndRolePanel({
+  world,
+  countries,
+  claims,
+  roles,
+  userRoles,
+  onChange,
+}: {
+  world: ContinuousWorldRecord;
+  countries: CountryView[];
+  claims: ContinuousWorldCountryTeam[];
+  roles: ContinuousWorldRoleAssignment[];
+  userRoles: ContinuousWorldRoleAssignment[];
+  onChange: () => Promise<void>;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const ownCountry =
+    userRoles.find((role) => role.world_id === world.id)?.country_key ?? "";
+  const unclaimed = countries.filter(
+    (country) => !claims.some((claim) => claim.country_key === country.id),
+  );
+  const execute = async (task: () => Promise<unknown>, success: string) => {
+    setBusy(true);
+    setError("");
+    try {
+      await task();
+      setMessage(success);
+      await onChange();
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "The requested League action could not be completed.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Card className="p-4">
+      <div className="flex items-center gap-2">
+        <UsersRound size={16} className="text-[var(--accent)]" />
+        <h2 className="text-sm font-bold">Country & roles</h2>
+      </div>
+      {ownCountry ? (
+        <>
+          <p className="mt-3 text-xs leading-5 text-[var(--ink-muted)]">
+            Your approved League Team controls{" "}
+            <strong className="text-[var(--ink)]">
+              {countryName(ownCountry)}
+            </strong>
+            . One account may hold any number of its seven portfolios.
+          </p>
+          <div className="mt-3 grid gap-2">
+            {FINAL_WORLD_ROLE_PORTFOLIOS.map((portfolio) => {
+              const assigned = roles.find(
+                (role) =>
+                  role.world_id === world.id &&
+                  role.country_key === ownCountry &&
+                  role.role_type === portfolio.id,
+              );
+              const own = userRoles.some(
+                (role) =>
+                  role.world_id === world.id &&
+                  role.country_key === ownCountry &&
+                  role.role_type === portfolio.id,
+              );
+              return (
+                <div
+                  key={portfolio.id}
+                  className="flex items-center justify-between gap-2 rounded-lg bg-[var(--surface-subtle)] p-2.5"
+                >
+                  <div>
+                    <p className="text-xs font-bold">{portfolio.label}</p>
+                    <p className="mt-.5 text-[10px] leading-4 text-[var(--ink-muted)]">
+                      {portfolio.description}
+                    </p>
+                  </div>
+                  {own ? (
+                    <Badge className="bg-[var(--accent-soft)] text-[var(--accent)]">
+                      Yours
+                    </Badge>
+                  ) : assigned ? (
+                    <Badge>Filled</Badge>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={busy}
+                      onClick={() =>
+                        void execute(
+                          () =>
+                            claimContinuousWorldRole(
+                              world.id,
+                              ownCountry,
+                              portfolio.id,
+                            ),
+                          `${portfolio.label} claimed.`,
+                        )
+                      }
+                    >
+                      Claim
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="mt-3 text-xs leading-5 text-[var(--ink-muted)]">
+            World participation requires an approved League school Team. A Team
+            captain may claim one unoccupied country; countries without a team
+            remain on the fixed calibrated default.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={busy}
+              onClick={() =>
+                void execute(
+                  () => joinContinuousWorld(world.id),
+                  "League participation registered. A Team captain can now claim a country.",
+                )
+              }
+            >
+              Join with League Team
+            </Button>
+            <Link
+              className="inline-flex h-8 items-center gap-1 rounded-lg px-2 text-xs font-bold text-[var(--accent)] hover:bg-[var(--accent-soft)]"
+              href="/league/join"
+            >
+              League registration <ChevronRight size={13} />
+            </Link>
+          </div>
+          <div className="mt-3 grid gap-2">
+            {unclaimed.map((country) => (
+              <div
+                key={country.id}
+                className="flex min-w-0 flex-col gap-3 rounded-lg bg-[var(--surface-subtle)] p-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-bold">{countryName(country.id)}</p>
+                  <p className="mt-0.5 text-xs leading-5 text-[var(--ink-muted)]">
+                    Default policy · no manual parameters
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  className="h-10 w-full shrink-0 whitespace-nowrap px-4 !text-xs !leading-none sm:w-auto sm:min-w-[132px]"
+                  disabled={busy}
+                  onClick={() =>
+                    void execute(
+                      () => claimContinuousWorldCountry(world.id, country.id),
+                      `${countryName(country.id)} is now controlled by your Team.`,
+                    )
+                  }
+                >
+                  Claim country
+                </Button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+      {error && <p className="mt-3 text-xs text-[var(--red)]">{error}</p>}
+      {message && (
+        <p className="mt-3 text-xs text-[var(--accent)]">{message}</p>
+      )}
+    </Card>
+  );
 }
 
-function PolicyActionRow({ action, busy, onAmend, onCancel }: { action: ContinuousWorldAction; busy: boolean; onAmend: (id: string, value: number) => Promise<void>; onCancel: (id: string) => Promise<void> }) { const [next, setNext] = useState(Number(action.parameters.change) || 0); return <div className="rounded-lg bg-[var(--surface-subtle)] p-2"><p className="text-[10px] font-bold">{titleCase(action.action_key)} <span className="text-[var(--accent)]">· {action.status}</span></p><div className="mt-2 flex gap-2"><input className="h-8 min-w-0 flex-1 rounded border border-[var(--line)] bg-[var(--canvas)] px-2 text-xs" type="number" value={next} onChange={(event) => setNext(Number(event.target.value))} /><Button size="sm" variant="secondary" disabled={busy} onClick={() => void onAmend(action.id, next)}>Amend</Button><Button size="sm" variant="ghost" disabled={busy} onClick={() => void onCancel(action.id)}>Cancel</Button></div></div>; }
-
-function ContractDesk({ world, countries, userRoles, contracts, onChange }: { world: ContinuousWorldRecord; countries: CountryView[]; userRoles: ContinuousWorldRoleAssignment[]; contracts: ContinuousWorldContract[]; onChange: () => Promise<void> }) {
-  const country = userRoles.find((role) => role.world_id === world.id)?.country_key ?? "";
-  const roleIds = new Set(userRoles.filter((role) => role.world_id === world.id && role.country_key === country).map((role) => role.role_type));
-  const canTrade = roleIds.has("country_captain") || roleIds.has("trade_minister");
-  const templates = asArray<Record<string, unknown>>(FINAL_WORLD_TEACHING.contractTemplates.templates);
-  const [templateId, setTemplateId] = useState(String(templates[0]?.template_id ?? "")); const [partner, setPartner] = useState(""); const [quantity, setQuantity] = useState(100); const [unitPrice, setUnitPrice] = useState(100); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
-  const selected = templates.find((item) => item.template_id === templateId) ?? templates[0];
-  const selectTemplate = (nextId: string) => { const next = templates.find((item) => item.template_id === nextId); const fixture = asRecord(next?.test_fixture); setTemplateId(nextId); setQuantity(value(fixture, "quantity", 100)); setUnitPrice(value(fixture, "unit_price", 100)); };
-  if (!canTrade) return <Card className="p-4"><div className="flex items-center gap-2"><Handshake size={16} className="text-[var(--accent)]" /><h2 className="text-sm font-bold">Trade & contracts</h2></div><p className="mt-3 text-xs leading-5 text-[var(--ink-muted)]">A Country Captain or Trade Minister can draft cross-border contracts. Settlement continues in natural time after both required approvals.</p></Card>;
-  const create = async () => { if (!partner || !selected) return; setBusy(true); setError(""); try { await createContinuousWorldContract({ worldId: world.id, exporterCountryKey: country, importerCountryKey: partner, templateId: String(selected.template_id), terms: { quantity, unit_price: unitPrice, payment_cycle_days: 30, currency: "GCU" } }); await onChange(); } catch (caught) { setError(caught instanceof Error ? caught.message : "Contract could not be drafted."); } finally { setBusy(false); } };
-  return <Card className="p-4"><div className="flex items-center gap-2"><Handshake size={16} className="text-[var(--accent)]" /><h2 className="text-sm font-bold">Trade & contracts</h2></div><p className="mt-1 text-xs leading-5 text-[var(--ink-muted)]">Trade Minister drafts → exporter Captain approves → importer Trade Minister or Captain approves → the contract settles continuously.</p><div className="mt-3 grid gap-2"><select value={templateId} onChange={(event) => selectTemplate(event.target.value)} className="h-9 rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-2 text-xs">{templates.map((template) => <option key={String(template.template_id)} value={String(template.template_id)}>{String(template.kind).replaceAll("_", " ")}</option>)}</select><select value={partner} onChange={(event) => setPartner(event.target.value)} className="h-9 rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-2 text-xs"><option value="">Select partner</option>{countries.filter((item) => item.id !== country).map((item) => <option key={item.id} value={item.id}>{countryName(item.id)}</option>)}</select><div className="grid grid-cols-2 gap-2"><label className="text-[10px] font-bold">Quantity<input className="mt-1 h-8 w-full rounded border border-[var(--line)] bg-[var(--canvas)] px-2 text-xs" type="number" min="1" value={quantity} onChange={(event) => setQuantity(Number(event.target.value))} /></label><label className="text-[10px] font-bold">Unit price<input className="mt-1 h-8 w-full rounded border border-[var(--line)] bg-[var(--canvas)] px-2 text-xs" type="number" min="1" value={unitPrice} onChange={(event) => setUnitPrice(Number(event.target.value))} /></label></div><Button disabled={busy || !partner} onClick={() => void create()}>{busy ? <LoaderCircle size={14} className="animate-spin" /> : <Banknote size={14} />} Draft contract</Button></div>{contracts.length > 0 && <div className="mt-4 border-t border-[var(--line)] pt-3"><p className="text-[10px] font-bold uppercase tracking-wide text-[var(--ink-faint)]">Contract ledger</p><div className="mt-2 space-y-2">{contracts.slice(0, 4).map((contract) => <div key={contract.id} className="rounded-lg bg-[var(--surface-subtle)] p-2.5"><div className="flex items-center justify-between gap-2"><p className="text-[10px] font-bold">{contract.template_id}</p><Badge>{titleCase(contract.status)}</Badge></div><p className="mt-1 text-[10px] text-[var(--ink-muted)]">{countryName(contract.exporter_country_key)} → {countryName(contract.importer_country_key)}</p>{contract.status === "draft" || contract.status === "submitted" ? <Button className="mt-2" size="sm" variant="secondary" disabled={busy} onClick={() => void approveContinuousWorldContract(contract.id).then(onChange).catch((caught: unknown) => setError(caught instanceof Error ? caught.message : "Approval failed."))}>Approve</Button> : <p className="mt-1 text-[10px] text-[var(--ink-muted)]">Next settlement: {contract.next_settlement_at ? new Date(contract.next_settlement_at).toLocaleDateString() : "after approval"}</p>}</div>)}</div></div>}{error && <p className="mt-3 text-xs text-[var(--red)]">{error}</p>}</Card>;
+// Retained for the legacy route; the country workspace uses ScopedPolicyDesk.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function PolicyDesk({
+  world,
+  userRoles,
+  policies,
+  actions,
+  onChange,
+}: {
+  world: ContinuousWorldRecord;
+  userRoles: ContinuousWorldRoleAssignment[];
+  policies: WorldPolicyDefinition[];
+  actions: ContinuousWorldAction[];
+  onChange: () => Promise<void>;
+}) {
+  const country =
+    userRoles.find((role) => role.world_id === world.id)?.country_key ?? "";
+  const roleIds = new Set(
+    userRoles
+      .filter(
+        (role) => role.world_id === world.id && role.country_key === country,
+      )
+      .map((role) => role.role_type),
+  );
+  const available = policies.filter(
+    (policy) =>
+      roleIds.has("country_captain") ||
+      roleIds.has(policyPortfolio({ role: policy.role, policy_id: policy.id })),
+  );
+  const [policyId, setPolicyId] = useState(available[0]?.id ?? "");
+  const [change, setChange] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const selected =
+    available.find((policy) => policy.id === policyId) ?? available[0];
+  const bounded = selected
+    ? Math.min(
+        selected.allowed_range[1],
+        Math.max(selected.allowed_range[0], change),
+      )
+    : 0;
+  const ownActions = actions.filter(
+    (action) =>
+      action.country_key === country &&
+      action.action_type === "policy" &&
+      ["scheduled", "active"].includes(action.status),
+  );
+  if (!country)
+    return (
+      <Card className="p-4">
+        <div className="flex items-center gap-2">
+          <SlidersHorizontal size={16} className="text-[var(--accent)]" />
+          <h2 className="text-sm font-bold">Policy desk</h2>
+        </div>
+        <p className="mt-3 text-xs leading-5 text-[var(--ink-muted)]">
+          Claim a country role to preview and publish its calibrated policy
+          instruments.
+        </p>
+      </Card>
+    );
+  const publish = async () => {
+    if (!selected) return;
+    setBusy(true);
+    setError("");
+    try {
+      await submitContinuousWorldPolicy({
+        worldId: world.id,
+        countryKey: country,
+        policyId: selected.id,
+        change: bounded,
+      });
+      setMessage(
+        "Policy published. It will take effect gradually according to its calibrated natural-time lifecycle.",
+      );
+      await onChange();
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Policy could not be published.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+  const revise = async (actionId: string, next: number) => {
+    setBusy(true);
+    setError("");
+    try {
+      await amendContinuousWorldPolicy(actionId, next);
+      setMessage(
+        "Policy amended from now; the previous version has been cancelled.",
+      );
+      await onChange();
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Policy could not be amended.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Card className="p-4">
+      <div className="flex items-center gap-2">
+        <SlidersHorizontal size={16} className="text-[var(--accent)]" />
+        <h2 className="text-sm font-bold">Policy desk</h2>
+      </div>
+      <p className="mt-1 text-xs leading-5 text-[var(--ink-muted)]">
+        Move controls to preview locally. Only{" "}
+        <strong className="text-[var(--ink)]">Publish policy</strong> writes one
+        deliberate event; no slider movement calls Supabase.
+      </p>
+      {selected ? (
+        <>
+          <label className="mt-4 block text-[10px] font-bold uppercase tracking-wide text-[var(--ink-faint)]">
+            Instrument
+            <select
+              value={selected.id}
+              onChange={(event) => {
+                setPolicyId(event.target.value);
+                setChange(0);
+              }}
+              className="mt-1.5 h-9 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-2 text-xs text-[var(--ink)]"
+            >
+              {available.map((policy) => (
+                <option key={policy.id} value={policy.id}>
+                  {titleCase(policy.instrument)} · {policy.role}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="mt-3 rounded-lg bg-[var(--surface-subtle)] p-3">
+            <div className="flex justify-between gap-3">
+              <span className="text-xs font-bold">Live value</span>
+              <strong className="text-sm text-[var(--accent)]">
+                {bounded} {selected.unit}
+              </strong>
+            </div>
+            <input
+              aria-label="Policy change"
+              className="mt-3 w-full"
+              type="range"
+              min={selected.allowed_range[0]}
+              max={selected.allowed_range[1]}
+              step={
+                selected.allowed_range[1] - selected.allowed_range[0] > 20
+                  ? 1
+                  : 0.1
+              }
+              value={bounded}
+              onChange={(event) => setChange(Number(event.target.value))}
+            />
+            <p className="mt-3 text-[10px] leading-5 text-[var(--ink-muted)]">
+              Lag {selected.lifecycleDays?.lag ?? 0}d · ramp{" "}
+              {selected.lifecycleDays?.ramp ?? 0}d · peak{" "}
+              {selected.lifecycleDays?.peak ?? 0}d · duration up to{" "}
+              {selected.lifecycleDays?.duration ?? "—"}d.
+            </p>
+            {selected.preconditions.length > 0 && (
+              <p className="mt-2 text-[10px] leading-5 text-[var(--ink-muted)]">
+                Preconditions: {selected.preconditions.join("; ")}
+              </p>
+            )}
+            {selected.sideEffects.length > 0 && (
+              <p className="mt-1 text-[10px] leading-5 text-[var(--amber)]">
+                Trade-off: {selected.sideEffects.join("; ")}
+              </p>
+            )}
+          </div>
+          <Button
+            className="mt-3 w-full"
+            disabled={busy}
+            onClick={() => void publish()}
+          >
+            {busy ? (
+              <LoaderCircle size={14} className="animate-spin" />
+            ) : (
+              <Play size={14} />
+            )}{" "}
+            Publish policy
+          </Button>
+        </>
+      ) : (
+        <p className="mt-3 text-xs text-[var(--ink-muted)]">
+          Your current portfolios do not own a policy instrument.
+        </p>
+      )}
+      {ownActions.length > 0 && (
+        <div className="mt-4 border-t border-[var(--line)] pt-3">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--ink-faint)]">
+            Your live policies
+          </p>
+          <div className="mt-2 space-y-2">
+            {ownActions.slice(0, 4).map((action) => (
+              <PolicyActionRow
+                key={action.id}
+                action={action}
+                busy={busy}
+                onAmend={revise}
+                onCancel={async (id) => {
+                  setBusy(true);
+                  try {
+                    await cancelContinuousWorldAction(id);
+                    await onChange();
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+      {error && <p className="mt-3 text-xs text-[var(--red)]">{error}</p>}
+      {message && (
+        <p className="mt-3 text-xs text-[var(--accent)]">{message}</p>
+      )}
+    </Card>
+  );
 }
 
-function Timeline({ events, contracts, actions }: { events: ContinuousWorldEvent[]; contracts: ContinuousWorldContract[]; actions: ContinuousWorldAction[] }) { const [tab, setTab] = useState<"Timeline" | "Contracts" | "Policies" | "Replay">("Timeline"); const items = tab === "Contracts" ? contracts.map((contract) => ({ id: contract.id, title: `${contract.template_id} · ${titleCase(contract.status)}`, detail: `${countryName(contract.exporter_country_key)} → ${countryName(contract.importer_country_key)}`, at: contract.created_at })) : tab === "Policies" ? actions.map((action) => ({ id: action.id, title: `${titleCase(action.action_key)} · ${action.status}`, detail: `${countryName(action.country_key)} · effective ${new Date(action.effective_at).toLocaleString()}`, at: action.created_at })) : events.map((event) => ({ id: event.id, title: titleCase(event.event_type), detail: String(event.payload.message ?? event.payload.shock_key ?? event.payload.status ?? "Recorded world event"), at: event.created_at })); return <Card className="p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><div className="flex items-center gap-2"><FileClock size={16} className="text-[var(--accent)]" /><h2 className="text-sm font-bold">World history & Replay</h2></div><p className="mt-1 text-xs text-[var(--ink-muted)]">Immutable events and automatic checkpoints; participants cannot create manual snapshots.</p></div><div className="flex gap-1">{(["Timeline", "Contracts", "Policies", "Replay"] as const).map((item) => <button key={item} onClick={() => setTab(item)} className={`rounded-md px-2.5 py-1.5 text-[10px] font-bold ${tab === item ? "bg-[var(--accent)] text-white" : "bg-[var(--surface-subtle)] text-[var(--ink-muted)]"}`}>{item}</button>)}</div></div><div className="mt-4 grid max-h-60 gap-2 overflow-y-auto pr-1">{items.slice(0, 40).map((item) => <div key={item.id} className="grid grid-cols-[auto_1fr] gap-3 rounded-lg border border-[var(--line)] p-2.5"><span className="mt-1 size-2 rounded-full bg-[var(--accent)]" /><div><p className="text-xs font-bold">{item.title}</p><p className="mt-1 text-[10px] leading-4 text-[var(--ink-muted)]">{item.detail}</p><p className="mt-1 text-[10px] text-[var(--ink-faint)]">{new Date(item.at).toLocaleString()}</p></div></div>)}{items.length === 0 && <p className="rounded-lg bg-[var(--surface-subtle)] p-4 text-xs text-[var(--ink-muted)]">No recorded items yet. The world clock will add its first state event after processing.</p>}</div></Card>; }
+function PolicyActionRow({
+  action,
+  busy,
+  onAmend,
+  onCancel,
+}: {
+  action: ContinuousWorldAction;
+  busy: boolean;
+  onAmend: (id: string, value: number) => Promise<void>;
+  onCancel: (id: string) => Promise<void>;
+}) {
+  const [next, setNext] = useState(Number(action.parameters.change) || 0);
+  return (
+    <div className="rounded-lg bg-[var(--surface-subtle)] p-2">
+      <p className="text-[10px] font-bold">
+        {titleCase(action.action_key)}{" "}
+        <span className="text-[var(--accent)]">· {action.status}</span>
+      </p>
+      <div className="mt-2 flex gap-2">
+        <input
+          className="h-8 min-w-0 flex-1 rounded border border-[var(--line)] bg-[var(--canvas)] px-2 text-xs"
+          type="number"
+          value={next}
+          onChange={(event) => setNext(Number(event.target.value))}
+        />
+        <Button
+          size="sm"
+          variant="secondary"
+          disabled={busy}
+          onClick={() => void onAmend(action.id, next)}
+        >
+          Amend
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          disabled={busy}
+          onClick={() => void onCancel(action.id)}
+        >
+          Cancel
+        </Button>
+      </div>
+    </div>
+  );
+}
 
-function TeacherShockPanel({ world, countries, onChange }: { world: ContinuousWorldRecord; countries: CountryView[]; onChange: () => Promise<void> }) { const { worldSupervisor } = useAuth(); const [busy, setBusy] = useState(false); const [error, setError] = useState(""); const shocks = asArray<Record<string, unknown>>(FINAL_WORLD_TEACHING.continuousWorldScenarios.scenarios); if (!worldSupervisor) return null; const inject = async () => { const sample = shocks[0]; setBusy(true); setError(""); try { await injectContinuousWorldShock({ worldId: world.id, shockKey: String(sample.scenario_id), effects: { inflation_pp: 1.2, real_gdp_growth_pp: -.4, stability_points: -1 }, durationDays: 14 }); await onChange(); } catch (caught) { setError(caught instanceof Error ? caught.message : "Shock injection requires teacher or League administrator access."); } finally { setBusy(false); } }; return <Card className="border-[var(--amber)] p-4"><div className="flex items-center gap-2"><CircleAlert size={16} className="text-[var(--amber)]" /><h2 className="text-sm font-bold">World supervisor control</h2></div><p className="mt-2 text-xs leading-5 text-[var(--ink-muted)]">The system can generate calibrated shocks naturally. Teachers, League administrators and platform administrators may additionally inject an auditable preset event; ordinary players cannot.</p><Button className="mt-3" size="sm" variant="secondary" disabled={busy || countries.length === 0} onClick={() => void inject()}>{busy ? <LoaderCircle size={13} className="animate-spin" /> : <AlertTriangle size={13} />} Inject oil-shock teaching event</Button>{error && <p className="mt-2 text-xs text-[var(--red)]">{error}</p>}</Card>; }
+function ContractDesk({
+  world,
+  countries,
+  userRoles,
+  contracts,
+  onChange,
+}: {
+  world: ContinuousWorldRecord;
+  countries: CountryView[];
+  userRoles: ContinuousWorldRoleAssignment[];
+  contracts: ContinuousWorldContract[];
+  onChange: () => Promise<void>;
+}) {
+  const country =
+    userRoles.find((role) => role.world_id === world.id)?.country_key ?? "";
+  const roleIds = new Set(
+    userRoles
+      .filter(
+        (role) => role.world_id === world.id && role.country_key === country,
+      )
+      .map((role) => role.role_type),
+  );
+  const canTrade =
+    roleIds.has("country_captain") || roleIds.has("trade_minister");
+  const templates = asArray<Record<string, unknown>>(
+    FINAL_WORLD_TEACHING.contractTemplates.templates,
+  );
+  const [templateId, setTemplateId] = useState(
+    String(templates[0]?.template_id ?? ""),
+  );
+  const [partner, setPartner] = useState("");
+  const [quantity, setQuantity] = useState(100);
+  const [unitPrice, setUnitPrice] = useState(100);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const selected =
+    templates.find((item) => item.template_id === templateId) ?? templates[0];
+  const selectTemplate = (nextId: string) => {
+    const next = templates.find((item) => item.template_id === nextId);
+    const fixture = asRecord(next?.test_fixture);
+    setTemplateId(nextId);
+    setQuantity(value(fixture, "quantity", 100));
+    setUnitPrice(value(fixture, "unit_price", 100));
+  };
+  if (!canTrade)
+    return (
+      <Card className="p-4">
+        <div className="flex items-center gap-2">
+          <Handshake size={16} className="text-[var(--accent)]" />
+          <h2 className="text-sm font-bold">Trade & contracts</h2>
+        </div>
+        <p className="mt-3 text-xs leading-5 text-[var(--ink-muted)]">
+          A Country Captain or Trade Minister can draft cross-border contracts.
+          Settlement continues in natural time after both required approvals.
+        </p>
+      </Card>
+    );
+  const create = async () => {
+    if (!partner || !selected) return;
+    setBusy(true);
+    setError("");
+    try {
+      await createContinuousWorldContract({
+        worldId: world.id,
+        exporterCountryKey: country,
+        importerCountryKey: partner,
+        templateId: String(selected.template_id),
+        terms: {
+          quantity,
+          unit_price: unitPrice,
+          payment_cycle_days: 30,
+          currency: "GCU",
+        },
+      });
+      await onChange();
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Contract could not be drafted.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Card className="p-4">
+      <div className="flex items-center gap-2">
+        <Handshake size={16} className="text-[var(--accent)]" />
+        <h2 className="text-sm font-bold">Trade & contracts</h2>
+      </div>
+      <p className="mt-1 text-xs leading-5 text-[var(--ink-muted)]">
+        Trade Minister drafts → exporter Captain approves → importer Trade
+        Minister or Captain approves → the contract settles continuously.
+      </p>
+      <div className="mt-3 grid gap-2">
+        <select
+          value={templateId}
+          onChange={(event) => selectTemplate(event.target.value)}
+          className="h-9 rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-2 text-xs"
+        >
+          {templates.map((template) => (
+            <option
+              key={String(template.template_id)}
+              value={String(template.template_id)}
+            >
+              {String(template.kind).replaceAll("_", " ")}
+            </option>
+          ))}
+        </select>
+        <select
+          value={partner}
+          onChange={(event) => setPartner(event.target.value)}
+          className="h-9 rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-2 text-xs"
+        >
+          <option value="">Select partner</option>
+          {countries
+            .filter((item) => item.id !== country)
+            .map((item) => (
+              <option key={item.id} value={item.id}>
+                {countryName(item.id)}
+              </option>
+            ))}
+        </select>
+        <div className="grid grid-cols-2 gap-2">
+          <label className="text-[10px] font-bold">
+            Quantity
+            <input
+              className="mt-1 h-8 w-full rounded border border-[var(--line)] bg-[var(--canvas)] px-2 text-xs"
+              type="number"
+              min="1"
+              value={quantity}
+              onChange={(event) => setQuantity(Number(event.target.value))}
+            />
+          </label>
+          <label className="text-[10px] font-bold">
+            Unit price
+            <input
+              className="mt-1 h-8 w-full rounded border border-[var(--line)] bg-[var(--canvas)] px-2 text-xs"
+              type="number"
+              min="1"
+              value={unitPrice}
+              onChange={(event) => setUnitPrice(Number(event.target.value))}
+            />
+          </label>
+        </div>
+        <Button disabled={busy || !partner} onClick={() => void create()}>
+          {busy ? (
+            <LoaderCircle size={14} className="animate-spin" />
+          ) : (
+            <Banknote size={14} />
+          )}{" "}
+          Draft contract
+        </Button>
+      </div>
+      {contracts.length > 0 && (
+        <div className="mt-4 border-t border-[var(--line)] pt-3">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--ink-faint)]">
+            Contract ledger
+          </p>
+          <div className="mt-2 space-y-2">
+            {contracts.slice(0, 4).map((contract) => (
+              <div
+                key={contract.id}
+                className="rounded-lg bg-[var(--surface-subtle)] p-2.5"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[10px] font-bold">
+                    {contract.template_id}
+                  </p>
+                  <Badge>{titleCase(contract.status)}</Badge>
+                </div>
+                <p className="mt-1 text-[10px] text-[var(--ink-muted)]">
+                  {countryName(contract.exporter_country_key)} →{" "}
+                  {countryName(contract.importer_country_key)}
+                </p>
+                {contract.status === "draft" ||
+                contract.status === "submitted" ? (
+                  <Button
+                    className="mt-2"
+                    size="sm"
+                    variant="secondary"
+                    disabled={busy}
+                    onClick={() =>
+                      void approveContinuousWorldContract(contract.id)
+                        .then(onChange)
+                        .catch((caught: unknown) =>
+                          setError(
+                            caught instanceof Error
+                              ? caught.message
+                              : "Approval failed.",
+                          ),
+                        )
+                    }
+                  >
+                    Approve
+                  </Button>
+                ) : (
+                  <p className="mt-1 text-[10px] text-[var(--ink-muted)]">
+                    Next settlement:{" "}
+                    {contract.next_settlement_at
+                      ? new Date(
+                          contract.next_settlement_at,
+                        ).toLocaleDateString()
+                      : "after approval"}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {error && <p className="mt-3 text-xs text-[var(--red)]">{error}</p>}
+    </Card>
+  );
+}
+
+type PreviewSelection = { policy: PolicyEffectPreview; change: number };
+type PolicyScope = "domestic" | "external";
+
+function WorldParticipationSummary({
+  userRoles,
+  onOpenCountry,
+}: {
+  userRoles: ContinuousWorldRoleAssignment[];
+  onOpenCountry: (countryId: string) => void;
+}) {
+  const countryId = userRoles[0]?.country_key;
+  return (
+    <Card className="p-4">
+      <div className="flex items-center gap-2">
+        <UsersRound size={16} className="text-[var(--accent)]" />
+        <h2 className="text-sm font-bold">Your world access</h2>
+      </div>
+      {countryId ? (
+        <>
+          <p className="mt-3 text-xs leading-5 text-[var(--ink-muted)]">
+            Your approved League Team has roles in{" "}
+            <strong className="text-[var(--ink)]">
+              {countryName(countryId)}
+            </strong>
+            . You can hold more than one of its seven portfolios.
+          </p>
+          <Button
+            className="mt-3 w-full"
+            onClick={() => onOpenCountry(countryId)}
+          >
+            Open {countryName(countryId)}
+          </Button>
+        </>
+      ) : (
+        <>
+          <p className="mt-3 text-xs leading-5 text-[var(--ink-muted)]">
+            Choose any country to observe its public economy. Joining an
+            approved school Team is required before a country or portfolio can
+            be controlled.
+          </p>
+          <Link
+            href="/league/join"
+            className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[var(--accent)]"
+          >
+            Join or create a League school <ChevronRight size={13} />
+          </Link>
+        </>
+      )}
+    </Card>
+  );
+}
+
+function CountrySelector({
+  countries,
+  claims,
+  actions,
+  onSelect,
+}: {
+  countries: CountryView[];
+  claims: ContinuousWorldCountryTeam[];
+  actions: ContinuousWorldAction[];
+  onSelect: (countryId: string) => void;
+}) {
+  return (
+    <Card className="p-4">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--accent)]">
+            Step 1 of 2
+          </p>
+          <h2 className="mt-1 text-lg font-bold">Choose a country</h2>
+          <p className="mt-1 text-xs leading-5 text-[var(--ink-muted)]">
+            Enter a national workspace to inspect its state. Controls appear
+            only for your own assigned country and portfolios.
+          </p>
+        </div>
+        <Badge>12 fictional economies</Badge>
+      </div>
+      <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+        {countries.map((country) => {
+          const score = countryScore(country, actions);
+          const claimed = claims.some(
+            (claim) => claim.country_key === country.id,
+          );
+          return (
+            <button
+              key={country.id}
+              onClick={() => onSelect(country.id)}
+              className="group rounded-xl border border-[var(--line)] bg-[var(--surface-subtle)] p-3 text-left transition hover:border-[var(--accent)] hover:bg-[var(--accent-soft)]"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-bold">{countryName(country.id)}</p>
+                  <p className="mt-1 text-[10px] text-[var(--ink-muted)]">
+                    {claimed
+                      ? "Team-controlled country"
+                      : "Calibrated default policy"}
+                  </p>
+                </div>
+                <ChevronRight
+                  size={16}
+                  className="mt-0.5 text-[var(--ink-faint)] transition group-hover:translate-x-0.5 group-hover:text-[var(--accent)]"
+                />
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-2 text-[10px] text-[var(--ink-muted)]">
+                <span>GDP {score.growth.toFixed(1)}%</span>
+                <span>CPI {score.inflation.toFixed(1)}%</span>
+                <span>
+                  Risk{" "}
+                  {governance(country) === "normal"
+                    ? "Low"
+                    : titleCase(governance(country))}
+                </span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
+function CountryRoleWorkspace({
+  world,
+  country,
+  claims,
+  roles,
+  userRoles,
+  onChange,
+}: {
+  world: ContinuousWorldRecord;
+  country: CountryView;
+  claims: ContinuousWorldCountryTeam[];
+  roles: ContinuousWorldRoleAssignment[];
+  userRoles: ContinuousWorldRoleAssignment[];
+  onChange: () => Promise<void>;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const claimed = claims.some((claim) => claim.country_key === country.id);
+  const countryRoles = roles.filter(
+    (role) => role.world_id === world.id && role.country_key === country.id,
+  );
+  const ownRoleIds = new Set(
+    userRoles
+      .filter(
+        (role) => role.world_id === world.id && role.country_key === country.id,
+      )
+      .map((role) => role.role_type),
+  );
+  const canControl = ownRoleIds.size > 0;
+  const execute = async (task: () => Promise<unknown>, success: string) => {
+    setBusy(true);
+    setError("");
+    try {
+      await task();
+      setMessage(success);
+      await onChange();
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "This League action could not be completed.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card className="p-4">
+      <div className="flex items-center gap-2">
+        <UsersRound size={16} className="text-[var(--accent)]" />
+        <h2 className="text-sm font-bold">Country access</h2>
+      </div>
+      {!claimed ? (
+        <>
+          <p className="mt-3 text-xs leading-5 text-[var(--ink-muted)]">
+            {countryName(country.id)} is still running on its fixed calibrated
+            default. An approved League Team may claim it; the database verifies
+            Team and Captain permissions before any change is made.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={busy}
+              onClick={() =>
+                void execute(
+                  () => joinContinuousWorld(world.id),
+                  "League participation registered. You can now request a country claim.",
+                )
+              }
+            >
+              Join with League Team
+            </Button>
+            <Button
+              size="sm"
+              disabled={busy}
+              onClick={() =>
+                void execute(
+                  () => claimContinuousWorldCountry(world.id, country.id),
+                  `${countryName(country.id)} is now controlled by your Team.`,
+                )
+              }
+            >
+              Claim this country
+            </Button>
+          </div>
+        </>
+      ) : canControl ? (
+        <>
+          <p className="mt-3 text-xs leading-5 text-[var(--ink-muted)]">
+            You can control the portfolios marked{" "}
+            <strong className="text-[var(--ink)]">Yours</strong>. One account
+            can hold more than one of the seven national roles.
+          </p>
+          <div className="mt-3 grid gap-2">
+            {FINAL_WORLD_ROLE_PORTFOLIOS.map((portfolio) => {
+              const assignment = countryRoles.find(
+                (role) => role.role_type === portfolio.id,
+              );
+              const own = ownRoleIds.has(portfolio.id);
+              return (
+                <div
+                  key={portfolio.id}
+                  className="flex items-center justify-between gap-2 rounded-lg bg-[var(--surface-subtle)] p-2.5"
+                >
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold">{portfolio.label}</p>
+                    <p className="mt-0.5 text-[10px] leading-4 text-[var(--ink-muted)]">
+                      {portfolio.description}
+                    </p>
+                  </div>
+                  {own ? (
+                    <Badge className="bg-[var(--accent-soft)] text-[var(--accent)]">
+                      Yours
+                    </Badge>
+                  ) : assignment ? (
+                    <Badge>Filled</Badge>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={busy}
+                      onClick={() =>
+                        void execute(
+                          () =>
+                            claimContinuousWorldRole(
+                              world.id,
+                              country.id,
+                              portfolio.id,
+                            ),
+                          `${portfolio.label} claimed.`,
+                        )
+                      }
+                    >
+                      Claim
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="mt-3 text-xs leading-5 text-[var(--ink-muted)]">
+            This is another Team’s country. You can inspect its public state and
+            predicted effects, but only its assigned roles can change national
+            policy or trade.
+          </p>
+          <Link
+            href="/league/join"
+            className="mt-3 inline-flex h-8 items-center gap-1 rounded-lg px-2 text-xs font-bold text-[var(--accent)] hover:bg-[var(--accent-soft)]"
+          >
+            Manage League registration <ChevronRight size={13} />
+          </Link>
+        </>
+      )}
+      {error && <p className="mt-3 text-xs text-[var(--red)]">{error}</p>}
+      {message && (
+        <p className="mt-3 text-xs text-[var(--accent)]">{message}</p>
+      )}
+    </Card>
+  );
+}
+
+function ScopedPolicyDesk({
+  world,
+  country,
+  userRoles,
+  policies,
+  actions,
+  scope,
+  onPreview,
+  onChange,
+}: {
+  world: ContinuousWorldRecord;
+  country: CountryView;
+  userRoles: ContinuousWorldRoleAssignment[];
+  policies: WorldPolicyDefinition[];
+  actions: ContinuousWorldAction[];
+  scope: PolicyScope;
+  onPreview: (preview: PreviewSelection | null) => void;
+  onChange: () => Promise<void>;
+}) {
+  const roleIds = new Set(
+    userRoles
+      .filter(
+        (role) => role.world_id === world.id && role.country_key === country.id,
+      )
+      .map((role) => role.role_type),
+  );
+  const eligible = policies.filter(
+    (policy) =>
+      roleIds.has("country_captain") ||
+      roleIds.has(policyPortfolio({ role: policy.role, policy_id: policy.id })),
+  );
+  const available = eligible.filter((policy) =>
+    scope === "external"
+      ? policy.id.startsWith("POL-TRADE-")
+      : !policy.id.startsWith("POL-TRADE-"),
+  );
+  const [policyId, setPolicyId] = useState(available[0]?.id ?? "");
+  const [change, setChange] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const selected =
+    available.find((policy) => policy.id === policyId) ?? available[0];
+  const bounded = selected
+    ? Math.min(
+        selected.allowed_range[1],
+        Math.max(selected.allowed_range[0], change),
+      )
+    : 0;
+  const activeActions = actions.filter(
+    (action) =>
+      action.country_key === country.id &&
+      action.action_type === "policy" &&
+      ["scheduled", "active"].includes(action.status) &&
+      (scope === "external"
+        ? action.action_key.startsWith("POL-TRADE-")
+        : !action.action_key.startsWith("POL-TRADE-")),
+  );
+
+  useEffect(() => {
+    onPreview(
+      selected
+        ? {
+            policy: {
+              id: selected.id,
+              allowedRange: selected.allowed_range,
+              effectVector: selected.effectVector,
+            },
+            change: bounded,
+          }
+        : null,
+    );
+  }, [bounded, onPreview, selected]);
+
+  const publish = async () => {
+    if (!selected) return;
+    setBusy(true);
+    setError("");
+    try {
+      await submitContinuousWorldPolicy({
+        worldId: world.id,
+        countryKey: country.id,
+        policyId: selected.id,
+        change: bounded,
+      });
+      setMessage(
+        "Policy published. Its calibrated effects will phase in through natural time.",
+      );
+      await onChange();
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Policy could not be published.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (roleIds.size === 0) {
+    return (
+      <Card className="p-4">
+        <div className="flex items-center gap-2">
+          <SlidersHorizontal size={16} className="text-[var(--accent)]" />
+          <h2 className="text-sm font-bold">
+            {scope === "domestic" ? "Domestic controls" : "External controls"}
+          </h2>
+        </div>
+        <p className="mt-3 text-xs leading-5 text-[var(--ink-muted)]">
+          You are observing this country. Only its Team’s assigned portfolios
+          can move or publish controls.
+        </p>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="p-4">
+      <div className="flex items-center gap-2">
+        <SlidersHorizontal size={16} className="text-[var(--accent)]" />
+        <h2 className="text-sm font-bold">
+          {scope === "domestic" ? "Domestic controls" : "External controls"}
+        </h2>
+      </div>
+      <p className="mt-1 text-xs leading-5 text-[var(--ink-muted)]">
+        The slider updates the predicted-effects chart locally. Only publishing
+        creates a world event.
+      </p>
+      {selected ? (
+        <>
+          <label className="mt-4 block text-[10px] font-bold uppercase tracking-wide text-[var(--ink-faint)]">
+            Instrument
+            <select
+              value={selected.id}
+              onChange={(event) => {
+                const next = available.find(
+                  (policy) => policy.id === event.target.value,
+                );
+                setPolicyId(event.target.value);
+                setChange(
+                  next
+                    ? Math.min(
+                        next.allowed_range[1],
+                        Math.max(next.allowed_range[0], 0),
+                      )
+                    : 0,
+                );
+              }}
+              className="mt-1.5 h-9 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-2 text-xs text-[var(--ink)]"
+            >
+              {available.map((policy) => (
+                <option key={policy.id} value={policy.id}>
+                  {titleCase(policy.instrument)} · {policy.role}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="mt-3 rounded-lg bg-[var(--surface-subtle)] p-3">
+            <div className="flex justify-between gap-3">
+              <span className="text-xs font-bold">Live value</span>
+              <strong className="text-sm text-[var(--accent)]">
+                {bounded} {selected.unit}
+              </strong>
+            </div>
+            <input
+              aria-label={`${scope} policy change`}
+              className="mt-3 w-full"
+              type="range"
+              min={selected.allowed_range[0]}
+              max={selected.allowed_range[1]}
+              step={
+                selected.allowed_range[1] - selected.allowed_range[0] > 20
+                  ? 1
+                  : 0.1
+              }
+              value={bounded}
+              onChange={(event) => setChange(Number(event.target.value))}
+            />
+            <p className="mt-3 text-[10px] leading-5 text-[var(--ink-muted)]">
+              Lag {selected.lifecycleDays?.lag ?? 0}d · ramp{" "}
+              {selected.lifecycleDays?.ramp ?? 0}d · peak{" "}
+              {selected.lifecycleDays?.peak ?? 0}d · duration up to{" "}
+              {selected.lifecycleDays?.duration ?? "—"}d.
+            </p>
+            {selected.preconditions.length > 0 && (
+              <p className="mt-2 text-[10px] leading-5 text-[var(--ink-muted)]">
+                Preconditions: {selected.preconditions.join("; ")}
+              </p>
+            )}
+            {selected.sideEffects.length > 0 && (
+              <p className="mt-1 text-[10px] leading-5 text-[var(--amber)]">
+                Trade-off: {selected.sideEffects.join("; ")}
+              </p>
+            )}
+          </div>
+          <Button
+            className="mt-3 w-full"
+            disabled={busy}
+            onClick={() => void publish()}
+          >
+            {busy ? (
+              <LoaderCircle size={14} className="animate-spin" />
+            ) : (
+              <Play size={14} />
+            )}{" "}
+            Publish policy
+          </Button>
+        </>
+      ) : (
+        <p className="mt-3 text-xs leading-5 text-[var(--ink-muted)]">
+          None of your assigned portfolios owns a {scope} instrument.
+        </p>
+      )}
+      {activeActions.length > 0 && (
+        <div className="mt-4 border-t border-[var(--line)] pt-3">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--ink-faint)]">
+            Your live policies
+          </p>
+          <div className="mt-2 space-y-2">
+            {activeActions.slice(0, 4).map((action) => (
+              <PolicyActionRow
+                key={action.id}
+                action={action}
+                busy={busy}
+                onAmend={async (actionId, next) => {
+                  setBusy(true);
+                  try {
+                    await amendContinuousWorldPolicy(actionId, next);
+                    await onChange();
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+                onCancel={async (actionId) => {
+                  setBusy(true);
+                  try {
+                    await cancelContinuousWorldAction(actionId);
+                    await onChange();
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+      {error && <p className="mt-3 text-xs text-[var(--red)]">{error}</p>}
+      {message && (
+        <p className="mt-3 text-xs text-[var(--accent)]">{message}</p>
+      )}
+    </Card>
+  );
+}
+
+function CountryControlWorkspace({
+  world,
+  country,
+  countries,
+  userRoles,
+  policies,
+  actions,
+  contracts,
+  onPreview,
+  onChange,
+}: {
+  world: ContinuousWorldRecord;
+  country: CountryView;
+  countries: CountryView[];
+  userRoles: ContinuousWorldRoleAssignment[];
+  policies: WorldPolicyDefinition[];
+  actions: ContinuousWorldAction[];
+  contracts: ContinuousWorldContract[];
+  onPreview: (preview: PreviewSelection | null) => void;
+  onChange: () => Promise<void>;
+}) {
+  const [scope, setScope] = useState<PolicyScope>("domestic");
+  return (
+    <section>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--accent)]">
+            Step 2 of 2
+          </p>
+          <h2 className="mt-1 text-lg font-bold">National control room</h2>
+        </div>
+        <div className="flex gap-1 rounded-lg bg-[var(--surface-subtle)] p-1">
+          <button
+            onClick={() => setScope("domestic")}
+            className={`rounded-md px-3 py-1.5 text-xs font-bold ${scope === "domestic" ? "bg-[var(--accent)] text-white" : "text-[var(--ink-muted)]"}`}
+          >
+            Domestic
+          </button>
+          <button
+            onClick={() => setScope("external")}
+            className={`rounded-md px-3 py-1.5 text-xs font-bold ${scope === "external" ? "bg-[var(--accent)] text-white" : "text-[var(--ink-muted)]"}`}
+          >
+            External
+          </button>
+        </div>
+      </div>
+      <div className="grid gap-5 xl:grid-cols-2">
+        <ScopedPolicyDesk
+          world={world}
+          country={country}
+          userRoles={userRoles}
+          policies={policies}
+          actions={actions}
+          scope={scope}
+          onPreview={onPreview}
+          onChange={onChange}
+        />
+        {scope === "external" ? (
+          <ContractDesk
+            world={world}
+            countries={countries}
+            userRoles={userRoles.filter(
+              (role) => role.country_key === country.id,
+            )}
+            contracts={contracts.filter(
+              (contract) =>
+                contract.exporter_country_key === country.id ||
+                contract.importer_country_key === country.id,
+            )}
+            onChange={onChange}
+          />
+        ) : (
+          <CountryMetrics country={country} />
+        )}
+      </div>
+    </section>
+  );
+}
+
+function CountryMetrics({ country }: { country: CountryView }) {
+  const items = [
+    [
+      "GDP growth",
+      metric(country, "real_gdp_growth", "growth_pp") ||
+        metric(country, "real_gdp_growth", "real_gdp_growth_pp"),
+      "%",
+    ],
+    ["Inflation", metric(country, "cpi_inflation", "inflation_pp"), "%"],
+    [
+      "Unemployment",
+      metric(country, "unemployment_rate", "unemployment_pp"),
+      "%",
+    ],
+    ["Public debt", metric(country, "public_debt", "debt_gdp_pp"), "% GDP"],
+    ["Stability", value(country.dynamics, "stability", 50), "/100"],
+    ["Trust", value(country.dynamics, "trust", 50), "/100"],
+  ];
+  return (
+    <Card className="p-4">
+      <div className="flex items-center gap-2">
+        <Activity size={16} className="text-[var(--accent)]" />
+        <h2 className="text-sm font-bold">Current national state</h2>
+      </div>
+      <p className="mt-1 text-xs leading-5 text-[var(--ink-muted)]">
+        Live outcomes include policies, contracts, shocks and automatic market
+        settlement to the latest world state.
+      </p>
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        {items.map(([label, number, unit]) => (
+          <div
+            key={String(label)}
+            className="rounded-lg bg-[var(--surface-subtle)] p-3"
+          >
+            <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--ink-faint)]">
+              {label}
+            </p>
+            <p className="mt-1 text-lg font-bold text-[var(--accent)]">
+              {Number(number).toFixed(1)}{" "}
+              <span className="text-[10px] text-[var(--ink-muted)]">
+                {unit}
+              </span>
+            </p>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function Timeline({
+  events,
+  contracts,
+  actions,
+}: {
+  events: ContinuousWorldEvent[];
+  contracts: ContinuousWorldContract[];
+  actions: ContinuousWorldAction[];
+}) {
+  const [tab, setTab] = useState<
+    "Timeline" | "Contracts" | "Policies" | "Replay"
+  >("Timeline");
+  const items =
+    tab === "Contracts"
+      ? contracts.map((contract) => ({
+          id: contract.id,
+          title: `${contract.template_id} · ${titleCase(contract.status)}`,
+          detail: `${countryName(contract.exporter_country_key)} → ${countryName(contract.importer_country_key)}`,
+          at: contract.created_at,
+        }))
+      : tab === "Policies"
+        ? actions.map((action) => ({
+            id: action.id,
+            title: `${titleCase(action.action_key)} · ${action.status}`,
+            detail: `${countryName(action.country_key)} · effective ${new Date(action.effective_at).toLocaleString()}`,
+            at: action.created_at,
+          }))
+        : events.map((event) => ({
+            id: event.id,
+            title: titleCase(event.event_type),
+            detail: String(
+              event.payload.message ??
+                event.payload.shock_key ??
+                event.payload.status ??
+                "Recorded world event",
+            ),
+            at: event.created_at,
+          }));
+  return (
+    <Card className="p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <FileClock size={16} className="text-[var(--accent)]" />
+            <h2 className="text-sm font-bold">World history & Replay</h2>
+          </div>
+          <p className="mt-1 text-xs text-[var(--ink-muted)]">
+            Immutable events and automatic checkpoints; participants cannot
+            create manual snapshots.
+          </p>
+        </div>
+        <div className="flex gap-1">
+          {(["Timeline", "Contracts", "Policies", "Replay"] as const).map(
+            (item) => (
+              <button
+                key={item}
+                onClick={() => setTab(item)}
+                className={`rounded-md px-2.5 py-1.5 text-[10px] font-bold ${tab === item ? "bg-[var(--accent)] text-white" : "bg-[var(--surface-subtle)] text-[var(--ink-muted)]"}`}
+              >
+                {item}
+              </button>
+            ),
+          )}
+        </div>
+      </div>
+      <div className="mt-4 grid max-h-60 gap-2 overflow-y-auto pr-1">
+        {items.slice(0, 40).map((item) => (
+          <div
+            key={item.id}
+            className="grid grid-cols-[auto_1fr] gap-3 rounded-lg border border-[var(--line)] p-2.5"
+          >
+            <span className="mt-1 size-2 rounded-full bg-[var(--accent)]" />
+            <div>
+              <p className="text-xs font-bold">{item.title}</p>
+              <p className="mt-1 text-[10px] leading-4 text-[var(--ink-muted)]">
+                {item.detail}
+              </p>
+              <p className="mt-1 text-[10px] text-[var(--ink-faint)]">
+                {new Date(item.at).toLocaleString()}
+              </p>
+            </div>
+          </div>
+        ))}
+        {items.length === 0 && (
+          <p className="rounded-lg bg-[var(--surface-subtle)] p-4 text-xs text-[var(--ink-muted)]">
+            No recorded items yet. The world clock will add its first state
+            event after processing.
+          </p>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+function TeacherShockPanel({
+  world,
+  countries,
+  onChange,
+}: {
+  world: ContinuousWorldRecord;
+  countries: CountryView[];
+  onChange: () => Promise<void>;
+}) {
+  const { worldSupervisor } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const shocks = asArray<Record<string, unknown>>(
+    FINAL_WORLD_TEACHING.continuousWorldScenarios.scenarios,
+  );
+  if (!worldSupervisor) return null;
+  const inject = async () => {
+    const sample = shocks[0];
+    setBusy(true);
+    setError("");
+    try {
+      await injectContinuousWorldShock({
+        worldId: world.id,
+        shockKey: String(sample.scenario_id),
+        effects: {
+          inflation_pp: 1.2,
+          real_gdp_growth_pp: -0.4,
+          stability_points: -1,
+        },
+        durationDays: 14,
+      });
+      await onChange();
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Shock injection requires teacher or League administrator access.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Card className="border-[var(--amber)] p-4">
+      <div className="flex items-center gap-2">
+        <CircleAlert size={16} className="text-[var(--amber)]" />
+        <h2 className="text-sm font-bold">World supervisor control</h2>
+      </div>
+      <p className="mt-2 text-xs leading-5 text-[var(--ink-muted)]">
+        The system can generate calibrated shocks naturally. Teachers, League
+        administrators and platform administrators may additionally inject an
+        auditable preset event; ordinary players cannot.
+      </p>
+      <Button
+        className="mt-3"
+        size="sm"
+        variant="secondary"
+        disabled={busy || countries.length === 0}
+        onClick={() => void inject()}
+      >
+        {busy ? (
+          <LoaderCircle size={13} className="animate-spin" />
+        ) : (
+          <AlertTriangle size={13} />
+        )}{" "}
+        Inject oil-shock teaching event
+      </Button>
+      {error && <p className="mt-2 text-xs text-[var(--red)]">{error}</p>}
+    </Card>
+  );
+}
 
 export function ContinuousWorldDashboard() {
   const { user, configured, openAuth } = useAuth();
-  const [worlds, setWorlds] = useState<ContinuousWorldRecord[]>([]); const [roles, setRoles] = useState<ContinuousWorldRoleAssignment[]>([]); const [countryTeams, setCountryTeams] = useState<ContinuousWorldCountryTeam[]>([]); const [policies, setPolicies] = useState<WorldPolicyDefinition[]>([]); const [actions, setActions] = useState<ContinuousWorldAction[]>([]); const [contracts, setContracts] = useState<ContinuousWorldContract[]>([]); const [events, setEvents] = useState<ContinuousWorldEvent[]>([]); const [mode, setMode] = useState<ViewMode>("Political"); const [loading, setLoading] = useState(true); const [error, setError] = useState("");
-  const refresh = useCallback(async () => { if (!user || !configured) { setLoading(false); return; } setLoading(true); setError(""); try { const [nextWorlds, nextPolicies] = await Promise.all([listContinuousWorlds(), getActiveWorldPolicies()]); const main = nextWorlds[0]; setWorlds(nextWorlds); setPolicies(nextPolicies); if (main) { const [nextRoles, nextClaims, nextActions, nextContracts, nextEvents] = await Promise.all([listContinuousWorldRoles(main.id), listContinuousWorldCountryTeams(main.id), listContinuousWorldActions(main.id), listContinuousWorldContracts(main.id), listContinuousWorldEvents(main.id)]); setRoles(nextRoles); setCountryTeams(nextClaims); setActions(nextActions); setContracts(nextContracts); setEvents(nextEvents); } else setRoles([]); } catch (caught) { setError(caught instanceof Error ? caught.message : "The continuous world could not be loaded."); } finally { setLoading(false); } }, [configured, user]);
-  useEffect(() => { const timer = window.setTimeout(() => { void refresh(); }, 0); return () => window.clearTimeout(timer); }, [refresh]);
-  const world = worlds[0] ?? null; const countries = countriesOf(world); const userRoles = roles.filter((role) => role.world_id === world?.id && role.user_id === user?.id);
-  if (!user) return <main className="mx-auto grid min-h-[68vh] max-w-3xl place-items-center px-5 py-12 text-center"><Card className="p-8"><Globe2 className="mx-auto text-[var(--accent)]" size={32} /><p className="mt-5 text-[10px] font-bold uppercase tracking-[.16em] text-[var(--accent)]">Persistent world economy</p><h1 className="mt-3 text-3xl font-bold">Sign in before entering the world.</h1><p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-[var(--ink-muted)]">An individual EconMind account is required. League registration and an approved school Team are required before a country can be controlled.</p><Button className="mt-6" onClick={() => openAuth("sign-in")}>Sign in</Button></Card></main>;
-  if (loading && !world) return <main className="mx-auto grid min-h-[60vh] place-items-center"><LoaderCircle className="animate-spin text-[var(--accent)]" size={24} /></main>;
-  if (!world) return <main className="mx-auto max-w-4xl px-5 py-12"><Card className="p-8"><Globe2 size={26} className="text-[var(--accent)]" /><h1 className="mt-4 text-2xl font-bold">World launch is waiting for its calibrated state.</h1><p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">The page will only show a real, versioned continuous world. It never replaces missing data with a fake demonstration.</p>{error && <p className="mt-3 text-sm text-[var(--red)]">{error}</p>}</Card></main>;
-  return <main className="mx-auto max-w-[1700px] px-4 py-6 sm:px-6 lg:px-8"><div className="mb-5 flex flex-wrap items-end justify-between gap-4"><div><Badge className="bg-[var(--accent-soft)] text-[var(--accent)]">Persistent · natural-time · no rounds</Badge><h1 className="mt-3 text-3xl font-bold tracking-[-.05em] sm:text-4xl">World Economy Simulation</h1><p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--ink-muted)]">A continuous twelve-country fictional world. Policies, shocks, trade and contracts evolve in real time; no Q1 locks, planning windows or round timer apply.</p></div><Link href="/league" className="inline-flex items-center gap-2 rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-xs font-bold hover:bg-[var(--surface-subtle)]"><UsersRound size={14} /> League home</Link></div><WorldHeader world={world} countries={countries} events={events} onRefresh={() => void refresh()} loading={loading} />{error && <Card className="mt-4 border-[var(--red)] bg-[var(--red-soft)] p-3 text-xs text-[var(--red)]"><AlertTriangle className="mr-1 inline" size={14} />{error}</Card>}<section className="mt-5 grid gap-5 xl:grid-cols-[330px_minmax(0,1fr)_330px]"><aside className="space-y-5"><CountryAndRolePanel world={world} countries={countries} claims={countryTeams} roles={roles} userRoles={userRoles} onChange={refresh} /><PolicyDesk world={world} userRoles={userRoles} policies={policies} actions={actions} onChange={refresh} /><ContractDesk world={world} countries={countries} userRoles={userRoles} contracts={contracts} onChange={refresh} /></aside><section className="min-w-0 space-y-5"><MapCanvas countries={countries} claims={countryTeams} mode={mode} setMode={setMode} /><TeacherShockPanel world={world} countries={countries} onChange={refresh} /></section><aside className="space-y-5"><RankingPanel countries={countries} actions={actions} /><Card className="p-4"><div className="flex items-center gap-2"><ShieldAlert size={16} className="text-[var(--amber)]" /><h2 className="text-sm font-bold">Risk & policy feedback</h2></div><div className="mt-3 space-y-2">{countries.filter((country) => governance(country) !== "normal").map((country) => <div key={country.id} className="rounded-lg bg-[var(--amber-soft)] p-2.5 text-xs"><strong>{countryName(country.id)} · {titleCase(governance(country))}</strong><p className="mt-1 text-[10px] leading-4">Stability {value(country.dynamics, "stability", 50).toFixed(0)} · trust {value(country.dynamics, "trust", 50).toFixed(0)} · service capacity {value(country.dynamics, "serviceCapacity", 50).toFixed(0)}.</p></div>)}{countries.every((country) => governance(country) === "normal") && <p className="rounded-lg bg-[var(--accent-soft)] p-3 text-xs text-[var(--accent)]">No country currently exceeds the calibrated risk threshold. Extreme outcomes remain possible through persistent price, shortage, unemployment, debt and trust pressure.</p>}</div></Card><Card className="p-4"><div className="flex items-center gap-2"><BookOpenCheck size={16} className="text-[var(--accent)]" /><h2 className="text-sm font-bold">How this world works</h2></div><ol className="mt-3 space-y-2 text-xs leading-5 text-[var(--ink-muted)]"><li>1. Register an individual account, then join an approved League Team.</li><li>2. A Team captain claims one free country; colleagues can hold one or many portfolios.</li><li>3. Preview locally, then publish deliberate policy, trade and contract decisions.</li><li>4. The server advances policy lags, market clearing, settlements, shocks, state risk and recovery automatically.</li></ol></Card></aside></section><section className="mt-5"><Timeline events={events} contracts={contracts} actions={actions} /></section></main>;
+  const [worlds, setWorlds] = useState<ContinuousWorldRecord[]>([]);
+  const [roles, setRoles] = useState<ContinuousWorldRoleAssignment[]>([]);
+  const [countryTeams, setCountryTeams] = useState<
+    ContinuousWorldCountryTeam[]
+  >([]);
+  const [policies, setPolicies] = useState<WorldPolicyDefinition[]>([]);
+  const [actions, setActions] = useState<ContinuousWorldAction[]>([]);
+  const [contracts, setContracts] = useState<ContinuousWorldContract[]>([]);
+  const [events, setEvents] = useState<ContinuousWorldEvent[]>([]);
+  const [mode, setMode] = useState<ViewMode>("Political");
+  const [selectedCountryId, setSelectedCountryId] = useState<string | null>(
+    null,
+  );
+  const [preview, setPreview] = useState<PreviewSelection | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const refresh = useCallback(async () => {
+    if (!user || !configured) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      const [nextWorlds, nextPolicies] = await Promise.all([
+        listContinuousWorlds(),
+        getActiveWorldPolicies(),
+      ]);
+      const main = nextWorlds[0];
+      setWorlds(nextWorlds);
+      setPolicies(nextPolicies);
+      if (main) {
+        const [nextRoles, nextClaims, nextActions, nextContracts, nextEvents] =
+          await Promise.all([
+            listContinuousWorldRoles(main.id),
+            listContinuousWorldCountryTeams(main.id),
+            listContinuousWorldActions(main.id),
+            listContinuousWorldContracts(main.id),
+            listContinuousWorldEvents(main.id),
+          ]);
+        setRoles(nextRoles);
+        setCountryTeams(nextClaims);
+        setActions(nextActions);
+        setContracts(nextContracts);
+        setEvents(nextEvents);
+      } else setRoles([]);
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "The continuous world could not be loaded.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [configured, user]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void refresh();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [refresh]);
+  const world = worlds[0] ?? null;
+  const countries = countriesOf(world);
+  const userRoles = roles.filter(
+    (role) => role.world_id === world?.id && role.user_id === user?.id,
+  );
+  const selectedCountry =
+    countries.find((country) => country.id === selectedCountryId) ?? null;
+  const selectCountry = (countryId: string | null) => {
+    setPreview(null);
+    setSelectedCountryId(countryId);
+  };
+  const updatePreview = useCallback((next: PreviewSelection | null) => {
+    setPreview((current) =>
+      current?.policy.id === next?.policy.id && current?.change === next?.change
+        ? current
+        : next,
+    );
+  }, []);
+  if (!user)
+    return (
+      <main className="mx-auto grid min-h-[68vh] max-w-3xl place-items-center px-5 py-12 text-center">
+        <Card className="p-8">
+          <Globe2 className="mx-auto text-[var(--accent)]" size={32} />
+          <p className="mt-5 text-[10px] font-bold uppercase tracking-[.16em] text-[var(--accent)]">
+            Persistent world economy
+          </p>
+          <h1 className="mt-3 text-3xl font-bold">
+            Sign in before entering the world.
+          </h1>
+          <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-[var(--ink-muted)]">
+            An individual EconMind account is required. League registration and
+            an approved school Team are required before a country can be
+            controlled.
+          </p>
+          <Button className="mt-6" onClick={() => openAuth("sign-in")}>
+            Sign in
+          </Button>
+        </Card>
+      </main>
+    );
+  if (loading && !world)
+    return (
+      <main className="mx-auto grid min-h-[60vh] place-items-center">
+        <LoaderCircle className="animate-spin text-[var(--accent)]" size={24} />
+      </main>
+    );
+  if (!world)
+    return (
+      <main className="mx-auto max-w-4xl px-5 py-12">
+        <Card className="p-8">
+          <Globe2 size={26} className="text-[var(--accent)]" />
+          <h1 className="mt-4 text-2xl font-bold">
+            World launch is waiting for its calibrated state.
+          </h1>
+          <p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">
+            The page will only show a real, versioned continuous world. It never
+            replaces missing data with a fake demonstration.
+          </p>
+          {error && <p className="mt-3 text-sm text-[var(--red)]">{error}</p>}
+        </Card>
+      </main>
+    );
+  return (
+    <main className="mx-auto max-w-[1700px] px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <Badge className="bg-[var(--accent-soft)] text-[var(--accent)]">
+            Persistent · natural-time · no rounds
+          </Badge>
+          <h1 className="mt-3 text-3xl font-bold tracking-[-.05em] sm:text-4xl">
+            {selectedCountry
+              ? `${countryName(selectedCountry.id)} · National Workspace`
+              : "World Economy Simulation"}
+          </h1>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--ink-muted)]">
+            {selectedCountry
+              ? "Inspect this country first, then use only the domestic and external controls granted to your assigned roles. Effects accumulate in natural time; there are no Q1 locks or round timers."
+              : "A continuous twelve-country fictional world. Choose a country to enter its national workspace; policies, shocks, trade and contracts evolve in natural time with no Q1 locks, planning windows or round timer."}
+          </p>
+        </div>
+        <Link
+          href="/league"
+          className="inline-flex items-center gap-2 rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-xs font-bold hover:bg-[var(--surface-subtle)]"
+        >
+          <UsersRound size={14} /> League home
+        </Link>
+      </div>
+      <WorldHeader
+        world={world}
+        countries={countries}
+        events={events}
+        onRefresh={() => void refresh()}
+        loading={loading}
+      />
+      {error && (
+        <Card className="mt-4 border-[var(--red)] bg-[var(--red-soft)] p-3 text-xs text-[var(--red)]">
+          <AlertTriangle className="mr-1 inline" size={14} />
+          {error}
+        </Card>
+      )}
+      {selectedCountry ? (
+        <section className="mt-5 space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--line)] bg-[var(--surface-subtle)] p-3">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => selectCountry(null)}
+                className="rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-xs font-bold hover:bg-[var(--accent-soft)]"
+              >
+                ← World overview
+              </button>
+              <div>
+                <p className="text-sm font-bold">
+                  {countryName(selectedCountry.id)}
+                </p>
+                <p className="text-[10px] text-[var(--ink-muted)]">
+                  {governance(selectedCountry) === "normal"
+                    ? "No current governance alert"
+                    : `Status: ${titleCase(governance(selectedCountry))}`}
+                </p>
+              </div>
+            </div>
+            <Badge
+              className={
+                countryTeams.some(
+                  (claim) => claim.country_key === selectedCountry.id,
+                )
+                  ? "bg-[var(--accent-soft)] text-[var(--accent)]"
+                  : undefined
+              }
+            >
+              {countryTeams.some(
+                (claim) => claim.country_key === selectedCountry.id,
+              )
+                ? "Team-controlled"
+                : "Calibrated default"}
+            </Badge>
+          </div>
+          <div className="grid gap-5 xl:grid-cols-[330px_minmax(0,1fr)]">
+            <aside className="space-y-5">
+              <CountryRoleWorkspace
+                world={world}
+                country={selectedCountry}
+                claims={countryTeams}
+                roles={roles}
+                userRoles={userRoles}
+                onChange={refresh}
+              />
+              <TeacherShockPanel
+                world={world}
+                countries={countries}
+                onChange={refresh}
+              />
+            </aside>
+            <section className="min-w-0 space-y-5">
+              <CountryControlWorkspace
+                world={world}
+                country={selectedCountry}
+                countries={countries}
+                userRoles={userRoles}
+                policies={policies}
+                actions={actions}
+                contracts={contracts}
+                onPreview={updatePreview}
+                onChange={refresh}
+              />
+              <WorldPredictedEffectsRadar
+                country={selectedCountry}
+                policy={preview?.policy}
+                change={preview?.change}
+              />
+            </section>
+          </div>
+        </section>
+      ) : (
+        <section className="mt-5 grid gap-5 xl:grid-cols-[330px_minmax(0,1fr)_330px]">
+          <aside className="space-y-5">
+            <WorldParticipationSummary
+              userRoles={userRoles}
+              onOpenCountry={selectCountry}
+            />
+          </aside>
+          <section className="min-w-0 space-y-5">
+            <MapCanvas
+              countries={countries}
+              claims={countryTeams}
+              mode={mode}
+              setMode={setMode}
+              onSelectCountry={selectCountry}
+            />
+            <CountrySelector
+              countries={countries}
+              claims={countryTeams}
+              actions={actions}
+              onSelect={selectCountry}
+            />
+            <TeacherShockPanel
+              world={world}
+              countries={countries}
+              onChange={refresh}
+            />
+          </section>
+          <aside className="space-y-5">
+            <RankingPanel countries={countries} actions={actions} />
+            <Card className="p-4">
+              <div className="flex items-center gap-2">
+                <ShieldAlert size={16} className="text-[var(--amber)]" />
+                <h2 className="text-sm font-bold">Risk & policy feedback</h2>
+              </div>
+              <div className="mt-3 space-y-2">
+                {countries
+                  .filter((country) => governance(country) !== "normal")
+                  .map((country) => (
+                    <div
+                      key={country.id}
+                      className="rounded-lg bg-[var(--amber-soft)] p-2.5 text-xs"
+                    >
+                      <strong>
+                        {countryName(country.id)} ·{" "}
+                        {titleCase(governance(country))}
+                      </strong>
+                      <p className="mt-1 text-[10px] leading-4">
+                        Stability{" "}
+                        {value(country.dynamics, "stability", 50).toFixed(0)} ·
+                        trust {value(country.dynamics, "trust", 50).toFixed(0)}{" "}
+                        · service capacity{" "}
+                        {value(country.dynamics, "serviceCapacity", 50).toFixed(
+                          0,
+                        )}
+                        .
+                      </p>
+                    </div>
+                  ))}
+                {countries.every(
+                  (country) => governance(country) === "normal",
+                ) && (
+                  <p className="rounded-lg bg-[var(--accent-soft)] p-3 text-xs text-[var(--accent)]">
+                    No country currently exceeds the calibrated risk threshold.
+                    Extreme outcomes remain possible through persistent price,
+                    shortage, unemployment, debt and trust pressure.
+                  </p>
+                )}
+              </div>
+            </Card>
+            <Card className="p-4">
+              <div className="flex items-center gap-2">
+                <BookOpenCheck size={16} className="text-[var(--accent)]" />
+                <h2 className="text-sm font-bold">How this world works</h2>
+              </div>
+              <ol className="mt-3 space-y-2 text-xs leading-5 text-[var(--ink-muted)]">
+                <li>
+                  1. Register an individual account, then join an approved
+                  League Team.
+                </li>
+                <li>
+                  2. A Team captain claims one free country; colleagues can hold
+                  one or many portfolios.
+                </li>
+                <li>
+                  3. Preview locally, then publish deliberate policy, trade and
+                  contract decisions.
+                </li>
+                <li>
+                  4. The server advances policy lags, market clearing,
+                  settlements, shocks, state risk and recovery automatically.
+                </li>
+              </ol>
+            </Card>
+          </aside>
+        </section>
+      )}
+      <section className="mt-5">
+        <Timeline events={events} contracts={contracts} actions={actions} />
+      </section>
+    </main>
+  );
 }
