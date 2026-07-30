@@ -93,7 +93,7 @@ export function AuthDialog() {
             <p className="mt-2 text-sm leading-6 text-[var(--ink-muted)]">
               {authMode === "sign-in"
                 ? "Sign in to access your cloud scenarios and learning history."
-                : "Your saved work stays private under Supabase Row Level Security."}
+                : "Your saved work stays private under Supabase Row Level Security. After your first sign-in, choose a school path or continue as a visitor."}
             </p>
           </div>
           <button

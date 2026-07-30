@@ -1,3 +1,4 @@
-import { WorldExperience } from "@/components/world/world-experience";
-import { Suspense } from "react";
-export default function WorldPage() { return <Suspense fallback={null}><WorldExperience /></Suspense>; }
+import { redirect } from "next/navigation";
+
+/** The persistent simulation is a League experience, not a parallel product area. */
+export default function WorldPage() { redirect("/league/world"); }

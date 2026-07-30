@@ -19,7 +19,7 @@ export default function ModelsPage() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<"All" | ModelCategory>("All");
   const [difficulty, setDifficulty] = useState<"All" | ModelDifficulty>("All");
-  const [status, setStatus] = useState<"all" | ModelStatus>("available");
+  const [status, setStatus] = useState<"all" | ModelStatus>("all");
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return MODEL_REGISTRY.filter((model) =>
@@ -55,7 +55,7 @@ export default function ModelsPage() {
       </div>
     </section>
 
-    <div className="mt-8 flex items-center justify-between border-b border-[var(--line)] pb-3 text-[10px] font-bold uppercase tracking-wider text-[var(--ink-faint)]"><span>{filtered.length} models</span><button type="button" onClick={() => { setQuery(""); setCategory("All"); setDifficulty("All"); setStatus("available"); }} className="text-[var(--accent)]">Reset filters</button></div>
+    <div className="mt-8 flex items-center justify-between border-b border-[var(--line)] pb-3 text-[10px] font-bold uppercase tracking-wider text-[var(--ink-faint)]"><span>{filtered.length} models</span><button type="button" onClick={() => { setQuery(""); setCategory("All"); setDifficulty("All"); setStatus("all"); }} className="text-[var(--accent)]">Reset filters</button></div>
     <div className="divide-y divide-[var(--line)] border-b border-[var(--line)]">
       {filtered.map((model) => {
         const Icon = MODEL_ICONS[model.icon];

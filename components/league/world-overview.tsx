@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { TWELVE_COUNTRY_TEMPLATES } from "@/lib/economics/world";
 
 export function TwelveNationWorldOverview({ competitionId, compact = false }: { competitionId?: string; compact?: boolean }) {
-  const target = competitionId ? `/world?competition=${competitionId}` : "/league/competitions";
+  const target = competitionId ? `/league/competitions/room?competition=${competitionId}` : "/league/world";
   return <Card className={`relative overflow-hidden border-[var(--accent)] ${compact ? "p-5" : "p-6 sm:p-8"}`}>
     <div className="absolute inset-0 page-grid opacity-25" />
     <div className="relative flex flex-wrap items-start justify-between gap-5">
