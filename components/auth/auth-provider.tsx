@@ -10,6 +10,7 @@ export type AuthMode = "sign-in" | "sign-up";
 type AuthContextValue = {
   user: User | null;
   role: AppRole;
+  worldSupervisor: boolean;
   roleLoading: boolean;
   loading: boolean;
   configured: boolean;
@@ -26,6 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<AppRole>("guest");
+  const [worldSupervisor, setWorldSupervisor] = useState(false);
   const [roleLoading, setRoleLoading] = useState(true);
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>("sign-in");
@@ -47,7 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (!session?.user) { setRole("guest"); setRoleLoading(false); }
+      if (!session?.user) { setRole("guest"); setWorldSupervisor(false); setRoleLoading(false); }
       setLoading(false);
     });
 
@@ -59,22 +61,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const supabase = getSupabaseBrowserClient();
-    if (!supabase || !user) { queueMicrotask(() => { setRole("guest"); setRoleLoading(false); }); return; }
+    if (!supabase || !user) { queueMicrotask(() => { setRole("guest"); setWorldSupervisor(false); setRoleLoading(false); }); return; }
     let active = true;
     const refreshRole = () => {
       queueMicrotask(() => { if (active) setRoleLoading(true); });
-      void supabase.from("profiles").select("role").eq("user_id", user.id).maybeSingle().then(async ({ data }) => {
+      void supabase.from("profiles").select("role,platform_role").eq("user_id", user.id).maybeSingle().then(async ({ data }) => {
         // Handles accounts created before a profile trigger was installed. The
         // insert is allowed only for the authenticated user's own UUID by RLS.
         if (!data) {
           const displayName = typeof user.user_metadata.display_name === "string" ? user.user_metadata.display_name.slice(0, 80) : null;
-          const created = await supabase.from("profiles").insert({ user_id: user.id, display_name: displayName }).select("role").maybeSingle();
+          const created = await supabase.from("profiles").insert({ user_id: user.id, display_name: displayName }).select("role,platform_role").maybeSingle();
           data = created.data;
         }
         if (!active) return;
         setRole(data?.role === "teacher" ? "teacher" : "student");
+        setWorldSupervisor(data?.role === "teacher" || data?.platform_role === "school_leader" || data?.platform_role === "platform_admin");
         setRoleLoading(false);
-      }, () => { if (active) { setRole("student"); setRoleLoading(false); } });
+      }, () => { if (active) { setRole("student"); setWorldSupervisor(false); setRoleLoading(false); } });
     };
     const refreshWhenVisible = () => { if (document.visibilityState === "visible") refreshRole(); };
     refreshRole();
@@ -87,6 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     () => ({
       user,
       role,
+      worldSupervisor,
       roleLoading,
       loading,
       configured,
@@ -102,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (supabase) await supabase.auth.signOut();
       },
     }),
-    [user, role, roleLoading, loading, configured, authOpen, authMode],
+    [user, role, worldSupervisor, roleLoading, loading, configured, authOpen, authMode],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
