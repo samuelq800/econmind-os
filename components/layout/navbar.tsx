@@ -5,20 +5,10 @@ import { usePathname } from "next/navigation";
 import { ClipboardCheck, Cloud, LogIn, LogOut, Menu, Moon, Sun, UserRound, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
+import { availableNavigation } from "@/lib/platform/feature-flags";
 import { useTheme } from "./theme-provider";
 
-const publicLinks = [
-  { href: "/", label: "Home" },
-  { href: "/models", label: "Models" },
-  { href: "/sandbox", label: "Sandbox" },
-  { href: "/policy-lab", label: "Policy Lab" },
-  { href: "/workspace", label: "Integrated Workspace" },
-  { href: "/experiments", label: "Experiments" },
-  { href: "/cases", label: "Cases" },
-  { href: "/league", label: "League" },
-  { href: "/daily-brief", label: "Daily Brief" },
-  { href: "/about", label: "About" },
-];
+const publicLinks = availableNavigation();
 
 export function Navbar() {
   const path = usePathname();
