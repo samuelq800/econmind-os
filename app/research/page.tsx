@@ -1,5 +1,5 @@
-import { EvidenceLab } from "@/components/learning/evidence-lab";
+import { EvidenceLabOverview } from "@/components/learning/evidence-lab/evidence-overview";
 
 export default function ResearchPage() {
-  return <EvidenceLab />;
+  return <EvidenceLabOverview />;
 }
