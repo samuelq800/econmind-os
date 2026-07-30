@@ -47,7 +47,7 @@ export function InterschoolNetworkHero() {
 
         <div className="inter-school-lanes" aria-label="Participating schools">
           {schools.map((school, index) => (
-            <p key={school} className={`inter-school-lane${index === 0 ? " inter-school-lane-featured" : ""}${school.length > 56 ? " inter-school-lane-long" : ""}`} style={{ "--school-index": index } as React.CSSProperties}>
+            <p key={school} className={`inter-school-lane${index === 0 ? " inter-school-lane-featured" : ""}${school.length > 48 ? " inter-school-lane-long" : ""}`} style={{ "--school-index": index } as React.CSSProperties}>
               {school}
             </p>
           ))}
