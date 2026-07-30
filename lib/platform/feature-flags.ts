@@ -10,7 +10,10 @@ export const FEATURE_FLAGS = {
   mechanismArena: false,
   evidenceLab: false,
   evidenceUpload: false,
-  worldEconomy: false,
+  // This is a public build flag, not a security mechanism. The database RLS
+  // and server worker remain the authority. It keeps the route out of normal
+  // navigation until a validated calibration package and live worker exist.
+  worldEconomy: process.env.NEXT_PUBLIC_ENABLE_CONTINUOUS_WORLD === "true",
   league: true,
   publicLeaderboard: false,
   counterfactual: false,

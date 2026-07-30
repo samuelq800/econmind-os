@@ -1,0 +1,180 @@
+{
+  "dataset_id": "econmind_world_country_calibration",
+  "version": "0.1.0",
+  "as_of": "2026-03-31",
+  "coverage_period": "2026-Q1 initial state",
+  "currency": "GCU (fictional global currency unit)",
+  "status": "synthetic_calibration",
+  "provenance_id": "CAL-SYN-01",
+  "confidence": "medium",
+  "non_mapping_notice": "These are balanced fictional economies. No country corresponds to, is parameterized from, or should be inferred to be a real country.",
+  "field_provenance_profile": {
+    "id": "P-SYNTH-2026Q1",
+    "status": "synthetic_calibration",
+    "source_url": "https://datatopics.worldbank.org/world-development-indicators/user-guide.html",
+    "source_urls": [
+      "https://datatopics.worldbank.org/world-development-indicators/user-guide.html",
+      "https://www.imf.org/external/datamapper/datasets/WEO",
+      "https://www.imf.org/external/datamapper/datasets/FM",
+      "https://ilostat.ilo.org/methods/concepts-and-definitions/description-labour-force-statistics/",
+      "https://www.fao.org/faostat/en/#data",
+      "https://www.iea.org/data-and-statistics/data-product/world-energy-balances",
+      "https://data.bis.org/topics/EER",
+      "https://comtradeplus.un.org/TradeFlow",
+      "https://pip.worldbank.org/"
+    ],
+    "source_ids": ["CAL-SYN-01"],
+    "published_or_calibration_date": "2026-07-30",
+    "coverage_period": "2026-Q1 initial state",
+    "conversion_method": "Values are scenario calibration draws bounded by public cross-country reference ranges; derived identities are calculated exactly before display rounding.",
+    "definition_reference": "variable_dictionary.csv (variable_id-specific definition, unit, frequency and range)",
+    "confidence": "medium",
+    "uncertainty": "Not an estimate of a real country. Use stochastic perturbations for simulations rather than treating point values as known truths."
+  },
+  "units": {
+    "gdp_current": "billions_GCU_current", "population": "millions_persons", "gdp_per_capita": "GCU_per_person_current",
+    "rates": "percent", "shares": "percent_of_GDP or percent_of_generation as documented", "indices": "index_2026Q1_100 unless named index_0_100",
+    "reserves": "months_import_cover", "debt": "percent_of_GDP"
+  },
+  "countries": [
+    {
+      "id": "asterra", "name": "Asterra", "status": "synthetic_calibration", "provenance_profile": "P-SYNTH-2026Q1",
+      "design_rationale": "Diversified upper-middle-income economy with tradable manufacturing, moderate renewable build-out and a modest current-account surplus.",
+      "values": {
+        "gdp_current": 480, "population": 24, "gdp_per_capita": 20000, "real_gdp_growth": 3.2, "cpi_inflation": 3.0, "unemployment_rate": 5.8, "youth_unemployment_rate": 12.0, "policy_rate": 4.25, "productivity_index": 103, "output_gap": -0.4, "money_supply_broad": 96, "consumer_confidence": 101, "business_confidence": 102,
+        "tax_revenue": 27.5, "total_revenue": 31.5, "total_expenditure": 33.5, "overall_fiscal_balance": -2.0, "public_debt": 59, "effective_debt_rate": 4.4, "interest_cost": 2.4, "primary_balance": 0.4, "fiscal_multiplier": 0.85, "automatic_stabilizer": 0.35,
+        "trade_balance": 1.0, "net_primary_secondary_income": -0.5, "current_account": 0.5, "foreign_reserves": 5.6, "external_debt": 42, "net_capital_inflows": 0.2, "exchange_rate_regime": "managed_flexible", "neer_index": 101, "reer_index": 100, "bank_stability": 70, "capital_control_intensity": 25,
+        "gini": 0.37, "poverty_rate": 10, "real_wage_index": 101, "food_energy_burden": 20, "public_support": 60, "institutional_trust": 63, "social_protection_coverage": 66,
+        "agriculture_share": 8, "manufacturing_share": 26, "services_share": 66, "technology_share": 18, "renewable_share": 35, "nuclear_share": 10, "fossil_share": 55, "food_self_sufficiency": 105, "mineral_reserve_proxy": 45, "export_concentration": 1300, "import_dependency": 30, "transport_capacity": 110
+      }
+    },
+    {
+      "id": "bellune", "name": "Bellune", "status": "synthetic_calibration", "provenance_profile": "P-SYNTH-2026Q1",
+      "design_rationale": "High-income service and knowledge economy with strong social insurance, an ageing-cost fiscal trade-off and high import dependence.",
+      "values": {
+        "gdp_current": 760, "population": 18.1, "gdp_per_capita": 41989, "real_gdp_growth": 1.6, "cpi_inflation": 2.3, "unemployment_rate": 4.7, "youth_unemployment_rate": 9.0, "policy_rate": 2.75, "productivity_index": 124, "output_gap": -0.6, "money_supply_broad": 142, "consumer_confidence": 98, "business_confidence": 99,
+        "tax_revenue": 36.5, "total_revenue": 40.0, "total_expenditure": 42.0, "overall_fiscal_balance": -2.0, "public_debt": 74, "effective_debt_rate": 3.1, "interest_cost": 2.3, "primary_balance": 0.3, "fiscal_multiplier": 0.65, "automatic_stabilizer": 0.60,
+        "trade_balance": 2.8, "net_primary_secondary_income": -1.0, "current_account": 1.8, "foreign_reserves": 4.2, "external_debt": 105, "net_capital_inflows": -0.4, "exchange_rate_regime": "flexible", "neer_index": 104, "reer_index": 103, "bank_stability": 78, "capital_control_intensity": 8,
+        "gini": 0.31, "poverty_rate": 6, "real_wage_index": 104, "food_energy_burden": 14, "public_support": 64, "institutional_trust": 74, "social_protection_coverage": 93,
+        "agriculture_share": 3, "manufacturing_share": 16, "services_share": 81, "technology_share": 26, "renewable_share": 45, "nuclear_share": 25, "fossil_share": 30, "food_self_sufficiency": 68, "mineral_reserve_proxy": 15, "export_concentration": 1200, "import_dependency": 60, "transport_capacity": 115
+      }
+    },
+    {
+      "id": "cyrenia", "name": "Cyrenia", "status": "synthetic_calibration", "provenance_profile": "P-SYNTH-2026Q1",
+      "design_rationale": "Resource-rich middle-income exporter with large external buffers but concentrated export revenue and volatile terms of trade.",
+      "values": {
+        "gdp_current": 330, "population": 12, "gdp_per_capita": 27500, "real_gdp_growth": 2.6, "cpi_inflation": 4.7, "unemployment_rate": 7.1, "youth_unemployment_rate": 16.5, "policy_rate": 6.0, "productivity_index": 104, "output_gap": 0.3, "money_supply_broad": 72, "consumer_confidence": 95, "business_confidence": 101,
+        "tax_revenue": 21.0, "total_revenue": 29.0, "total_expenditure": 30.5, "overall_fiscal_balance": -1.5, "public_debt": 40, "effective_debt_rate": 4.8, "interest_cost": 1.8, "primary_balance": 0.3, "fiscal_multiplier": 0.55, "automatic_stabilizer": 0.22,
+        "trade_balance": 6.5, "net_primary_secondary_income": -1.5, "current_account": 5.0, "foreign_reserves": 10.5, "external_debt": 33, "net_capital_inflows": -2.0, "exchange_rate_regime": "managed_float", "neer_index": 98, "reer_index": 99, "bank_stability": 67, "capital_control_intensity": 40,
+        "gini": 0.43, "poverty_rate": 11, "real_wage_index": 99, "food_energy_burden": 22, "public_support": 56, "institutional_trust": 55, "social_protection_coverage": 58,
+        "agriculture_share": 6, "manufacturing_share": 29, "services_share": 65, "technology_share": 12, "renewable_share": 20, "nuclear_share": 0, "fossil_share": 80, "food_self_sufficiency": 112, "mineral_reserve_proxy": 88, "export_concentration": 3800, "import_dependency": 25, "transport_capacity": 90
+      }
+    },
+    {
+      "id": "damaris", "name": "Damaris", "status": "synthetic_calibration", "provenance_profile": "P-SYNTH-2026Q1",
+      "design_rationale": "Young agrarian economy with rapid catch-up potential, food and climate exposure, constrained fiscal space and rising infrastructure needs.",
+      "values": {
+        "gdp_current": 210, "population": 32.8, "gdp_per_capita": 6402, "real_gdp_growth": 4.8, "cpi_inflation": 6.3, "unemployment_rate": 8.9, "youth_unemployment_rate": 20.5, "policy_rate": 8.5, "productivity_index": 76, "output_gap": -1.8, "money_supply_broad": 48, "consumer_confidence": 91, "business_confidence": 94,
+        "tax_revenue": 16.0, "total_revenue": 20.0, "total_expenditure": 24.0, "overall_fiscal_balance": -4.0, "public_debt": 72, "effective_debt_rate": 7.4, "interest_cost": 5.0, "primary_balance": 1.0, "fiscal_multiplier": 1.05, "automatic_stabilizer": 0.15,
+        "trade_balance": -5.5, "net_primary_secondary_income": 1.0, "current_account": -4.5, "foreign_reserves": 3.1, "external_debt": 63, "net_capital_inflows": 4.8, "exchange_rate_regime": "crawl", "neer_index": 94, "reer_index": 91, "bank_stability": 52, "capital_control_intensity": 55,
+        "gini": 0.46, "poverty_rate": 31, "real_wage_index": 88, "food_energy_burden": 39, "public_support": 49, "institutional_trust": 46, "social_protection_coverage": 34,
+        "agriculture_share": 28, "manufacturing_share": 17, "services_share": 55, "technology_share": 6, "renewable_share": 45, "nuclear_share": 0, "fossil_share": 55, "food_self_sufficiency": 92, "mineral_reserve_proxy": 35, "export_concentration": 2600, "import_dependency": 48, "transport_capacity": 72
+      }
+    },
+    {
+      "id": "eryndor", "name": "Eryndor", "status": "synthetic_calibration", "provenance_profile": "P-SYNTH-2026Q1",
+      "design_rationale": "Manufacturing-export economy with competitive supply chains, strong employment absorption and moderate energy/import exposure.",
+      "values": {
+        "gdp_current": 920, "population": 46, "gdp_per_capita": 20000, "real_gdp_growth": 3.4, "cpi_inflation": 2.8, "unemployment_rate": 4.9, "youth_unemployment_rate": 10.5, "policy_rate": 3.5, "productivity_index": 106, "output_gap": -0.2, "money_supply_broad": 108, "consumer_confidence": 102, "business_confidence": 106,
+        "tax_revenue": 24.0, "total_revenue": 29.0, "total_expenditure": 30.4, "overall_fiscal_balance": -1.4, "public_debt": 55, "effective_debt_rate": 3.6, "interest_cost": 1.9, "primary_balance": 0.5, "fiscal_multiplier": 0.75, "automatic_stabilizer": 0.30,
+        "trade_balance": 4.0, "net_primary_secondary_income": -1.0, "current_account": 3.0, "foreign_reserves": 7.0, "external_debt": 50, "net_capital_inflows": -1.8, "exchange_rate_regime": "managed_float", "neer_index": 97, "reer_index": 96, "bank_stability": 72, "capital_control_intensity": 28,
+        "gini": 0.36, "poverty_rate": 9, "real_wage_index": 102, "food_energy_burden": 19, "public_support": 58, "institutional_trust": 61, "social_protection_coverage": 70,
+        "agriculture_share": 9, "manufacturing_share": 35, "services_share": 56, "technology_share": 20, "renewable_share": 28, "nuclear_share": 8, "fossil_share": 64, "food_self_sufficiency": 100, "mineral_reserve_proxy": 52, "export_concentration": 1800, "import_dependency": 42, "transport_capacity": 125
+      }
+    },
+    {
+      "id": "falcrest", "name": "Falcrest", "status": "synthetic_calibration", "provenance_profile": "P-SYNTH-2026Q1",
+      "design_rationale": "Affluent financial-services and technology economy with high private leverage, deep capital markets and cyclical confidence sensitivity.",
+      "values": {
+        "gdp_current": 1100, "population": 36.7, "gdp_per_capita": 29973, "real_gdp_growth": 1.9, "cpi_inflation": 2.5, "unemployment_rate": 5.4, "youth_unemployment_rate": 11.0, "policy_rate": 3.0, "productivity_index": 119, "output_gap": -0.7, "money_supply_broad": 168, "consumer_confidence": 97, "business_confidence": 98,
+        "tax_revenue": 31.0, "total_revenue": 35.0, "total_expenditure": 38.0, "overall_fiscal_balance": -3.0, "public_debt": 96, "effective_debt_rate": 3.9, "interest_cost": 3.5, "primary_balance": 0.5, "fiscal_multiplier": 0.60, "automatic_stabilizer": 0.48,
+        "trade_balance": -1.2, "net_primary_secondary_income": -0.8, "current_account": -2.0, "foreign_reserves": 3.8, "external_debt": 135, "net_capital_inflows": 2.4, "exchange_rate_regime": "flexible", "neer_index": 105, "reer_index": 104, "bank_stability": 64, "capital_control_intensity": 5,
+        "gini": 0.42, "poverty_rate": 8, "real_wage_index": 103, "food_energy_burden": 16, "public_support": 54, "institutional_trust": 67, "social_protection_coverage": 76,
+        "agriculture_share": 2, "manufacturing_share": 20, "services_share": 78, "technology_share": 25, "renewable_share": 35, "nuclear_share": 20, "fossil_share": 45, "food_self_sufficiency": 62, "mineral_reserve_proxy": 20, "export_concentration": 1700, "import_dependency": 70, "transport_capacity": 132
+      }
+    },
+    {
+      "id": "gavren", "name": "Gavren", "status": "synthetic_calibration", "provenance_profile": "P-SYNTH-2026Q1",
+      "design_rationale": "Landlocked commodity and food producer: high natural-resource potential, weak connectivity, costly external debt and uneven social protection.",
+      "values": {
+        "gdp_current": 95, "population": 15.8, "gdp_per_capita": 6013, "real_gdp_growth": 3.7, "cpi_inflation": 8.2, "unemployment_rate": 10.2, "youth_unemployment_rate": 24.0, "policy_rate": 11.0, "productivity_index": 70, "output_gap": -2.2, "money_supply_broad": 42, "consumer_confidence": 82, "business_confidence": 86,
+        "tax_revenue": 14.0, "total_revenue": 18.0, "total_expenditure": 24.5, "overall_fiscal_balance": -6.5, "public_debt": 92, "effective_debt_rate": 9.5, "interest_cost": 7.4, "primary_balance": 0.9, "fiscal_multiplier": 1.10, "automatic_stabilizer": 0.12,
+        "trade_balance": -7.0, "net_primary_secondary_income": 1.0, "current_account": -6.0, "foreign_reserves": 2.4, "external_debt": 88, "net_capital_inflows": 6.3, "exchange_rate_regime": "crawl", "neer_index": 89, "reer_index": 87, "bank_stability": 45, "capital_control_intensity": 62,
+        "gini": 0.48, "poverty_rate": 35, "real_wage_index": 82, "food_energy_burden": 43, "public_support": 42, "institutional_trust": 39, "social_protection_coverage": 27,
+        "agriculture_share": 20, "manufacturing_share": 24, "services_share": 56, "technology_share": 7, "renewable_share": 60, "nuclear_share": 0, "fossil_share": 40, "food_self_sufficiency": 110, "mineral_reserve_proxy": 78, "export_concentration": 3200, "import_dependency": 38, "transport_capacity": 68
+      }
+    },
+    {
+      "id": "helion", "name": "Helion", "status": "synthetic_calibration", "provenance_profile": "P-SYNTH-2026Q1",
+      "design_rationale": "Compact high-productivity technology and professional-services economy: import dependent, well governed, innovation intensive and externally exposed.",
+      "values": {
+        "gdp_current": 610, "population": 15.25, "gdp_per_capita": 40000, "real_gdp_growth": 2.4, "cpi_inflation": 2.1, "unemployment_rate": 4.2, "youth_unemployment_rate": 8.0, "policy_rate": 2.5, "productivity_index": 130, "output_gap": 0.1, "money_supply_broad": 150, "consumer_confidence": 104, "business_confidence": 108,
+        "tax_revenue": 29.0, "total_revenue": 33.0, "total_expenditure": 34.5, "overall_fiscal_balance": -1.5, "public_debt": 46, "effective_debt_rate": 2.9, "interest_cost": 1.4, "primary_balance": -0.1, "fiscal_multiplier": 0.55, "automatic_stabilizer": 0.42,
+        "trade_balance": 2.5, "net_primary_secondary_income": -1.0, "current_account": 1.5, "foreign_reserves": 4.9, "external_debt": 112, "net_capital_inflows": -0.7, "exchange_rate_regime": "flexible", "neer_index": 103, "reer_index": 102, "bank_stability": 82, "capital_control_intensity": 10,
+        "gini": 0.33, "poverty_rate": 5, "real_wage_index": 106, "food_energy_burden": 12, "public_support": 68, "institutional_trust": 79, "social_protection_coverage": 89,
+        "agriculture_share": 3, "manufacturing_share": 14, "services_share": 83, "technology_share": 34, "renewable_share": 55, "nuclear_share": 20, "fossil_share": 25, "food_self_sufficiency": 45, "mineral_reserve_proxy": 12, "export_concentration": 1600, "import_dependency": 78, "transport_capacity": 123
+      }
+    },
+    {
+      "id": "iskara", "name": "Iskara", "status": "synthetic_calibration", "provenance_profile": "P-SYNTH-2026Q1",
+      "design_rationale": "Small services, tourism and remittance economy: renewable potential but high food/import exposure and seasonal employment risk.",
+      "values": {
+        "gdp_current": 155, "population": 10.3, "gdp_per_capita": 15049, "real_gdp_growth": 3.0, "cpi_inflation": 5.4, "unemployment_rate": 9.4, "youth_unemployment_rate": 22.0, "policy_rate": 6.5, "productivity_index": 87, "output_gap": -1.1, "money_supply_broad": 79, "consumer_confidence": 90, "business_confidence": 93,
+        "tax_revenue": 19.0, "total_revenue": 25.0, "total_expenditure": 29.0, "overall_fiscal_balance": -4.0, "public_debt": 78, "effective_debt_rate": 6.2, "interest_cost": 4.8, "primary_balance": 0.8, "fiscal_multiplier": 0.90, "automatic_stabilizer": 0.22,
+        "trade_balance": -6.0, "net_primary_secondary_income": 2.0, "current_account": -4.0, "foreign_reserves": 3.0, "external_debt": 98, "net_capital_inflows": 4.5, "exchange_rate_regime": "managed_float", "neer_index": 93, "reer_index": 91, "bank_stability": 55, "capital_control_intensity": 45,
+        "gini": 0.41, "poverty_rate": 18, "real_wage_index": 92, "food_energy_burden": 34, "public_support": 50, "institutional_trust": 52, "social_protection_coverage": 48,
+        "agriculture_share": 12, "manufacturing_share": 16, "services_share": 72, "technology_share": 14, "renewable_share": 50, "nuclear_share": 0, "fossil_share": 50, "food_self_sufficiency": 58, "mineral_reserve_proxy": 24, "export_concentration": 2100, "import_dependency": 72, "transport_capacity": 105
+      }
+    },
+    {
+      "id": "jorvia", "name": "Jorvia", "status": "synthetic_calibration", "provenance_profile": "P-SYNTH-2026Q1",
+      "design_rationale": "Large industrial domestic market with legacy heavy industry, modest technology upgrading, high energy intensity and a visible debt-service burden.",
+      "values": {
+        "gdp_current": 510, "population": 30, "gdp_per_capita": 17000, "real_gdp_growth": 2.1, "cpi_inflation": 5.8, "unemployment_rate": 7.6, "youth_unemployment_rate": 17.0, "policy_rate": 7.25, "productivity_index": 92, "output_gap": -1.0, "money_supply_broad": 86, "consumer_confidence": 89, "business_confidence": 92,
+        "tax_revenue": 23.0, "total_revenue": 29.0, "total_expenditure": 34.0, "overall_fiscal_balance": -5.0, "public_debt": 88, "effective_debt_rate": 6.1, "interest_cost": 5.1, "primary_balance": 0.1, "fiscal_multiplier": 0.95, "automatic_stabilizer": 0.27,
+        "trade_balance": -4.0, "net_primary_secondary_income": -1.0, "current_account": -5.0, "foreign_reserves": 3.7, "external_debt": 69, "net_capital_inflows": 5.2, "exchange_rate_regime": "managed_float", "neer_index": 95, "reer_index": 94, "bank_stability": 58, "capital_control_intensity": 35,
+        "gini": 0.40, "poverty_rate": 17, "real_wage_index": 94, "food_energy_burden": 30, "public_support": 47, "institutional_trust": 50, "social_protection_coverage": 62,
+        "agriculture_share": 10, "manufacturing_share": 37, "services_share": 53, "technology_share": 14, "renewable_share": 22, "nuclear_share": 18, "fossil_share": 60, "food_self_sufficiency": 76, "mineral_reserve_proxy": 46, "export_concentration": 1900, "import_dependency": 55, "transport_capacity": 96
+      }
+    },
+    {
+      "id": "kordell", "name": "Kordell", "status": "synthetic_calibration", "provenance_profile": "P-SYNTH-2026Q1",
+      "design_rationale": "Capital-rich energy-and-minerals exporter with high reserve buffers, concentrated rents, relatively low public debt and diversification pressure.",
+      "values": {
+        "gdp_current": 280, "population": 7, "gdp_per_capita": 40000, "real_gdp_growth": 2.8, "cpi_inflation": 3.8, "unemployment_rate": 5.3, "youth_unemployment_rate": 13.0, "policy_rate": 4.75, "productivity_index": 112, "output_gap": 0.5, "money_supply_broad": 110, "consumer_confidence": 103, "business_confidence": 104,
+        "tax_revenue": 18.0, "total_revenue": 31.0, "total_expenditure": 31.5, "overall_fiscal_balance": -0.5, "public_debt": 35, "effective_debt_rate": 5.0, "interest_cost": 1.7, "primary_balance": 1.2, "fiscal_multiplier": 0.50, "automatic_stabilizer": 0.20,
+        "trade_balance": 8.5, "net_primary_secondary_income": -2.0, "current_account": 6.5, "foreign_reserves": 12.0, "external_debt": 28, "net_capital_inflows": -3.5, "exchange_rate_regime": "basket_peg", "neer_index": 100, "reer_index": 102, "bank_stability": 74, "capital_control_intensity": 48,
+        "gini": 0.39, "poverty_rate": 7, "real_wage_index": 102, "food_energy_burden": 17, "public_support": 59, "institutional_trust": 57, "social_protection_coverage": 72,
+        "agriculture_share": 4, "manufacturing_share": 22, "services_share": 74, "technology_share": 16, "renewable_share": 15, "nuclear_share": 0, "fossil_share": 85, "food_self_sufficiency": 40, "mineral_reserve_proxy": 92, "export_concentration": 4200, "import_dependency": 35, "transport_capacity": 88
+      }
+    },
+    {
+      "id": "lumeria", "name": "Lumeria", "status": "synthetic_calibration", "provenance_profile": "P-SYNTH-2026Q1",
+      "design_rationale": "Large diversified emerging economy with broad domestic demand, regional trade links, high inequality and a manageable but material external financing need.",
+      "values": {
+        "gdp_current": 1250, "population": 72.5, "gdp_per_capita": 17241, "real_gdp_growth": 3.9, "cpi_inflation": 5.1, "unemployment_rate": 6.8, "youth_unemployment_rate": 15.0, "policy_rate": 6.25, "productivity_index": 91, "output_gap": -0.5, "money_supply_broad": 82, "consumer_confidence": 96, "business_confidence": 99,
+        "tax_revenue": 18.5, "total_revenue": 23.5, "total_expenditure": 27.0, "overall_fiscal_balance": -3.5, "public_debt": 68, "effective_debt_rate": 6.8, "interest_cost": 4.5, "primary_balance": 1.0, "fiscal_multiplier": 1.00, "automatic_stabilizer": 0.25,
+        "trade_balance": -1.5, "net_primary_secondary_income": 0.5, "current_account": -1.0, "foreign_reserves": 4.8, "external_debt": 57, "net_capital_inflows": 1.4, "exchange_rate_regime": "managed_float", "neer_index": 96, "reer_index": 95, "bank_stability": 62, "capital_control_intensity": 30,
+        "gini": 0.45, "poverty_rate": 21, "real_wage_index": 95, "food_energy_burden": 29, "public_support": 53, "institutional_trust": 54, "social_protection_coverage": 52,
+        "agriculture_share": 16, "manufacturing_share": 27, "services_share": 57, "technology_share": 12, "renewable_share": 32, "nuclear_share": 5, "fossil_share": 63, "food_self_sufficiency": 97, "mineral_reserve_proxy": 60, "export_concentration": 1500, "import_dependency": 45, "transport_capacity": 103
+      }
+    }
+  ],
+  "integrity_checks": [
+    { "id": "GDP_PC", "formula": "abs(gdp_per_capita - gdp_current*1000/population) <= 1 GCU", "expected": "pass for all 12" },
+    { "id": "FISCAL", "formula": "overall_fiscal_balance = total_revenue-total_expenditure; primary_balance = overall_fiscal_balance+interest_cost", "expected": "pass to displayed precision" },
+    { "id": "EXTERNAL", "formula": "current_account = trade_balance+net_primary_secondary_income", "expected": "pass to displayed precision" },
+    { "id": "SECTOR", "formula": "agriculture_share+manufacturing_share+services_share = 100; technology_share is a non-additive subset", "expected": "pass for all 12" },
+    { "id": "POWER", "formula": "renewable_share+nuclear_share+fossil_share = 100", "expected": "pass for all 12" }
+  ]
+}

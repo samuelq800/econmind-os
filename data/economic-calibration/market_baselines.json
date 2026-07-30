@@ -1,0 +1,98 @@
+{
+  "dataset_id": "econmind_market_baselines",
+  "version": "0.1.0",
+  "as_of": "2026-03-31",
+  "status": "synthetic_calibration",
+  "provenance_id": "CAL-MKT-01",
+  "unit_convention": "All engine prices are index_2026Q1_100. External USD quotes are optional observed anchors and never imply a GCU/USD parity.",
+  "price_anchor_ingestion_rule": {
+    "status": "placeholder",
+    "provenance_id": "SRC-WB-PINK-2026",
+    "source_url": "https://www.worldbank.org/en/research/commodity-markets",
+    "published_or_coverage": "World Bank Pink Sheet monthly XLS, latest referenced July 2026; historical 1960–latest",
+    "method": "On scenario publication, snapshot the specified source series/date/unit; set engine price index=100 at that snapshot; store raw quote, raw unit, download URL, retrieval date and checksum in the scenario snapshot.",
+    "confidence": "high",
+    "why_placeholder": "No stale or unverified raw USD quote is copied into this version-controlled starter package."
+  },
+  "markets": [
+    {
+      "id": "energy", "name": "Energy basket", "status": "synthetic_calibration", "provenance_id": "CAL-MKT-01",
+      "price": {"unit": "index_2026Q1_100", "initial": 100, "floor": 30, "ceiling": 400, "raw_anchor_spec": "Brent-like crude oil, USD/barrel, World Bank Pink Sheet"},
+      "flow": {"unit": "world_quantity_index", "supply": 100, "demand": 100, "inventory_days": 45, "stock_floor_days": 10},
+      "elasticity": {"short_run_supply": 0.15, "long_run_supply": 0.55, "short_run_demand": -0.18, "long_run_demand": -0.60},
+      "market_structure": {"supplier_hhi": 1500, "importer_hhi": 850, "base_transport_cost_pct_cif": 7, "settlement_days": 20},
+      "source": {"url": "https://www.worldbank.org/en/research/commodity-markets", "published_or_coverage": "monthly; 1960–latest", "conversion": "raw monthly USD quote / scenario anchor quote * 100", "confidence": "medium"}
+    },
+    {
+      "id": "food", "name": "Staple food basket", "status": "synthetic_calibration", "provenance_id": "CAL-MKT-01",
+      "price": {"unit": "index_2026Q1_100", "initial": 100, "floor": 40, "ceiling": 350, "raw_anchor_spec": "Wheat-like staple, USD/metric tonne, World Bank Pink Sheet"},
+      "flow": {"unit": "world_quantity_index", "supply": 100, "demand": 100, "inventory_days": 70, "stock_floor_days": 20},
+      "elasticity": {"short_run_supply": 0.20, "long_run_supply": 0.70, "short_run_demand": -0.25, "long_run_demand": -0.55},
+      "market_structure": {"supplier_hhi": 900, "importer_hhi": 600, "base_transport_cost_pct_cif": 9, "settlement_days": 30},
+      "source": {"url": "https://www.fao.org/faostat/en/#data", "published_or_coverage": "annual agricultural balances, 1961–latest; price anchor monthly", "conversion": "FAOSTAT quantities inform stocks/self-sufficiency; Pink Sheet informs price anchor", "confidence": "medium"}
+    },
+    {
+      "id": "metals", "name": "Industrial metals basket", "status": "synthetic_calibration", "provenance_id": "CAL-MKT-01",
+      "price": {"unit": "index_2026Q1_100", "initial": 100, "floor": 35, "ceiling": 450, "raw_anchor_spec": "Copper-like metal, USD/metric tonne, World Bank Pink Sheet"},
+      "flow": {"unit": "world_quantity_index", "supply": 100, "demand": 100, "inventory_days": 35, "stock_floor_days": 7},
+      "elasticity": {"short_run_supply": 0.18, "long_run_supply": 0.85, "short_run_demand": -0.35, "long_run_demand": -0.85},
+      "market_structure": {"supplier_hhi": 1900, "importer_hhi": 950, "base_transport_cost_pct_cif": 6, "settlement_days": 30},
+      "source": {"url": "https://www.worldbank.org/en/research/commodity-markets", "published_or_coverage": "monthly; 1960–latest", "conversion": "raw monthly USD quote / scenario anchor quote * 100", "confidence": "medium"}
+    },
+    {
+      "id": "manufactured_goods", "name": "Manufactured goods", "status": "synthetic_calibration", "provenance_id": "CAL-MKT-01",
+      "price": {"unit": "index_2026Q1_100", "initial": 100, "floor": 55, "ceiling": 240, "raw_anchor_spec": "Trade-weighted unit-value proxy; no single authoritative raw price"},
+      "flow": {"unit": "world_quantity_index", "supply": 100, "demand": 100, "inventory_days": 28, "stock_floor_days": 5},
+      "elasticity": {"short_run_supply": 0.35, "long_run_supply": 1.10, "short_run_demand": -0.45, "long_run_demand": -1.00},
+      "market_structure": {"supplier_hhi": 1250, "importer_hhi": 700, "base_transport_cost_pct_cif": 8, "settlement_days": 45},
+      "source": {"url": "https://comtradeplus.un.org/TradeFlow", "published_or_coverage": "annual/monthly goods trade, reporter-dependent", "conversion": "Laspeyres chain index from selected HS basket; weights and base snapshot are mandatory", "confidence": "low"}
+    },
+    {
+      "id": "technology_services", "name": "Technology services", "status": "synthetic_calibration", "provenance_id": "CAL-MKT-01",
+      "price": {"unit": "index_2026Q1_100", "initial": 100, "floor": 60, "ceiling": 300, "raw_anchor_spec": "Synthetic quality-adjusted service price; no public global spot quote"},
+      "flow": {"unit": "world_quantity_index", "supply": 100, "demand": 100, "inventory_days": 0, "stock_floor_days": 0},
+      "elasticity": {"short_run_supply": 0.20, "long_run_supply": 1.20, "short_run_demand": -0.55, "long_run_demand": -1.10},
+      "market_structure": {"supplier_hhi": 1800, "importer_hhi": 800, "base_transport_cost_pct_cif": 1, "settlement_days": 30},
+      "source": {"url": "https://datatopics.worldbank.org/world-development-indicators/user-guide.html", "published_or_coverage": "placeholder; service trade data vary by reporting economy", "conversion": "quality index and wage-cost proxy; record model version", "confidence": "low"}
+    }
+  ],
+  "clearing": {
+    "frequency": "daily", "price_update": "P_t = clamp(P_min,P_max,P_(t-1)*exp(kappa*(excess_demand/flow - inventory_buffer)))",
+    "default_kappa_range": [0.05, 0.25],
+    "inventory_buffer": "max(0,(inventory_days-stock_floor_days)/target_inventory_days)",
+    "allocation": "pro_rata after priority contracts; rationing is explicit when physical supply < committed demand",
+    "validation": ["supply >= 0", "demand >= 0", "inventory >= 0", "all country import=other-country export only after transport losses", "no price update may use an empty denominator"]
+  },
+  "trade_and_logistics": {
+    "status": "placeholder",
+    "provenance_id": "SRC-UNCT-2026",
+    "source_url": "https://comtradeplus.un.org/TradeFlow",
+    "why_placeholder": "A fictional bilateral matrix must be deliberately designed, not copied from a real trade network.",
+    "generation_rule": "Gravity-style seed: w_ij proportional to exporter_capacity_i * importer_demand_j * exp(-0.04*route_time_days_ij) * policy_access_ij, then IPF-balance rows/columns to world totals.",
+    "route_classes": [
+      {"id": "inland", "days_range": [4, 18], "capacity_index_range": [55, 105], "base_insurance_pct": [0.5, 1.2]},
+      {"id": "regional_sea", "days_range": [7, 24], "capacity_index_range": [70, 150], "base_insurance_pct": [0.6, 1.5]},
+      {"id": "ocean_corridor", "days_range": [18, 45], "capacity_index_range": [80, 170], "base_insurance_pct": [0.8, 2.5]},
+      {"id": "constrained_chokepoint", "days_range": [22, 60], "capacity_index_range": [35, 90], "base_insurance_pct": [1.5, 8.0]}
+    ],
+    "key_strait_rule": "Use fictional route-node IDs only. A closure reduces available route capacity and raises insurance; it does not alter geographic distance or create goods."
+  },
+  "project_template": {
+    "status": "synthetic_calibration", "provenance_id": "CAL-POL-01",
+    "required_fields": ["project_id", "type", "owner_country", "cost_millions_GCU", "financing_shares", "construction_milestones", "delay_probability", "leakage_pct", "import_content_pct", "construction_job_years", "operating_jobs", "productivity_effect_index_points", "maintenance_pct_capex", "environmental_cost_index", "source_status", "provenance_id"],
+    "recommended_ranges": {
+      "port": {"cost_millions_GCU": [250, 3500], "build_months": [18, 72], "delay_probability": [0.10, 0.45], "import_content_pct": [25, 55], "maintenance_pct_capex": [2, 5]},
+      "rail": {"cost_millions_GCU": [80, 1200], "build_months": [12, 96], "delay_probability": [0.10, 0.50], "import_content_pct": [15, 45], "maintenance_pct_capex": [2, 6]},
+      "grid": {"cost_millions_GCU": [120, 2800], "build_months": [12, 60], "delay_probability": [0.08, 0.40], "import_content_pct": [30, 65], "maintenance_pct_capex": [2, 7]},
+      "research_centre": {"cost_millions_GCU": [25, 600], "build_months": [9, 36], "delay_probability": [0.05, 0.30], "import_content_pct": [10, 35], "maintenance_pct_capex": [4, 10]}
+    },
+    "milestone_rule": "No capacity/productivity benefit before commissioning. Capital is accumulated by verified milestones net of leakage; delays shift milestones and may raise financing cost."
+  },
+  "contract_template": {
+    "status": "synthetic_calibration", "provenance_id": "CAL-MKT-01",
+    "required_fields": ["contract_id", "seller_country", "buyer_country", "commodity_id", "specification", "quantity", "unit", "unit_price", "pricing_currency", "price_basis", "payment_days", "deposit_pct", "credit_support", "default_probability", "loss_given_default_pct", "force_majeure_rule", "insurance_pct", "incoterm_or_delivery_rule", "route_id", "status", "provenance_id"],
+    "settlement": "expected_credit_loss = exposure_after_deposit * default_probability * loss_given_default; payment and delivery are separate state machines.",
+    "force_majeure": "Requires a named eligible event, evidence timestamp, mitigation effort and a defined cure/termination window; no generic automatic escape clause.",
+    "placeholders": ["real counterparty names", "real insurance quotations", "real port/route identifiers", "credit ratings"]
+  }
+}
