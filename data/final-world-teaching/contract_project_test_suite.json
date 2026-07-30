@@ -1,0 +1,17 @@
+{
+  "dataset_id": "econmind_contract_project_test_suite",
+  "version": "0.1.0",
+  "status": "derived",
+  "tests": [
+    {"id":"CON-001","given":{"template":"CT-LONG-ENERGY","quantity":100,"unit_price":70,"deposit_percent":10,"tariff_percent":5,"insurance_percent":2},"expect":{"customs_value":7000,"deposit":700,"tariff":350,"insurance":140,"invoice_before_deposit":7490,"invoice_after_deposit":6790}},
+    {"id":"CON-002","given":{"contracted":1000,"accepted":400,"force_majeure_excused":100},"expect":{"obligation_remaining":500,"state":"partially_delivered"}},
+    {"id":"CON-003","given":{"unpaid_balance":1000,"annual_penalty_rate":0.12,"overdue_days":30},"expect":{"late_interest":9.863014,"tolerance":0.000001}},
+    {"id":"CON-004","given":{"unpaid":1000,"accrued":10,"collateral":200,"insurance_recovery":500},"expect":{"default_loss":310}},
+    {"id":"CON-005","given":{"same_event_uuid_submitted_twice":true},"expect":{"ledger_postings":1}},
+    {"id":"PRJ-001","given":{"type":"renewable_energy","base_cost":100,"delay_months":6,"monthly_escalation":0.005,"corruption_loss_percent":10},"expect":{"cost_at_completion":113}},
+    {"id":"PRJ-002","given":{"complete":false,"full_productivity_effect":1.2},"expect":{"applied_productivity_effect":0}},
+    {"id":"PRJ-003","given":{"complete":true,"ramp_month":6,"ramp_total_months":12,"full_effect":1.2},"expect":{"applied_effect":0.6}},
+    {"id":"PRJ-004","given":{"project_destroyed":true,"outstanding_debt":80},"expect":{"capacity":0,"outstanding_debt":80,"repair_decision_required":true}}
+  ],
+  "validation": ["contract template fields resolve", "project values lie in relevant type range unless test overrides", "ledger balances by currency", "seeded event sequence is reproducible"]
+}

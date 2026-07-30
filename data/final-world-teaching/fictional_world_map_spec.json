@@ -1,0 +1,20 @@
+{
+  "dataset_id": "econmind_fictional_world_map_spec",
+  "version": "0.1.0",
+  "status": "synthetic_calibration",
+  "provenance_id": "FW-CAL-MAP-01",
+  "coordinate_system": "fictional planar grid; x grows east, y grows north; units are map cells and have no real-world geographic interpretation",
+  "non_mapping_notice": "All geometry and labels are invented for EconMind OS. They must never be geocoded or matched to a real country, port, strait or resource basin.",
+  "regions": [
+    {"id":"north_meridian","name":"North Meridian","members":["bellune","falcrest","helion"],"status":"synthetic_calibration"},
+    {"id":"central_arc","name":"Central Arc","members":["asterra","eryndor","jorvia","lumeria"],"status":"synthetic_calibration"},
+    {"id":"eastern_basin","name":"Eastern Basin","members":["cyrenia","kordell"],"status":"synthetic_calibration"},
+    {"id":"southern_reach","name":"Southern Reach","members":["damaris","gavren","iskara"],"status":"synthetic_calibration"}
+  ],
+  "territory_centroids": {
+    "asterra":[4,5],"bellune":[3,7],"cyrenia":[8,6],"damaris":[5,1],"eryndor":[6,5],"falcrest":[1,7],"gavren":[3,2],"helion":[2,9],"iskara":[6,0],"jorvia":[4,4],"kordell":[10,7],"lumeria":[6,3]
+  },
+  "legend": {"coastal":"has at least one fictional maritime node","landlocked":"no maritime node; trade must use rail/road/pipeline then a foreign port","strategic_strait":"fictional chokepoint node with route capacity/insurance effects"},
+  "map_layers": ["territories","borders","coasts","ports","routes","strategic_straits","resource_zones","climate_zones","infrastructure_nodes"],
+  "rendering_rules": {"draw_border_only_when_adjacency_exists":true,"draw_routes_from":"trade_route_graph.json","route_thickness":"capacity_index","route_style":"risk_level","do_not_render_real_world_basemap":true}
+}

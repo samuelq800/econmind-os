@@ -1,0 +1,18 @@
+{
+  "dataset_id": "econmind_policy_regression_tests",
+  "version": "0.1.0",
+  "status": "derived",
+  "tests": [
+    {"id":"POL-TEST-01","given":{"policy":"POL-FIN-VAT-RATE","parameter":2,"lifecycle_weight":1},"expect":{"inflation_pp":[0.1,0.4,1],"deficit_gdp_pp":[-1.2,-0.5,-0.1]}},
+    {"id":"POL-TEST-02","given":{"policy":"POL-FIN-MEANS-TESTED-TRANSFER","parameter":1,"coverage":0.8},"expect":{"poverty_pp":[-2,-0.8,-0.2]}},
+    {"id":"POL-TEST-03","given":{"policies":["POL-FIN-MEANS-TESTED-TRANSFER","POL-SOC-SAFETY-NET-COVERAGE"],"coverage_percent":70},"expect":{"interaction":"INT-001","poverty_effect_multiplier":1.3}},
+    {"id":"POL-TEST-04","given":{"policy":"POL-RES-CARBON-TAX-RECYCLE","base_carbon_price_already_active":true},"expect":{"reject_reason":"double-application with base carbon_price"}},
+    {"id":"POL-TEST-05","given":{"policy":"POL-RES-STRATEGIC-RESERVE-RELEASE","inventory":0},"expect":{"reject_reason":"verified inventory precondition false"}},
+    {"id":"POL-TEST-06","given":{"policy":"POL-FIN-DEBT-RESTRUCTURING","haircut_pct":20,"bank_recap":false},"expect":{"stability_points_upper_bound":2,"warning":"bank balance-sheet loss unresolved"}},
+    {"id":"POL-TEST-07","given":{"policy":"POL-SOC-MINIMUM-WAGE-FLOOR","floor_pct_median":60,"market":"concentrated"},"expect":{"no_binary_claim":"employment must fall"}},
+    {"id":"POL-TEST-08","given":{"policy":"POL-CB-RESOLUTION-LIQUIDITY","support_pct_deposits":12,"solvent":true},"expect":{"approval":"fiscal indemnity required","stability_points_central":6}},
+    {"id":"POL-TEST-09","given":{"action_id":"same-uuid","submit_twice":true},"expect":{"number_of_effect_applications":1}},
+    {"id":"POL-TEST-10","given":{"policy":"POL-TRADE-EXPORT-LICENCE","duration_days":181},"expect":{"reject_reason":"duration above delegated maximum"}}
+  ],
+  "validation": ["all referenced policy IDs exist", "all input parameter values obey allowed range", "effect vector contains 13 entries", "approval gate is evaluated before lifecycle starts"]
+}

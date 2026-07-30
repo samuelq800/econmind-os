@@ -1,0 +1,18 @@
+{
+  "dataset_id": "econmind_mechanism_regression_tests",
+  "version": "0.1.0",
+  "status": "derived",
+  "tests": [
+    {"scenario_id":"MA-01-FIRST-PRICE","cases":[{"values":[30,60,90],"bids":[20,40,60],"expect":{"winner":3,"payment":60,"efficiency":1}},{"values":[50,50,10],"bids":[30,30,5],"expect":{"winner":1,"tie_break":"lowest_id"}},{"values":[30,60,90],"bids":[30,60,90],"expect":{"winner":3,"payment":90,"winner_payoff":0}}]},
+    {"scenario_id":"MA-02-SECOND-PRICE","cases":[{"values":[30,60,90],"bids":[30,60,90],"expect":{"winner":3,"payment":60,"efficiency":1}},{"values":[30,60,90],"bids":[0,60,90],"expect":{"winner":3,"payment":60}},{"values":[30,60,90],"bids":[30,60,50],"expect":{"winner":2,"payment":50,"efficiency":0}}]},
+    {"scenario_id":"MA-03-SCHOOL-MATCHING","cases":[{"defaults":true,"expect":{"match":{"s1":"X","s2":"X","s3":"Y","s4":"Y"},"stable":true}},{"capacities":{"X":1,"Y":2},"expect":{"unmatched_count":1}},{"reported_preferences":"truthful","expect":{"student_proposing_strategy_proof":true}}]},
+    {"scenario_id":"MA-04-PUBLIC-GOODS","cases":[{"contributions":[0,0,0,0],"expect":{"payoff_each":10,"total":40}},{"contributions":[10,10,10,10],"expect":{"payoff_each":16,"total":64}},{"contributions":[10,0,0,0],"expect":{"contributor_payoff":4,"free_rider_payoff":14}}]},
+    {"scenario_id":"MA-05-COMMON-POOL","cases":[{"S":100,"K":200,"r":0.3,"harvest_total":40,"expect":{"S_next":75}},{"S":20,"K":200,"r":0.3,"harvest_total":30,"expect":{"S_next":0}},{"S":100,"K":200,"r":0.3,"harvest_total":0,"expect":{"S_next":115}}]},
+    {"scenario_id":"MA-06-CARBON-PERMITS","cases":[{"target_abatement":40,"mac_A_slope":2,"mac_B_slope":4,"expect":{"q_A":26.666667,"q_B":13.333333,"price":53.333333,"tolerance":0.00001}},{"target_abatement":0,"expect":{"price":0,"q_A":0,"q_B":0}},{"target_abatement":30,"mac_A_slope":1,"mac_B_slope":1,"expect":{"q_A":15,"q_B":15,"price":15}}]},
+    {"scenario_id":"MA-07-INSURANCE","cases":[{"risks":[0.1,0.1,0.4,0.4],"loss":100,"expect":{"fair_pool_premium":25}},{"premium":25,"buyers":"only high risk","expect":{"expected_claims":80,"premium_income":50,"adverse_selection":true}},{"premium":25,"coverage":100,"care_effect":"risk falls 0.1 at effort cost 2","expect":{"moral_hazard_flag":"evaluate incentive"}}]},
+    {"scenario_id":"MA-08-BANK-RUN","cases":[{"early_withdrawals":2,"liquid_assets":2,"expect":{"run":false,"wait_payoff":1.2}},{"early_withdrawals":3,"liquid_assets":2,"expect":{"run":true,"wait_payoff":0.4}},{"early_withdrawals":3,"liquid_assets":2,"support":1,"expect":{"run":false}}]},
+    {"scenario_id":"MA-09-PRINCIPAL-AGENT","cases":[{"bonus":20,"p_low":0.3,"p_high":0.7,"cost_high":8,"expect":{"high_effort":true}},{"bonus":10,"p_low":0.3,"p_high":0.7,"cost_high":8,"expect":{"high_effort":false}},{"bonus":20,"base_wage":0,"outside_option":10,"expect":{"participation":"fails unless expected agent utility >=10"}}]},
+    {"scenario_id":"MA-10-REPEATED-PD","cases":[{"delta":0.9,"noise":0,"strategies":["grim_trigger","grim_trigger"],"expect":{"cooperation_sustainable":true}},{"delta":0.2,"noise":0,"strategies":["grim_trigger","grim_trigger"],"expect":{"cooperation_sustainable":false}},{"delta":0.9,"noise":0.1,"strategies":["tit_for_tat","tit_for_tat"],"expect":{"record":"noise can trigger retaliation; no deterministic full-cooperation assertion"}}]}
+  ],
+  "validation": ["three cases per mechanism", "numeric expected values use stated tolerance", "default seeds reproduce stochastic tests"]
+}

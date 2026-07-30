@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { FavoriteModelButton } from "@/components/models/favorite-model-button";
 import type { ModelKey } from "@/lib/supabase/data";
@@ -29,6 +30,7 @@ export function ModelHeader({
             <Badge className="bg-[var(--accent-soft)] text-[var(--accent)]">{difficulty}</Badge>
             {tags.map((tag) => <Badge key={tag}>{tag}</Badge>)}
           </div>
+          <div className="mt-4 flex flex-wrap gap-3 text-xs font-bold text-[var(--accent)]"><Link href="/models/practice">Practice this family →</Link><Link href="/models/composer">Open Model Composer →</Link></div>
         </div>
         <FavoriteModelButton modelKey={modelKey} />
       </div>

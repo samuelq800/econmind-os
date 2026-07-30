@@ -1,0 +1,17 @@
+{
+  "dataset_id": "econmind_stability_collapse_test_suite",
+  "version": "0.1.0",
+  "status": "synthetic_calibration",
+  "warning": "These are explicitly calibratable game rules, not measured predictions of protest, collapse, violence or state survival.",
+  "rule": {"stability_next":"clip(0,100, stability_now + service_capacity_effect + support_effect + trust_effect - cost_of_living_pressure - unemployment_pressure - shortage_pressure - debt_crisis_pressure - repression_backfire)","protest_trigger":"stability < 35 for 7 consecutive days AND (cost_of_living_pressure + shortage_pressure) >= 18","government_crisis_trigger":"stability < 25 for 30 consecutive days OR trusted_governance < 20 with debt_service_stress > 25","institutional_collapse_trigger":"stability < 12 for 60 consecutive days AND service_capacity < 25","empty_state_trigger":"institutional_collapse plus population/administration availability index < 10","recovery_trigger":"service_capacity >= 40 AND trust >= 35 AND stability >= 30 for 30 days"},
+  "tests": [
+    {"id":"STAB-01","given":{"stability":50,"service_effect":5,"support":2,"trust":1,"col":3,"unemployment":2,"shortage":1,"debt":1,"repression":0},"expect":{"stability_next":51}},
+    {"id":"STAB-02","given":{"stability":34,"days_below_35":7,"col_plus_shortage":18},"expect":{"state":"protest"}},
+    {"id":"STAB-03","given":{"stability":24,"days_below_25":30},"expect":{"state":"government_crisis"}},
+    {"id":"STAB-04","given":{"stability":11,"days_below_12":60,"service_capacity":24},"expect":{"state":"institutional_collapse"}},
+    {"id":"STAB-05","given":{"state":"institutional_collapse","administration_availability":9},"expect":{"state":"empty_state","new_policies_allowed":false}},
+    {"id":"STAB-06","given":{"state":"empty_state","service_capacity":45,"trust":40,"stability":31,"days":30},"expect":{"state":"recovery","new_policies_allowed":"staged"}},
+    {"id":"STAB-07","given":{"stability":15,"repression_backfire":20,"service_effect":0},"expect":{"must_not":"increase stability from repression alone"}}
+  ],
+  "validation": ["clip stability to 0..100", "record every trigger input in audit snapshot", "never label a synthetic threshold observed"]
+}

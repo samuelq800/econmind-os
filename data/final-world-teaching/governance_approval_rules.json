@@ -1,0 +1,33 @@
+{
+  "dataset_id": "econmind_governance_approval_rules",
+  "version": "0.1.0",
+  "status": "synthetic_calibration",
+  "provenance": ["FW-CAL-POL-01"],
+  "roles": {
+    "Captain": {"authority":"emergency coordination, promulgation, cross-ministry conflict resolution","cannot_unilaterally":"permanent tax, debt restructuring, independent monetary decision","emergency_expiry_days":90},
+    "Central Bank Governor": {"authority":"liquidity, prudential tools, FX backstop within reserve limit","cannot_unilaterally":"fiscal guarantee or permanent capital control","independence_rule":"policy minutes and reasons logged"},
+    "Finance & Fiscal Minister": {"authority":"budget, taxes, transfers, debt operations","cannot_unilaterally":"central-bank liquidity or sector environmental licence","budget_guardrail":"new recurring outlay requires multi-year funding source"},
+    "Trade & Foreign Economic Minister": {"authority":"trade finance, licences, FDI review","cannot_unilaterally":"broad capital control or tariff action exceeding delegated band","transparency_rule":"publish commodity, duration, exemption"},
+    "Industry, Investment & Infrastructure Minister": {"authority":"sector support, R&D, zones, projects","cannot_unilaterally":"environmental waiver or fiscal outlay beyond appropriation","procurement_rule":"milestones and disclosure required"},
+    "Resources, Energy & Environment Minister": {"authority":"reserves, extraction licences, environmental instruments","cannot_unilaterally":"unfunded fuel subsidy","safeguard_rule":"inventory and emissions audit"},
+    "Social Affairs & Internal Stability Minister": {"authority":"employment support, social coverage, minimum-wage proposal","cannot_unilaterally":"tax-funded benefit without Finance co-signature","rights_rule":"appeal and nondiscrimination process"}
+  },
+  "approval_matrix": [
+    {"condition":"recurring fiscal cost >0.5% GDP/year","required":["Finance & Fiscal Minister","legislature"],"record":"appropriation_id"},
+    {"condition":"contingent liability >5% GDP","required":["Finance & Fiscal Minister","legislature","Captain"],"record":"liability_register_id"},
+    {"condition":"central-bank support >10% bank deposits","required":["Central Bank Governor","Finance & Fiscal Minister"],"record":"indemnity_id"},
+    {"condition":"restriction of trade, FX, or capital >30 days","required":["responsible minister","Captain","legislative review"],"record":"sunset_id"},
+    {"condition":"carbon or environmental pricing","required":["Resources, Energy & Environment Minister","Finance & Fiscal Minister","legislature"],"record":"registry_id"},
+    {"condition":"project land/environment footprint above local threshold","required":["Industry, Investment & Infrastructure Minister","Resources, Energy & Environment Minister","local authority"],"record":"impact_assessment_id"},
+    {"condition":"debt restructuring","required":["Finance & Fiscal Minister","Captain","legislature","creditor voting threshold"],"record":"restructuring_term_sheet_id"}
+  ],
+  "state_gates": {
+    "normal":"all delegated actions allowed",
+    "government_crisis":"only reversible policies and pre-approved contracts may initiate; debt/FX emergency requires two-role approval",
+    "institutional_collapse":"no new discretionary policy; contracts, projects, shocks and automatic stabilizers continue",
+    "empty_state":"no actor can submit new action; only scheduled expiry, settlement, decay and recovery event handlers run",
+    "recovery":"Captain plus two functioning ministries restore permissions gradually; no retroactive effect duplication"
+  },
+  "audit_fields_required": ["action_id","policy_id","actor_id","territory_id","submitted_at","approved_at","effective_at","parameter","approval_ids","idempotency_key","source_version"],
+  "validation_rules": ["policy role matches library", "parameter within allowed range", "all named preconditions evaluate true", "approval matrix conditions met", "idempotency_key unused for same policy/territory/effective window"]
+}

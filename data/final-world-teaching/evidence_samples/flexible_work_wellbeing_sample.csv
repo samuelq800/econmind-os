@@ -1,0 +1,17 @@
+worker_id,month,remote_days_week,wellbeing_0_10,workload_index,status
+w1,2026-01,0,6.1,62,synthetic_calibration
+w1,2026-02,1,6.3,60,synthetic_calibration
+w1,2026-03,2,6.7,58,synthetic_calibration
+w1,2026-04,2,6.6,61,synthetic_calibration
+w2,2026-01,1,5.8,70,synthetic_calibration
+w2,2026-02,1,5.9,68,synthetic_calibration
+w2,2026-03,2,6.2,65,synthetic_calibration
+w2,2026-04,3,6.4,63,synthetic_calibration
+w3,2026-01,0,7.0,45,synthetic_calibration
+w3,2026-02,1,7.1,46,synthetic_calibration
+w3,2026-03,1,7.2,44,synthetic_calibration
+w3,2026-04,2,7.4,43,synthetic_calibration
+w4,2026-01,2,6.3,66,synthetic_calibration
+w4,2026-02,2,6.3,67,synthetic_calibration
+w4,2026-03,3,6.6,64,synthetic_calibration
+w4,2026-04,3,6.7,62,synthetic_calibration
