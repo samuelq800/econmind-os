@@ -1,9 +1,10 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { ModelSlug } from "@/lib/models/registry";
 
+export type ModelKey = ModelSlug;
 // Arena records use the existing private model_runs store but are a learning
 // system rather than one of the standalone model routes.
-export type ModelKey = ModelSlug | "mechanism-arena";
+export type StoredRunKey = ModelKey | "mechanism-arena";
 export type JsonObject = Record<string, unknown>;
 
 export type ProfileRow = {
@@ -19,7 +20,7 @@ export type ProfileRow = {
 export type ModelRunRow = {
   id: string;
   user_id: string;
-  model_key: ModelKey;
+  model_key: StoredRunKey;
   name: string;
   parameters: JsonObject;
   results: JsonObject;
@@ -77,7 +78,7 @@ export async function getProfile(userId: string) {
 
 export async function saveModelRun(input: {
   userId: string;
-  modelKey: ModelKey;
+  modelKey: StoredRunKey;
   name: string;
   parameters: JsonObject;
   results: JsonObject;
