@@ -5,6 +5,7 @@ import { BookmarkPlus, CheckCircle2, CloudUpload, GitCompareArrows, LoaderCircle
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { OutcomeComparison } from "@/components/models/outcome-comparison";
+import { CorePredictedEffectsRadar } from "@/components/models/predicted-effects-radar";
 import { safePercentChange, type ScenarioSnapshot } from "@/lib/economics/types";
 import { usePersistentState } from "@/lib/hooks/use-persistent-state";
 import { defaultModelResults } from "@/lib/models/default-results";
@@ -124,7 +125,7 @@ export function ScenarioComparison({
         })}
       </div>
 
-      <div className="mt-5"><OutcomeComparison current={results} metrics={metrics} defaultBaseline={defaultResults} scenarioA={scenarios.A?.results ?? null} /></div>
+      <div className="mt-5 space-y-5"><CorePredictedEffectsRadar modelKey={modelKey} results={results} baseline={defaultResults} /><OutcomeComparison current={results} metrics={metrics} defaultBaseline={defaultResults} scenarioA={scenarios.A?.results ?? null} /></div>
 
       <div className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--canvas)] p-4">
         <div className="flex items-center gap-2 text-xs font-bold"><CloudUpload size={15} className="text-[var(--accent)]" />Save a named cloud run</div>

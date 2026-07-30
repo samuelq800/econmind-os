@@ -85,3 +85,21 @@ export function OutcomePredictedEffectsRadar({ modelLabel, results, baseline, ma
     <p className="mt-2 text-[10px] leading-5 text-[var(--ink-faint)]">This visual is a mechanism summary, not an empirical forecast or a ranking across models.</p>
   </ChartContainer>;
 }
+
+const coreMappings: Record<string, PredictedEffectMapping> = {
+  "supply-demand": { activity: { key: "quantity" }, price: { key: "price", direction: -1 }, welfare: { key: "totalSurplus" } },
+  policy: { activity: { key: "quantity" }, price: { key: "consumerPrice", direction: -1 }, fiscal: { key: "governmentBalance" }, welfare: { key: "deadweightLoss", direction: -1 } },
+  "price-controls": { activity: { key: "quantityTraded" }, price: { key: "price", direction: -1 }, welfare: { key: "totalSurplus" }, resilience: { key: "shortage", direction: -1 } },
+  elasticity: { activity: { key: "quantity" }, price: { key: "price", direction: -1 }, welfare: { key: "totalRevenue" } },
+  externalities: { activity: { key: "efficientQuantity" }, fiscal: { key: "correctivePolicy", direction: -1 }, welfare: { key: "socialWelfare" }, resilience: { key: "externalImpact", direction: -1 } },
+  monopoly: { activity: { key: "monopolyQuantity" }, price: { key: "monopolyPrice", direction: -1 }, welfare: { key: "profit" }, resilience: { key: "deadweightLoss", direction: -1 } },
+  ppf: { activity: { key: "outputX" }, welfare: { key: "outputY" }, resilience: { key: "capacityGap" } },
+  "ad-as": { activity: { key: "output" }, employment: { key: "unemploymentGap", direction: -1 }, price: { key: "priceLevel", direction: -1 }, resilience: { key: "outputGap" } },
+};
+
+/** Covers the original standalone models whose results are already passed to ScenarioComparison. */
+export function CorePredictedEffectsRadar({ modelKey, results, baseline, modelLabel }: { modelKey: string; results: Record<string, number>; baseline: Record<string, number>; modelLabel?: string }) {
+  const mapping = coreMappings[modelKey];
+  if (!mapping) return null;
+  return <OutcomePredictedEffectsRadar modelLabel={modelLabel ?? "EconMind model"} results={results} baseline={baseline} mapping={mapping} />;
+}
