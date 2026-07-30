@@ -14,10 +14,10 @@ import { calculateSolow, DEFAULT_SOLOW } from "@/lib/economics/solow";
 import { DEFAULT_MARKET, calculateMarketEquilibrium } from "@/lib/economics/supply-demand";
 import { BASELINE_PARAMETERS } from "@/lib/economics/sandbox/defaults";
 import { simulateSandbox } from "@/lib/economics/sandbox/simulation";
-import type { SupportedModelKey } from "@/lib/models/change-tracking";
+import { getExtendedModelDefinition } from "@/lib/economics/extended-models";
 
 /** Baseline result vectors remain local and make comparisons independent of saved scenarios. */
-export function defaultModelResults(modelKey: SupportedModelKey): Record<string, number> {
+export function defaultModelResults(modelKey: string): Record<string, number> {
   switch (modelKey) {
     case "supply-demand": { const r = calculateMarketEquilibrium(DEFAULT_MARKET); return { price: r.price, quantity: r.quantity, consumerSurplus: r.consumerSurplus, producerSurplus: r.producerSurplus, totalSurplus: r.totalSurplus }; }
     case "policy": { const r = calculatePolicyOutcome({ ...DEFAULT_MARKET, wedge: 10 }); return { consumerPrice: r.consumerPrice, producerPrice: r.producerPrice, quantity: r.quantity, governmentBalance: r.governmentBalance, deadweightLoss: r.deadweightLoss }; }
@@ -36,5 +36,11 @@ export function defaultModelResults(modelKey: SupportedModelKey): Record<string,
     case "repeated-games": { const r = simulateRepeatedGame(DEFAULT_REPEATED_GAME); return { cooperationRate: r.cooperationRate, cumulativeA: r.cumulativeA, cumulativeB: r.cumulativeB, punishmentPeriods: r.punishmentPeriods }; }
     case "sandbox": return { ...simulateSandbox(BASELINE_PARAMETERS).indicators };
     case "policy-lab": { const r = simulateSandbox(BASELINE_PARAMETERS).indicators; return { score: 0, inflation: r.inflationRate, unemployment: r.unemploymentRate, gdp: r.gdpIndex, emissions: r.carbonEmissions, consumerWelfare: r.consumerWelfare }; }
+    default: {
+      const extended = getExtendedModelDefinition(modelKey);
+      if (!extended) return {};
+      const parameters = Object.fromEntries(extended.controls.map((control) => [control.id, control.defaultValue]));
+      return extended.calculate(parameters).results;
+    }
   }
 }

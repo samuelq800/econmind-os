@@ -13,6 +13,7 @@ import { ModelAssumptions } from "@/components/models/model-assumptions";
 import { ModelHeader } from "@/components/models/model-header";
 import { ModelWorkspace } from "@/components/models/model-workspace";
 import { ParameterControl } from "@/components/models/parameter-control";
+import { OutcomePredictedEffectsRadar, type PredictedEffectMapping } from "@/components/models/predicted-effects-radar";
 import { ScenarioComparison } from "@/components/models/scenario-comparison";
 import { ShortRunLongRun } from "@/components/models/short-run-long-run";
 import { StakeholderImpact, type StakeholderImpactItem } from "@/components/models/stakeholder-impact";
@@ -81,6 +82,16 @@ const labels: Record<NewLabKey, { eyebrow: string; title: string; description: s
   "phillips-curve": { eyebrow: "Macroeconomics · Inflation and employment", title: "Phillips Curve", description: "Separate movements along a short-run Phillips curve from shifts driven by expectations or supply shocks.", tags: ["Inflation", "Unemployment", "Expectations"], difficulty: "Intermediate" },
   "solow-growth": { eyebrow: "Macroeconomics · Long-run development", title: "Solow Growth Model", description: "Trace capital accumulation, steady states, and the distinction between level effects and transitional growth.", tags: ["Savings", "Steady state", "Golden Rule"], difficulty: "Advanced" },
   "lorenz-gini": { eyebrow: "Macroeconomics · Distribution", title: "Lorenz Curve & Gini Coefficient", description: "Change a five-quintile distribution and compare the inequality and fiscal effects of simple redistributive rules.", tags: ["Inequality", "Redistribution", "Gini"], difficulty: "Intermediate" },
+};
+
+const predictedEffectMappings: Record<NewLabKey, PredictedEffectMapping> = {
+  "is-lm": { activity: { key: "output" }, employment: { key: "output" }, price: { key: "interestRate", direction: -1 }, welfare: { key: "consumption" }, resilience: { key: "crowdingOut", direction: -1 } },
+  "prisoners-dilemma": { welfare: { key: "paretoCount" }, resilience: { key: "socialDilemma", direction: -1 } },
+  "repeated-games": { activity: { key: "cumulativeA" }, welfare: { key: "cooperationRate" }, resilience: { key: "punishmentPeriods", direction: -1 } },
+  cournot: { activity: { key: "totalOutput" }, price: { key: "price", direction: -1 }, welfare: { key: "profit1" }, resilience: { key: "deadweightLoss", direction: -1 } },
+  "phillips-curve": { employment: { key: "unemploymentGap", direction: -1 }, price: { key: "inflation", direction: -1 }, resilience: { key: "inflationSurprise", direction: -1 } },
+  "solow-growth": { activity: { key: "output" }, welfare: { key: "consumption" }, resilience: { key: "steadyOutput" } },
+  "lorenz-gini": { fiscal: { key: "revenue" }, welfare: { key: "postGini", direction: -1 }, resilience: { key: "giniChange", direction: -1 } },
 };
 
 const numericControls: Record<NewLabKey, ModelParameter[]> = {
@@ -169,6 +180,7 @@ export function NewModelLab({ model }: { model: NewLabKey }) {
   const [values, setValues] = usePersistentState<Values>("econmind:parameters:" + model, initial);
   const update = (key: string, value: Value) => setValues((current) => ({ ...current, [key]: value }));
   const definition = buildDefinition(model, values);
+  const baselineDefinition = useMemo(() => buildDefinition(model, initial), [model, initial]);
   const lastChanged = useParameterChange(values, model);
   if (lastChanged) {
     definition.mechanism[0] = { stage: "Latest parameter change", text: `${parameterLabel(model, lastChanged.parameterKey)} ${lastChanged.direction} from ${String(lastChanged.previousValue)} to ${String(lastChanged.currentValue)}. ${lastChanged.affectedCurves.join(", ") || "The strategic or dynamic relationship"} updates before the new outcome is calculated.` };
@@ -185,7 +197,7 @@ export function NewModelLab({ model }: { model: NewLabKey }) {
         {model === "repeated-games" && <StrategyControls values={values} update={update} />}
         {model === "lorenz-gini" && <TaxSystemControl value={String(values.taxSystem)} update={update} />}
       </>}
-      chart={<LabVisual model={model} definition={definition} />}
+      chart={<div className="grid gap-5 2xl:grid-cols-2"><LabVisual model={model} definition={definition} /><OutcomePredictedEffectsRadar modelLabel={info.title} results={definition.results} baseline={baselineDefinition.results} mapping={predictedEffectMappings[model]} /></div>}
       metrics={<>{definition.metrics.map((metric) => <MetricCard key={metric.label} label={metric.label} value={metric.value} note={metric.note} icon={metric.icon} tone={metric.tone} />)}</>}
       explanation={<>
         <EconomicExplanation principle={definition.principle} modelLabel={info.title}>{definition.interpretation}</EconomicExplanation>

@@ -1,4 +1,3 @@
-import { CompetitionSurface } from "@/components/league/competition-pages";
-import { Suspense } from "react";
+import { redirect } from "next/navigation";
 
-export default function CompetitionRoomPage() { return <Suspense fallback={null}><CompetitionSurface surface="room" /></Suspense>; }
+export default function CompetitionRoomPage() { redirect("/league/world"); }

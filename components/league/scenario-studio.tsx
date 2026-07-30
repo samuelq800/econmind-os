@@ -3,42 +3,681 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CheckCircle2, FlaskConical, LoaderCircle, Plus, Save, Send, ShieldCheck } from "lucide-react";
+import {
+  CheckCircle2,
+  FlaskConical,
+  LoaderCircle,
+  Plus,
+  Save,
+  Send,
+  ShieldCheck,
+} from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { DEFAULT_COUNTRY_TEMPLATES, DEFAULT_WORLD_SCENARIO, createWorldState, defaultInstitutionDecisions, settleWorldRound, validateScenario, type ScenarioConfig } from "@/lib/economics/world";
-import type { LeagueCountryTemplate, LeagueScenario } from "@/lib/league/world-league-types";
+import {
+  DEFAULT_COUNTRY_TEMPLATES,
+  DEFAULT_WORLD_SCENARIO,
+  createWorldState,
+  defaultInstitutionDecisions,
+  settleWorldRound,
+  validateScenario,
+  type ScenarioConfig,
+} from "@/lib/economics/world";
+import type {
+  LeagueCountryTemplate,
+  LeagueScenario,
+} from "@/lib/league/world-league-types";
 import { getLeagueContext } from "@/lib/supabase/league";
-import { createLeagueScenario, getLeagueScenario, listLeagueScenarios, listMyScenarioEditorAccess, saveCountryTemplate, updateLeagueScenario } from "@/lib/supabase/league-infrastructure";
+import {
+  createLeagueScenario,
+  getLeagueScenario,
+  listLeagueScenarios,
+  listMyScenarioEditorAccess,
+  saveCountryTemplate,
+  updateLeagueScenario,
+} from "@/lib/supabase/league-infrastructure";
 
-const initialConfig = () => ({ version: DEFAULT_WORLD_SCENARIO.version, numberOfCountries: 4, numberOfRounds: 3, roundDurationSeconds: null, enabledAgreements: DEFAULT_WORLD_SCENARIO.enabledAgreements, enabledMarkets: DEFAULT_WORLD_SCENARIO.enabledMarkets, scoringWeights: DEFAULT_WORLD_SCENARIO.scoringWeights, assumptions: DEFAULT_WORLD_SCENARIO.assumptions });
+const initialConfig = () => ({
+  version: DEFAULT_WORLD_SCENARIO.version,
+  numberOfCountries: 4,
+  numberOfRounds: 3,
+  roundDurationSeconds: null,
+  enabledAgreements: DEFAULT_WORLD_SCENARIO.enabledAgreements,
+  enabledMarkets: DEFAULT_WORLD_SCENARIO.enabledMarkets,
+  scoringWeights: DEFAULT_WORLD_SCENARIO.scoringWeights,
+  assumptions: DEFAULT_WORLD_SCENARIO.assumptions,
+});
 const format = (value: unknown) => JSON.stringify(value, null, 2);
 
-function StudioShell({ children }: { children: React.ReactNode }) { return <main className="mx-auto min-h-[68vh] max-w-[1440px] px-5 py-10 sm:px-8 lg:px-12">{children}</main>; }
-function Notice({ children, error = false }: { children: React.ReactNode; error?: boolean }) { return <div className={`rounded-xl border px-4 py-3 text-sm ${error ? "border-[var(--red)] bg-[var(--red-soft)] text-[var(--red)]" : "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]"}`}>{children}</div>; }
-function scenarioConfig(scenario: LeagueScenario, templates: LeagueCountryTemplate[]): ScenarioConfig { return { ...DEFAULT_WORLD_SCENARIO, ...scenario.config, type: "league_world", countryTemplates: templates.map((template) => ({ id: template.id, slug: template.slug, name: template.name, specialisation: template.specialisation, config: template.config as ScenarioConfig["countryTemplates"][number]["config"], balanceScore: Number(template.balance_score) })), scoringWeights: { ...DEFAULT_WORLD_SCENARIO.scoringWeights, ...(scenario.config.scoringWeights as object ?? {}) } } as ScenarioConfig; }
-
-export function ScenarioStudio({ focus = "index" }: { focus?: "index" | "new" | "editor" | "published" | "archive" }) {
-  const { user, openAuth } = useAuth(); const search = useSearchParams(); const [platformRole, setPlatformRole] = useState(""); const [editorScenarioIds, setEditorScenarioIds] = useState<Set<string>>(new Set()); const [scenarios, setScenarios] = useState<LeagueScenario[]>([]); const [loading, setLoading] = useState(true); const [error, setError] = useState(""); const requestedId = search.get("scenario") ?? "";
-  const refresh = async () => { setLoading(true); try { setScenarios(await listLeagueScenarios(true)); setError(""); } catch (caught) { setError(caught instanceof Error ? caught.message : "Could not load scenarios."); } finally { setLoading(false); } };
-  useEffect(() => { queueMicrotask(() => { void refresh(); }); }, []); useEffect(() => { if (!user) return; void Promise.all([getLeagueContext(user.id), listMyScenarioEditorAccess(user.id)]).then(([context, access]) => { setPlatformRole(context.profile?.platform_role ?? ""); setEditorScenarioIds(access); }).catch((caught) => setError(caught instanceof Error ? caught.message : "Could not load Scenario Studio permissions.")); }, [user]);
-  if (!user) return <StudioShell><Notice>Sign in is required to view published teaching scenarios.</Notice><Button className="mt-4" onClick={() => openAuth("sign-in")}>Sign in</Button></StudioShell>;
-  const admin = platformRole === "platform_admin"; const selected = scenarios.find((scenario) => scenario.id === requestedId) ?? scenarios[0] ?? null; const canEditSelected = Boolean(selected && (admin || editorScenarioIds.has(selected.id)));
-  if (focus === "new") return <ScenarioCreate admin={admin} onComplete={refresh} />;
-  if (focus === "editor" && selected) return <ScenarioEditor scenario={selected} canEdit={canEditSelected} onComplete={refresh} />;
-  const visible = scenarios.filter((scenario) => focus === "published" ? scenario.status === "published" : focus === "archive" ? scenario.status === "archived" : true);
-  return <StudioShell><div className="flex flex-wrap items-end justify-between gap-4"><div><Badge>Scenario Studio</Badge><h1 className="mt-3 text-4xl font-bold tracking-[-.05em]">Economic worlds, configured deliberately.</h1><p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--ink-muted)]">Platform administrators create, validate, test, publish and archive scenarios. Published scenarios are readable, but never editable, by school teams.</p></div>{admin && <Link href="/league/scenario-studio/new" className="inline-flex h-10 items-center gap-2 rounded-lg bg-[var(--accent)] px-4 text-sm font-bold text-white"><Plus size={16} /> New scenario</Link>}</div>{error && <div className="mt-5"><Notice error>{error}</Notice></div>}<div className="mt-8 grid gap-4 lg:grid-cols-2">{loading ? <p className="text-sm text-[var(--ink-muted)]">Loading Scenario Studio…</p> : visible.map((scenario) => <Card key={scenario.id} className="p-6"><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[.13em] text-[var(--accent)]">{scenario.scenario_type.replaceAll("_", " ")}</p><h2 className="mt-2 text-xl font-bold">{scenario.title}</h2></div><Badge>{scenario.status}</Badge></div><p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">{scenario.description}</p><div className="mt-5 flex gap-3"><Link className="text-sm font-bold text-[var(--accent)]" href={`/league/scenario-studio/editor?scenario=${scenario.id}`}>Inspect Studio →</Link>{scenario.status === "published" && <Link className="text-sm font-bold text-[var(--ink-muted)]" href="/league/competitions/new">Use in Builder</Link>}</div></Card>)}{!loading && !visible.length && <Card className="p-6 text-sm text-[var(--ink-muted)]">No scenarios in this state.</Card>}</div></StudioShell>;
+function StudioShell({ children }: { children: React.ReactNode }) {
+  return (
+    <main className="mx-auto min-h-[68vh] max-w-[1440px] px-5 py-10 sm:px-8 lg:px-12">
+      {children}
+    </main>
+  );
+}
+function Notice({
+  children,
+  error = false,
+}: {
+  children: React.ReactNode;
+  error?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-xl border px-4 py-3 text-sm ${error ? "border-[var(--red)] bg-[var(--red-soft)] text-[var(--red)]" : "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]"}`}
+    >
+      {children}
+    </div>
+  );
+}
+function scenarioConfig(
+  scenario: LeagueScenario,
+  templates: LeagueCountryTemplate[],
+): ScenarioConfig {
+  return {
+    ...DEFAULT_WORLD_SCENARIO,
+    ...scenario.config,
+    type: "league_world",
+    countryTemplates: templates.map((template) => ({
+      id: template.id,
+      slug: template.slug,
+      name: template.name,
+      specialisation: template.specialisation,
+      config:
+        template.config as ScenarioConfig["countryTemplates"][number]["config"],
+      balanceScore: Number(template.balance_score),
+    })),
+    scoringWeights: {
+      ...DEFAULT_WORLD_SCENARIO.scoringWeights,
+      ...((scenario.config.scoringWeights as object) ?? {}),
+    },
+  } as ScenarioConfig;
 }
 
-function ScenarioCreate({ admin, onComplete }: { admin: boolean; onComplete: () => Promise<void> }) { const router = useRouter(); const [title, setTitle] = useState("Four Nations: New World"); const [slug, setSlug] = useState("four-nations-new-world"); const [description, setDescription] = useState("A four-country, three-quarter deterministic world economy for collaborative economic learning."); const [busy, setBusy] = useState(false); const [error, setError] = useState(""); if (!admin) return <StudioShell><Notice error>Only platform administrators can create scenarios.</Notice></StudioShell>; async function create() { setBusy(true); try { const scenario = await createLeagueScenario({ title, slug, description, scenario_type: "league_world", config: initialConfig() }); await Promise.all(DEFAULT_COUNTRY_TEMPLATES.map((template) => saveCountryTemplate({ scenario_id: scenario.id, slug: template.slug, name: template.name, specialisation: template.specialisation, config: template.config, balance_score: template.balanceScore }))); await onComplete(); router.push(`/league/scenario-studio/editor?scenario=${scenario.id}`); } catch (caught) { setError(caught instanceof Error ? caught.message : "Scenario could not be created."); } finally { setBusy(false); } } return <StudioShell><Badge>Scenario Studio · New</Badge><h1 className="mt-3 text-3xl font-bold">Start a controlled scenario draft.</h1>{error && <div className="mt-5"><Notice error>{error}</Notice></div>}<Card className="mt-7 max-w-2xl p-6"><label className="block text-sm font-bold">Title<input value={title} onChange={(event) => setTitle(event.target.value)} className="mt-2 h-10 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 text-sm" /></label><label className="mt-5 block text-sm font-bold">Slug<input value={slug} onChange={(event) => setSlug(event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))} className="mt-2 h-10 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 text-sm" /></label><label className="mt-5 block text-sm font-bold">Learning brief<textarea value={description} onChange={(event) => setDescription(event.target.value)} className="mt-2 min-h-28 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] p-3 text-sm" /></label><Button className="mt-6" disabled={busy} onClick={() => void create()}>{busy && <LoaderCircle className="animate-spin" size={15} />} Create draft</Button></Card></StudioShell>; }
+export function ScenarioStudio({
+  focus = "index",
+}: {
+  focus?: "index" | "new" | "editor" | "published" | "archive";
+}) {
+  const { user, openAuth } = useAuth();
+  const search = useSearchParams();
+  const [platformRole, setPlatformRole] = useState("");
+  const [editorScenarioIds, setEditorScenarioIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const [scenarios, setScenarios] = useState<LeagueScenario[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const requestedId = search.get("scenario") ?? "";
+  const refresh = async () => {
+    setLoading(true);
+    try {
+      setScenarios(await listLeagueScenarios(true));
+      setError("");
+    } catch (caught) {
+      setError(
+        caught instanceof Error ? caught.message : "Could not load scenarios.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    queueMicrotask(() => {
+      void refresh();
+    });
+  }, []);
+  useEffect(() => {
+    if (!user) return;
+    void Promise.all([
+      getLeagueContext(user.id),
+      listMyScenarioEditorAccess(user.id),
+    ])
+      .then(([context, access]) => {
+        setPlatformRole(context.profile?.platform_role ?? "");
+        setEditorScenarioIds(access);
+      })
+      .catch((caught) =>
+        setError(
+          caught instanceof Error
+            ? caught.message
+            : "Could not load Scenario Studio permissions.",
+        ),
+      );
+  }, [user]);
+  if (!user)
+    return (
+      <StudioShell>
+        <Notice>
+          Sign in is required to view published teaching scenarios.
+        </Notice>
+        <Button className="mt-4" onClick={() => openAuth("sign-in")}>
+          Sign in
+        </Button>
+      </StudioShell>
+    );
+  const admin = platformRole === "platform_admin";
+  const selected =
+    scenarios.find((scenario) => scenario.id === requestedId) ??
+    scenarios[0] ??
+    null;
+  const canEditSelected = Boolean(
+    selected && (admin || editorScenarioIds.has(selected.id)),
+  );
+  if (focus === "new")
+    return <ScenarioCreate admin={admin} onComplete={refresh} />;
+  if (focus === "editor" && selected)
+    return (
+      <ScenarioEditor
+        scenario={selected}
+        canEdit={canEditSelected}
+        onComplete={refresh}
+      />
+    );
+  const visible = scenarios.filter((scenario) =>
+    focus === "published"
+      ? scenario.status === "published"
+      : focus === "archive"
+        ? scenario.status === "archived"
+        : true,
+  );
+  return (
+    <StudioShell>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <Badge>Scenario Studio</Badge>
+          <h1 className="mt-3 text-4xl font-bold tracking-[-.05em]">
+            Economic worlds, configured deliberately.
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--ink-muted)]">
+            Platform administrators create, validate, test, publish and archive
+            scenarios. Published scenarios are readable, but never editable, by
+            school teams.
+          </p>
+        </div>
+        {admin && (
+          <Link
+            href="/league/scenario-studio/new"
+            className="inline-flex h-10 items-center gap-2 rounded-lg bg-[var(--accent)] px-4 text-sm font-bold text-white"
+          >
+            <Plus size={16} /> New scenario
+          </Link>
+        )}
+      </div>
+      {error && (
+        <div className="mt-5">
+          <Notice error>{error}</Notice>
+        </div>
+      )}
+      <div className="mt-8 grid gap-4 lg:grid-cols-2">
+        {loading ? (
+          <p className="text-sm text-[var(--ink-muted)]">
+            Loading Scenario Studio…
+          </p>
+        ) : (
+          visible.map((scenario) => (
+            <Card key={scenario.id} className="p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[.13em] text-[var(--accent)]">
+                    {scenario.scenario_type.replaceAll("_", " ")}
+                  </p>
+                  <h2 className="mt-2 text-xl font-bold">{scenario.title}</h2>
+                </div>
+                <Badge>{scenario.status}</Badge>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">
+                {scenario.description}
+              </p>
+              <div className="mt-5 flex gap-3">
+                <Link
+                  className="text-sm font-bold text-[var(--accent)]"
+                  href={`/league/scenario-studio/editor?scenario=${scenario.id}`}
+                >
+                  Inspect Studio →
+                </Link>
+                {scenario.status === "published" && (
+                  <Link
+                    className="text-sm font-bold text-[var(--ink-muted)]"
+                    href="/league/world"
+                  >
+                    Open persistent World
+                  </Link>
+                )}
+              </div>
+            </Card>
+          ))
+        )}
+        {!loading && !visible.length && (
+          <Card className="p-6 text-sm text-[var(--ink-muted)]">
+            No scenarios in this state.
+          </Card>
+        )}
+      </div>
+    </StudioShell>
+  );
+}
 
-function ScenarioEditor({ scenario, canEdit, onComplete }: { scenario: LeagueScenario; canEdit: boolean; onComplete: () => Promise<void> }) { const [templates, setTemplates] = useState<LeagueCountryTemplate[]>([]); const [configText, setConfigText] = useState(format(scenario.config)); const [loading, setLoading] = useState(true); const [error, setError] = useState(""); const [message, setMessage] = useState(""); const [testHash, setTestHash] = useState("");
-  const load = useCallback(async () => { setLoading(true); try { const data = await getLeagueScenario(scenario.id); setTemplates(data.templates); setConfigText(format(data.scenario?.config ?? scenario.config)); } catch (caught) { setError(caught instanceof Error ? caught.message : "Could not load scenario detail."); } finally { setLoading(false); } }, [scenario.config, scenario.id]);
-  useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]); const parsed = useMemo(() => { try { return JSON.parse(configText) as Record<string, unknown>; } catch { return null; } }, [configText]); const checked = parsed ? validateScenario(scenarioConfig({ ...scenario, config: parsed }, templates)) : null;
-  async function save(status?: LeagueScenario["status"]) { if (!canEdit || !parsed) return setError(parsed ? "You do not have Scenario Editor permission for this scenario." : "Configuration must be valid JSON."); try { await updateLeagueScenario(scenario.id, { config: parsed, status: status ?? scenario.status, published_at: status === "published" ? new Date().toISOString() : scenario.published_at, archived_at: status === "archived" ? new Date().toISOString() : scenario.archived_at }); setMessage(status ? `Scenario moved to ${status}.` : "Scenario configuration saved."); await onComplete(); } catch (caught) { setError(caught instanceof Error ? caught.message : "Scenario could not be saved."); } }
-  function runTest() { if (!parsed || !checked || checked.errors.length) return setError("Resolve validation errors before running a deterministic test."); try { const config = scenarioConfig({ ...scenario, config: parsed }, templates); const world = createWorldState(config); const submission = world.countries.map((country) => ({ countryId: country.countryId, round: 1 as const, decisions: defaultInstitutionDecisions(), agreementActions: [], finalised: true, finalisedBy: "scenario-test" })); const result = settleWorldRound(world, submission, config); setTestHash(result.result.settlementHash); setMessage("Deterministic test clearing passed. Re-running the same inputs produces the same settlement hash."); } catch (caught) { setError(caught instanceof Error ? caught.message : "Scenario test failed."); } }
-  return <StudioShell><div className="flex flex-wrap items-end justify-between gap-4"><div><Link href="/league/scenario-studio" className="text-xs font-bold text-[var(--accent)]">← Scenario Studio</Link><h1 className="mt-2 text-3xl font-bold">{scenario.title}</h1><p className="mt-2 text-sm text-[var(--ink-muted)]">Lifecycle: <strong>{scenario.status}</strong></p></div><Badge>{scenario.status}</Badge></div>{error && <div className="mt-5"><Notice error>{error}</Notice></div>}{message && <div className="mt-5"><Notice>{message}</Notice></div>}<div className="mt-7 grid gap-5 xl:grid-cols-[1fr_.75fr]"><Card className="p-6"><p className="font-bold">Scenario configuration</p><p className="mt-2 text-xs leading-5 text-[var(--ink-muted)]">This stores structured world settings. The economy engine still validates balance and applies deterministic clearing.</p><textarea value={configText} disabled={!canEdit} onChange={(event) => setConfigText(event.target.value)} className="mt-4 min-h-[430px] w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] p-3 font-mono text-xs leading-5" /><div className="mt-4 flex flex-wrap gap-2">{canEdit && <Button onClick={() => void save()}><Save size={15} /> Save configuration</Button>}<Button variant="secondary" onClick={runTest} disabled={!checked || Boolean(checked.errors.length)}><FlaskConical size={15} /> Test clearing</Button>{canEdit && <Button variant="secondary" disabled={!checked || Boolean(checked.errors.length)} onClick={() => void save("published")}><Send size={15} /> Publish</Button>}{canEdit && scenario.status !== "archived" && <Button variant="danger" onClick={() => { if (window.confirm("Archive this scenario? Existing competitions will keep their snapshot.")) void save("archived"); }}>Archive</Button>}</div>{testHash && <p className="mt-3 text-xs text-[var(--ink-muted)]">Test settlement: <code>{testHash}</code></p>}</Card><div className="space-y-5"><Card className="p-6"><p className="font-bold">Validation report</p>{!parsed ? <p className="mt-3 text-sm text-[var(--red)]">Invalid JSON.</p> : <><p className="mt-3 text-sm text-[var(--accent)]">{checked?.errors.length ? "Blocked" : "Ready for test"}</p><div className="mt-3 space-y-2 text-sm">{checked?.errors.map((item) => <p key={item} className="text-[var(--red)]">• {item}</p>)}{checked?.warnings.map((item) => <p key={item} className="text-[var(--ink-muted)]">• {item}</p>)}{!checked?.errors.length && !checked?.warnings.length && <p className="text-[var(--ink-muted)]">The configured balance and scoring checks passed.</p>}</div></>}</Card><Card className="p-6"><p className="font-bold">Country templates</p><div className="mt-4 space-y-3">{loading ? <p className="text-sm text-[var(--ink-muted)]">Loading templates…</p> : templates.map((template) => <TemplateEditor key={template.id} template={template} admin={canEdit} onSaved={load} />)}</div></Card><Card className="p-6"><ShieldCheck className="text-[var(--accent)]" size={18} /><p className="mt-3 text-sm font-bold">Publishing discipline</p><p className="mt-1 text-xs leading-5 text-[var(--ink-muted)]">Platform administrators grant Scenario Editor access per scenario. Published worlds remain readable by others, while only authorised editors can change templates or lifecycle. Existing competitions keep immutable country snapshots.</p></Card></div></div></StudioShell>; }
+function ScenarioCreate({
+  admin,
+  onComplete,
+}: {
+  admin: boolean;
+  onComplete: () => Promise<void>;
+}) {
+  const router = useRouter();
+  const [title, setTitle] = useState("Four Nations: New World");
+  const [slug, setSlug] = useState("four-nations-new-world");
+  const [description, setDescription] = useState(
+    "A four-country, three-quarter deterministic world economy for collaborative economic learning.",
+  );
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  if (!admin)
+    return (
+      <StudioShell>
+        <Notice error>
+          Only platform administrators can create scenarios.
+        </Notice>
+      </StudioShell>
+    );
+  async function create() {
+    setBusy(true);
+    try {
+      const scenario = await createLeagueScenario({
+        title,
+        slug,
+        description,
+        scenario_type: "league_world",
+        config: initialConfig(),
+      });
+      await Promise.all(
+        DEFAULT_COUNTRY_TEMPLATES.map((template) =>
+          saveCountryTemplate({
+            scenario_id: scenario.id,
+            slug: template.slug,
+            name: template.name,
+            specialisation: template.specialisation,
+            config: template.config,
+            balance_score: template.balanceScore,
+          }),
+        ),
+      );
+      await onComplete();
+      router.push(`/league/scenario-studio/editor?scenario=${scenario.id}`);
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Scenario could not be created.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <StudioShell>
+      <Badge>Scenario Studio · New</Badge>
+      <h1 className="mt-3 text-3xl font-bold">
+        Start a controlled scenario draft.
+      </h1>
+      {error && (
+        <div className="mt-5">
+          <Notice error>{error}</Notice>
+        </div>
+      )}
+      <Card className="mt-7 max-w-2xl p-6">
+        <label className="block text-sm font-bold">
+          Title
+          <input
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            className="mt-2 h-10 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 text-sm"
+          />
+        </label>
+        <label className="mt-5 block text-sm font-bold">
+          Slug
+          <input
+            value={slug}
+            onChange={(event) =>
+              setSlug(
+                event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"),
+              )
+            }
+            className="mt-2 h-10 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 text-sm"
+          />
+        </label>
+        <label className="mt-5 block text-sm font-bold">
+          Learning brief
+          <textarea
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            className="mt-2 min-h-28 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] p-3 text-sm"
+          />
+        </label>
+        <Button className="mt-6" disabled={busy} onClick={() => void create()}>
+          {busy && <LoaderCircle className="animate-spin" size={15} />} Create
+          draft
+        </Button>
+      </Card>
+    </StudioShell>
+  );
+}
 
-function TemplateEditor({ template, admin, onSaved }: { template: LeagueCountryTemplate; admin: boolean; onSaved: () => Promise<void> }) { const [score, setScore] = useState(template.balance_score); const [busy, setBusy] = useState(false); return <div className="rounded-lg border border-[var(--line)] p-3"><div className="flex items-center justify-between gap-3"><div><p className="text-sm font-bold">{template.name}</p><p className="text-xs text-[var(--ink-muted)]">{template.specialisation}</p></div><div className="flex items-center gap-2"><input type="number" min="50" max="150" value={score} disabled={!admin} onChange={(event) => setScore(Number(event.target.value))} className="h-8 w-16 rounded border border-[var(--line)] bg-[var(--canvas)] px-2 text-xs" />{admin && <Button size="sm" variant="secondary" disabled={busy} onClick={async () => { setBusy(true); try { await saveCountryTemplate({ ...template, balance_score: score }); await onSaved(); } finally { setBusy(false); } }}><CheckCircle2 size={13} /></Button>}</div></div></div>; }
+function ScenarioEditor({
+  scenario,
+  canEdit,
+  onComplete,
+}: {
+  scenario: LeagueScenario;
+  canEdit: boolean;
+  onComplete: () => Promise<void>;
+}) {
+  const [templates, setTemplates] = useState<LeagueCountryTemplate[]>([]);
+  const [configText, setConfigText] = useState(format(scenario.config));
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [testHash, setTestHash] = useState("");
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getLeagueScenario(scenario.id);
+      setTemplates(data.templates);
+      setConfigText(format(data.scenario?.config ?? scenario.config));
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Could not load scenario detail.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [scenario.config, scenario.id]);
+  useEffect(() => {
+    queueMicrotask(() => {
+      void load();
+    });
+  }, [load]);
+  const parsed = useMemo(() => {
+    try {
+      return JSON.parse(configText) as Record<string, unknown>;
+    } catch {
+      return null;
+    }
+  }, [configText]);
+  const checked = parsed
+    ? validateScenario(
+        scenarioConfig({ ...scenario, config: parsed }, templates),
+      )
+    : null;
+  async function save(status?: LeagueScenario["status"]) {
+    if (!canEdit || !parsed)
+      return setError(
+        parsed
+          ? "You do not have Scenario Editor permission for this scenario."
+          : "Configuration must be valid JSON.",
+      );
+    try {
+      await updateLeagueScenario(scenario.id, {
+        config: parsed,
+        status: status ?? scenario.status,
+        published_at:
+          status === "published"
+            ? new Date().toISOString()
+            : scenario.published_at,
+        archived_at:
+          status === "archived"
+            ? new Date().toISOString()
+            : scenario.archived_at,
+      });
+      setMessage(
+        status
+          ? `Scenario moved to ${status}.`
+          : "Scenario configuration saved.",
+      );
+      await onComplete();
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Scenario could not be saved.",
+      );
+    }
+  }
+  function runTest() {
+    if (!parsed || !checked || checked.errors.length)
+      return setError(
+        "Resolve validation errors before running a deterministic test.",
+      );
+    try {
+      const config = scenarioConfig({ ...scenario, config: parsed }, templates);
+      const world = createWorldState(config);
+      const submission = world.countries.map((country) => ({
+        countryId: country.countryId,
+        round: 1 as const,
+        decisions: defaultInstitutionDecisions(),
+        agreementActions: [],
+        finalised: true,
+        finalisedBy: "scenario-test",
+      }));
+      const result = settleWorldRound(world, submission, config);
+      setTestHash(result.result.settlementHash);
+      setMessage(
+        "Deterministic test clearing passed. Re-running the same inputs produces the same settlement hash.",
+      );
+    } catch (caught) {
+      setError(
+        caught instanceof Error ? caught.message : "Scenario test failed.",
+      );
+    }
+  }
+  return (
+    <StudioShell>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <Link
+            href="/league/scenario-studio"
+            className="text-xs font-bold text-[var(--accent)]"
+          >
+            ← Scenario Studio
+          </Link>
+          <h1 className="mt-2 text-3xl font-bold">{scenario.title}</h1>
+          <p className="mt-2 text-sm text-[var(--ink-muted)]">
+            Lifecycle: <strong>{scenario.status}</strong>
+          </p>
+        </div>
+        <Badge>{scenario.status}</Badge>
+      </div>
+      {error && (
+        <div className="mt-5">
+          <Notice error>{error}</Notice>
+        </div>
+      )}
+      {message && (
+        <div className="mt-5">
+          <Notice>{message}</Notice>
+        </div>
+      )}
+      <div className="mt-7 grid gap-5 xl:grid-cols-[1fr_.75fr]">
+        <Card className="p-6">
+          <p className="font-bold">Scenario configuration</p>
+          <p className="mt-2 text-xs leading-5 text-[var(--ink-muted)]">
+            This stores structured world settings. The economy engine still
+            validates balance and applies deterministic clearing.
+          </p>
+          <textarea
+            value={configText}
+            disabled={!canEdit}
+            onChange={(event) => setConfigText(event.target.value)}
+            className="mt-4 min-h-[430px] w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] p-3 font-mono text-xs leading-5"
+          />
+          <div className="mt-4 flex flex-wrap gap-2">
+            {canEdit && (
+              <Button onClick={() => void save()}>
+                <Save size={15} /> Save configuration
+              </Button>
+            )}
+            <Button
+              variant="secondary"
+              onClick={runTest}
+              disabled={!checked || Boolean(checked.errors.length)}
+            >
+              <FlaskConical size={15} /> Test clearing
+            </Button>
+            {canEdit && (
+              <Button
+                variant="secondary"
+                disabled={!checked || Boolean(checked.errors.length)}
+                onClick={() => void save("published")}
+              >
+                <Send size={15} /> Publish
+              </Button>
+            )}
+            {canEdit && scenario.status !== "archived" && (
+              <Button
+                variant="danger"
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      "Archive this scenario? Existing competitions will keep their snapshot.",
+                    )
+                  )
+                    void save("archived");
+                }}
+              >
+                Archive
+              </Button>
+            )}
+          </div>
+          {testHash && (
+            <p className="mt-3 text-xs text-[var(--ink-muted)]">
+              Test settlement: <code>{testHash}</code>
+            </p>
+          )}
+        </Card>
+        <div className="space-y-5">
+          <Card className="p-6">
+            <p className="font-bold">Validation report</p>
+            {!parsed ? (
+              <p className="mt-3 text-sm text-[var(--red)]">Invalid JSON.</p>
+            ) : (
+              <>
+                <p className="mt-3 text-sm text-[var(--accent)]">
+                  {checked?.errors.length ? "Blocked" : "Ready for test"}
+                </p>
+                <div className="mt-3 space-y-2 text-sm">
+                  {checked?.errors.map((item) => (
+                    <p key={item} className="text-[var(--red)]">
+                      • {item}
+                    </p>
+                  ))}
+                  {checked?.warnings.map((item) => (
+                    <p key={item} className="text-[var(--ink-muted)]">
+                      • {item}
+                    </p>
+                  ))}
+                  {!checked?.errors.length && !checked?.warnings.length && (
+                    <p className="text-[var(--ink-muted)]">
+                      The configured balance and scoring checks passed.
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
+          </Card>
+          <Card className="p-6">
+            <p className="font-bold">Country templates</p>
+            <div className="mt-4 space-y-3">
+              {loading ? (
+                <p className="text-sm text-[var(--ink-muted)]">
+                  Loading templates…
+                </p>
+              ) : (
+                templates.map((template) => (
+                  <TemplateEditor
+                    key={template.id}
+                    template={template}
+                    admin={canEdit}
+                    onSaved={load}
+                  />
+                ))
+              )}
+            </div>
+          </Card>
+          <Card className="p-6">
+            <ShieldCheck className="text-[var(--accent)]" size={18} />
+            <p className="mt-3 text-sm font-bold">Publishing discipline</p>
+            <p className="mt-1 text-xs leading-5 text-[var(--ink-muted)]">
+              Platform administrators grant Scenario Editor access per scenario.
+              Published worlds remain readable by others, while only authorised
+              editors can change templates or lifecycle. Existing competitions
+              keep immutable country snapshots.
+            </p>
+          </Card>
+        </div>
+      </div>
+    </StudioShell>
+  );
+}
+
+function TemplateEditor({
+  template,
+  admin,
+  onSaved,
+}: {
+  template: LeagueCountryTemplate;
+  admin: boolean;
+  onSaved: () => Promise<void>;
+}) {
+  const [score, setScore] = useState(template.balance_score);
+  const [busy, setBusy] = useState(false);
+  return (
+    <div className="rounded-lg border border-[var(--line)] p-3">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-bold">{template.name}</p>
+          <p className="text-xs text-[var(--ink-muted)]">
+            {template.specialisation}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            min="50"
+            max="150"
+            value={score}
+            disabled={!admin}
+            onChange={(event) => setScore(Number(event.target.value))}
+            className="h-8 w-16 rounded border border-[var(--line)] bg-[var(--canvas)] px-2 text-xs"
+          />
+          {admin && (
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true);
+                try {
+                  await saveCountryTemplate({
+                    ...template,
+                    balance_score: score,
+                  });
+                  await onSaved();
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              <CheckCircle2 size={13} />
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

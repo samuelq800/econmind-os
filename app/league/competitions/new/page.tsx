@@ -1,3 +1,3 @@
-import { CompetitionBuilder } from "@/components/league/competition-pages";
+import { redirect } from "next/navigation";
 
-export default function CompetitionBuilderPage() { return <CompetitionBuilder />; }
+export default function CompetitionBuilderPage() { redirect("/league/world"); }

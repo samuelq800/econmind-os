@@ -1,3 +1,4 @@
-import { CompetitionDirectory } from "@/components/league/competition-pages";
+import { redirect } from "next/navigation";
 
-export default function CompetitionsPage() { return <CompetitionDirectory />; }
+/** Legacy quarter-based routes now lead to the persistent World experience. */
+export default function CompetitionsPage() { redirect("/league/world"); }
