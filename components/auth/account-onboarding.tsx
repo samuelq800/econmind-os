@@ -8,6 +8,18 @@ import { completeAccountOnboarding, getAccountOnboarding, listApprovedSchoolChoi
 
 type SetupStep = "choose" | OnboardingPath;
 
+const onboardingStoragePrefix = "econmind.account-onboarding.completed.";
+
+function hasSavedOnboardingChoice(userId: string) {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(`${onboardingStoragePrefix}${userId}`) === "true";
+}
+
+function saveOnboardingChoice(userId: string) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(`${onboardingStoragePrefix}${userId}`, "true");
+}
+
 const paths: Array<{ id: OnboardingPath; title: string; description: string; icon: typeof School2 }> = [
   { id: "school", title: "Choose an existing school", description: "Associate your account with an approved school. Join a team later with its invite code.", icon: School2 },
   { id: "create_school", title: "Create a school", description: "Submit a school for teacher approval. It does not create a League team or country automatically.", icon: Building2 },
@@ -33,10 +45,14 @@ export function AccountOnboarding() {
     let active = true;
     void getAccountOnboarding().then((profile) => {
       if (!active) return;
-      setCompletedUserId(profile?.onboarding_path ? userId : null);
+      const isComplete = Boolean(profile?.onboarding_path) || hasSavedOnboardingChoice(userId);
+      if (profile?.onboarding_path) saveOnboardingChoice(userId);
+      setCompletedUserId(isComplete ? userId : null);
       setCheckedUserId(userId);
     }).catch(() => {
-      if (active) setCheckedUserId(userId);
+      if (!active) return;
+      setCompletedUserId(hasSavedOnboardingChoice(userId) ? userId : null);
+      setCheckedUserId(userId);
     });
     return () => { active = false; };
   }, [userId, roleLoading]);
@@ -72,6 +88,7 @@ export function AccountOnboarding() {
         clubName: path === "create_school" ? clubName.trim() : undefined,
       });
       setMessage(result.path === "create_school" ? "School application submitted for teacher approval." : "Account setup complete.");
+      saveOnboardingChoice(userId);
       setCompletedUserId(userId);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not complete account setup.");
