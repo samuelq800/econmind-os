@@ -8,7 +8,7 @@ const root = process.cwd();
 const calibrationDirectory = resolve(root, "data/economic-calibration");
 const args = new Set(process.argv.slice(2));
 const requestedSlug = process.argv.find((argument) => argument.startsWith("--slug="))?.slice("--slug=".length) ?? "econmind-continuous-world";
-const tickSeconds = Number(process.argv.find((argument) => argument.startsWith("--tick-seconds="))?.slice("--tick-seconds=".length) ?? 3600);
+const tickSeconds = Number(process.argv.find((argument) => argument.startsWith("--tick-seconds="))?.slice("--tick-seconds=".length) ?? 7200);
 
 if (!args.has("--confirm-launch")) {
   console.error("Refusing to create a live world without --confirm-launch.");
