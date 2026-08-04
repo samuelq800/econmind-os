@@ -1,7 +1,5 @@
-"use client";
-
-import { ContinuousWorldDashboard } from "@/components/world/continuous-world-dashboard";
+import { WorldSimulationOverview } from "@/components/world-governance/world-simulation";
 
 export default function LeagueWorldPage() {
-  return <ContinuousWorldDashboard />;
+  return <WorldSimulationOverview />;
 }

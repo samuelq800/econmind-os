@@ -249,13 +249,18 @@ export async function submitContinuousWorldPolicy(input: {
   countryKey: string;
   policyId: string;
   change: number;
+  metadata?: Record<string, unknown>;
 }) {
   const { data, error } = await client().rpc("submit_continuous_world_action", {
     p_world_id: input.worldId,
     p_country_key: input.countryKey,
     p_action_type: "policy",
     p_action_key: input.policyId,
-    p_parameters: { change: input.change, reversible: true },
+    p_parameters: {
+      change: input.change,
+      reversible: true,
+      ...(input.metadata ?? {}),
+    },
   });
   fail(error);
   return data;
