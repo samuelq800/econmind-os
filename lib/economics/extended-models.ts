@@ -152,6 +152,11 @@ export function getExtendedModelDefinition(slug: string) {
   return EXTENDED_MODEL_DEFINITIONS[slug as ExtendedModelSlug] ?? null;
 }
 
+/** Locates the browser-side calculator that backs a source model used in Model Practice. */
+export function getExtendedModelDefinitionBySourceId(sourceId: string) {
+  return Object.values(EXTENDED_MODEL_DEFINITIONS).find((item) => item.sourceId === sourceId) ?? null;
+}
+
 export function extendedModelSensitivity(definition: ExtendedModelDefinition, values: Values) {
   const parameter = definition.controls.find((control) => control.id === definition.sensitivityKey) ?? definition.controls[0];
   const steps = 6;
