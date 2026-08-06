@@ -130,4 +130,31 @@ describe("World Governance continuous model", () => {
       "insert into public.continuous_world_snapshots",
     );
   });
+
+  it("keeps School Leader authority inside its school's assigned country", () => {
+    const scopeMigration = readFileSync(
+      "supabase/migrations/20260806000000_scope_school_leader_world_access.sql",
+      "utf8",
+    );
+
+    expect(scopeMigration).toContain(
+      "create or replace function public.can_manage_continuous_world_country",
+    );
+    expect(scopeMigration).toContain(
+      "public.is_school_leader_for(team.school_id, p_user_id)",
+    );
+    expect(scopeMigration).toContain(
+      "Only the Team captain, its School Leader, or a World supervisor may claim a country",
+    );
+    expect(scopeMigration).toContain(
+      "and not public.can_manage_continuous_world_country(",
+    );
+    expect(scopeMigration).toContain(
+      "and public.is_continuous_world_team_member(\n          p_world_id,\n          p_country_key,\n          p_user_id\n        )",
+    );
+    expect(scopeMigration).toContain("public.has_platform_role('teacher', p_user_id)");
+    expect(scopeMigration).not.toContain(
+      "public.has_platform_role('league_admin', p_user_id)",
+    );
+  });
 });
