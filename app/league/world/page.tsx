@@ -1,5 +1,5 @@
-import { WorldSimulationOverview } from "@/components/world-governance/world-simulation";
+import { WorldExperience } from "@/components/world/world-experience";
 
 export default function LeagueWorldPage() {
-  return <WorldSimulationOverview />;
+  return <WorldExperience />;
 }

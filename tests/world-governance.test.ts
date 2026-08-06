@@ -193,4 +193,14 @@ describe("World Governance continuous model", () => {
     expect(repairMigration).toContain("profile.platform_role = 'platform_admin'");
     expect(repairMigration).not.toContain("public.is_platform_admin(p_user_id)");
   });
+
+  it("mounts the live World experience at the League entry route", () => {
+    const worldRoute = readFileSync("app/league/world/page.tsx", "utf8");
+
+    expect(worldRoute).toContain(
+      'import { WorldExperience } from "@/components/world/world-experience"',
+    );
+    expect(worldRoute).toContain("return <WorldExperience />");
+    expect(worldRoute).not.toContain("WorldSimulationOverview");
+  });
 });
