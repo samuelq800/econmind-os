@@ -75,7 +75,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         if (!active) return;
         setRole(data?.role === "teacher" ? "teacher" : "student");
-        setWorldSupervisor(data?.role === "teacher" || data?.platform_role === "school_leader" || data?.platform_role === "platform_admin");
+        // School Leaders supervise only the country assigned to their own
+        // school Team. Global World controls remain limited to teachers and
+        // platform administrators; the database enforces the same boundary.
+        setWorldSupervisor(
+          data?.role === "teacher" || data?.platform_role === "platform_admin",
+        );
         setRoleLoading(false);
       }, () => { if (active) { setRole("student"); setWorldSupervisor(false); setRoleLoading(false); } });
     };
