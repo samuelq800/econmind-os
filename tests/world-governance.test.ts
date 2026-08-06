@@ -152,9 +152,45 @@ describe("World Governance continuous model", () => {
     expect(scopeMigration).toContain(
       "and public.is_continuous_world_team_member(\n          p_world_id,\n          p_country_key,\n          p_user_id\n        )",
     );
-    expect(scopeMigration).toContain("public.has_platform_role('teacher', p_user_id)");
+    expect(scopeMigration).toContain("profile.role = 'teacher'");
+    expect(scopeMigration).not.toContain("public.is_platform_admin(p_user_id)");
     expect(scopeMigration).not.toContain(
       "public.has_platform_role('league_admin', p_user_id)",
     );
+  });
+
+  it("reserves World-wide supervision for the Platform Admin", () => {
+    const teacherScopeMigration = readFileSync(
+      "supabase/migrations/20260806000001_remove_teacher_world_supervision.sql",
+      "utf8",
+    );
+
+    expect(teacherScopeMigration).toContain(
+      "create or replace function public.can_administer_continuous_world",
+    );
+    expect(teacherScopeMigration).toContain(
+      "profile.platform_role = 'platform_admin'",
+    );
+    expect(teacherScopeMigration).not.toContain("has_platform_role('teacher'");
+    expect(teacherScopeMigration).not.toContain("public.is_platform_admin(p_user_id)");
+  });
+
+  it("includes a standalone repair for the legacy Platform Admin lookup", () => {
+    const repairMigration = readFileSync(
+      "supabase/migrations/20260806000002_repair_world_supervisor_lookup.sql",
+      "utf8",
+    );
+
+    expect(repairMigration).toContain(
+      "create or replace function public.can_administer_continuous_world",
+    );
+    expect(repairMigration).toContain(
+      "create or replace function public.can_manage_continuous_world_country",
+    );
+    expect(repairMigration).toContain(
+      "leader.platform_role = 'school_leader'",
+    );
+    expect(repairMigration).toContain("profile.platform_role = 'platform_admin'");
+    expect(repairMigration).not.toContain("public.is_platform_admin(p_user_id)");
   });
 });

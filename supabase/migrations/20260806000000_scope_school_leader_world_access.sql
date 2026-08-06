@@ -13,8 +13,15 @@ stable
 security definer
 set search_path = public
 as $$
-  select public.is_platform_admin(p_user_id)
-    or public.has_platform_role('teacher', p_user_id)
+  select exists(
+    select 1
+    from public.profiles profile
+    where profile.user_id = p_user_id
+      and (
+        profile.platform_role = 'platform_admin'
+        or profile.role = 'teacher'
+      )
+  )
 $$;
 
 create or replace function public.can_manage_continuous_world_country(
