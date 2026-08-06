@@ -203,4 +203,37 @@ describe("World Governance continuous model", () => {
     expect(worldRoute).toContain("return <WorldExperience />");
     expect(worldRoute).not.toContain("WorldSimulationOverview");
   });
+
+  it("automatically enrols a claimed Team and exposes its vacant portfolios", () => {
+    const enrolmentMigration = readFileSync(
+      "supabase/migrations/20260806000003_auto_enrol_world_team_members.sql",
+      "utf8",
+    );
+    const dashboard = readFileSync(
+      "components/world/continuous-world-dashboard.tsx",
+      "utf8",
+    );
+
+    expect(enrolmentMigration).toContain(
+      "continuous_world_country_teams_enrol_members",
+    );
+    expect(enrolmentMigration).toContain(
+      "team_members_enrol_claimed_worlds",
+    );
+    expect(enrolmentMigration).toContain(
+      "team_member.team_id = new.team_id",
+    );
+    expect(enrolmentMigration).toContain(
+      "country_team.team_id = new.team_id",
+    );
+    expect(enrolmentMigration).toContain(
+      "on team_member.team_id = country_team.team_id",
+    );
+    expect(enrolmentMigration).toContain("membership_status = 'active'");
+    expect(enrolmentMigration).toContain("research_innovation_minister");
+    expect(dashboard).toContain("teamControlsCountry");
+    expect(dashboard).toContain(
+      "Your Team has already joined this country",
+    );
+  });
 });

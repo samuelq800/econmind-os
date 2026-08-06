@@ -68,6 +68,7 @@ import {
   type ContinuousWorldRoleAssignment,
   type WorldPolicyDefinition,
 } from "@/lib/supabase/continuous-world";
+import { getLeagueContext } from "@/lib/supabase/league";
 
 type CountryView = {
   id: string;
@@ -1226,12 +1227,15 @@ type PolicyScope = "domestic" | "external";
 
 function WorldParticipationSummary({
   userRoles,
+  teamCountryId,
   onOpenCountry,
 }: {
   userRoles: ContinuousWorldRoleAssignment[];
+  teamCountryId: string | null;
   onOpenCountry: (countryId: string) => void;
 }) {
-  const countryId = userRoles[0]?.country_key;
+  const assignedCountryId = userRoles[0]?.country_key;
+  const countryId = assignedCountryId ?? teamCountryId;
   return (
     <Card className="p-4">
       <div className="flex items-center gap-2">
@@ -1241,17 +1245,21 @@ function WorldParticipationSummary({
       {countryId ? (
         <>
           <p className="mt-3 text-xs leading-5 text-[var(--ink-muted)]">
-            Your approved League Team has roles in{" "}
+            {assignedCountryId
+              ? "Your approved League Team has roles in "
+              : "Your approved League Team already controls "}
             <strong className="text-[var(--ink)]">
               {countryName(countryId)}
             </strong>
-            . You can hold more than one of its seven portfolios.
+            {assignedCountryId
+              ? ". You can hold more than one of its seven portfolios."
+              : ". You are automatically included in this country’s membership; claim an unfilled portfolio to make policy decisions."}
           </p>
           <Button
             className="mt-3 w-full"
             onClick={() => onOpenCountry(countryId)}
           >
-            Open {countryName(countryId)}
+            {assignedCountryId ? "Open" : "Claim a portfolio in"} {countryName(countryId)}
           </Button>
         </>
       ) : (
@@ -1349,6 +1357,7 @@ function CountryRoleWorkspace({
   claims,
   roles,
   userRoles,
+  teamId,
   onChange,
 }: {
   world: ContinuousWorldRecord;
@@ -1356,6 +1365,7 @@ function CountryRoleWorkspace({
   claims: ContinuousWorldCountryTeam[];
   roles: ContinuousWorldRoleAssignment[];
   userRoles: ContinuousWorldRoleAssignment[];
+  teamId: string | null;
   onChange: () => Promise<void>;
 }) {
   const [busy, setBusy] = useState(false);
@@ -1373,6 +1383,13 @@ function CountryRoleWorkspace({
       .map((role) => role.role_type),
   );
   const canControl = ownRoleIds.size > 0;
+  const teamControlsCountry = Boolean(
+    teamId &&
+      claims.some(
+        (claim) =>
+          claim.team_id === teamId && claim.country_key === country.id,
+      ),
+  );
   const execute = async (task: () => Promise<unknown>, success: string) => {
     setBusy(true);
     setError("");
@@ -1432,12 +1449,21 @@ function CountryRoleWorkspace({
             </Button>
           </div>
         </>
-      ) : canControl ? (
+      ) : canControl || teamControlsCountry ? (
         <>
           <p className="mt-3 text-xs leading-5 text-[var(--ink-muted)]">
-            You can control the portfolios marked{" "}
-            <strong className="text-[var(--ink)]">Yours</strong>. One account
-            can hold more than one of the seven national roles.
+            {canControl ? (
+              <>
+                You can control the portfolios marked{" "}
+                <strong className="text-[var(--ink)]">Yours</strong>. One
+                account can hold more than one of the seven national roles.
+              </>
+            ) : (
+              <>
+                Your Team has already joined this country. Claim an unfilled
+                portfolio below to gain its decision authority.
+              </>
+            )}
           </p>
           <div className="mt-3 grid gap-2">
             {FINAL_WORLD_ROLE_PORTFOLIOS.map((portfolio) => {
@@ -2068,6 +2094,7 @@ export function ContinuousWorldDashboard() {
   const [countryTeams, setCountryTeams] = useState<
     ContinuousWorldCountryTeam[]
   >([]);
+  const [teamId, setTeamId] = useState<string | null>(null);
   const [policies, setPolicies] = useState<WorldPolicyDefinition[]>([]);
   const [actions, setActions] = useState<ContinuousWorldAction[]>([]);
   const [contracts, setContracts] = useState<ContinuousWorldContract[]>([]);
@@ -2081,16 +2108,19 @@ export function ContinuousWorldDashboard() {
   const [error, setError] = useState("");
   const refresh = useCallback(async () => {
     if (!user || !configured) {
+      setTeamId(null);
       setLoading(false);
       return;
     }
     setLoading(true);
     setError("");
     try {
-      const [nextWorlds, nextPolicies] = await Promise.all([
+      const [nextWorlds, nextPolicies, context] = await Promise.all([
         listContinuousWorlds(),
         getActiveWorldPolicies(),
+        getLeagueContext(user.id).catch(() => null),
       ]);
+      setTeamId(context?.membership?.team_id ?? null);
       const main = nextWorlds[0];
       setWorlds(nextWorlds);
       setPolicies(nextPolicies);
@@ -2130,6 +2160,9 @@ export function ContinuousWorldDashboard() {
   const userRoles = roles.filter(
     (role) => role.world_id === world?.id && role.user_id === user?.id,
   );
+  const teamCountryId = teamId
+    ? countryTeams.find((claim) => claim.team_id === teamId)?.country_key ?? null
+    : null;
   const selectedCountry =
     countries.find((country) => country.id === selectedCountryId) ?? null;
   const selectCountry = (countryId: string | null) => {
@@ -2270,6 +2303,7 @@ export function ContinuousWorldDashboard() {
                 claims={countryTeams}
                 roles={roles}
                 userRoles={userRoles}
+                teamId={teamId}
                 onChange={refresh}
               />
               <TeacherShockPanel
@@ -2303,6 +2337,7 @@ export function ContinuousWorldDashboard() {
           <aside className="space-y-5">
             <WorldParticipationSummary
               userRoles={userRoles}
+              teamCountryId={teamCountryId}
               onOpenCountry={selectCountry}
             />
           </aside>
