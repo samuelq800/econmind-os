@@ -36,7 +36,7 @@ export function InterschoolNetworkHero() {
             <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1.5 backdrop-blur-sm"><Network size={13} /> Inter-school network</span>
             <span>Fourteen schools · one economic world</span>
           </div>
-          <h1 className="mt-7 text-[clamp(3.2rem,5.4vw,6rem)] font-bold leading-[.86] tracking-[-.075em]">EconMind<br />OS League.</h1>
+          <h1 className="inter-school-league-title mt-7 font-bold">EconMind<br />OS League.</h1>
           <p className="mt-6 max-w-xl text-base leading-7 text-blue-100/85 sm:text-lg">A shared economics workspace where schools test policies, connect markets and run one persistent world together.</p>
         </div>
 
