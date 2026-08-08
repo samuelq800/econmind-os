@@ -29,8 +29,10 @@ describe("Inter-school Network cover", () => {
   });
 
   it("keeps the school roster on the right with its diagonal type treatment", () => {
-    expect(hero).toContain('className="inter-school-lanes-list"');
+    expect(hero).toContain('className="inter-school-lanes-list inter-school-lanes-list-right"');
     expect(hero).toContain('<li key={school.join(" ")}');
+    expect(hero).toContain("schools.slice(0, 7)");
+    expect(hero).toContain("schools.slice(7)");
     expect(styles).toContain("right:clamp(2rem,4vw,4.5rem)");
     expect(styles).toContain("font-style:italic");
     expect(styles).toContain("skewY(-7deg)");

@@ -49,9 +49,16 @@ export function InterschoolNetworkHero() {
 
         <div className="inter-school-lanes" aria-label="Participating schools">
           <p className="inter-school-lanes-label">Participating schools</p>
-          <ol className="inter-school-lanes-list">
-            {schools.map((school, index) => (
+          <ol className="inter-school-lanes-list inter-school-lanes-list-right">
+            {schools.slice(0, 7).map((school, index) => (
               <li key={school.join(" ")} className={`inter-school-lane${index === 0 ? " inter-school-lane-featured" : ""}`} style={{ "--school-index": index } as React.CSSProperties}>
+                {school.map((line) => <span key={line}>{line}</span>)}
+              </li>
+            ))}
+          </ol>
+          <ol className="inter-school-lanes-list inter-school-lanes-list-lower">
+            {schools.slice(7).map((school, index) => (
+              <li key={school.join(" ")} className="inter-school-lane" style={{ "--school-index": index } as React.CSSProperties}>
                 {school.map((line) => <span key={line}>{line}</span>)}
               </li>
             ))}
