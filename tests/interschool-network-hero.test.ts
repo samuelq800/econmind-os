@@ -5,6 +5,7 @@ const hero = readFileSync(
   "components/home/interschool-network-hero.tsx",
   "utf8",
 );
+const styles = readFileSync("app/globals.css", "utf8");
 
 describe("Inter-school Network cover", () => {
   it("shows all fourteen participating schools in the agreed display order", () => {
@@ -25,5 +26,13 @@ describe("Inter-school Network cover", () => {
     expect(hero.indexOf("Hangzhou Dingwen Academy")).toBeLessThan(
       hero.indexOf("Harrow Nanning"),
     );
+  });
+
+  it("uses a right-side grid roster instead of offset school tracks", () => {
+    expect(hero).toContain('className="inter-school-lanes-list"');
+    expect(hero).toContain('<li key={school.join(" ")}');
+    expect(styles).toContain("grid-template-columns:repeat(2,minmax(0,1fr))");
+    expect(styles).toContain("right:clamp(2rem,4vw,4.5rem)");
+    expect(styles).toContain("position:relative;top:auto;left:auto;display:flex");
   });
 });
