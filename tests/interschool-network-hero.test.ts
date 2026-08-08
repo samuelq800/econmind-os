@@ -40,5 +40,6 @@ describe("Inter-school Network cover", () => {
     expect(styles).toContain("skewY(-7deg)");
     expect(styles).toContain("inter-school-league-title");
     expect(styles).toContain("grid-template-columns:repeat(4,minmax(0,1fr))");
+    expect(styles).toContain("grid-template-columns:repeat(7,minmax(0,1fr))");
   });
 });
