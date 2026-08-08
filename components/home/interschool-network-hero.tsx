@@ -6,11 +6,16 @@ const schools = [
   { lines: ["Basis International School Shenzhen"], position: 1 },
   { lines: ["Beijing Academy International Department"], position: 2 },
   { lines: ["Chongqing Nankai Secondary School"], position: 3 },
-  { lines: ["HD Shanghai School"], position: 4 },
-  { lines: ["HT Nanjing Impact Academy"], position: 5 },
-  { lines: ["Nanjing Foreign Language School, Xianlin Campus"], position: 6 },
-  { lines: ["Suzhou Industrial Park", "Xinghai Experimental Senior High School", "(Shenhu Road Campus)"], position: 7 },
-  { lines: ["SUZHOU SCIENCE&TECHNOLOGY TOWN", "FOREIGN LANGUAGE SCHOOL"], position: 8.75 },
+  { lines: ["Hangzhou Dingwen Academy"], position: 4 },
+  { lines: ["Harrow Nanning"], position: 5 },
+  { lines: ["HD Shanghai School"], position: 6 },
+  { lines: ["HT Nanjing Impact Academy"], position: 7 },
+  { lines: ["International Department of", "Beijing No.80 High School"], position: 8 },
+  { lines: ["Jiangsu Tianyi High School"], position: 9.45 },
+  { lines: ["Nanjing Foreign Language School, Xianlin Campus"], position: 10.45 },
+  { lines: ["Shandong Experimental High School"], position: 11.45 },
+  { lines: ["Suzhou Industrial Park", "Xinghai Experimental Senior High School", "(Shenhu Road Campus)"], position: 12.45 },
+  { lines: ["SUZHOU SCIENCE&TECHNOLOGY TOWN", "FOREIGN LANGUAGE SCHOOL"], position: 14.85 },
 ] as const;
 
 export function InterschoolNetworkHero() {
@@ -25,11 +30,11 @@ export function InterschoolNetworkHero() {
       <div className="inter-school-orbit inter-school-orbit-one" aria-hidden="true" />
       <div className="inter-school-orbit inter-school-orbit-two" aria-hidden="true" />
 
-      <div className="relative mx-auto grid min-h-[720px] max-w-[1440px] px-5 py-16 sm:px-8 lg:min-h-[760px] lg:px-12 lg:py-20">
+      <div className="relative mx-auto grid min-h-[720px] max-w-[1440px] px-5 py-16 sm:px-8 lg:min-h-[900px] lg:px-12 lg:py-20">
         <div className="relative z-10 max-w-3xl self-start">
           <div className="flex flex-wrap items-center gap-3 text-[10px] font-extrabold uppercase tracking-[.18em] text-blue-100">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1.5 backdrop-blur-sm"><Network size={13} /> Inter-school network</span>
-            <span>Nine schools · one economic world</span>
+            <span>Fourteen schools · one economic world</span>
           </div>
           <h1 className="mt-7 text-[clamp(3.2rem,5.4vw,6rem)] font-bold leading-[.86] tracking-[-.075em]">EconMind<br />OS League.</h1>
           <p className="mt-6 max-w-xl text-base leading-7 text-blue-100/85 sm:text-lg">A shared economics workspace where schools test policies, connect markets and run one persistent world together.</p>
