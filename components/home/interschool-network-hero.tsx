@@ -18,6 +18,13 @@ const schools = [
   ["SUZHOU SCIENCE&TECHNOLOGY TOWN", "FOREIGN LANGUAGE SCHOOL"],
 ] as const;
 
+const schoolLength = (school: readonly string[]) => school.join(" ").length;
+const schoolsByLength = [...schools.slice(1)].sort(
+  (left, right) => schoolLength(left) - schoolLength(right),
+);
+const upperRightSchools = [schools[0], ...schoolsByLength.slice(0, 6)];
+const lowerSchools = schoolsByLength.slice(6);
+
 export function InterschoolNetworkHero() {
   return (
     <section className="inter-school-hero overflow-hidden text-white">
@@ -50,14 +57,14 @@ export function InterschoolNetworkHero() {
         <div className="inter-school-lanes" aria-label="Participating schools">
           <p className="inter-school-lanes-label">Participating schools</p>
           <ol className="inter-school-lanes-list inter-school-lanes-list-right">
-            {schools.slice(0, 7).map((school, index) => (
+            {upperRightSchools.map((school, index) => (
               <li key={school.join(" ")} className={`inter-school-lane${index === 0 ? " inter-school-lane-featured" : ""}`} style={{ "--school-index": index } as React.CSSProperties}>
                 {school.map((line) => <span key={line}>{line}</span>)}
               </li>
             ))}
           </ol>
           <ol className="inter-school-lanes-list inter-school-lanes-list-lower">
-            {schools.slice(7).map((school, index) => (
+            {lowerSchools.map((school, index) => (
               <li key={school.join(" ")} className="inter-school-lane" style={{ "--school-index": index } as React.CSSProperties}>
                 {school.map((line) => <span key={line}>{line}</span>)}
               </li>
