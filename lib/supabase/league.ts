@@ -13,11 +13,16 @@ export async function getLeagueContext(userId: string): Promise<LeagueContext> {
   const supabase = client();
   const [{ data: profile, error: profileError }, { data: membership, error: membershipError }] = await Promise.all([
     supabase.from("profiles").select("user_id,display_name,platform_role,school_id,graduation_year,economics_club_name,role_preference,created_at,updated_at").eq("user_id", userId).maybeSingle(),
-    supabase.from("team_members").select("*, team:teams(*, school:schools(*))").eq("user_id", userId).maybeSingle(),
+    supabase
+      .from("team_members")
+      .select("*, team:teams(*, school:schools(*))")
+      .eq("user_id", userId)
+      .order("joined_at")
+      .limit(1),
   ]);
   fail(profileError); fail(membershipError);
   const typedProfile = profile as LeagueProfile | null;
-  const typedMembership = membership as TeamMember | null;
+  const typedMembership = (membership?.[0] ?? null) as TeamMember | null;
   let school: School | null = typedMembership?.team?.school ?? null;
   if (!school && typedProfile?.school_id) {
     const { data, error } = await supabase.from("schools").select("*").eq("id", typedProfile.school_id).maybeSingle();
@@ -46,9 +51,37 @@ export async function joinLeagueTeam(inviteCode: string) {
   fail(error); return data as { team_id: string; team_name: string; school_id: string };
 }
 
-export async function createLeagueTeam(input: { schoolId: string; name: string; captainUserId: string }) {
-  const { data, error } = await client().from("teams").insert({ school_id: input.schoolId, name: input.name, captain_user_id: input.captainUserId }).select("*").single();
+export async function createLeagueTeam(input: { schoolId: string; name: string }) {
+  const { data, error } = await client().rpc("create_school_team", {
+    p_school_id: input.schoolId,
+    p_name: input.name,
+  });
   fail(error); return data as Team;
+}
+
+export async function renameLeagueTeam(teamId: string, name: string) {
+  const { data, error } = await client().rpc("rename_school_team", {
+    p_team_id: teamId,
+    p_name: name,
+  });
+  fail(error); return data as Team;
+}
+
+export async function setLeagueTeamStatus(teamId: string, status: Team["status"]) {
+  const { data, error } = await client().rpc("set_school_team_status", {
+    p_team_id: teamId,
+    p_status: status,
+  });
+  fail(error); return data as Team;
+}
+
+export async function moveLeagueTeamMember(input: { userId: string; fromTeamId: string; toTeamId: string }) {
+  const { error } = await client().rpc("move_school_team_member", {
+    p_user_id: input.userId,
+    p_from_team_id: input.fromTeamId,
+    p_to_team_id: input.toTeamId,
+  });
+  fail(error);
 }
 
 export async function listSchoolTeams(schoolId: string) {

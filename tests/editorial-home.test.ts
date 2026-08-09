@@ -27,6 +27,7 @@ describe("editorial public architecture", () => {
     expect(PARTICIPATING_SCHOOLS).toHaveLength(15);
     expect(PARTICIPATING_SCHOOLS[0]?.name).toBe("Suzhou High School-International Division");
     expect(PARTICIPATING_SCHOOLS.map((school) => school.name)).toContain("Chengdu Jiaxiang Foreign Language School");
+    expect(home.indexOf("Participating schools")).toBeLessThan(home.indexOf("Platform thesis"));
   });
 
   it("turns Explore into a grouped operating-system directory", () => {

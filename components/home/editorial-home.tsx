@@ -65,6 +65,11 @@ export function EditorialHome() {
         {[["REAL WORLD", "↓"], ["MODEL", "↓"], ["SIMULATE", "↓"], ["EVIDENCE", "↓"], ["DECIDE", ""]].map(([label, arrow]) => <span key={label}>{label} {arrow}</span>)}
       </section>
 
+      <section className="home-section home-schools-section">
+        <div className="home-section-heading"><div><Eyebrow>Participating schools</Eyebrow><h2>Built across a growing school network.</h2></div><p className="max-w-md text-sm leading-6 text-[var(--ink-muted)]">Schools are listed here as a public network directory. Team membership, approval and League access remain managed within the existing account system.</p></div>
+        <ol className="home-schools-grid">{PARTICIPATING_SCHOOLS.map((school, index) => <li key={school.name}><span>{String(index + 1).padStart(2, "0")}</span><div><h3>{school.name}</h3><p>{school.city} · {school.region}</p></div></li>)}</ol>
+      </section>
+
       <section className="home-section home-thesis-section">
         <div className="home-section-grid">
           <div><Eyebrow>Platform thesis</Eyebrow><h2>Economics does not begin with a graph.</h2><p className="home-display-line">It begins with a problem.</p></div>
@@ -105,11 +110,6 @@ export function EditorialHome() {
 
       <section className="home-section home-league-section">
         <div className="home-league-panel"><div><Eyebrow>Inter-school League</Eyebrow><h2>{PARTICIPATING_SCHOOL_COUNT} schools.<br />One connected economic world.</h2><p>Teams learn through one persistent fictional economy: countries remain connected, policies take time to work, and decisions create effects beyond one screen.</p><div className="mt-8 flex flex-wrap gap-3"><Link href="/league" className="home-primary-action">Explore the League <ArrowRight size={17} /></Link><Link href="/league/join" className="home-secondary-action">Join a school team <UsersRound size={16} /></Link></div></div><div className="home-league-network" aria-hidden="true"><span className="home-network-orbit one" /><span className="home-network-orbit two" />{Array.from({ length: 12 }, (_, index) => <i key={index} style={{ "--node": index } as React.CSSProperties} />)}</div></div>
-      </section>
-
-      <section className="home-section home-schools-section">
-        <div className="home-section-heading"><div><Eyebrow>Participating schools</Eyebrow><h2>Built across a growing school network.</h2></div><p className="max-w-md text-sm leading-6 text-[var(--ink-muted)]">Schools are listed here as a public network directory. Team membership, approval and League access remain managed within the existing account system.</p></div>
-        <ol className="home-schools-grid">{PARTICIPATING_SCHOOLS.map((school, index) => <li key={school.name}><span>{String(index + 1).padStart(2, "0")}</span><div><h3>{school.name}</h3><p>{school.city} · {school.region}</p></div></li>)}</ol>
       </section>
 
       <section className="home-section home-how-section">

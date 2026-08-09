@@ -4,14 +4,18 @@ import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import {
   ArrowRight,
+  Archive,
+  ArrowRightLeft,
   Building2,
   CheckCircle2,
   ClipboardCheck,
   KeyRound,
   LoaderCircle,
   LogIn,
+  Pencil,
   Plus,
   ShieldCheck,
+  Undo2,
 } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +30,7 @@ import type {
   Team,
   TeamMember,
 } from "@/lib/league/types";
+import type { LeagueChallenge } from "@/lib/league/async-challenge-types";
 import {
   createLeagueTeam,
   getLeagueContext,
@@ -37,9 +42,13 @@ import {
   listMyCrisisRuns,
   listSchoolCrisisRuns,
   listSchoolTeams,
+  moveLeagueTeamMember,
+  renameLeagueTeam,
   reviewLeagueApplication,
   setLeaguePlatformRole,
+  setLeagueTeamStatus,
 } from "@/lib/supabase/league";
+import { listLeagueChallenges, setLeagueChallengeStatus } from "@/lib/supabase/league-challenges";
 
 type TeamWithMembers = Team & { members: TeamMember[] };
 const roleLabels = {
@@ -78,11 +87,14 @@ export function LeagueDashboard() {
       >
     >
   >([]);
+  const [challenges, setChallenges] = useState<LeagueChallenge[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [inviteCode, setInviteCode] = useState("");
   const [teamName, setTeamName] = useState("");
+  const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
+  const [renamedTeam, setRenamedTeam] = useState("");
   const [busy, setBusy] = useState(false);
   const load = useCallback(async () => {
     if (!userId) return;
@@ -105,17 +117,19 @@ export function LeagueDashboard() {
         setSchoolRuns(nextSchoolRuns);
       }
       if (nextContext.profile?.platform_role === "platform_admin") {
-        const [nextApplications, nextSchools, nextProfiles, nextRuns] =
+        const [nextApplications, nextSchools, nextProfiles, nextRuns, nextChallenges] =
           await Promise.all([
             listAdminLeagueApplications(),
             listLeagueSchools(),
             listLeagueProfiles(),
             listAdminCrisisRuns(),
+            listLeagueChallenges(),
           ]);
         setApplications(nextApplications);
         setSchools(nextSchools);
         setProfiles(nextProfiles);
         setAllRuns(nextRuns);
+        setChallenges(nextChallenges);
       }
     } catch (caught) {
       setError(
@@ -177,7 +191,6 @@ export function LeagueDashboard() {
       const team = await createLeagueTeam({
         schoolId: context.school.id,
         name: teamName.trim(),
-        captainUserId: userId,
       });
       setMessage(`${team.name} created. Invite code: ${team.invite_code}`);
       setTeamName("");
@@ -186,6 +199,63 @@ export function LeagueDashboard() {
       setError(
         caught instanceof Error ? caught.message : "Could not create team.",
       );
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function renameTeam(teamId: string) {
+    const nextName = renamedTeam.trim();
+    if (!nextName) return;
+    setBusy(true);
+    setError("");
+    try {
+      const team = await renameLeagueTeam(teamId, nextName);
+      setMessage(`${team.name} renamed.`);
+      setEditingTeamId(null);
+      setRenamedTeam("");
+      await load();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not rename this team.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function changeTeamStatus(teamId: string, status: Team["status"]) {
+    setBusy(true);
+    setError("");
+    try {
+      const team = await setLeagueTeamStatus(teamId, status);
+      setMessage(`${team.name} is now ${team.status}.`);
+      await load();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not update this team.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function moveMember(userIdToMove: string, fromTeamId: string, toTeamId: string) {
+    if (!toTeamId) return;
+    setBusy(true);
+    setError("");
+    try {
+      await moveLeagueTeamMember({ userId: userIdToMove, fromTeamId, toTeamId });
+      setMessage("Team member moved. Their school association has not changed.");
+      await load();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not move this team member.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function changeChallengeStatus(challengeId: string, status: LeagueChallenge["status"]) {
+    setBusy(true);
+    setError("");
+    try {
+      const challenge = await setLeagueChallengeStatus(challengeId, status);
+      setMessage(`${challenge.title} is now ${challenge.status}.`);
+      await load();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not update Challenge status.");
     } finally {
       setBusy(false);
     }
@@ -332,8 +402,8 @@ export function LeagueDashboard() {
             <Card className="p-6">
               <h2 className="text-lg font-bold">Join a team</h2>
               <p className="mt-2 text-sm leading-6 text-[var(--ink-muted)]">
-                Use the eight-character invite code from a school leader. A user
-                may belong to one school team in this MVP.
+                Use the eight-character invite code from a school leader. You
+                may join more than one team within your own school.
               </p>
               <form
                 className="mt-5 flex gap-2"
@@ -413,8 +483,9 @@ export function LeagueDashboard() {
                     </Button>
                   </form>
                   <p className="mt-3 text-xs leading-5 text-[var(--ink-muted)]">
-                    The new team gets a unique eight-character invite code and
-                    you become captain.
+                    The new team gets a unique eight-character invite code.
+                    You become captain, and can later manage independent
+                    Challenge roles for each team.
                   </p>
                 </Card>
                 <Card className="p-6">
@@ -426,16 +497,15 @@ export function LeagueDashboard() {
                         className="rounded-lg bg-[var(--surface-subtle)] p-4"
                       >
                         <div className="flex flex-wrap items-center justify-between gap-3">
-                          <p className="font-bold">{team.name}</p>
-                          <code className="rounded bg-[var(--surface)] px-2 py-1 text-xs font-bold text-[var(--accent)]">
-                            {team.invite_code}
-                          </code>
+                          {editingTeamId === team.id ? <form className="flex min-w-0 flex-1 gap-2" onSubmit={(event) => { event.preventDefault(); void renameTeam(team.id); }}><input autoFocus required minLength={2} maxLength={100} value={renamedTeam} onChange={(event) => setRenamedTeam(event.target.value)} className="h-9 min-w-0 flex-1 rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-2 text-sm" /><Button size="sm" disabled={busy} type="submit">Save</Button><Button size="sm" variant="ghost" type="button" onClick={() => { setEditingTeamId(null); setRenamedTeam(""); }}>Cancel</Button></form> : <><div className="flex items-center gap-2"><p className="font-bold">{team.name}</p><Badge>{team.status}</Badge></div><code className="rounded bg-[var(--surface)] px-2 py-1 text-xs font-bold text-[var(--accent)]">{team.invite_code}</code></>}
                         </div>
                         <p className="mt-2 text-xs text-[var(--ink-muted)]">
                           {team.members.length} member
                           {team.members.length === 1 ? "" : "s"} · share this
                           code to join
                         </p>
+                        <div className="mt-3 flex flex-wrap gap-2"><Button size="sm" variant="ghost" disabled={busy || editingTeamId === team.id} onClick={() => { setEditingTeamId(team.id); setRenamedTeam(team.name); }}><Pencil size={13} /> Rename</Button>{team.status === "archived" ? <Button size="sm" variant="ghost" disabled={busy} onClick={() => void changeTeamStatus(team.id, "active")}><Undo2 size={13} /> Restore</Button> : <Button size="sm" variant="ghost" disabled={busy} onClick={() => void changeTeamStatus(team.id, "archived")}><Archive size={13} /> Archive</Button>}<Link href="/league/arena" className="inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--surface)]">Challenges <ArrowRight size={13} /></Link></div>
+                        {teams.length > 1 && team.members.length > 0 && <div className="mt-4 border-t border-[var(--line)] pt-3"><p className="text-[10px] font-bold uppercase tracking-[.12em] text-[var(--ink-faint)]">Move member</p><div className="mt-2 space-y-2">{team.members.filter((member) => member.team_role !== "captain").map((member) => <label key={member.id} className="flex items-center justify-between gap-2 text-xs"><span className="min-w-0 truncate">{member.profile?.display_name ?? member.user_id.slice(0, 8)}</span><span className="flex shrink-0 items-center gap-1"><ArrowRightLeft size={12} /><select aria-label={`Move ${member.profile?.display_name ?? "member"}`} defaultValue="" disabled={busy} onChange={(event) => void moveMember(member.user_id, team.id, event.target.value)} className="h-7 max-w-32 rounded border border-[var(--line)] bg-[var(--canvas)] px-1 text-[10px]"><option value="">Move to…</option>{teams.filter((target) => target.id !== team.id && target.status === "active").map((target) => <option key={target.id} value={target.id}>{target.name}</option>)}</select></span></label>)}</div></div>}
                       </div>
                     ))}
                     {teams.length === 0 && (
@@ -597,6 +667,44 @@ export function LeagueDashboard() {
                   intentional: the meeting build does not present fictional
                   school results as real competition data.
                 </p>
+              </Card>
+              <Card className="mt-5 p-6">
+                <div className="flex flex-wrap items-end justify-between gap-4">
+                  <div>
+                    <h3 className="font-bold">Asynchronous Challenge status</h3>
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--ink-muted)]">
+                      Challenge definitions, fixed starting conditions and scoring
+                      live in the reviewed code and database seed. This panel
+                      only controls public availability; official attempts stay
+                      saved, locked and auditable.
+                    </p>
+                  </div>
+                  <Link href="/league/arena" className="text-xs font-bold text-[var(--accent)]">
+                    Open Simulation Arena <ArrowRight className="inline" size={13} />
+                  </Link>
+                </div>
+                <div className="mt-5 grid gap-3 lg:grid-cols-3">
+                  {challenges.map((challenge) => (
+                    <div key={challenge.id} className="rounded-lg bg-[var(--surface-subtle)] p-4">
+                      <p className="text-sm font-bold">{challenge.title}</p>
+                      <p className="mt-1 text-xs text-[var(--ink-muted)]">
+                        {challenge.official_attempt_limit} official attempts · {challenge.stage_count} stages
+                      </p>
+                      <select
+                        className="mt-3 h-9 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-2 text-xs"
+                        value={challenge.status}
+                        disabled={busy}
+                        onChange={(event) => void changeChallengeStatus(challenge.id, event.target.value as LeagueChallenge["status"])}
+                      >
+                        <option value="draft">Draft</option>
+                        <option value="open">Open</option>
+                        <option value="closed">Closed</option>
+                        <option value="archived">Archived</option>
+                      </select>
+                    </div>
+                  ))}
+                  {challenges.length === 0 && <p className="text-sm text-[var(--ink-muted)]">No seeded asynchronous Challenge is available yet.</p>}
+                </div>
               </Card>
             </section>
           )}

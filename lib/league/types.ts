@@ -17,7 +17,20 @@ export type LeagueProfile = {
 };
 
 export type School = { id: string; name: string; club_name: string | null; city: string | null; status: SchoolStatus; liaison_user_id: string | null; created_at: string; updated_at: string };
-export type Team = { id: string; school_id: string; name: string; invite_code: string; captain_user_id: string; created_at: string; updated_at: string };
+export type TeamStatus = "active" | "inactive" | "archived";
+export type Team = {
+  id: string;
+  school_id: string;
+  name: string;
+  slug: string;
+  invite_code: string;
+  captain_user_id: string;
+  created_by: string | null;
+  status: TeamStatus;
+  archived_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
 export type TeamMember = { id: string; team_id: string; user_id: string; team_role: "captain" | "member"; joined_at: string; team?: Team & { school?: School | null }; profile?: Pick<LeagueProfile, "user_id" | "display_name"> | null };
 
 export type LeagueApplication = {
