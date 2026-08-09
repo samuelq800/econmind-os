@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import { ClipboardCheck, Cloud, LogIn, LogOut, Menu, Moon, Sun, UserRound, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
-import { availableNavigation } from "@/lib/platform/feature-flags";
+import { availablePrimaryNavigation, MOBILE_NAVIGATION_GROUPS } from "@/lib/platform/feature-flags";
 import { useTheme } from "./theme-provider";
 
-const publicLinks = availableNavigation();
+const publicLinks = availablePrimaryNavigation();
 
 export function Navbar() {
   const path = usePathname();
@@ -16,9 +16,7 @@ export function Navbar() {
   const { user, role, loading, openAuth, signOut } = useAuth();
   const [open, setOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
-  const links = user
-    ? [...publicLinks, { href: "/dashboard", label: "Dashboard" }]
-    : publicLinks;
+  const links = publicLinks;
 
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--canvas)_88%,transparent)] backdrop-blur-xl">
@@ -109,12 +107,26 @@ export function Navbar() {
         </div>
       </div>
       {open && (
-        <nav className="border-t border-[var(--line)] bg-[var(--surface)] p-3 md:hidden">
-          {links.map((link) => (
-            <Link key={link.href} href={link.href} onClick={() => setOpen(false)} className="block rounded-lg px-3 py-3 text-sm font-semibold text-[var(--ink-muted)]">
-              {link.label}
-            </Link>
-          ))}
+        <nav className="fixed inset-x-0 bottom-0 top-16 overflow-y-auto border-t border-[var(--line)] bg-[var(--canvas)] p-5 shadow-2xl md:hidden" aria-label="Full navigation">
+          <div className="mx-auto max-w-xl">
+            <p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-[var(--ink-faint)]">Navigate EconMind</p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {links.map((link) => (
+                <Link key={link.href} href={link.href} onClick={() => setOpen(false)} className={`rounded-xl border px-4 py-3 text-sm font-bold ${path === link.href ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]" : "border-[var(--line)] bg-[var(--surface)]"}`}>
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+            <div className="mt-8 grid gap-6">
+              {MOBILE_NAVIGATION_GROUPS.map((group) => (
+                <section key={group.label}>
+                  <p className="text-[10px] font-extrabold uppercase tracking-[.16em] text-[var(--ink-faint)]">{group.label}</p>
+                  <div className="mt-2 grid grid-cols-2 gap-1">
+                    {group.items.map((item) => <Link key={item.href} href={item.href} onClick={() => setOpen(false)} className="rounded-lg px-2 py-2.5 text-sm font-semibold text-[var(--ink-muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]">{item.label}</Link>)}
+                  </div>
+                </section>
+              ))}
+            </div>
           {role === "teacher" && (
             <Link href="/admin/daily-brief" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--accent)]">
               <ClipboardCheck size={15} /> Review Daily Brief
@@ -129,6 +141,7 @@ export function Navbar() {
               <LogIn size={15} /> Sign in
             </button>
           )}
+          </div>
         </nav>
       )}
     </header>

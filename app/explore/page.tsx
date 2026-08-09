@@ -1,49 +1,15 @@
 import Link from "next/link";
-import { ArrowRight, BookOpen, Landmark, Newspaper } from "lucide-react";
+import { ArrowRight, BarChart3, BookOpenCheck, CircleDotDashed, FlaskConical, Globe2, Newspaper, Scale } from "lucide-react";
 
-const destinations = [
-  {
-    href: "/daily-brief",
-    icon: Newspaper,
-    eyebrow: "Real-world economics",
-    title: "Daily Brief",
-    description: "Follow current economic developments and connect each brief to the models used to explain it.",
-  },
-  {
-    href: "/cases",
-    icon: Landmark,
-    eyebrow: "Applied learning",
-    title: "Real-World Cases",
-    description: "Work through economic problems, constraints and policy choices without affecting the fictional World Economy.",
-  },
-  {
-    href: "/cases/history",
-    icon: BookOpen,
-    eyebrow: "Context and evidence",
-    title: "Historical Crises",
-    description: "Review historical cases and trace the mechanisms that link shocks, policies and outcomes.",
-  },
+const directories = [
+  { title: "Real World", copy: "Read current economic context and investigate structured applied cases.", icon: Newspaper, links: [{ href: "/daily-brief", label: "Daily Brief" }, { href: "/cases", label: "Real-World Cases" }, { href: "/cases/history", label: "Case history" }] },
+  { title: "Models", copy: "Move from a claim to its assumptions, equations, diagrams and interpretation.", icon: CircleDotDashed, links: [{ href: "/models", label: "Model Library" }, { href: "/mechanism-arena", label: "Mechanism Design Arena" }, { href: "/models/practice", label: "Model Practice" }] },
+  { title: "Simulation & Policy", copy: "Use controlled, real-time teaching simulations to trace policy transmission.", icon: BarChart3, links: [{ href: "/sandbox", label: "Economic Sandbox" }, { href: "/policy-lab", label: "Policy Lab" }, { href: "/workspace", label: "Integrated Workspace" }] },
+  { title: "Practice & Assessment", copy: "Apply mechanisms to bounded questions and receive transparent feedback.", icon: Scale, links: [{ href: "/econbench", label: "EconBench" }, { href: "/experiments", label: "Experiments" }, { href: "/models/practice", label: "Model questions" }] },
+  { title: "Evidence & Research", copy: "Test a model against curated evidence and make the limits part of the conclusion.", icon: FlaskConical, links: [{ href: "/research", label: "Evidence Lab" }, { href: "/research", label: "Curated projects" }] },
+  { title: "Network", copy: "Learn with school teams in a persistent fictional world economy.", icon: Globe2, links: [{ href: "/league", label: "League home" }, { href: "/league/join", label: "Join a school team" }, { href: "/league/world", label: "World Simulation" }] },
 ] as const;
 
 export default function ExplorePage() {
-  return (
-    <main className="mx-auto max-w-[1440px] px-5 py-12 sm:px-8 lg:px-12">
-      <header className="max-w-3xl">
-        <p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-[var(--accent)]">Learning & research</p>
-        <h1 className="mt-3 text-4xl font-bold tracking-[-.05em] sm:text-5xl">Explore economics in context.</h1>
-        <p className="mt-5 text-base leading-7 text-[var(--ink-muted)]">Real-world information, cases and historical context remain separate from the fictional, persistent World Economy simulation.</p>
-      </header>
-      <section className="mt-10 grid gap-4 lg:grid-cols-3" aria-label="Explore destinations">
-        {destinations.map(({ href, icon: Icon, eyebrow, title, description }) => (
-          <Link key={href} href={href} className="group flex min-h-64 flex-col rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6 transition hover:-translate-y-0.5 hover:shadow-[var(--shadow)]">
-            <span className="grid size-10 place-items-center rounded-lg bg-[var(--accent-soft)] text-[var(--accent)]"><Icon size={19} /></span>
-            <p className="mt-7 text-[10px] font-extrabold uppercase tracking-[.16em] text-[var(--ink-faint)]">{eyebrow}</p>
-            <h2 className="mt-2 text-xl font-bold">{title}</h2>
-            <p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">{description}</p>
-            <span className="mt-auto flex items-center gap-2 pt-8 text-xs font-bold text-[var(--accent)]">Open <ArrowRight size={14} /></span>
-          </Link>
-        ))}
-      </section>
-    </main>
-  );
+  return <main className="explore-directory"><section className="mx-auto max-w-[1560px] px-5 pb-12 pt-16 sm:px-8 lg:px-12 lg:pb-20 lg:pt-24"><p className="home-eyebrow">EconMind operating-system launcher</p><h1>Explore the tools behind an economic argument.</h1><p className="mt-6 max-w-3xl text-lg leading-8 text-[var(--ink-muted)]">Choose the kind of question you want to investigate. Each destination preserves the difference between a simplified model, a simulation outcome and real-world evidence.</p><div className="mt-10 flex flex-wrap items-center gap-3 text-[11px] font-extrabold uppercase tracking-[.14em] text-[var(--ink-faint)]"><span>Real World</span><ArrowRight size={14} /><span>Model</span><ArrowRight size={14} /><span>Simulate</span><ArrowRight size={14} /><span>Evidence</span><ArrowRight size={14} /><span>Decide</span></div></section><section className="border-y border-[var(--line)] bg-[var(--surface)]"><div className="mx-auto grid max-w-[1560px] gap-px px-5 py-5 sm:px-8 md:grid-cols-2 lg:grid-cols-3 lg:px-12 lg:py-12">{directories.map((directory, index) => { const Icon = directory.icon; return <section key={directory.title} className="explore-directory-card"><div className="flex items-start justify-between gap-5"><span className="text-[11px] font-extrabold tracking-[.16em] text-[var(--ink-faint)]">{String(index + 1).padStart(2, "0")}</span><Icon size={22} className="text-[var(--accent)]" /></div><h2>{directory.title}</h2><p>{directory.copy}</p><ul>{directory.links.map((link) => <li key={`${directory.title}-${link.href}-${link.label}`}><Link href={link.href}>{link.label} <ArrowRight size={14} /></Link></li>)}</ul></section>; })}</div></section><section className="mx-auto grid max-w-[1560px] gap-6 px-5 py-14 sm:px-8 lg:grid-cols-[1fr_auto] lg:px-12 lg:py-20"><div><p className="home-eyebrow">A disciplined distinction</p><h2 className="max-w-3xl text-3xl font-bold tracking-[-.05em] sm:text-5xl">A model can clarify a mechanism. It cannot replace evidence or a decision.</h2></div><Link href="/research" className="home-primary-action self-end">Test in Evidence Lab <BookOpenCheck size={17} /></Link></section></main>;
 }

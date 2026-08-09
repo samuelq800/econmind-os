@@ -41,7 +41,28 @@ export const PLATFORM_NAVIGATION: readonly PlatformNavigationItem[] = [
   { href: "/mechanism-arena", label: "Mechanism Arena", system: "learning-research", feature: "mechanismArena" },
   { href: "/league", label: "League", system: "world-economy", feature: "league" },
   { href: "/research", label: "Evidence Lab", system: "learning-research", feature: "evidenceLab" },
+  { href: "/dashboard", label: "Dashboard", system: "shared" },
 ];
+
+// The desktop header intentionally shows only the five primary gateways.
+// PLATFORM_NAVIGATION remains the complete, feature-aware registry for
+// existing systems and compatibility consumers.
+export const PRIMARY_NAVIGATION: readonly PlatformNavigationItem[] = [
+  { href: "/", label: "Home", system: "shared" },
+  { href: "/explore", label: "Explore", system: "learning-research", feature: "dailyBrief" },
+  { href: "/league", label: "League", system: "world-economy", feature: "league" },
+  { href: "/research", label: "Evidence", system: "learning-research", feature: "evidenceLab" },
+  { href: "/dashboard", label: "Dashboard", system: "shared" },
+];
+
+export const MOBILE_NAVIGATION_GROUPS = [
+  { label: "Real World", items: [{ href: "/daily-brief", label: "Daily Brief" }, { href: "/cases", label: "Cases" }] },
+  { label: "Models & Mechanisms", items: [{ href: "/models", label: "Model Library" }, { href: "/mechanism-arena", label: "Mechanism Arena" }] },
+  { label: "Simulation & Policy", items: [{ href: "/sandbox", label: "Economic Sandbox" }, { href: "/policy-lab", label: "Policy Lab" }, { href: "/workspace", label: "Integrated Workspace" }] },
+  { label: "Practice & Assessment", items: [{ href: "/econbench", label: "EconBench" }, { href: "/experiments", label: "Experiments" }] },
+  { label: "Evidence & Research", items: [{ href: "/research", label: "Evidence Lab" }] },
+  { label: "Network", items: [{ href: "/league", label: "League" }] },
+] as const;
 
 export function isFeatureEnabled(feature: FeatureFlag | undefined) {
   return feature === undefined || FEATURE_FLAGS[feature];
@@ -49,4 +70,8 @@ export function isFeatureEnabled(feature: FeatureFlag | undefined) {
 
 export function availableNavigation() {
   return PLATFORM_NAVIGATION.filter((item) => isFeatureEnabled(item.feature));
+}
+
+export function availablePrimaryNavigation() {
+  return PRIMARY_NAVIGATION.filter((item) => isFeatureEnabled(item.feature));
 }

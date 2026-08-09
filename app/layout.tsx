@@ -10,7 +10,14 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: { default: "EconMind OS", template: "%s · EconMind OS" },
-  description: "Interactive economics learning and simulation platform.",
+  description: "An interactive economics laboratory for models, policy simulation, evidence and cross-school economic experimentation.",
+  metadataBase: new URL("https://samuelq800.github.io/econmind-os/"),
+  openGraph: {
+    title: "EconMind OS",
+    description: "From the real world to economic reasoning.",
+    images: [{ url: "https://samuelq800.github.io/econmind-os/og.png", width: 1920, height: 1080, alt: "EconMind OS economic reasoning diagram" }],
+  },
+  twitter: { card: "summary_large_image", title: "EconMind OS", description: "From the real world to economic reasoning.", images: ["https://samuelq800.github.io/econmind-os/og.png"] },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

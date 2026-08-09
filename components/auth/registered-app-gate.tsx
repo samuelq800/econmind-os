@@ -1,6 +1,7 @@
 "use client";
 
 import { LockKeyhole, LoaderCircle } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 
@@ -11,6 +12,13 @@ import { Button } from "@/components/ui/button";
  */
 export function RegisteredAppGate({ children }: { children: React.ReactNode }) {
   const { user, loading, configured, openAuth } = useAuth();
+  const pathname = usePathname();
+  const normalisedPath = pathname?.replace(/^\/econmind-os(?=\/|$)/, "") || "/";
+  const isPublicEntry = normalisedPath === "/" || normalisedPath === "/explore";
+
+  // The editorial front door is intentionally readable before a learner has an
+  // account. Interactive routes remain protected below, including direct URLs.
+  if (isPublicEntry) return <>{children}</>;
 
   if (loading) {
     return (

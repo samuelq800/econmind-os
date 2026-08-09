@@ -1,0 +1,29 @@
+export type ParticipatingSchool = {
+  name: string;
+  city: string;
+  region: "East China" | "North China" | "South China" | "West China";
+};
+
+// This is the public editorial roster. It deliberately lives separately from
+// the approval workflow in Supabase: the public page is available on static
+// GitHub Pages, while school membership and League permissions remain database
+// controlled. A future sync can map these labels to approved school records.
+export const PARTICIPATING_SCHOOLS: readonly ParticipatingSchool[] = [
+  { name: "Suzhou High School-International Division", city: "Suzhou", region: "East China" },
+  { name: "Basis International School Shenzhen", city: "Shenzhen", region: "South China" },
+  { name: "Beijing Academy International Department", city: "Beijing", region: "North China" },
+  { name: "Chongqing Nankai Secondary School", city: "Chongqing", region: "West China" },
+  { name: "Hangzhou Dingwen Academy", city: "Hangzhou", region: "East China" },
+  { name: "Harrow Nanning", city: "Nanning", region: "South China" },
+  { name: "HD Shanghai School", city: "Shanghai", region: "East China" },
+  { name: "HT Nanjing Impact Academy", city: "Nanjing", region: "East China" },
+  { name: "International Department of Beijing No.80 High School", city: "Beijing", region: "North China" },
+  { name: "Jiangsu Tianyi High School", city: "Wuxi", region: "East China" },
+  { name: "Nanjing Foreign Language School, Xianlin Campus", city: "Nanjing", region: "East China" },
+  { name: "Shandong Experimental High School", city: "Jinan", region: "East China" },
+  { name: "Suzhou Industrial Park Xinghai Experimental Senior High School (Shenhu Road Campus)", city: "Suzhou", region: "East China" },
+  { name: "SUZHOU SCIENCE&TECHNOLOGY TOWN FOREIGN LANGUAGE SCHOOL", city: "Suzhou", region: "East China" },
+  { name: "Chengdu Jiaxiang Foreign Language School", city: "Chengdu", region: "West China" },
+];
+
+export const PARTICIPATING_SCHOOL_COUNT = PARTICIPATING_SCHOOLS.length;
