@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowRight,
   BarChart3,
@@ -35,6 +36,20 @@ const howItWorks = [
   ["04", "Test", "Use evidence, counterarguments and limitations to challenge the result."],
   ["05", "Evaluate", "Compare distributional effects, trade-offs and unintended consequences."],
   ["06", "Decide", "Explain what you would do—and what the model cannot decide for you."],
+] as const;
+
+const leagueCityHubs = [
+  { city: "Beijing", schools: 2, x: 74, y: 25 },
+  { city: "Jinan", schools: 1, x: 65, y: 36 },
+  { city: "Nanjing", schools: 2, x: 68, y: 48 },
+  { city: "Wuxi", schools: 1, x: 73, y: 53 },
+  { city: "Suzhou", schools: 3, x: 77, y: 56 },
+  { city: "Shanghai", schools: 1, x: 82, y: 60 },
+  { city: "Hangzhou", schools: 1, x: 72, y: 63 },
+  { city: "Chengdu", schools: 1, x: 36, y: 56 },
+  { city: "Chongqing", schools: 1, x: 47, y: 59 },
+  { city: "Nanning", schools: 1, x: 49, y: 75 },
+  { city: "Shenzhen", schools: 1, x: 62, y: 79 },
 ] as const;
 
 function Eyebrow({ children }: { children: React.ReactNode }) {
@@ -91,7 +106,7 @@ export function EditorialHome() {
       </section>
 
       <section className="home-section home-real-world-section">
-        <div className="home-split-heading"><div><Eyebrow>Real World</Eyebrow><h2>Economic context, ready for a question.</h2><p>Daily Brief connects reviewed public economic developments to the tools used to investigate them. Cases make a decision, its constraints and its consequences visible.</p></div><div className="home-signal-graphic" aria-hidden="true"><span /><span /><span /><i /></div></div>
+        <div className="home-split-heading"><div><Eyebrow>Real World</Eyebrow><h2>Economic context, ready for a question.</h2><p>Daily Brief connects reviewed public economic developments to the tools used to investigate them. Cases make a decision, its constraints and its consequences visible.</p></div><HomeContextSummary /></div>
         <div className="mt-10 grid gap-5 lg:grid-cols-[1.35fr_.65fr]">
           <HomeDailyBriefPreview />
           <article className="home-case-card"><p className="home-card-eyebrow">Featured case</p><h3>Restaurant Food Waste</h3><p>Balance preparation, stockouts, waste, customer experience and risk in a transparent perishable-inventory decision.</p><div className="mt-6 flex flex-wrap gap-2"><span className="home-chip">Newsvendor logic</span><span className="home-chip">Operational trade-off</span></div><Link href="/cases/restaurant-food-waste" className="home-text-link">Open featured case <ArrowRight size={15} /></Link></article>
@@ -109,7 +124,7 @@ export function EditorialHome() {
       </section>
 
       <section className="home-section home-league-section">
-        <div className="home-league-panel"><div><Eyebrow>Inter-school League</Eyebrow><h2>{PARTICIPATING_SCHOOL_COUNT} schools.<br />One connected economic world.</h2><p>Teams learn through one persistent fictional economy: countries remain connected, policies take time to work, and decisions create effects beyond one screen.</p><div className="mt-8 flex flex-wrap gap-3"><Link href="/league" className="home-primary-action">Explore the League <ArrowRight size={17} /></Link><Link href="/league/join" className="home-secondary-action">Join a school team <UsersRound size={16} /></Link></div></div><div className="home-league-network" aria-hidden="true"><span className="home-network-orbit one" /><span className="home-network-orbit two" />{Array.from({ length: 12 }, (_, index) => <i key={index} style={{ "--node": index } as React.CSSProperties} />)}</div></div>
+        <div className="home-league-panel"><div><Eyebrow>Inter-school League</Eyebrow><h2>{PARTICIPATING_SCHOOL_COUNT} schools.<br />One connected economic world.</h2><p>Teams learn through one persistent fictional economy: countries remain connected, policies take time to work, and decisions create effects beyond one screen.</p><div className="mt-8 flex flex-wrap gap-3"><Link href="/league" className="home-primary-action">Explore the League <ArrowRight size={17} /></Link><Link href="/league/join" className="home-secondary-action">Join a school team <UsersRound size={16} /></Link></div></div><SchoolCityMap /></div>
       </section>
 
       <section className="home-section home-how-section">
@@ -145,6 +160,15 @@ function HeroVisual() {
   );
 }
 
+function HomeContextSummary() {
+  return <aside className="home-context-summary" aria-label="Daily Brief learning flow"><p>DAILY BRIEF</p><strong>Context before conclusion.</strong><ol><li>Issue</li><li>Evidence</li><li>Question</li></ol></aside>;
+}
+
+function SchoolCityMap() {
+  const mapAsset = process.env.GITHUB_PAGES === "true" ? "/econmind-os/league-cities-map.png" : "/league-cities-map.png";
+  return <div className="home-league-city-map" aria-label="Participating school cities in China"><div className="home-city-map-art"><Image src={mapAsset} alt="Map of China showing participating school cities" width={1400} height={1120} unoptimized /><ol>{leagueCityHubs.map((hub) => <li key={hub.city} style={{ "--city-x": `${hub.x}%`, "--city-y": `${hub.y}%` } as React.CSSProperties}><i /><span><b>{hub.city}</b>{hub.schools > 1 && <em> · {hub.schools}</em>}</span></li>)}</ol></div><div className="home-city-map-caption"><b>11 city hubs</b><span>{PARTICIPATING_SCHOOL_COUNT} participating schools</span></div></div>;
+}
+
 function EvidenceMotif() {
-  return <div className="home-evidence-motif" aria-hidden="true"><div className="home-evidence-axis" /><span className="home-evidence-line line-one" /><span className="home-evidence-line line-two" /><span className="home-evidence-line line-three" /><div className="home-evidence-points">{Array.from({ length: 12 }, (_, index) => <i key={index} style={{ "--dot": index } as React.CSSProperties} />)}</div><p>THEORY → DATA → METHOD → EVIDENCE → LIMITS</p></div>;
+  return <div className="home-evidence-motif" aria-label="Evidence Lab workflow"><p>Evidence workflow</p><ol>{["Theory", "Data", "Method", "Claim", "Limits"].map((step, index) => <li key={step}><span>{String(index + 1).padStart(2, "0")}</span><b>{step}</b></li>)}</ol></div>;
 }
