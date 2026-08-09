@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   TIME_MACHINE_STAGES,
+  FINANCIAL_NETWORK_STAGES,
   advanceChallengeState,
   challengeDefinition,
   createChallengeInitialState,
@@ -32,17 +33,16 @@ import {
 import {
   CHALLENGE_COUNTRY_ROLES,
   CHALLENGE_ROLE_LABELS,
+  challengeRoleLabels,
   type ChallengeCountryRole,
   type LeagueAttemptMode,
   type LeagueChallenge,
   type LeagueChallengeAttempt,
   type LeagueChallengeRoleAssignment,
   type LeagueChallengeStageDecision,
-  type LeagueLeaderboardRow,
 } from "@/lib/league/async-challenge-types";
 import { getLeagueContext } from "@/lib/supabase/league";
 import {
-  getLeagueChallengeLeaderboard,
   listChallengeAttemptDecisions,
   listChallengeRoleAssignments,
   listLeagueChallenges,
@@ -63,7 +63,6 @@ export function LeagueChallengeWorkspace({ slug, preferredMode = "practice" }: W
   const [attempt, setAttempt] = useState<LeagueChallengeAttempt | null>(null);
   const [roleAssignments, setRoleAssignments] = useState<LeagueChallengeRoleAssignment[]>([]);
   const [decisions, setDecisions] = useState<LeagueChallengeStageDecision[]>([]);
-  const [leaderboard, setLeaderboard] = useState<LeagueLeaderboardRow[]>([]);
   const [policies, setPolicies] = useState<PolicyValues>(() => definition ? policyDefaults(definition.controls) : {});
   const [state, setState] = useState<Record<string, unknown>>(() => definition ? createChallengeInitialState(definition.slug) as Record<string, unknown> : {});
   const [stage, setStage] = useState(1);
@@ -73,6 +72,7 @@ export function LeagueChallengeWorkspace({ slug, preferredMode = "practice" }: W
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [analysisTab, setAnalysisTab] = useState<"mechanism" | "score" | "data" | "assumptions">("mechanism");
 
   useEffect(() => {
     const requestedMode = new URLSearchParams(window.location.search).get("mode");
@@ -94,7 +94,9 @@ export function LeagueChallengeWorkspace({ slug, preferredMode = "practice" }: W
       setTeamId(context.membership?.team_id ?? null);
       if (databaseChallenge && context.membership?.team_id) {
         const attempts = await listMyChallengeAttempts(context.membership.team_id, databaseChallenge.id);
-        const resumable = attempts.find((candidate) => candidate.mode === "official" && candidate.status === "active");
+        const requestedAttemptId = new URLSearchParams(window.location.search).get("attempt");
+        const resumable = attempts.find((candidate) => candidate.id === requestedAttemptId && candidate.mode === "official")
+          ?? attempts.find((candidate) => candidate.mode === "official" && candidate.status === "active");
         if (resumable) {
           const [locked, roles] = await Promise.all([
             listChallengeAttemptDecisions(resumable.id),
@@ -102,15 +104,14 @@ export function LeagueChallengeWorkspace({ slug, preferredMode = "practice" }: W
           ]);
           setAttempt(resumable);
           setMode("official");
-          setStage(resumable.current_stage);
+          setStage(resumable.status === "submitted" ? definition.stageCount + 1 : resumable.current_stage);
           setPolicies({ ...policyDefaults(definition.controls), ...(resumable.policy_state as PolicyValues) });
           setState({ ...createChallengeInitialState(definition.slug), ...resumable.simulation_state });
           setDecisions(locked);
           setRoleAssignments(roles);
-          setMessage("Your saved official attempt has been restored. Earlier locked stages remain immutable.");
+          setMessage(resumable.status === "submitted" ? "Completed official replay restored. Its score and locked decisions are immutable." : "Your saved official attempt has been restored. Earlier locked stages remain immutable.");
         }
       }
-      if (databaseChallenge) setLeaderboard(await getLeagueChallengeLeaderboard(definition.slug));
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not load this Challenge.");
     } finally {
@@ -124,11 +125,13 @@ export function LeagueChallengeWorkspace({ slug, preferredMode = "practice" }: W
 
   const score = useMemo(() => definition ? scoreChallengeState(definition.slug, state) : null, [definition, state]);
   const currentStageLabel = definition?.stageLabels[stage - 1] ?? "Final results";
+  const roleLabels = definition ? challengeRoleLabels(definition.simulationType) : CHALLENGE_ROLE_LABELS;
   const visibleControls = definition?.controls.filter((control) => control.role === selectedRole) ?? [];
   const activeRoles = roleAssignments.length
     ? Array.from(new Set(roleAssignments.filter((assignment) => assignment.user_id === user?.id).map((assignment) => assignment.role_type)))
     : CHALLENGE_COUNTRY_ROLES;
   const canProceed = mode === "practice" || activeRoles.length > 0;
+  const showExactScore = mode === "practice" || decisions.length > 0 || attempt?.status === "submitted";
 
   if (!definition) {
     return <main className="mx-auto min-h-[60vh] max-w-3xl px-5 py-16"><h1 className="text-3xl font-bold">Challenge not found</h1><Link href="/league/arena" className="mt-6 inline-flex text-sm font-bold text-[var(--accent)]">Return to Simulation Arena <ArrowRight size={14} /></Link></main>;
@@ -210,7 +213,6 @@ export function LeagueChallengeWorkspace({ slug, preferredMode = "practice" }: W
       });
       setAttempt(submitted);
       setMessage(`Official result submitted: ${submitted.final_score?.toFixed(1) ?? score.score.toFixed(1)} / 100. It is now immutable unless a platform administrator explicitly resets it.`);
-      setLeaderboard(await getLeagueChallengeLeaderboard(currentDefinition.slug));
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not submit this official attempt.");
     } finally { setBusy(false); }
@@ -245,7 +247,7 @@ export function LeagueChallengeWorkspace({ slug, preferredMode = "practice" }: W
             <Card className="p-5">
               <p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--ink-faint)]">My responsibilities</p>
               <div className="mt-4 space-y-2">
-                {CHALLENGE_COUNTRY_ROLES.map((role) => <button type="button" key={role} onClick={() => setSelectedRole(role)} className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-bold transition ${selectedRole === role ? "bg-[var(--accent-soft)] text-[var(--accent)]" : "bg-[var(--surface-subtle)]"}`}><span>{CHALLENGE_ROLE_LABELS[role]}</span><span>{activeRoles.includes(role) ? "Control" : "View"}</span></button>)}
+                {CHALLENGE_COUNTRY_ROLES.map((role) => <button type="button" key={role} onClick={() => setSelectedRole(role)} className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-bold transition ${selectedRole === role ? "bg-[var(--accent-soft)] text-[var(--accent)]" : "bg-[var(--surface-subtle)]"}`}><span>{roleLabels[role]}</span><span>{activeRoles.includes(role) ? "Control" : "View"}</span></button>)}
               </div>
               <p className="mt-4 text-xs leading-5 text-[var(--ink-muted)]">One person may hold all four Challenge portfolios. Only assigned portfolio holders can save or lock an official Decision Stage.</p>
             </Card>
@@ -256,6 +258,7 @@ export function LeagueChallengeWorkspace({ slug, preferredMode = "practice" }: W
           </aside>
 
           <section className="space-y-5">
+            <SystemView simulationType={definition.simulationType} state={state} stage={stage} />
             <Card className="overflow-hidden p-0">
               <div className="border-b border-[var(--line)] bg-[var(--surface-subtle)] px-6 py-5">
                 <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--accent)]">Decision Stage {Math.min(stage, definition.stageCount)} of {definition.stageCount}</p><h2 className="mt-1 text-xl font-bold">{currentStageLabel}</h2></div><Badge>{stage > definition.stageCount ? "Ready to submit" : "Information unlocked"}</Badge></div>
@@ -268,7 +271,7 @@ export function LeagueChallengeWorkspace({ slug, preferredMode = "practice" }: W
                   <div className="mt-6 flex flex-wrap gap-3"><Button onClick={() => void lockCurrentStage()} disabled={busy || !canProceed}><LockKeyhole size={15} /> Lock Decision Stage</Button>{mode === "official" && attempt && <Button variant="secondary" onClick={() => void saveProgress()} disabled={busy}><Save size={15} /> Save & leave</Button>}</div>
                 </> : <>
                   <p className="text-sm leading-6 text-[var(--ink-muted)]">All Decision Stages are locked. Review the visible score components, then submit this official result. Submission creates a reusable anonymous Ghost Strategy.</p>
-                  <div className="mt-6 flex flex-wrap gap-3">{mode === "official" && attempt?.status === "active" ? <Button onClick={() => void submitOfficial()} disabled={busy}><CheckCircle2 size={15} /> Submit official result</Button> : <Button onClick={resetPractice}><Play size={15} /> New practice run</Button>}<Link href="#replay" className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[var(--line)] px-4 text-sm font-semibold"><History size={15} /> Replay timeline</Link></div>
+                  <div className="mt-6 flex flex-wrap gap-3">{mode === "official" && attempt?.status === "active" ? <Button onClick={() => void submitOfficial()} disabled={busy}><CheckCircle2 size={15} /> Submit official result</Button> : <Button onClick={resetPractice}><Play size={15} /> New practice run</Button>}{attempt?.status === "submitted" && <Link href="/league/replay" className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[var(--line)] px-4 text-sm font-semibold"><History size={15} /> View replay</Link>}</div>
                 </>}
               </div>
             </Card>
@@ -276,13 +279,54 @@ export function LeagueChallengeWorkspace({ slug, preferredMode = "practice" }: W
           </section>
 
           <aside className="space-y-5">
-            <Card className="p-5"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--ink-faint)]">Predicted performance</p><p className="mt-3 text-5xl font-bold tracking-[-.07em] text-[var(--accent)]">{score?.score.toFixed(1) ?? "—"}<span className="ml-1 text-lg text-[var(--ink-muted)]">/ 100</span></p><div className="mt-5 space-y-3">{score?.components.map((component) => <div key={component.label} className="border-t border-[var(--line)] pt-3"><div className="flex justify-between gap-2 text-sm"><span className="font-semibold">{component.label}</span><b className={component.points < 0 ? "text-[var(--red)]" : "text-[var(--accent)]"}>{component.points > 0 ? "+" : ""}{component.points.toFixed(1)}</b></div><p className="mt-1 text-[11px] leading-5 text-[var(--ink-muted)]">{component.detail}</p></div>)}</div></Card>
-            <Card className="p-5"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--ink-faint)]">Team leaderboard</p><div className="mt-4 space-y-3">{leaderboard.slice(0, 5).map((entry) => <div key={entry.team_id} className="flex items-center justify-between gap-3 text-sm"><span><b className="mr-2 text-[var(--accent)]">{entry.rank}</b>{entry.team_name}<small className="ml-2 text-[var(--ink-faint)]">{entry.school_name}</small></span><b>{Number(entry.performance_score).toFixed(1)}</b></div>)}{leaderboard.length === 0 && <p className="text-sm leading-6 text-[var(--ink-muted)]">No official team result has been submitted yet. Rankings always use a team’s highest official score.</p>}</div></Card>
-            <Card id="replay" className="p-5"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--ink-faint)]">Replay</p><div className="mt-4 space-y-3">{decisions.map((decision) => <div key={decision.id} className="rounded-lg bg-[var(--surface-subtle)] p-3"><p className="text-sm font-bold">Stage {decision.stage_number} locked</p><p className="mt-1 text-xs text-[var(--ink-muted)]">{new Date(decision.locked_at).toLocaleString()}</p></div>)}{decisions.length === 0 && <p className="text-sm leading-6 text-[var(--ink-muted)]">Your decision timeline will appear here as stages are locked.</p>}</div></Card>
+            <Card className="p-5"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--ink-faint)]">{showExactScore ? "Performance score" : "Directional pressure"}</p>{showExactScore ? <><p className="mt-3 text-5xl font-bold tracking-[-.07em] text-[var(--accent)]">{score?.score.toFixed(1) ?? "—"}<span className="ml-1 text-lg text-[var(--ink-muted)]">/ 100</span></p><div className="mt-5 space-y-3">{score?.components.map((component) => <div key={component.label} className="border-t border-[var(--line)] pt-3"><div className="flex justify-between gap-2 text-sm"><span className="font-semibold">{component.label}</span><b className={component.points < 0 ? "text-[var(--red)]" : "text-[var(--accent)]"}>{component.points > 0 ? "+" : ""}{component.points.toFixed(1)}</b></div><p className="mt-1 text-[11px] leading-5 text-[var(--ink-muted)]">{component.detail}</p></div>)}</div></> : <DirectionalPressure simulationType={definition.simulationType} state={state} />}</Card>
+            <Card className="p-5"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--ink-faint)]">Challenge fairness</p><p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">Official attempts hide exact predicted performance until a Decision Stage is locked. Team standings, other teams’ policies and Ghost rules remain outside the active workspace.</p><Link href="/league/standings" className="mt-4 inline-flex text-sm font-bold text-[var(--accent)]">View released standings <ArrowRight size={14} /></Link></Card>
+            {attempt?.status === "submitted" && <Card className="p-5"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--ink-faint)]">Completed attempt</p><p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">Your final result is immutable. Its decision history is now available in the dedicated Replay hub.</p><Link href="/league/replay" className="mt-4 inline-flex text-sm font-bold text-[var(--accent)]"><History size={14} /> View replay</Link></Card>}
           </aside>
         </section>
-        <section className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--surface-subtle)] p-5 text-xs leading-5 text-[var(--ink-muted)]"><CircleAlert className="mr-2 inline text-[var(--accent)]" size={14} />{definition.simulationType === "time_machine" ? "Historical Data, calibrated values and stylised model results are deliberately labelled separately. This educational counterfactual is not an exact historical forecast." : definition.simulationType === "industry" ? "All firms are fictional. Standard agents and Ghosts use documented deterministic behaviour for comparable educational competition." : "World Economy Challenge is an asynchronous fixed-snapshot learning format. It does not change the persistent 12-country World Simulation."}</section>
+        <section className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--surface-subtle)] p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--accent)]">Analysis dock</p><h2 className="mt-1 text-lg font-bold">Mechanism, score and model context</h2></div><div className="flex flex-wrap gap-1">{(["mechanism", "score", "data", "assumptions"] as const).map((tab) => <button type="button" key={tab} onClick={() => setAnalysisTab(tab)} className={`rounded-md px-3 py-2 text-xs font-bold capitalize ${analysisTab === tab ? "bg-[var(--accent)] text-white" : "bg-[var(--canvas)] text-[var(--ink-muted)]"}`}>{tab}</button>)}</div></div><AnalysisDock tab={analysisTab} simulationType={definition.simulationType} score={score} state={state} /></section>
       </>}
     </main>
   );
+}
+
+function stateNumber(state: Record<string, unknown>, key: string) {
+  const value = state[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function SystemView({ simulationType, state, stage }: { simulationType: LeagueChallenge["simulation_type"]; state: Record<string, unknown>; stage: number }) {
+  const content = simulationType === "financial"
+    ? [
+      ["Profit", stateNumber(state, "profit"), "credits"],
+      ["Capital ratio", stateNumber(state, "capitalRatio"), "%"],
+      ["Liquidity ratio", stateNumber(state, "liquidityRatio"), "%"],
+      ["Default risk", stateNumber(state, "defaultRisk"), "%"],
+      ["Interbank exposure", stateNumber(state, "interbankExposure"), "% assets"],
+    ]
+    : simulationType === "industry"
+      ? [["Units sold", stateNumber(state, "unitsSold"), ""], ["Market share", stateNumber(state, "marketShare"), "%"], ["Revenue", stateNumber(state, "revenue"), "credits"], ["Profit", stateNumber(state, "profit"), "credits"], ["Firm value", stateNumber(state, "firmValue"), ""]]
+      : simulationType === "time_machine"
+        ? [["Inflation", stateNumber(state, "inflation"), "%"], ["Unemployment", stateNumber(state, "unemployment"), "%"], ["Real output", stateNumber(state, "realOutput"), "index"], ["Debt", stateNumber(state, "debtToGdp"), "% GDP"], ["Energy security", stateNumber(state, "energySecurity"), "/ 100"]]
+        : [["Growth", stateNumber(state, "growth"), "%"], ["Inflation", stateNumber(state, "inflation"), "%"], ["Unemployment", stateNumber(state, "unemployment"), "%"], ["Debt", stateNumber(state, "debtToGdp"), "% GDP"], ["Domestic production", stateNumber(state, "domesticProduction"), "index"]];
+  const financialStage = simulationType === "financial" ? FINANCIAL_NETWORK_STAGES[Math.min(stage, FINANCIAL_NETWORK_STAGES.length) - 1] : null;
+  const bankStates = Array.isArray(state.bankStates) ? state.bankStates as Array<{ id?: string; label?: string; stress?: string }> : [];
+  return <Card className="overflow-hidden p-0"><div className="border-b border-[var(--line)] bg-[var(--surface-subtle)] px-6 py-4"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--accent)]">Main system view</p><h2 className="mt-1 text-xl font-bold">{financialStage?.title ?? (simulationType === "industry" ? "Fictional EV market" : simulationType === "time_machine" ? "Counterfactual economy" : "National economy")}</h2></div><div className="p-6"><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{content.map(([label, value, unit]) => <div key={label} className="rounded-xl bg-[var(--surface-subtle)] p-3"><p className="text-[10px] font-bold uppercase tracking-[.1em] text-[var(--ink-faint)]">{label}</p><p className="mt-2 text-2xl font-bold tracking-[-.04em]">{value === null ? "—" : value}<span className="ml-1 text-xs font-semibold text-[var(--ink-muted)]">{unit}</span></p></div>)}</div>{simulationType === "financial" && <div className="mt-5 rounded-xl border border-[var(--line)] p-4" aria-label="Financial Network diagram: Your Bank is connected to four fictional counterparties by interbank exposures."><div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-[var(--accent)] px-3 py-2 text-xs font-bold text-white">Your Bank · {String(state.stress ?? "stable")}</span>{bankStates.map((bank) => <><span key={`line-${bank.id}`} aria-hidden className="h-px w-5 bg-[var(--line)]" /><span key={bank.id} className="rounded-full border border-[var(--line)] bg-[var(--surface-subtle)] px-3 py-2 text-xs font-bold">{bank.label ?? "Network bank"} · {bank.stress ?? "stable"}</span></>)}</div><p className="mt-3 text-xs leading-5 text-[var(--ink-muted)]">Node labels communicate stress state without relying on colour. Interbank links can transmit losses and funding pressure in later stages.</p></div>}</div></Card>;
+}
+
+function DirectionalPressure({ simulationType, state }: { simulationType: LeagueChallenge["simulation_type"]; state: Record<string, unknown> }) {
+  const pressures = simulationType === "financial"
+    ? [["Capital", stateNumber(state, "capitalRatio"), "higher buffer reduces stress"], ["Liquidity", stateNumber(state, "liquidityRatio"), "withdrawal capacity"], ["Default risk", stateNumber(state, "defaultRisk"), "lower is safer"]]
+    : simulationType === "industry"
+      ? [["Demand", stateNumber(state, "unitsSold"), "sales pressure"], ["Margin", stateNumber(state, "profit"), "profit pressure"], ["Inventory", stateNumber(state, "inventory"), "lower is usually safer"]]
+      : [["Inflation", stateNumber(state, "inflation"), "price pressure"], ["Output", stateNumber(state, simulationType === "world" ? "growth" : "realOutput"), "activity pressure"], ["Debt", stateNumber(state, "debtToGdp"), "fiscal pressure"]];
+  return <div className="mt-4 space-y-3">{pressures.map(([label, value, detail]) => <div key={label} className="rounded-lg bg-[var(--surface-subtle)] p-3"><div className="flex justify-between gap-2 text-sm"><span className="font-semibold">{label}</span><span className="font-mono text-[var(--accent)]">{value ?? "—"}</span></div><p className="mt-1 text-[11px] leading-5 text-[var(--ink-muted)]">{detail}</p></div>)}<p className="text-xs leading-5 text-[var(--ink-muted)]">Exact Performance Score unlocks after you lock a Decision Stage. This prevents pre-submission parameter searching in official mode.</p></div>;
+}
+
+function AnalysisDock({ tab, simulationType, score, state }: { tab: "mechanism" | "score" | "data" | "assumptions"; simulationType: LeagueChallenge["simulation_type"]; score: ReturnType<typeof scoreChallengeState> | null; state: Record<string, unknown> }) {
+  const interactions = (state.interactions ?? state.policyInteractions ?? state.competitorActions ?? []) as string[];
+  if (tab === "score") return <div className="mt-5 grid gap-3 sm:grid-cols-3">{score?.components.map((component) => <div key={component.label} className="rounded-lg bg-[var(--canvas)] p-4"><p className="text-sm font-bold">{component.label}</p><p className="mt-2 text-2xl font-bold text-[var(--accent)]">{component.points.toFixed(1)}</p><p className="mt-2 text-xs leading-5 text-[var(--ink-muted)]">{component.detail}</p></div>)}</div>;
+  if (tab === "data") return <pre className="mt-5 overflow-x-auto rounded-lg bg-[var(--canvas)] p-4 text-xs leading-6 text-[var(--ink-muted)]">{JSON.stringify(state, null, 2)}</pre>;
+  if (tab === "assumptions") return <p className="mt-5 text-sm leading-6 text-[var(--ink-muted)]">{simulationType === "financial" ? "This is a stylised educational banking system, not financial advice, a real bank-risk model, a regulatory stress test, or a prediction of real institutions. Assets equal liabilities plus capital at every displayed state." : simulationType === "time_machine" ? "Historical Data, calibrated values and stylised model results are labelled separately. The counterfactual does not claim to reproduce an exact historical forecast." : simulationType === "industry" ? "All firms are fictional. Standard competitors and Ghosts use documented deterministic behaviour for comparable educational competition." : "This fixed-snapshot Challenge is separate from the persistent 12-country World Simulation. Policies remain active until changed, with only documented immediate and delayed effects."}</p>;
+  return <div className="mt-5 space-y-3">{interactions.length ? interactions.map((explanation) => <p key={explanation} className="rounded-lg bg-[var(--canvas)] p-4 text-sm leading-6 text-[var(--ink-muted)]">{explanation}</p>) : <p className="text-sm leading-6 text-[var(--ink-muted)]"><CircleAlert className="mr-2 inline text-[var(--accent)]" size={14} />No special interaction is active yet. The workspace exposes only documented mechanisms rather than hidden coefficients.</p>}</div>;
 }

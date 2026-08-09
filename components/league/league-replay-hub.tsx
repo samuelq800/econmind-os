@@ -1,0 +1,23 @@
+"use client";
+
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import { ArrowRight, Archive, History, LoaderCircle } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { challengeDefinition } from "@/lib/economics/league-arena";
+import type { LeagueChallenge, LeagueChallengeAttempt } from "@/lib/league/async-challenge-types";
+import { getLeagueContext } from "@/lib/supabase/league";
+import { listLeagueChallenges, listMyChallengeAttempts } from "@/lib/supabase/league-challenges";
+import { useAuth } from "@/components/auth/auth-provider";
+
+export function LeagueReplayHub() {
+  const { user, openAuth } = useAuth();
+  const [attempts, setAttempts] = useState<LeagueChallengeAttempt[]>([]);
+  const [challenges, setChallenges] = useState<LeagueChallenge[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const load = useCallback(async () => { if (!user) { setLoading(false); return; } try { const context = await getLeagueContext(user.id); if (!context.membership?.team_id) return; const [teamAttempts, configured] = await Promise.all([listMyChallengeAttempts(context.membership.team_id), listLeagueChallenges()]); setAttempts(teamAttempts.filter((attempt) => attempt.status === "submitted")); setChallenges(configured); } catch (caught) { setError(caught instanceof Error ? caught.message : "Could not load completed attempts."); } finally { setLoading(false); } }, [user]);
+  useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
+  if (!user) return <main className="mx-auto min-h-[60vh] max-w-4xl px-5 py-16"><h1 className="text-4xl font-bold">Replay</h1><p className="mt-4 text-[var(--ink-muted)]">Sign in to view replays available to your Team.</p><button type="button" onClick={() => openAuth("sign-in")} className="mt-6 rounded-lg bg-[var(--accent)] px-5 py-3 text-sm font-bold text-white">Sign in</button></main>;
+  return <main className="mx-auto min-h-screen max-w-[1240px] px-5 py-10 sm:px-8 lg:px-12"><header><p className="text-[10px] font-bold uppercase tracking-[.18em] text-[var(--accent)]">Completed League simulations</p><h1 className="mt-2 text-4xl font-bold tracking-[-.06em]">Replay</h1><p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--ink-muted)]">Replay is a dedicated archive. During an open Challenge, other teams’ in-progress policy paths remain private; your submitted history remains available to you.</p></header>{error && <p role="alert" className="mt-6 rounded-lg bg-[var(--red-soft)] p-4 text-sm text-[var(--red)]">{error}</p>}{loading ? <div className="grid min-h-64 place-items-center"><LoaderCircle className="animate-spin text-[var(--accent)]" /></div> : attempts.length ? <div className="mt-8 grid gap-5 md:grid-cols-2">{attempts.map((attempt) => { const configured = challenges.find((challenge) => challenge.id === attempt.challenge_id); const definition = configured ? challengeDefinition(configured.slug) : null; return <Card key={attempt.id} className="p-6"><History className="text-[var(--accent)]" size={20} /><p className="mt-5 text-[10px] font-bold uppercase tracking-[.14em] text-[var(--accent)]">{definition?.eyebrow ?? "League Challenge"}</p><h2 className="mt-2 text-xl font-bold">{configured?.title ?? definition?.title ?? "Completed Challenge"}</h2><p className="mt-3 text-3xl font-bold tracking-[-.05em]">{attempt.final_score?.toFixed(1) ?? "—"}<span className="ml-1 text-sm text-[var(--ink-muted)]">/ 100</span></p><p className="mt-3 text-xs leading-5 text-[var(--ink-muted)]">Submitted {attempt.submitted_at ? new Date(attempt.submitted_at).toLocaleDateString() : "—"}. Stage decisions and explanatory model state are preserved for this Team.</p>{definition && <Link href={`/league/arena/${definition.slug}/workspace/?attempt=${attempt.id}`} className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-[var(--accent)]">Open replay <ArrowRight size={14} /></Link>}</Card>; })}</div> : <Card className="mt-8 p-8"><Archive className="text-[var(--accent)]" size={22} /><h2 className="mt-5 text-xl font-bold">No completed replay yet</h2><p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">Finish and submit an official Challenge to create your Team’s private replay. Completed official attempts also become anonymous Ghost candidates under the Challenge visibility rules.</p><Link href="/league/arena" className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-[var(--accent)]">Open Simulation Arena <ArrowRight size={14} /></Link></Card>}</main>;
+}

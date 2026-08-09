@@ -1,4 +1,4 @@
-export type LeagueSimulationType = "world" | "time_machine" | "industry";
+export type LeagueSimulationType = "world" | "time_machine" | "industry" | "financial";
 
 export type LeagueChallengeStatus = "draft" | "open" | "closed" | "archived";
 export type LeagueAttemptMode = "practice" | "official";
@@ -28,6 +28,34 @@ export const CHALLENGE_ROLE_LABELS: Record<ChallengeCountryRole, string> = {
   trade: "Trade",
   investment_resources: "Investment & Resources",
 };
+
+/**
+ * Challenge portfolios keep the same permission keys across the League, while
+ * their public names match the system a team is operating. This lets one
+ * member hold several portfolios without permanently attaching a job title to
+ * their account.
+ */
+export function challengeRoleLabels(
+  simulationType: LeagueSimulationType,
+): Record<ChallengeCountryRole, string> {
+  if (simulationType === "industry") {
+    return {
+      central_bank: "Pricing & market",
+      economic_policy: "Operations",
+      trade: "Brand & demand",
+      investment_resources: "Innovation & capacity",
+    };
+  }
+  if (simulationType === "financial") {
+    return {
+      central_bank: "Lending & credit",
+      economic_policy: "Treasury & liquidity",
+      trade: "Risk & capital",
+      investment_resources: "Interbank & resilience",
+    };
+  }
+  return CHALLENGE_ROLE_LABELS;
+}
 
 export type ChallengeControl = {
   key: string;

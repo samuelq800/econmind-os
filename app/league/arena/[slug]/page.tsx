@@ -1,4 +1,4 @@
-import { LeagueChallengeWorkspace } from "@/components/league/league-challenge-workspace";
+import { LeagueChallengeBrief } from "@/components/league/league-challenge-brief";
 import { LEAGUE_CHALLENGE_CATALOG } from "@/lib/economics/league-arena";
 
 export const dynamicParams = false;
@@ -13,5 +13,5 @@ export default async function LeagueChallengePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  return <LeagueChallengeWorkspace slug={slug} />;
+  return <LeagueChallengeBrief slug={slug} />;
 }

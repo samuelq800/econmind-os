@@ -2,16 +2,20 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   LEAGUE_CHALLENGE_CATALOG,
+  FINANCIAL_NETWORK_STAGES,
   TIME_MACHINE_STAGES,
+  advanceFinancialNetworkState,
   advanceIndustryArenaState,
   advanceTimeMachineStage,
   advanceWorldArenaState,
   createIndustryArenaState,
+  createFinancialNetworkState,
   createTimeMachineState,
   createWorldArenaState,
   ghostDisplayName,
   replayGhostBehaviour,
   scoreIndustryArena,
+  scoreFinancialNetwork,
   scoreTimeMachine,
   scoreWorldChallenge,
 } from "@/lib/economics/league-arena";
@@ -19,6 +23,10 @@ import { CHALLENGE_COUNTRY_ROLES } from "@/lib/league/async-challenge-types";
 
 const migration = readFileSync(
   "supabase/migrations/20260809000000_asynchronous_league_challenges.sql",
+  "utf8",
+);
+const financialMigration = readFileSync(
+  "supabase/migrations/20260809010000_financial_network_league.sql",
   "utf8",
 );
 
@@ -34,11 +42,12 @@ describe("asynchronous League challenge foundation", () => {
     expect(migration).toContain("unique(attempt_id, role_type, user_id)");
   });
 
-  it("offers the three published Challenge formats with five official attempts", () => {
+  it("offers four published Challenge formats with five official attempts", () => {
     expect(LEAGUE_CHALLENGE_CATALOG.map((challenge) => challenge.simulationType)).toEqual([
       "world",
       "time_machine",
       "industry",
+      "financial",
     ]);
     expect(LEAGUE_CHALLENGE_CATALOG.every((challenge) => challenge.officialAttemptLimit === 5)).toBe(true);
     expect(migration).toContain("official_attempt_limit smallint not null default 5");
@@ -89,6 +98,37 @@ describe("asynchronous League challenge foundation", () => {
   it("keeps Ghost source identities anonymous until the Challenge closes", () => {
     expect(ghostDisplayName("public_after_unlock", true, "Team Alpha")).toBe("Anonymous League Ghost");
     expect(ghostDisplayName("public_after_unlock", false, "Team Alpha")).toBe("Team Alpha Ghost Strategy");
+  });
+
+  it("reconciles the Financial Network balance sheet deterministically through each stress stage", () => {
+    const policy = { lendingGrowth: 12, liquidityReserve: 22, riskExposure: 34, capitalBuffer: 18, interbankLending: 14 };
+    let state = createFinancialNetworkState();
+    expect(FINANCIAL_NETWORK_STAGES).toHaveLength(5);
+    for (let stage = 1; stage <= 5; stage += 1) {
+      const first = advanceFinancialNetworkState(state, policy, stage);
+      const second = advanceFinancialNetworkState(state, policy, stage);
+      expect(first).toEqual(second);
+      const assets = first.cash + first.customerLoans + first.safeSecurities + first.riskAssets + first.interbankAssets;
+      const liabilitiesAndEquity = first.deposits + first.interbankBorrowing + first.otherDebt + first.capital;
+      expect(Math.abs(assets - liabilitiesAndEquity)).toBeLessThanOrEqual(0.02);
+      for (const value of [first.cash, first.customerLoans, first.safeSecurities, first.riskAssets, first.interbankAssets, first.deposits, first.interbankBorrowing, first.otherDebt, first.capital]) {
+        expect(Number.isFinite(value)).toBe(true);
+        expect(value).toBeGreaterThanOrEqual(0);
+      }
+      state = first;
+    }
+    expect(state.contagionPath.join(" ")).toContain("Interbank confidence");
+    const score = scoreFinancialNetwork(state);
+    expect(score.components.map((component) => component.label)).toEqual(["Solvency", "Profitability", "Liquidity"]);
+    expect(score.score).toBeGreaterThanOrEqual(0);
+    expect(score.score).toBeLessThanOrEqual(100);
+  });
+
+  it("extends the security-constrained Challenge schema to Financial Network without weakening generic RLS", () => {
+    expect(financialMigration).toContain("'financial'");
+    expect(financialMigration).toContain("derive_league_challenge_score");
+    expect(financialMigration).toContain("financial-network-contagion");
+    expect(financialMigration).toContain("Existing Challenge RLS policies and security-definer RPCs are generic");
   });
 
   it("enforces save, stage locking, final submission and best-score leaderboard in the database", () => {
