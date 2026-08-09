@@ -123,7 +123,26 @@ export function EditorialHome() {
 }
 
 function HeroVisual() {
-  return <div className="home-hero-visual" aria-label="Illustrated supply and demand mechanism"><div className="home-visual-grid" /><p className="home-visual-kicker">ONE CLEAR MECHANISM</p><svg className="home-hero-chart" viewBox="0 0 640 430" role="img" aria-label="Supply and demand curves meeting at equilibrium"><g className="home-chart-axis"><path d="M92 54V350H570" /><path d="M92 218H570" className="home-chart-reference" /></g><path className="home-chart-demand" d="M150 108L520 309" /><path className="home-chart-supply" d="M145 302L476 104" /><path className="home-chart-guide" d="M335 208V350M92 208H335" /><circle className="home-chart-point" cx="335" cy="208" r="7" /><text x="120" y="62" className="home-chart-label">PRICE</text><text x="542" y="376" className="home-chart-label">QUANTITY</text><text x="437" y="308" className="home-chart-line-label">Demand</text><text x="430" y="125" className="home-chart-line-label home-chart-supply-label">Supply</text><text x="353" y="197" className="home-chart-equilibrium-label">Equilibrium</text></svg><div className="home-visual-foot"><p>Y = C + I + G + (X − M)</p><span>Assumptions → mechanism → interpretation</span></div></div>;
+  return (
+    <aside className="home-hero-summary" aria-label="Economic reasoning mechanism">
+      <p className="home-hero-summary-kicker">ONE CLEAR MECHANISM</p>
+      <div className="home-hero-summary-steps">
+        <section>
+          <span>01</span>
+          <div><b>Assumption</b><p>State the market, agents and constraints.</p></div>
+        </section>
+        <section>
+          <span>02</span>
+          <div><b>Mechanism</b><p>Trace how incentives change demand or supply.</p></div>
+        </section>
+        <section>
+          <span>03</span>
+          <div><b>Interpretation</b><p>Compare the outcome with the real-world question.</p></div>
+        </section>
+      </div>
+      <div className="home-hero-summary-foot"><p>Y = C + I + G + (X − M)</p><span>Assumptions → mechanism → interpretation</span></div>
+    </aside>
+  );
 }
 
 function EvidenceMotif() {
