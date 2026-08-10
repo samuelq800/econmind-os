@@ -16,7 +16,18 @@ export type LeagueProfile = {
   updated_at: string;
 };
 
-export type School = { id: string; name: string; club_name: string | null; city: string | null; status: SchoolStatus; liaison_user_id: string | null; created_at: string; updated_at: string };
+export type School = {
+  id: string;
+  name: string;
+  club_name: string | null;
+  city: string | null;
+  description: string | null;
+  logo_url: string | null;
+  status: SchoolStatus;
+  liaison_user_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
 export type TeamStatus = "active" | "inactive" | "archived";
 export type Team = {
   id: string;

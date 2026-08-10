@@ -41,6 +41,7 @@ import {
   type LeagueChallengeRoleAssignment,
   type LeagueChallengeStageDecision,
 } from "@/lib/league/async-challenge-types";
+import { LEAGUE_SEASON } from "@/lib/league/league-season";
 import { getLeagueContext } from "@/lib/supabase/league";
 import {
   listChallengeAttemptDecisions,
@@ -49,7 +50,6 @@ import {
   listMyChallengeAttempts,
   lockLeagueChallengeStage,
   saveLeagueChallengeAttempt,
-  startLeagueChallengeAttempt,
   submitLeagueChallengeAttempt,
 } from "@/lib/supabase/league-challenges";
 
@@ -57,9 +57,8 @@ type WorkspaceProps = { slug: string; preferredMode?: LeagueAttemptMode };
 
 export function LeagueChallengeWorkspace({ slug, preferredMode = "practice" }: WorkspaceProps) {
   const definition = challengeDefinition(slug);
-  const { user, openAuth } = useAuth();
+  const { user } = useAuth();
   const [mode, setMode] = useState<LeagueAttemptMode>(preferredMode);
-  const [configuredChallenge, setConfiguredChallenge] = useState<LeagueChallenge | null>(null);
   const [attempt, setAttempt] = useState<LeagueChallengeAttempt | null>(null);
   const [roleAssignments, setRoleAssignments] = useState<LeagueChallengeRoleAssignment[]>([]);
   const [decisions, setDecisions] = useState<LeagueChallengeStageDecision[]>([]);
@@ -67,7 +66,6 @@ export function LeagueChallengeWorkspace({ slug, preferredMode = "practice" }: W
   const [state, setState] = useState<Record<string, unknown>>(() => definition ? createChallengeInitialState(definition.slug) as Record<string, unknown> : {});
   const [stage, setStage] = useState(1);
   const [selectedRole, setSelectedRole] = useState<ChallengeCountryRole>("central_bank");
-  const [teamId, setTeamId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -77,7 +75,7 @@ export function LeagueChallengeWorkspace({ slug, preferredMode = "practice" }: W
 
   useEffect(() => {
     const requestedMode = new URLSearchParams(window.location.search).get("mode");
-    if (requestedMode === "official") queueMicrotask(() => setMode("official"));
+    if (requestedMode === "practice") queueMicrotask(() => setMode("practice"));
   }, []);
 
   const load = useCallback(async () => {
@@ -91,8 +89,6 @@ export function LeagueChallengeWorkspace({ slug, preferredMode = "practice" }: W
         listLeagueChallenges(),
       ]);
       const databaseChallenge = challengeRows.find((challenge) => challenge.slug === definition.slug) ?? null;
-      setConfiguredChallenge(databaseChallenge);
-      setTeamId(context.membership?.team_id ?? null);
       if (databaseChallenge && context.membership?.team_id) {
         const attempts = await listMyChallengeAttempts(context.membership.team_id, databaseChallenge.id);
         const requestedAttemptId = new URLSearchParams(window.location.search).get("attempt");
@@ -150,24 +146,6 @@ export function LeagueChallengeWorkspace({ slug, preferredMode = "practice" }: W
     setRoleAssignments([]);
     setMessage("New practice simulation ready. It does not affect League standings.");
     setError("");
-  }
-
-  async function beginOfficial() {
-    if (!user) return openAuth("sign-in");
-    setBusy(true); setError("");
-    try {
-      const nextAttempt = await startLeagueChallengeAttempt({ challengeSlug: currentDefinition.slug, mode: "official", teamId });
-      setAttempt(nextAttempt);
-      setMode("official");
-      setStage(1);
-      setPolicies(policyDefaults(currentDefinition.controls));
-      setState(createChallengeInitialState(currentDefinition.slug) as Record<string, unknown>);
-      setRoleAssignments(CHALLENGE_COUNTRY_ROLES.map((role) => ({ id: `local-${role}`, attempt_id: nextAttempt.id, user_id: user.id, role_type: role, is_primary: true, assigned_by: user.id, created_at: new Date().toISOString() })));
-      setDecisions([]);
-      setMessage("Official attempt started. You hold all four portfolios by default; a Team Captain can later reassign roles without changing the Challenge rules.");
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not start an official attempt.");
-    } finally { setBusy(false); }
   }
 
   async function saveProgress() {
@@ -241,10 +219,10 @@ export function LeagueChallengeWorkspace({ slug, preferredMode = "practice" }: W
             <Card className="p-5">
               <p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--ink-faint)]">Run mode</p>
               <div className="mt-4 grid gap-2">
-                <Button variant={mode === "practice" ? "primary" : "secondary"} onClick={resetPractice} disabled={busy}><Play size={14} /> Practice freely</Button>
-                <Button variant={mode === "official" ? "primary" : "secondary"} onClick={() => void beginOfficial()} disabled={busy || attempt?.status === "submitted" || configuredChallenge?.status !== "open"}><ShieldCheck size={14} /> Start official</Button>
+                <Button className="h-12" variant={mode === "practice" ? "primary" : "secondary"} onClick={resetPractice} disabled={busy}><Play size={15} /> START PRACTICE</Button>
+                <Button variant="secondary" disabled><ShieldCheck size={14} /> Official opens with Season 1</Button>
               </div>
-              <p className="mt-4 text-xs leading-5 text-[var(--ink-muted)]">Practice is unlimited. Official teams receive five attempts; the team’s highest submitted score ranks.</p>
+              <p className="mt-4 text-xs leading-5 text-[var(--ink-muted)]">Practice is unlimited. {LEAGUE_SEASON.title} Official mode is coming soon; it will keep each Team’s highest score across five attempts.</p>
             </Card>
             <Card className="p-5">
               <p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--ink-faint)]">My responsibilities</p>
@@ -271,7 +249,7 @@ export function LeagueChallengeWorkspace({ slug, preferredMode = "practice" }: W
                 {stage <= definition.stageCount ? <>
                   <p className="text-sm leading-6 text-[var(--ink-muted)]">{definition.simulationType === "time_machine" ? TIME_MACHINE_STAGES[stage - 1]?.briefing : "Your chosen values remain active until changed. Effects marked delayed build through later Decision Stages."}</p>
                   <div className="mt-6 grid gap-4">{visibleControls.map((control) => <label key={control.key} className="rounded-xl bg-[var(--surface-subtle)] p-4"><div className="flex justify-between gap-4"><span><small className="mb-1 block text-[10px] font-bold uppercase tracking-[.12em] text-[var(--accent)]">{showAllTimeMachineControls ? roleLabels[control.role] : "Current portfolio"}</small><b className="text-sm">{control.label}</b></span><output className="font-mono text-sm font-bold text-[var(--accent)]">{policies[control.key]} {control.unit}</output></div><input className="mt-4 w-full accent-[var(--accent)]" type="range" min={control.min} max={control.max} step={control.step} value={policies[control.key] ?? control.defaultValue} onChange={(event) => setPolicies((current) => ({ ...current, [control.key]: Number(event.target.value) }))} disabled={mode === "official" && !activeRoles.includes(control.role)} /><p className="mt-3 text-xs leading-5 text-[var(--ink-muted)]"><b className="mr-1 text-[var(--ink)]">{control.timing === "immediate" ? "Immediate:" : "Delayed:"}</b>{control.description}</p></label>)}</div>
-                  <div className="mt-6 flex flex-wrap gap-3"><Button onClick={() => void lockCurrentStage()} disabled={busy || !canProceed}><LockKeyhole size={15} /> Lock Decision Stage</Button>{mode === "official" && attempt && <Button variant="secondary" onClick={() => void saveProgress()} disabled={busy}><Save size={15} /> Save & leave</Button>}</div>
+                  <div className="mt-6 flex flex-wrap gap-3"><Button className="h-14 w-full text-base sm:w-auto sm:min-w-64" onClick={() => void lockCurrentStage()} disabled={busy || !canProceed}><LockKeyhole size={17} /> LOCK DECISION</Button>{mode === "official" && attempt && <Button variant="secondary" onClick={() => void saveProgress()} disabled={busy}><Save size={15} /> Save & leave</Button>}</div>
                 </> : <>
                   <p className="text-sm leading-6 text-[var(--ink-muted)]">All Decision Stages are locked. Review the visible score components, then submit this official result. Submission creates a reusable anonymous Ghost Strategy.</p>
                   <div className="mt-6 flex flex-wrap gap-3">{mode === "official" && attempt?.status === "active" ? <Button onClick={() => void submitOfficial()} disabled={busy}><CheckCircle2 size={15} /> Submit official result</Button> : <Button onClick={resetPractice}><Play size={15} /> New practice run</Button>}{attempt?.status === "submitted" && <Link href="/league/replay" className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[var(--line)] px-4 text-sm font-semibold"><History size={15} /> View replay</Link>}</div>

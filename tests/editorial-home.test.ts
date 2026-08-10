@@ -9,7 +9,7 @@ const explore = readFileSync("app/explore/page.tsx", "utf8");
 
 describe("editorial public architecture", () => {
   it("keeps the requested public front door while preserving the account gate for tools", () => {
-    expect(gate).toContain('normalisedPath === "/" || normalisedPath === "/explore"');
+    expect(gate).toContain("publicLeagueDirectoryPaths");
     expect(gate).toContain("if (!user)");
     expect(nav).toContain("MOBILE_NAVIGATION_GROUPS");
   });
@@ -30,9 +30,10 @@ describe("editorial public architecture", () => {
     expect(home.indexOf("Participating schools")).toBeLessThan(home.indexOf("Platform thesis"));
   });
 
-  it("turns Explore into a grouped operating-system directory", () => {
-    for (const label of ["Real World", "Models", "Simulation & Policy", "Practice & Assessment", "Evidence & Research", "Network"]) {
+  it("keeps Explore intentionally short and sends League organisation to its own home", () => {
+    for (const label of ["Start from the world", "Make a mechanism visible", "Run a controlled counterfactual", "Test the claim"]) {
       expect(explore).toContain(`title: "${label}"`);
     }
+    expect(explore).toContain("League is where schools and Teams compete");
   });
 });

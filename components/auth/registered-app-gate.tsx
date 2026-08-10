@@ -6,18 +6,29 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 
 /**
- * Keeps the whole application behind an individual EconMind account. This is
- * deliberately placed in the root layout so direct links and static Pages
- * routes follow the same rule as navigation from the home page.
+ * Keeps interactive EconMind work behind an individual account. The small
+ * public front door includes the League directory and released standings;
+ * direct links still follow the same boundary as navigation from the home.
  */
 export function RegisteredAppGate({ children }: { children: React.ReactNode }) {
   const { user, loading, configured, openAuth } = useAuth();
   const pathname = usePathname();
   const normalisedPath = pathname?.replace(/^\/econmind-os(?=\/|$)/, "") || "/";
-  const isPublicEntry = normalisedPath === "/" || normalisedPath === "/explore";
+  const publicLeagueDirectoryPaths = new Set([
+    "/league",
+    "/league/schools",
+    "/league/schools/profile",
+    "/league/teams",
+    "/league/season",
+    "/league/standings",
+    "/league/about",
+  ]);
+  const isPublicEntry = normalisedPath === "/" || normalisedPath === "/explore" || publicLeagueDirectoryPaths.has(normalisedPath);
 
   // The editorial front door is intentionally readable before a learner has an
-  // account. Interactive routes remain protected below, including direct URLs.
+  // account. The League directory and released standings are public; every
+  // simulation, attempt, membership and school-management action stays behind
+  // the account gate below, including direct URLs.
   if (isPublicEntry) return <>{children}</>;
 
   if (loading) {
