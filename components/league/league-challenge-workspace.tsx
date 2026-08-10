@@ -73,6 +73,7 @@ export function LeagueChallengeWorkspace({ slug, preferredMode = "practice" }: W
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [analysisTab, setAnalysisTab] = useState<"mechanism" | "score" | "data" | "assumptions">("mechanism");
+  const [timeMachineDesk, setTimeMachineDesk] = useState<"portfolio" | "all">("all");
 
   useEffect(() => {
     const requestedMode = new URLSearchParams(window.location.search).get("mode");
@@ -126,10 +127,11 @@ export function LeagueChallengeWorkspace({ slug, preferredMode = "practice" }: W
   const score = useMemo(() => definition ? scoreChallengeState(definition.slug, state) : null, [definition, state]);
   const currentStageLabel = definition?.stageLabels[stage - 1] ?? "Final results";
   const roleLabels = definition ? challengeRoleLabels(definition.simulationType) : CHALLENGE_ROLE_LABELS;
-  const visibleControls = definition?.controls.filter((control) => control.role === selectedRole) ?? [];
   const activeRoles = roleAssignments.length
     ? Array.from(new Set(roleAssignments.filter((assignment) => assignment.user_id === user?.id).map((assignment) => assignment.role_type)))
     : CHALLENGE_COUNTRY_ROLES;
+  const showAllTimeMachineControls = definition?.simulationType === "time_machine" && timeMachineDesk === "all";
+  const visibleControls = definition?.controls.filter((control) => showAllTimeMachineControls ? activeRoles.includes(control.role) : control.role === selectedRole) ?? [];
   const canProceed = mode === "practice" || activeRoles.length > 0;
   const showExactScore = mode === "practice" || decisions.length > 0 || attempt?.status === "submitted";
 
@@ -249,6 +251,7 @@ export function LeagueChallengeWorkspace({ slug, preferredMode = "practice" }: W
               <div className="mt-4 space-y-2">
                 {CHALLENGE_COUNTRY_ROLES.map((role) => <button type="button" key={role} onClick={() => setSelectedRole(role)} className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-bold transition ${selectedRole === role ? "bg-[var(--accent-soft)] text-[var(--accent)]" : "bg-[var(--surface-subtle)]"}`}><span>{roleLabels[role]}</span><span>{activeRoles.includes(role) ? "Control" : "View"}</span></button>)}
               </div>
+              {definition.simulationType === "time_machine" && <div className="mt-4 flex gap-2"><button type="button" onClick={() => setTimeMachineDesk("all")} className={`rounded-md px-3 py-2 text-xs font-bold ${timeMachineDesk === "all" ? "bg-[var(--accent)] text-white" : "bg-[var(--surface-subtle)] text-[var(--ink-muted)]"}`}>All my controls</button><button type="button" onClick={() => setTimeMachineDesk("portfolio")} className={`rounded-md px-3 py-2 text-xs font-bold ${timeMachineDesk === "portfolio" ? "bg-[var(--accent)] text-white" : "bg-[var(--surface-subtle)] text-[var(--ink-muted)]"}`}>One portfolio</button></div>}
               <p className="mt-4 text-xs leading-5 text-[var(--ink-muted)]">One person may hold all four Challenge portfolios. Only assigned portfolio holders can save or lock an official Decision Stage.</p>
             </Card>
             <Card className="p-5">
@@ -267,7 +270,7 @@ export function LeagueChallengeWorkspace({ slug, preferredMode = "practice" }: W
               <div className="p-6">
                 {stage <= definition.stageCount ? <>
                   <p className="text-sm leading-6 text-[var(--ink-muted)]">{definition.simulationType === "time_machine" ? TIME_MACHINE_STAGES[stage - 1]?.briefing : "Your chosen values remain active until changed. Effects marked delayed build through later Decision Stages."}</p>
-                  <div className="mt-6 grid gap-4">{visibleControls.map((control) => <label key={control.key} className="rounded-xl bg-[var(--surface-subtle)] p-4"><div className="flex justify-between gap-4"><span className="text-sm font-bold">{control.label}</span><output className="font-mono text-sm font-bold text-[var(--accent)]">{policies[control.key]} {control.unit}</output></div><input className="mt-4 w-full accent-[var(--accent)]" type="range" min={control.min} max={control.max} step={control.step} value={policies[control.key] ?? control.defaultValue} onChange={(event) => setPolicies((current) => ({ ...current, [control.key]: Number(event.target.value) }))} disabled={mode === "official" && !activeRoles.includes(selectedRole)} /><p className="mt-3 text-xs leading-5 text-[var(--ink-muted)]"><b className="mr-1 text-[var(--ink)]">{control.timing === "immediate" ? "Immediate:" : "Delayed:"}</b>{control.description}</p></label>)}</div>
+                  <div className="mt-6 grid gap-4">{visibleControls.map((control) => <label key={control.key} className="rounded-xl bg-[var(--surface-subtle)] p-4"><div className="flex justify-between gap-4"><span><small className="mb-1 block text-[10px] font-bold uppercase tracking-[.12em] text-[var(--accent)]">{showAllTimeMachineControls ? roleLabels[control.role] : "Current portfolio"}</small><b className="text-sm">{control.label}</b></span><output className="font-mono text-sm font-bold text-[var(--accent)]">{policies[control.key]} {control.unit}</output></div><input className="mt-4 w-full accent-[var(--accent)]" type="range" min={control.min} max={control.max} step={control.step} value={policies[control.key] ?? control.defaultValue} onChange={(event) => setPolicies((current) => ({ ...current, [control.key]: Number(event.target.value) }))} disabled={mode === "official" && !activeRoles.includes(control.role)} /><p className="mt-3 text-xs leading-5 text-[var(--ink-muted)]"><b className="mr-1 text-[var(--ink)]">{control.timing === "immediate" ? "Immediate:" : "Delayed:"}</b>{control.description}</p></label>)}</div>
                   <div className="mt-6 flex flex-wrap gap-3"><Button onClick={() => void lockCurrentStage()} disabled={busy || !canProceed}><LockKeyhole size={15} /> Lock Decision Stage</Button>{mode === "official" && attempt && <Button variant="secondary" onClick={() => void saveProgress()} disabled={busy}><Save size={15} /> Save & leave</Button>}</div>
                 </> : <>
                   <p className="text-sm leading-6 text-[var(--ink-muted)]">All Decision Stages are locked. Review the visible score components, then submit this official result. Submission creates a reusable anonymous Ghost Strategy.</p>
@@ -307,7 +310,7 @@ function SystemView({ simulationType, state, stage }: { simulationType: LeagueCh
     : simulationType === "industry"
       ? [["Units sold", stateNumber(state, "unitsSold"), ""], ["Market share", stateNumber(state, "marketShare"), "%"], ["Revenue", stateNumber(state, "revenue"), "credits"], ["Profit", stateNumber(state, "profit"), "credits"], ["Firm value", stateNumber(state, "firmValue"), ""]]
       : simulationType === "time_machine"
-        ? [["Inflation", stateNumber(state, "inflation"), "%"], ["Unemployment", stateNumber(state, "unemployment"), "%"], ["Real output", stateNumber(state, "realOutput"), "index"], ["Debt", stateNumber(state, "debtToGdp"), "% GDP"], ["Energy security", stateNumber(state, "energySecurity"), "/ 100"]]
+        ? [["Inflation", stateNumber(state, "inflation"), "%"], ["Unemployment", stateNumber(state, "unemployment"), "%"], ["Real output", stateNumber(state, "realOutput"), "index"], ["Debt", stateNumber(state, "debtToGdp"), "% GDP"], ["Energy security", stateNumber(state, "energySecurity"), "/ 100"], ["Oil dependence", stateNumber(state, "energyDependence"), "%"]]
         : [["Growth", stateNumber(state, "growth"), "%"], ["Inflation", stateNumber(state, "inflation"), "%"], ["Unemployment", stateNumber(state, "unemployment"), "%"], ["Debt", stateNumber(state, "debtToGdp"), "% GDP"], ["Domestic production", stateNumber(state, "domesticProduction"), "index"]];
   const financialStage = simulationType === "financial" ? FINANCIAL_NETWORK_STAGES[Math.min(stage, FINANCIAL_NETWORK_STAGES.length) - 1] : null;
   const bankStates = Array.isArray(state.bankStates) ? state.bankStates as Array<{ id?: string; label?: string; stress?: string }> : [];

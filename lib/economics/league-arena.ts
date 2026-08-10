@@ -113,11 +113,12 @@ export type TimeMachineState = {
   debtToGdp: number;
   recovery: number;
   energySecurity: number;
+  energyDependence: number;
   interactions: string[];
 };
 
 export function createTimeMachineState(): TimeMachineState {
-  return { inflation: 5.9, realOutput: 101, unemployment: 4.3, fiscalBalance: -1.5, debtToGdp: 38, recovery: 52, energySecurity: 44, interactions: [] };
+  return { inflation: 5.9, realOutput: 101, unemployment: 4.3, fiscalBalance: -1.5, debtToGdp: 38, recovery: 52, energySecurity: 44, energyDependence: 68, interactions: [] };
 }
 
 export function advanceTimeMachineStage(state: TimeMachineState, policy: PolicyValues, stage: number): TimeMachineState {
@@ -129,13 +130,20 @@ export function advanceTimeMachineStage(state: TimeMachineState, policy: PolicyV
   const energySubsidy = policy.energySubsidy ?? 5;
   const investment = policy.publicInvestment ?? 10;
   const reserve = policy.strategicReserve ?? 5;
+  const creditRestraint = policy.creditRestraint ?? 5;
+  const wagePriceGuidance = policy.wagePriceGuidance ?? 2;
+  const importDiversification = policy.importDiversification ?? 4;
+  const energyConservation = policy.energyConservation ?? 4;
   const interactions: string[] = [];
-  let inflation = state.inflation + shock - (interestRate - 4) * 0.22 + spending * 0.026 + energySubsidy * 0.045;
-  let realOutput = state.realOutput + growthShock - (interestRate - 4) * 0.17 + (spending - 18) * 0.15 + taxRelief * 0.07 + investment * 0.06 + reserve * 0.035;
+  let inflation = state.inflation + shock - (interestRate - 4) * 0.22 - (creditRestraint - 5) * 0.09 - wagePriceGuidance * 0.055 + spending * 0.026 + energySubsidy * 0.045 - importDiversification * 0.018 - energyConservation * 0.04;
+  let realOutput = state.realOutput + growthShock - (interestRate - 4) * 0.17 - (creditRestraint - 5) * 0.065 - wagePriceGuidance * 0.025 + (spending - 18) * 0.15 + taxRelief * 0.07 + investment * 0.06 + reserve * 0.035 + importDiversification * 0.035 + energyConservation * 0.02;
   const unemployment = state.unemployment - (realOutput - state.realOutput) * 0.34;
-  const fiscalBalance = state.fiscalBalance - (spending - 18) * 0.13 - taxRelief * 0.09 - energySubsidy * 0.07 - investment * 0.08 - reserve * 0.04;
-  let energySecurity = state.energySecurity + reserve * 0.65 + investment * 0.22 + energySubsidy * 0.12 - shock * 1.2;
-  const recovery = state.recovery + investment * 0.28 + reserve * 0.15 + (spending - 18) * 0.12 - Math.max(0, interestRate - 6) * 0.6;
+  const fiscalBalance = state.fiscalBalance - (spending - 18) * 0.13 - taxRelief * 0.09 - energySubsidy * 0.07 - investment * 0.08 - reserve * 0.04 - wagePriceGuidance * 0.018 - importDiversification * 0.035 - energyConservation * 0.03;
+  let energySecurity = state.energySecurity + reserve * 0.65 + investment * 0.22 + energySubsidy * 0.12 + importDiversification * 0.72 + energyConservation * 0.54 - shock * 1.2;
+  // Older saved practice states predate this indicator. Keep them replayable from
+  // the documented 1973 baseline instead of producing an invalid numerical path.
+  const energyDependence = (state.energyDependence ?? 68) - importDiversification * 0.21 - energyConservation * 0.29 + shock * 0.08;
+  const recovery = state.recovery + investment * 0.28 + reserve * 0.15 + importDiversification * 0.18 + energyConservation * 0.2 + (spending - 18) * 0.12 - Math.max(0, interestRate - 6) * 0.6 - Math.max(0, creditRestraint - 10) * 0.25;
 
   if (spending > 22 && interestRate > 6) {
     realOutput -= 0.55;
@@ -146,6 +154,20 @@ export function advanceTimeMachineStage(state: TimeMachineState, policy: PolicyV
     inflation -= 0.28;
     interactions.push("Energy support plus public investment eases the energy-cost pass-through while strengthening future supply capacity.");
   }
+  if (importDiversification > 10 && energyConservation > 12) {
+    energySecurity += 2.6;
+    inflation -= 0.32;
+    interactions.push("Diversified energy imports plus conservation reduce exposure to the oil shock. The benefit builds progressively and is funded through a modest fiscal cost.");
+  }
+  if (creditRestraint > 10 && spending > 22) {
+    realOutput -= 0.35;
+    interactions.push("Strong credit restraint offsets part of fiscal support: it helps contain price pressure but weakens private demand during the slowdown.");
+  }
+  if (wagePriceGuidance > 8 && energySubsidy < 4) {
+    inflation -= 0.18;
+    realOutput -= 0.12;
+    interactions.push("Tighter wage and price guidance restrains second-round inflation, while creating a small near-term output trade-off in this stylised model.");
+  }
   const debtToGdp = state.debtToGdp + Math.max(0, -fiscalBalance) * 0.46 - Math.max(0, realOutput - state.realOutput) * 0.18;
   return {
     inflation: round(clamp(inflation, 0, 25)),
@@ -155,19 +177,20 @@ export function advanceTimeMachineStage(state: TimeMachineState, policy: PolicyV
     debtToGdp: round(clamp(debtToGdp, 10, 160)),
     recovery: round(clamp(recovery, 0, 100)),
     energySecurity: round(clamp(energySecurity, 0, 100)),
+    energyDependence: round(clamp(energyDependence, 20, 95)),
     interactions,
   };
 }
 
 export function scoreTimeMachine(state: TimeMachineState): ScoreBreakdown {
   const stability = clamp(40 - Math.abs(state.inflation - 3) * 2.3 - Math.max(0, state.unemployment - 5) * 1.9, 0, 40);
-  const effectiveness = clamp(30 * ((state.realOutput - 70) / 65) + state.recovery * 0.12, 0, 30);
+  const effectiveness = clamp(30 * ((state.realOutput - 70) / 65) + state.recovery * 0.09 + state.energySecurity * 0.04 + (68 - (state.energyDependence ?? 68)) * 0.05, 0, 30);
   const fiscal = clamp(30 - Math.max(0, state.debtToGdp - 45) * 0.32 - Math.max(0, -state.fiscalBalance - 2) * 0.9, 0, 30);
   return {
     score: round(stability + effectiveness + fiscal),
     components: [
       { label: "Economic stability", points: round(stability), detail: "Up to 40 points from inflation and unemployment stability." },
-      { label: "Policy effectiveness", points: round(effectiveness), detail: "Up to 30 points from output resilience and recovery capacity." },
+      { label: "Policy effectiveness", points: round(effectiveness), detail: "Up to 30 points from output resilience, recovery capacity and energy resilience." },
       { label: "Fiscal sustainability", points: round(fiscal), detail: "Up to 30 points from debt and fiscal balance." },
     ],
   };
@@ -478,9 +501,13 @@ const worldControls: ChallengeControl[] = [
 
 const timeMachineControls: ChallengeControl[] = [
   { key: "interestRate", label: "Policy interest rate", role: "central_bank", min: 2, max: 10, step: 0.25, defaultValue: 4, unit: "%", timing: "immediate", description: "Restrains inflation but can weaken output and employment." },
+  { key: "creditRestraint", label: "Credit restraint", role: "central_bank", min: 0, max: 16, step: 1, defaultValue: 5, unit: "/ 16", timing: "immediate", description: "Tightens bank credit conditions in addition to the policy rate, reducing price pressure and private demand." },
   { key: "governmentSpending", label: "Government spending", role: "economic_policy", min: 10, max: 30, step: 1, defaultValue: 18, unit: "% GDP", timing: "immediate", description: "Supports demand and employment with a fiscal cost." },
   { key: "taxRelief", label: "Tax relief", role: "economic_policy", min: 0, max: 14, step: 1, defaultValue: 4, unit: "% GDP", timing: "immediate", description: "Supports household and business income with a fiscal cost." },
+  { key: "wagePriceGuidance", label: "Wage & price guidance", role: "economic_policy", min: 0, max: 12, step: 1, defaultValue: 2, unit: "/ 12", timing: "immediate", description: "Restrains second-round inflation in the stylised model, with a limited short-run output trade-off." },
   { key: "energySubsidy", label: "Energy subsidy", role: "trade", min: 0, max: 16, step: 1, defaultValue: 5, unit: "% GDP", timing: "immediate", description: "Moderates energy-cost pass-through but needs fiscal funding." },
+  { key: "importDiversification", label: "Oil import diversification", role: "trade", min: 0, max: 18, step: 1, defaultValue: 4, unit: "/ 18", timing: "delayed", description: "Builds alternative supply relationships and lowers dependence on a concentrated energy source over later stages." },
+  { key: "energyConservation", label: "Energy conservation programme", role: "trade", min: 0, max: 20, step: 1, defaultValue: 4, unit: "/ 20", timing: "delayed", description: "Reduces energy demand and oil-shock exposure progressively, with an implementation cost." },
   { key: "publicInvestment", label: "Public investment", role: "investment_resources", min: 0, max: 24, step: 1, defaultValue: 10, unit: "% GDP", timing: "delayed", description: "Strengthens recovery and energy capacity over time." },
   { key: "strategicReserve", label: "Strategic reserve", role: "investment_resources", min: 0, max: 16, step: 1, defaultValue: 5, unit: "% GDP", timing: "delayed", description: "Improves resilience against supply disruption." },
 ];

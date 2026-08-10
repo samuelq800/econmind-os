@@ -8,6 +8,7 @@ import {
   advanceIndustryArenaState,
   advanceTimeMachineStage,
   advanceWorldArenaState,
+  challengeDefinition,
   createIndustryArenaState,
   createFinancialNetworkState,
   createTimeMachineState,
@@ -80,6 +81,23 @@ describe("asynchronous League challenge foundation", () => {
     expect(state.interactions.join(" ")).toContain("crowding out");
     expect(scoreTimeMachine(state).score).toBeGreaterThanOrEqual(0);
     expect(scoreTimeMachine(state).score).toBeLessThanOrEqual(100);
+  });
+
+  it("gives the 1973 Oil Shock a complete multi-parameter policy desk without changing its five stages", () => {
+    const timeMachine = challengeDefinition("time-machine-1973-oil-shock");
+    expect(timeMachine?.stageCount).toBe(5);
+    expect(timeMachine?.controls.map((control) => control.key)).toEqual([
+      "interestRate", "creditRestraint", "governmentSpending", "taxRelief", "wagePriceGuidance",
+      "energySubsidy", "importDiversification", "energyConservation", "publicInvestment", "strategicReserve",
+    ]);
+    const base = createTimeMachineState();
+    const resilient = advanceTimeMachineStage(base, {
+      interestRate: 5, creditRestraint: 7, governmentSpending: 18, taxRelief: 4, wagePriceGuidance: 4,
+      energySubsidy: 6, importDiversification: 15, energyConservation: 16, publicInvestment: 12, strategicReserve: 8,
+    }, 3);
+    expect(resilient.energyDependence).toBeLessThan(base.energyDependence);
+    expect(resilient.energySecurity).toBeGreaterThan(base.energySecurity);
+    expect(resilient.interactions.join(" ")).toContain("Diversified energy imports");
   });
 
   it("replays a deterministic Ghost and computes the published Industry score", () => {
