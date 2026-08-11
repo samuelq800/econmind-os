@@ -39,19 +39,36 @@ const howItWorks = [
   ["06", "Decide", "Explain what you would do—and what the model cannot decide for you."],
 ] as const;
 
-const leagueCityHubs = [
-  { city: "Beijing", schools: 2, x: 68, y: 33, labelX: 10, labelY: -17 },
-  { city: "Jinan", schools: 1, x: 72.5, y: 40.2, labelX: 10, labelY: -17 },
-  { city: "Nanjing", schools: 2, x: 75.4, y: 46.7, labelX: -58, labelY: -36 },
-  { city: "Wuxi", schools: 1, x: 76.5, y: 48.5, labelX: 10, labelY: -12 },
-  { city: "Suzhou", schools: 3, x: 78, y: 49.4, labelX: 10, labelY: 12 },
-  { city: "Shanghai", schools: 1, x: 79.6, y: 49.4, labelX: 10, labelY: 35 },
-  { city: "Hangzhou", schools: 1, x: 76.8, y: 52.2, labelX: -73, labelY: 43 },
-  { city: "Chengdu", schools: 1, x: 47.6, y: 51.8, labelX: 10, labelY: -17 },
-  { city: "Chongqing", schools: 1, x: 54.2, y: 52.8, labelX: 10, labelY: -17 },
-  { city: "Nanning", schools: 1, x: 56.8, y: 64.5, labelX: 10, labelY: -17 },
-  { city: "Shenzhen", schools: 1, x: 65.3, y: 65.5, labelX: 10, labelY: -17 },
-] as const;
+type LeagueCityPosition = {
+  city: string;
+  x: number;
+  y: number;
+  labelX: number;
+  labelY: number;
+  labelSide?: "left";
+};
+
+// Pin locations are calibrated to the supplied China map. Labels are offset
+// independently so the Yangtze River Delta remains readable while the dots
+// continue to mark the real city locations.
+const leagueCityPositions: readonly LeagueCityPosition[] = [
+  { city: "Beijing", x: 68.7, y: 34.7, labelX: 12, labelY: -31 },
+  { city: "Jinan", x: 72.8, y: 42.6, labelX: 13, labelY: -24 },
+  { city: "Nanjing", x: 75.6, y: 49.1, labelX: -16, labelY: -42, labelSide: "left" },
+  { city: "Wuxi", x: 77.1, y: 50.8, labelX: 13, labelY: -29 },
+  { city: "Suzhou", x: 78.4, y: 51.7, labelX: 14, labelY: 7 },
+  { city: "Shanghai", x: 80.3, y: 53.4, labelX: 14, labelY: 28 },
+  { city: "Hangzhou", x: 77.4, y: 55.2, labelX: -16, labelY: 35, labelSide: "left" },
+  { city: "Chengdu", x: 47.8, y: 52.6, labelX: -16, labelY: -28, labelSide: "left" },
+  { city: "Chongqing", x: 54.6, y: 54.1, labelX: 13, labelY: 14 },
+  { city: "Nanning", x: 57.4, y: 65.5, labelX: -16, labelY: -28, labelSide: "left" },
+  { city: "Shenzhen", x: 66.2, y: 66.5, labelX: 13, labelY: 15 },
+];
+
+const leagueCityHubs = leagueCityPositions.map((hub) => ({
+  ...hub,
+  schools: PARTICIPATING_SCHOOLS.filter((school) => school.city === hub.city).length,
+}));
 
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return <p className="home-eyebrow">{children}</p>;
@@ -173,7 +190,7 @@ function HomeContextSummary() {
 
 function SchoolCityMap() {
   const mapAsset = process.env.GITHUB_PAGES === "true" ? "/econmind-os/league-cities-map.png" : "/league-cities-map.png";
-  return <div className="home-league-city-map" aria-label="Participating school cities in China"><div className="home-city-map-art"><Image src={mapAsset} alt="Map of China with Taiwan Island and the South China Sea islands shown, overlaid with participating school cities" width={2356} height={2312} unoptimized /><ol>{leagueCityHubs.map((hub) => <li key={hub.city} style={{ "--city-x": `${hub.x}%`, "--city-y": `${hub.y}%`, "--label-x": `${hub.labelX ?? 10}px`, "--label-y": `${hub.labelY ?? -17}px` } as React.CSSProperties}><i /><span><b>{hub.city}</b>{hub.schools > 1 && <em> · {hub.schools}</em>}</span></li>)}</ol></div><div className="home-city-map-caption"><b>11 city hubs</b><span>{PARTICIPATING_SCHOOL_COUNT} participating schools</span></div></div>;
+  return <div className="home-league-city-map" aria-label="Participating school cities in China"><div className="home-city-map-art"><Image src={mapAsset} alt="Map of China with Taiwan Island and the South China Sea islands shown, overlaid with participating school cities" width={2356} height={2312} unoptimized /><ol>{leagueCityHubs.map((hub) => <li key={hub.city} className={hub.labelSide === "left" ? "home-city-label-left" : undefined} style={{ "--city-x": `${hub.x}%`, "--city-y": `${hub.y}%`, "--label-x": `${hub.labelX}px`, "--label-y": `${hub.labelY}px` } as React.CSSProperties}><i /><span><b>{hub.city}</b>{hub.schools > 1 && <em> · {hub.schools}</em>}</span></li>)}</ol></div><div className="home-city-map-caption"><b>{leagueCityHubs.length} city hubs</b><span>{PARTICIPATING_SCHOOL_COUNT} participating schools</span></div></div>;
 }
 
 function EvidenceMotif() {

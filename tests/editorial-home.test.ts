@@ -23,9 +23,10 @@ describe("editorial public architecture", () => {
     expect(home).toContain("How EconMind works");
   });
 
-  it("uses one central 15-school public roster, including the new Chengdu school", () => {
-    expect(PARTICIPATING_SCHOOLS).toHaveLength(15);
+  it("uses one central 16-school public roster, including the new Beijing and Chengdu schools", () => {
+    expect(PARTICIPATING_SCHOOLS).toHaveLength(16);
     expect(PARTICIPATING_SCHOOLS[0]?.name).toBe("Suzhou High School-International Division");
+    expect(PARTICIPATING_SCHOOLS.map((school) => school.name)).toContain("Beijing Aidi International School");
     expect(PARTICIPATING_SCHOOLS.map((school) => school.name)).toContain("Chengdu Jiaxiang Foreign Language School");
     expect(home.indexOf("Participating schools")).toBeLessThan(home.indexOf("Platform thesis"));
   });

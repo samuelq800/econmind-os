@@ -72,3 +72,6 @@ input[type=range]{appearance:none;height:4px;border-radius:99px;background:var(-
 @media(max-width:1100px){.home-city-map-art{height:100%;width:100%}}
 @media(max-width:700px){.home-city-map-art{left:0}}
 .home-city-map-art li:nth-child(n) span{top:var(--label-y);left:var(--label-x)}
+.home-city-map-art li span{border-radius:4px;background:rgba(4,21,45,.42);padding:1px 3px;line-height:1.35}
+.home-city-map-art li:not(.home-city-label-left) span{transform:none}
+.home-city-map-art li.home-city-label-left span{transform:translateX(-100%);text-align:right}

@@ -12,6 +12,7 @@ export const PARTICIPATING_SCHOOLS: readonly ParticipatingSchool[] = [
   { name: "Suzhou High School-International Division", city: "Suzhou", region: "East China" },
   { name: "Basis International School Shenzhen", city: "Shenzhen", region: "South China" },
   { name: "Beijing Academy International Department", city: "Beijing", region: "North China" },
+  { name: "Beijing Aidi International School", city: "Beijing", region: "North China" },
   { name: "Chongqing Nankai Secondary School", city: "Chongqing", region: "West China" },
   { name: "Hangzhou Dingwen Academy", city: "Hangzhou", region: "East China" },
   { name: "Harrow Nanning", city: "Nanning", region: "South China" },
