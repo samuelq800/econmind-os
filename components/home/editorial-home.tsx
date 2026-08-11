@@ -43,26 +43,23 @@ type LeagueCityPosition = {
   city: string;
   x: number;
   y: number;
-  labelX: number;
-  labelY: number;
-  labelSide?: "left";
 };
 
-// Pin locations are calibrated to the supplied China map. Labels are offset
-// independently so the Yangtze River Delta remains readable while the dots
-// continue to mark the real city locations.
+// Pin locations are calibrated to the supplied China map. City names live in
+// a fixed index rather than beside their markers, keeping the dense eastern
+// cluster legible at every viewport size.
 const leagueCityPositions: readonly LeagueCityPosition[] = [
-  { city: "Beijing", x: 68.7, y: 34.7, labelX: 12, labelY: -31 },
-  { city: "Jinan", x: 72.8, y: 42.6, labelX: 13, labelY: -24 },
-  { city: "Nanjing", x: 75.6, y: 49.1, labelX: -16, labelY: -42, labelSide: "left" },
-  { city: "Wuxi", x: 77.1, y: 50.8, labelX: 13, labelY: -29 },
-  { city: "Suzhou", x: 78.4, y: 51.7, labelX: 14, labelY: 7 },
-  { city: "Shanghai", x: 80.3, y: 53.4, labelX: 14, labelY: 28 },
-  { city: "Hangzhou", x: 77.4, y: 55.2, labelX: -16, labelY: 35, labelSide: "left" },
-  { city: "Chengdu", x: 47.8, y: 52.6, labelX: -16, labelY: -28, labelSide: "left" },
-  { city: "Chongqing", x: 54.6, y: 54.1, labelX: 13, labelY: 14 },
-  { city: "Nanning", x: 57.4, y: 65.5, labelX: -16, labelY: -28, labelSide: "left" },
-  { city: "Shenzhen", x: 66.2, y: 66.5, labelX: 13, labelY: 15 },
+  { city: "Beijing", x: 68.7, y: 34.7 },
+  { city: "Jinan", x: 72.8, y: 42.6 },
+  { city: "Nanjing", x: 75.6, y: 49.1 },
+  { city: "Wuxi", x: 77.1, y: 50.8 },
+  { city: "Suzhou", x: 78.4, y: 51.7 },
+  { city: "Shanghai", x: 80.3, y: 53.4 },
+  { city: "Hangzhou", x: 77.4, y: 55.2 },
+  { city: "Chengdu", x: 47.8, y: 52.6 },
+  { city: "Chongqing", x: 54.6, y: 54.1 },
+  { city: "Nanning", x: 57.4, y: 65.5 },
+  { city: "Shenzhen", x: 66.2, y: 66.5 },
 ];
 
 const leagueCityHubs = leagueCityPositions.map((hub) => ({
@@ -190,7 +187,7 @@ function HomeContextSummary() {
 
 function SchoolCityMap() {
   const mapAsset = process.env.GITHUB_PAGES === "true" ? "/econmind-os/league-cities-map.png" : "/league-cities-map.png";
-  return <div className="home-league-city-map" aria-label="Participating school cities in China"><div className="home-city-map-art"><Image src={mapAsset} alt="Map of China with Taiwan Island and the South China Sea islands shown, overlaid with participating school cities" width={2356} height={2312} unoptimized /><ol>{leagueCityHubs.map((hub) => <li key={hub.city} className={hub.labelSide === "left" ? "home-city-label-left" : undefined} style={{ "--city-x": `${hub.x}%`, "--city-y": `${hub.y}%`, "--label-x": `${hub.labelX}px`, "--label-y": `${hub.labelY}px` } as React.CSSProperties}><i /><span><b>{hub.city}</b>{hub.schools > 1 && <em> · {hub.schools}</em>}</span></li>)}</ol></div><div className="home-city-map-caption"><b>{leagueCityHubs.length} city hubs</b><span>{PARTICIPATING_SCHOOL_COUNT} participating schools</span></div></div>;
+  return <div className="home-league-city-map" aria-label="Participating school cities in China"><div className="home-city-map-art"><Image src={mapAsset} alt="Map of China with Taiwan Island and the South China Sea islands shown, overlaid with participating school cities" width={2356} height={2312} unoptimized /><ol aria-label="School city locations">{leagueCityHubs.map((hub) => <li key={hub.city} aria-label={`${hub.city}: ${hub.schools} participating school${hub.schools === 1 ? "" : "s"}`} data-school-count={hub.schools} style={{ "--city-x": `${hub.x}%`, "--city-y": `${hub.y}%` } as React.CSSProperties}><i /></li>)}</ol></div><div className="home-city-map-caption"><b>{leagueCityHubs.length} city hubs</b><span>{PARTICIPATING_SCHOOL_COUNT} participating schools</span></div><div className="home-city-map-index" aria-label="School city index"><p>City hubs</p><ol>{leagueCityHubs.map((hub) => <li key={hub.city}><span>{hub.city}</span><b>{hub.schools}</b></li>)}</ol></div></div>;
 }
 
 function EvidenceMotif() {

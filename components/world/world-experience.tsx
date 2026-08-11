@@ -1,6 +1,6 @@
-import { ContinuousWorldDashboard } from "./continuous-world-dashboard";
+import { WorldSimulationOverview } from "@/components/world-governance/world-simulation";
 
-/** One continuous simulation replaces the former quarter-based World surface. */
+/** The persistent World entrypoint: 12 countries, each with six offices. */
 export function WorldExperience() {
-  return <ContinuousWorldDashboard />;
+  return <WorldSimulationOverview />;
 }

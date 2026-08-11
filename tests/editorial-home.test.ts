@@ -31,6 +31,12 @@ describe("editorial public architecture", () => {
     expect(home.indexOf("Participating schools")).toBeLessThan(home.indexOf("Platform thesis"));
   });
 
+  it("uses a fixed city index instead of floating labels around dense map markers", () => {
+    expect(home).toContain('className="home-city-map-index"');
+    expect(home).toContain("School city locations");
+    expect(home).not.toContain("home-city-label-left");
+  });
+
   it("keeps Explore intentionally short and sends League organisation to its own home", () => {
     for (const label of ["Start from the world", "Make a mechanism visible", "Run a controlled counterfactual", "Test the claim"]) {
       expect(explore).toContain(`title: "${label}"`);
