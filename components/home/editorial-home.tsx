@@ -58,14 +58,17 @@ const leagueCityPositions: readonly LeagueCityPosition[] = [
   { city: "Hangzhou", x: 77.4, y: 55.2 },
   { city: "Chengdu", x: 47.8, y: 52.6 },
   { city: "Chongqing", x: 54.6, y: 54.1 },
+  { city: "Nanchang", x: 70.4, y: 58.1 },
   { city: "Nanning", x: 57.4, y: 65.5 },
   { city: "Shenzhen", x: 66.2, y: 66.5 },
+  { city: "Zhuhai", x: 64.8, y: 67.4 },
 ];
 
 const leagueCityHubs = leagueCityPositions.map((hub) => ({
   ...hub,
   schools: PARTICIPATING_SCHOOLS.filter((school) => school.city === hub.city).length,
 }));
+const internationalSchoolCount = PARTICIPATING_SCHOOLS.filter((school) => school.region === "International").length;
 
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return <p className="home-eyebrow">{children}</p>;
@@ -187,7 +190,7 @@ function HomeContextSummary() {
 
 function SchoolCityMap() {
   const mapAsset = process.env.GITHUB_PAGES === "true" ? "/econmind-os/league-cities-map.png" : "/league-cities-map.png";
-  return <div className="home-league-city-map" aria-label="Participating school cities in China"><div className="home-city-map-art"><Image src={mapAsset} alt="Map of China with Taiwan Island and the South China Sea islands shown, overlaid with participating school cities" width={2356} height={2312} unoptimized /><ol aria-label="School city locations">{leagueCityHubs.map((hub) => <li key={hub.city} aria-label={`${hub.city}: ${hub.schools} participating school${hub.schools === 1 ? "" : "s"}`} data-school-count={hub.schools} style={{ "--city-x": `${hub.x}%`, "--city-y": `${hub.y}%` } as React.CSSProperties}><i /></li>)}</ol></div><div className="home-city-map-caption"><b>{leagueCityHubs.length} city hubs</b><span>{PARTICIPATING_SCHOOL_COUNT} participating schools</span></div><div className="home-city-map-index" aria-label="School city index"><p>City hubs</p><ol>{leagueCityHubs.map((hub) => <li key={hub.city}><span>{hub.city}</span><b>{hub.schools}</b></li>)}</ol></div></div>;
+  return <div className="home-league-city-map" aria-label="Participating school city network"><div className="home-city-map-art"><Image src={mapAsset} alt="Map of China with Taiwan Island and the South China Sea islands shown, overlaid with participating school cities" width={2356} height={2312} unoptimized /><ol aria-label="School city locations">{leagueCityHubs.map((hub) => <li key={hub.city} aria-label={`${hub.city}: ${hub.schools} participating school${hub.schools === 1 ? "" : "s"}`} data-school-count={hub.schools} style={{ "--city-x": `${hub.x}%`, "--city-y": `${hub.y}%` } as React.CSSProperties}><i /></li>)}</ol></div><div className="home-city-map-caption"><b>{leagueCityHubs.length} China city hubs</b><span>{PARTICIPATING_SCHOOL_COUNT} participating schools</span></div><div className="home-city-map-index" aria-label="School city index"><p>China city hubs</p><ol>{leagueCityHubs.map((hub) => <li key={hub.city}><span>{hub.city}</span><b>{hub.schools}</b></li>)}</ol>{internationalSchoolCount > 0 && <p className="home-city-map-international">+ {internationalSchoolCount} international hub · Singapore</p>}</div></div>;
 }
 
 function EvidenceMotif() {
