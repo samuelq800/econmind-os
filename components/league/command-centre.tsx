@@ -139,7 +139,13 @@ const metric = (
 const compact = (value: number, suffix = "") =>
   `${value.toFixed(value < 1 ? 2 : 1)}${suffix}`;
 
-export function CommandCentreStart() {
+export function CommandCentreStart({
+  basePath = "/league/command-centre",
+  dashboardPath = "/league/dashboard",
+}: {
+  basePath?: string;
+  dashboardPath?: string;
+} = {}) {
   const router = useRouter();
   const { user } = useAuth();
   const [scenario, setScenario] = useState<SandboxScenario | null>(null);
@@ -199,7 +205,7 @@ export function CommandCentreStart() {
         initialState: createInitialCommandCentreState(),
       });
       router.push(
-        `/league/command-centre/run?run=${encodeURIComponent(run.id)}`,
+        `${basePath}/run?run=${encodeURIComponent(run.id)}`,
       );
     } catch (caught) {
       setError(
@@ -328,7 +334,7 @@ export function CommandCentreStart() {
               </p>
             </div>
             <Link
-              href="/league/dashboard"
+              href={dashboardPath}
               className="text-xs font-bold text-[var(--accent)]"
             >
               Dashboard <ArrowRight className="inline" size={13} />
@@ -341,7 +347,7 @@ export function CommandCentreStart() {
               .map((run) => (
                 <Link
                   key={run.id}
-                  href={`/league/command-centre/run?run=${encodeURIComponent(run.id)}`}
+                  href={`${basePath}/run?run=${encodeURIComponent(run.id)}`}
                   className="flex items-center justify-between gap-4 rounded-lg border border-[var(--line)] p-4 hover:bg-[var(--surface-subtle)]"
                 >
                   <div>
@@ -378,7 +384,15 @@ export function CommandCentreStart() {
   );
 }
 
-export function CommandCentreRun({ runId }: { runId: string }) {
+export function CommandCentreRun({
+  runId,
+  basePath = "/league/command-centre",
+  dashboardPath = "/league/dashboard",
+}: {
+  runId: string;
+  basePath?: string;
+  dashboardPath?: string;
+}) {
   const router = useRouter();
   const { user } = useAuth();
   const [run, setRun] = useState<RunWithRounds | null>(null);
@@ -451,7 +465,7 @@ export function CommandCentreRun({ runId }: { runId: string }) {
           </p>
           <Link
             className="mt-6 inline-flex text-sm font-bold text-[var(--accent)]"
-            href="/league/command-centre"
+            href={basePath}
           >
             Back to Command Centre
           </Link>
@@ -540,7 +554,7 @@ export function CommandCentreRun({ runId }: { runId: string }) {
     setSaving(true);
     try {
       await abandonCommandCentreRun(activeRun.id);
-      router.push("/league/command-centre");
+      router.push(basePath);
     } catch (caught) {
       setError(
         caught instanceof Error
@@ -575,7 +589,7 @@ export function CommandCentreRun({ runId }: { runId: string }) {
               variant="secondary"
               size="sm"
               disabled={saving}
-              onClick={() => router.push("/league/dashboard")}
+              onClick={() => router.push(dashboardPath)}
             >
               <Save size={14} />
               Save & exit
@@ -694,7 +708,7 @@ export function CommandCentreRun({ runId }: { runId: string }) {
               onContinue={() => {
                 if (preview.stateAfter.completed)
                   router.push(
-                    `/league/command-centre/run/results?run=${encodeURIComponent(activeRun.id)}`,
+                    `${basePath}/run/results?run=${encodeURIComponent(activeRun.id)}`,
                   );
                 else {
                   setPolicy(recommendedPolicyForState(preview.stateAfter));
@@ -1340,7 +1354,15 @@ function QuarterReport({
     </Card>
   );
 }
-export function CommandCentreResults({ runId }: { runId: string }) {
+export function CommandCentreResults({
+  runId,
+  basePath = "/league/command-centre",
+  dashboardPath = "/league/dashboard",
+}: {
+  runId: string;
+  basePath?: string;
+  dashboardPath?: string;
+}) {
   const router = useRouter();
   const [run, setRun] = useState<RunWithRounds | null>(null);
   const [error, setError] = useState("");
@@ -1388,7 +1410,7 @@ export function CommandCentreResults({ runId }: { runId: string }) {
         startRound: round ? Math.min(3, round.round_number + 1) : 1,
       });
       router.push(
-        `/league/command-centre/run?run=${encodeURIComponent(next.id)}`,
+        `${basePath}/run?run=${encodeURIComponent(next.id)}`,
       );
     } catch (caught) {
       setError(
@@ -1422,7 +1444,7 @@ export function CommandCentreResults({ runId }: { runId: string }) {
             Duplicate strategy
           </Button>
           <Link
-            href="/league/dashboard"
+            href={dashboardPath}
             className="inline-flex h-10 items-center rounded-lg px-3 text-sm font-bold text-[var(--accent)]"
           >
             Dashboard

@@ -69,7 +69,15 @@ function Metric({ label, value }: { label: string; value: string | number }) {
   );
 }
 
-export function LeagueDashboard() {
+export function LeagueDashboard({
+  paths = {
+    quickChallenge: "/league/quick-challenge",
+    join: "/league/join",
+    arena: "/league/arena",
+  },
+}: {
+  paths?: { quickChallenge: string; join: string; arena: string };
+} = {}) {
   const { user, openAuth } = useAuth();
   const userId = user?.id;
   const [context, setContext] = useState<LeagueContext | null>(null);
@@ -367,7 +375,7 @@ export function LeagueDashboard() {
                   Recent Quick Challenge records
                 </h2>
                 <Link
-                  href="/league/quick-challenge"
+                  href={paths.quickChallenge}
                   className="text-xs font-bold text-[var(--accent)]"
                 >
                   Run sprint <ArrowRight className="inline" size={13} />
@@ -425,7 +433,7 @@ export function LeagueDashboard() {
                 </Button>
               </form>
               <Link
-                href="/league/join"
+                href={paths.join}
                 className="mt-5 inline-flex text-xs font-bold text-[var(--accent)]"
               >
                 Or submit a school application{" "}
@@ -504,7 +512,7 @@ export function LeagueDashboard() {
                           {team.members.length === 1 ? "" : "s"} · share this
                           code to join
                         </p>
-                        <div className="mt-3 flex flex-wrap gap-2"><Button size="sm" variant="ghost" disabled={busy || editingTeamId === team.id} onClick={() => { setEditingTeamId(team.id); setRenamedTeam(team.name); }}><Pencil size={13} /> Rename</Button>{team.status === "archived" ? <Button size="sm" variant="ghost" disabled={busy} onClick={() => void changeTeamStatus(team.id, "active")}><Undo2 size={13} /> Restore</Button> : <Button size="sm" variant="ghost" disabled={busy} onClick={() => void changeTeamStatus(team.id, "archived")}><Archive size={13} /> Archive</Button>}<Link href="/league/arena" className="inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--surface)]">Challenges <ArrowRight size={13} /></Link></div>
+                        <div className="mt-3 flex flex-wrap gap-2"><Button size="sm" variant="ghost" disabled={busy || editingTeamId === team.id} onClick={() => { setEditingTeamId(team.id); setRenamedTeam(team.name); }}><Pencil size={13} /> Rename</Button>{team.status === "archived" ? <Button size="sm" variant="ghost" disabled={busy} onClick={() => void changeTeamStatus(team.id, "active")}><Undo2 size={13} /> Restore</Button> : <Button size="sm" variant="ghost" disabled={busy} onClick={() => void changeTeamStatus(team.id, "archived")}><Archive size={13} /> Archive</Button>}<Link href={paths.arena} className="inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--surface)]">Challenges <ArrowRight size={13} /></Link></div>
                         {teams.length > 1 && team.members.length > 0 && <div className="mt-4 border-t border-[var(--line)] pt-3"><p className="text-[10px] font-bold uppercase tracking-[.12em] text-[var(--ink-faint)]">Move member</p><div className="mt-2 space-y-2">{team.members.filter((member) => member.team_role !== "captain").map((member) => <label key={member.id} className="flex items-center justify-between gap-2 text-xs"><span className="min-w-0 truncate">{member.profile?.display_name ?? member.user_id.slice(0, 8)}</span><span className="flex shrink-0 items-center gap-1"><ArrowRightLeft size={12} /><select aria-label={`Move ${member.profile?.display_name ?? "member"}`} defaultValue="" disabled={busy} onChange={(event) => void moveMember(member.user_id, team.id, event.target.value)} className="h-7 max-w-32 rounded border border-[var(--line)] bg-[var(--canvas)] px-1 text-[10px]"><option value="">Move to…</option>{teams.filter((target) => target.id !== team.id && target.status === "active").map((target) => <option key={target.id} value={target.id}>{target.name}</option>)}</select></span></label>)}</div></div>}
                       </div>
                     ))}
@@ -679,7 +687,7 @@ export function LeagueDashboard() {
                       saved, locked and auditable.
                     </p>
                   </div>
-                  <Link href="/league/arena" className="text-xs font-bold text-[var(--accent)]">
+                  <Link href={paths.arena} className="text-xs font-bold text-[var(--accent)]">
                     Open Simulation Arena <ArrowRight className="inline" size={13} />
                   </Link>
                 </div>

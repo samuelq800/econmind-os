@@ -99,8 +99,12 @@ function scenarioConfig(
 
 export function ScenarioStudio({
   focus = "index",
+  basePath = "/league/scenario-studio",
+  worldPath = "/league/world",
 }: {
   focus?: "index" | "new" | "editor" | "published" | "archive";
+  basePath?: string;
+  worldPath?: string;
 }) {
   const { user, openAuth } = useAuth();
   const search = useSearchParams();
@@ -168,13 +172,14 @@ export function ScenarioStudio({
     selected && (admin || editorScenarioIds.has(selected.id)),
   );
   if (focus === "new")
-    return <ScenarioCreate admin={admin} onComplete={refresh} />;
+    return <ScenarioCreate admin={admin} onComplete={refresh} basePath={basePath} />;
   if (focus === "editor" && selected)
     return (
       <ScenarioEditor
         scenario={selected}
         canEdit={canEditSelected}
         onComplete={refresh}
+        basePath={basePath}
       />
     );
   const visible = scenarios.filter((scenario) =>
@@ -200,7 +205,7 @@ export function ScenarioStudio({
         </div>
         {admin && (
           <Link
-            href="/league/scenario-studio/new"
+            href={`${basePath}/new`}
             className="inline-flex h-10 items-center gap-2 rounded-lg bg-[var(--accent)] px-4 text-sm font-bold text-white"
           >
             <Plus size={16} /> New scenario
@@ -235,14 +240,14 @@ export function ScenarioStudio({
               <div className="mt-5 flex gap-3">
                 <Link
                   className="text-sm font-bold text-[var(--accent)]"
-                  href={`/league/scenario-studio/editor?scenario=${scenario.id}`}
+                  href={`${basePath}/editor?scenario=${scenario.id}`}
                 >
                   Inspect Studio →
                 </Link>
                 {scenario.status === "published" && (
                   <Link
                     className="text-sm font-bold text-[var(--ink-muted)]"
-                    href="/league/world"
+                    href={worldPath}
                   >
                     Open persistent World
                   </Link>
@@ -264,9 +269,11 @@ export function ScenarioStudio({
 function ScenarioCreate({
   admin,
   onComplete,
+  basePath,
 }: {
   admin: boolean;
   onComplete: () => Promise<void>;
+  basePath: string;
 }) {
   const router = useRouter();
   const [title, setTitle] = useState("Four Nations: New World");
@@ -307,7 +314,7 @@ function ScenarioCreate({
         ),
       );
       await onComplete();
-      router.push(`/league/scenario-studio/editor?scenario=${scenario.id}`);
+      router.push(`${basePath}/editor?scenario=${scenario.id}`);
     } catch (caught) {
       setError(
         caught instanceof Error
@@ -371,10 +378,12 @@ function ScenarioEditor({
   scenario,
   canEdit,
   onComplete,
+  basePath,
 }: {
   scenario: LeagueScenario;
   canEdit: boolean;
   onComplete: () => Promise<void>;
+  basePath: string;
 }) {
   const [templates, setTemplates] = useState<LeagueCountryTemplate[]>([]);
   const [configText, setConfigText] = useState(format(scenario.config));
@@ -481,7 +490,7 @@ function ScenarioEditor({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <Link
-            href="/league/scenario-studio"
+            href={basePath}
             className="text-xs font-bold text-[var(--accent)]"
           >
             ← Scenario Studio
