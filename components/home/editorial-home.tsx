@@ -18,7 +18,7 @@ import { LEAGUE_CHALLENGES_COMING_SOON, LEAGUE_SEASON } from "@/lib/league/leagu
 const zones = [
   { number: "01", title: "Real World", detail: "Daily Brief · Cases", href: "/daily-brief", icon: Newspaper, description: "Start from a current issue, a published case or a concrete economic decision." },
   { number: "02", title: "Models & Mechanisms", detail: "Model Library · Mechanism Arena", href: "/models", icon: CircleDotDashed, description: "Make assumptions visible, then trace the mechanism that connects them to outcomes." },
-  { number: "03", title: "Simulation", detail: "Sandbox · Policy Lab · Workspace", href: "/sandbox", icon: BarChart3, description: "Change a condition and watch a transparent teaching model update in real time." },
+  { number: "03", title: "Simulation", detail: "World · Oil Shock · Sandbox", href: "/simulation", icon: BarChart3, description: "Run a persistent world, test a historical counterfactual or change a controlled teaching model in real time." },
   { number: "04", title: "Evidence", detail: "Evidence Lab", href: "/research", icon: BookOpenCheck, description: "Test claims with curated sources, methods and clearly stated limits." },
   { number: "05", title: "League", detail: "Teams · Countries · Decisions", href: "/league", icon: Globe2, description: "Connect schools through one persistent fictional world economy." },
 ] as const;

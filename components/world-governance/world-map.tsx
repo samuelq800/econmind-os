@@ -29,11 +29,13 @@ export function WorldMap({
   mode = "political",
   onModeChange,
   compact = false,
+  basePath = "/league/world",
 }: {
   selectedCountryId?: string;
   mode?: MapMode;
   onModeChange?: (mode: MapMode) => void;
   compact?: boolean;
+  basePath?: string;
 }) {
   const positions = new Map(
     WORLD_COUNTRIES.map((country) => [
@@ -131,7 +133,7 @@ export function WorldMap({
           return (
             <Link
               key={country.id}
-              href={`/league/world/country/${country.id}`}
+              href={`${basePath}/country/${country.id}`}
               className={`absolute z-10 -translate-x-1/2 -translate-y-1/2 rounded-xl border px-2.5 py-2 text-left transition hover:-translate-y-[55%] hover:border-white/60 hover:bg-white/15 ${active ? "border-white bg-white/20 shadow-[0_0_0_4px_rgba(255,255,255,.12)]" : "border-white/20 bg-[#0a1724]/65"}`}
               style={{ left: `${position.x}%`, top: `${position.y}%` }}
             >

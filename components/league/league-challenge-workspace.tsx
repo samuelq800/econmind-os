@@ -53,9 +53,21 @@ import {
   submitLeagueChallengeAttempt,
 } from "@/lib/supabase/league-challenges";
 
-type WorkspaceProps = { slug: string; preferredMode?: LeagueAttemptMode };
+type WorkspaceProps = {
+  slug: string;
+  preferredMode?: LeagueAttemptMode;
+  arenaPath?: string;
+  standingsPath?: string;
+  replayPath?: string;
+};
 
-export function LeagueChallengeWorkspace({ slug, preferredMode = "practice" }: WorkspaceProps) {
+export function LeagueChallengeWorkspace({
+  slug,
+  preferredMode = "practice",
+  arenaPath = "/league/arena",
+  standingsPath = "/league/standings",
+  replayPath = "/league/replay",
+}: WorkspaceProps) {
   const definition = challengeDefinition(slug);
   const { user } = useAuth();
   const [mode, setMode] = useState<LeagueAttemptMode>(preferredMode);
@@ -132,7 +144,7 @@ export function LeagueChallengeWorkspace({ slug, preferredMode = "practice" }: W
   const showExactScore = mode === "practice" || decisions.length > 0 || attempt?.status === "submitted";
 
   if (!definition) {
-    return <main className="mx-auto min-h-[60vh] max-w-3xl px-5 py-16"><h1 className="text-3xl font-bold">Challenge not found</h1><Link href="/league/arena" className="mt-6 inline-flex text-sm font-bold text-[var(--accent)]">Return to Simulation Arena <ArrowRight size={14} /></Link></main>;
+    return <main className="mx-auto min-h-[60vh] max-w-3xl px-5 py-16"><h1 className="text-3xl font-bold">Challenge not found</h1><Link href={arenaPath} className="mt-6 inline-flex text-sm font-bold text-[var(--accent)]">Return to Simulation Arena <ArrowRight size={14} /></Link></main>;
   }
   const currentDefinition = definition;
 
@@ -200,7 +212,7 @@ export function LeagueChallengeWorkspace({ slug, preferredMode = "practice" }: W
 
   return (
     <main className="mx-auto min-h-screen max-w-[1440px] px-5 py-9 sm:px-8 lg:px-12">
-      <Link href="/league/arena" className="inline-flex items-center gap-2 text-xs font-bold text-[var(--accent)]"><ArrowLeft size={14} /> Simulation Arena</Link>
+      <Link href={arenaPath} className="inline-flex items-center gap-2 text-xs font-bold text-[var(--accent)]"><ArrowLeft size={14} /> Simulation Arena</Link>
       <header className="mt-6 flex flex-wrap items-end justify-between gap-5">
         <div>
           <p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-[var(--accent)]">{definition.eyebrow}</p>
@@ -252,7 +264,7 @@ export function LeagueChallengeWorkspace({ slug, preferredMode = "practice" }: W
                   <div className="mt-6 flex flex-wrap gap-3"><Button className="h-14 w-full text-base sm:w-auto sm:min-w-64" onClick={() => void lockCurrentStage()} disabled={busy || !canProceed}><LockKeyhole size={17} /> LOCK DECISION</Button>{mode === "official" && attempt && <Button variant="secondary" onClick={() => void saveProgress()} disabled={busy}><Save size={15} /> Save & leave</Button>}</div>
                 </> : <>
                   <p className="text-sm leading-6 text-[var(--ink-muted)]">All Decision Stages are locked. Review the visible score components, then submit this official result. Submission creates a reusable anonymous Ghost Strategy.</p>
-                  <div className="mt-6 flex flex-wrap gap-3">{mode === "official" && attempt?.status === "active" ? <Button onClick={() => void submitOfficial()} disabled={busy}><CheckCircle2 size={15} /> Submit official result</Button> : <Button onClick={resetPractice}><Play size={15} /> New practice run</Button>}{attempt?.status === "submitted" && <Link href="/league/replay" className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[var(--line)] px-4 text-sm font-semibold"><History size={15} /> View replay</Link>}</div>
+                  <div className="mt-6 flex flex-wrap gap-3">{mode === "official" && attempt?.status === "active" ? <Button onClick={() => void submitOfficial()} disabled={busy}><CheckCircle2 size={15} /> Submit official result</Button> : <Button onClick={resetPractice}><Play size={15} /> New practice run</Button>}{attempt?.status === "submitted" && <Link href={replayPath} className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[var(--line)] px-4 text-sm font-semibold"><History size={15} /> View replay</Link>}</div>
                 </>}
               </div>
             </Card>
@@ -261,8 +273,8 @@ export function LeagueChallengeWorkspace({ slug, preferredMode = "practice" }: W
 
           <aside className="space-y-5">
             <Card className="p-5"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--ink-faint)]">{showExactScore ? "Performance score" : "Directional pressure"}</p>{showExactScore ? <><p className="mt-3 text-5xl font-bold tracking-[-.07em] text-[var(--accent)]">{score?.score.toFixed(1) ?? "—"}<span className="ml-1 text-lg text-[var(--ink-muted)]">/ 100</span></p><div className="mt-5 space-y-3">{score?.components.map((component) => <div key={component.label} className="border-t border-[var(--line)] pt-3"><div className="flex justify-between gap-2 text-sm"><span className="font-semibold">{component.label}</span><b className={component.points < 0 ? "text-[var(--red)]" : "text-[var(--accent)]"}>{component.points > 0 ? "+" : ""}{component.points.toFixed(1)}</b></div><p className="mt-1 text-[11px] leading-5 text-[var(--ink-muted)]">{component.detail}</p></div>)}</div></> : <DirectionalPressure simulationType={definition.simulationType} state={state} />}</Card>
-            <Card className="p-5"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--ink-faint)]">Challenge fairness</p><p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">Official attempts hide exact predicted performance until a Decision Stage is locked. Team standings, other teams’ policies and Ghost rules remain outside the active workspace.</p><Link href="/league/standings" className="mt-4 inline-flex text-sm font-bold text-[var(--accent)]">View released standings <ArrowRight size={14} /></Link></Card>
-            {attempt?.status === "submitted" && <Card className="p-5"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--ink-faint)]">Completed attempt</p><p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">Your final result is immutable. Its decision history is now available in the dedicated Replay hub.</p><Link href="/league/replay" className="mt-4 inline-flex text-sm font-bold text-[var(--accent)]"><History size={14} /> View replay</Link></Card>}
+            <Card className="p-5"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--ink-faint)]">Challenge fairness</p><p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">Official attempts hide exact predicted performance until a Decision Stage is locked. Team standings, other teams’ policies and Ghost rules remain outside the active workspace.</p><Link href={standingsPath} className="mt-4 inline-flex text-sm font-bold text-[var(--accent)]">View released standings <ArrowRight size={14} /></Link></Card>
+            {attempt?.status === "submitted" && <Card className="p-5"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--ink-faint)]">Completed attempt</p><p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">Your final result is immutable. Its decision history is now available in the dedicated Replay hub.</p><Link href={replayPath} className="mt-4 inline-flex text-sm font-bold text-[var(--accent)]"><History size={14} /> View replay</Link></Card>}
           </aside>
         </section>
         <section className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--surface-subtle)] p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--accent)]">Analysis dock</p><h2 className="mt-1 text-lg font-bold">Mechanism, score and model context</h2></div><div className="flex flex-wrap gap-1">{(["mechanism", "score", "data", "assumptions"] as const).map((tab) => <button type="button" key={tab} onClick={() => setAnalysisTab(tab)} className={`rounded-md px-3 py-2 text-xs font-bold capitalize ${analysisTab === tab ? "bg-[var(--accent)] text-white" : "bg-[var(--canvas)] text-[var(--ink-muted)]"}`}>{tab}</button>)}</div></div><AnalysisDock tab={analysisTab} simulationType={definition.simulationType} score={score} state={state} /></section>

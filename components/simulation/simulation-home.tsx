@@ -1,0 +1,16 @@
+"use client";
+
+import Link from "next/link";
+import { ArrowRight, CirclePlay, Globe2, History, Landmark } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { LEAGUE_CHALLENGE_CATALOG } from "@/lib/economics/league-arena";
+
+const icons = { world: Globe2, time_machine: History, industry: CirclePlay, financial: Landmark } as const;
+
+export function SimulationHome() {
+  return <main><section className="relative overflow-hidden border-b border-[var(--line)]"><div className="page-grid absolute inset-0 opacity-50" /><div className="relative mx-auto max-w-[1440px] px-5 py-14 sm:px-8 lg:px-12 lg:py-20"><p className="text-[10px] font-extrabold uppercase tracking-[.2em] text-[var(--accent)]">EconMind OS · simulation systems</p><div className="mt-5 grid gap-8 lg:grid-cols-[1.12fr_.88fr] lg:items-end"><div><h1 className="text-[clamp(3.8rem,8vw,7.4rem)] font-bold leading-[.83] tracking-[-.085em]">Simulation.</h1><p className="mt-6 max-w-2xl text-lg leading-8 text-[var(--ink-muted)]">Run the persistent twelve-country economy, then test decisions through shared economic scenarios and historical counterfactuals.</p></div><div className="grid grid-cols-3 gap-px border border-[var(--line)] bg-[var(--line)]"><Fact value="12" label="Countries" /><Fact value="6" label="Offices each" /><Fact value="5" label="Oil Shock stages" /></div></div><div className="mt-9 flex flex-wrap gap-3"><Link href="/simulation/world" className="inline-flex h-11 items-center gap-2 rounded-lg bg-[var(--accent)] px-5 text-sm font-bold text-white"><Globe2 size={16} /> Open 12-Country World</Link><Link href="/simulation/arena/time-machine-1973-oil-shock" className="inline-flex h-11 items-center gap-2 rounded-lg border border-[var(--line)] px-5 text-sm font-bold"><History size={16} /> Enter 1973 Oil Shock</Link></div></div></section><section className="mx-auto max-w-[1440px] px-5 py-14 sm:px-8 lg:px-12"><p className="text-[10px] font-bold uppercase tracking-[.18em] text-[var(--accent)]">Simulation Arena</p><h2 className="mt-2 text-3xl font-bold tracking-[-.055em]">Shared systems to explore.</h2><div className="mt-7 grid gap-5 md:grid-cols-2 xl:grid-cols-4">{LEAGUE_CHALLENGE_CATALOG.map((challenge) => { const Icon = icons[challenge.simulationType]; return <Card key={challenge.slug} className="flex min-h-[290px] flex-col p-6"><Icon className="text-[var(--accent)]" size={22} /><p className="mt-7 text-[10px] font-bold uppercase tracking-[.14em] text-[var(--accent)]">{challenge.eyebrow}</p><h3 className="mt-2 text-xl font-bold tracking-[-.035em]">{challenge.title}</h3><p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">{challenge.summary}</p><Link href={`/simulation/arena/${challenge.slug}`} className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-bold text-[var(--accent)]">Open scenario <ArrowRight size={14} /></Link></Card>; })}</div></section></main>;
+}
+
+function Fact({ value, label }: { value: string; label: string }) {
+  return <div className="bg-[var(--surface)] p-5"><p className="text-3xl font-bold tracking-[-.06em] text-[var(--accent)]">{value}</p><p className="mt-2 text-[10px] font-bold uppercase tracking-[.14em] text-[var(--ink-muted)]">{label}</p></div>;
+}

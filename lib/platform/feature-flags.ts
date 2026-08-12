@@ -40,6 +40,7 @@ export const PLATFORM_NAVIGATION: readonly PlatformNavigationItem[] = [
   { href: "/econbench", label: "EconBench", system: "learning-research", feature: "econBench" },
   { href: "/mechanism-arena", label: "Mechanism Arena", system: "learning-research", feature: "mechanismArena" },
   { href: "/league", label: "League", system: "world-economy", feature: "league" },
+  { href: "/simulation", label: "Simulation", system: "world-economy", feature: "league" },
   { href: "/research", label: "Evidence Lab", system: "learning-research", feature: "evidenceLab" },
   { href: "/dashboard", label: "Dashboard", system: "shared" },
 ];
@@ -51,6 +52,7 @@ export const PRIMARY_NAVIGATION: readonly PlatformNavigationItem[] = [
   { href: "/", label: "Home", system: "shared" },
   { href: "/explore", label: "Explore", system: "learning-research", feature: "dailyBrief" },
   { href: "/league", label: "League", system: "world-economy", feature: "league" },
+  { href: "/simulation", label: "Simulation", system: "world-economy", feature: "league" },
   { href: "/research", label: "Evidence", system: "learning-research", feature: "evidenceLab" },
   { href: "/dashboard", label: "Dashboard", system: "shared" },
 ];
@@ -58,7 +60,7 @@ export const PRIMARY_NAVIGATION: readonly PlatformNavigationItem[] = [
 export const MOBILE_NAVIGATION_GROUPS = [
   { label: "Real World", items: [{ href: "/daily-brief", label: "Daily Brief" }, { href: "/cases", label: "Cases" }] },
   { label: "Models & Mechanisms", items: [{ href: "/models", label: "Model Library" }, { href: "/mechanism-arena", label: "Mechanism Arena" }] },
-  { label: "Simulation & Policy", items: [{ href: "/sandbox", label: "Economic Sandbox" }, { href: "/policy-lab", label: "Policy Lab" }, { href: "/workspace", label: "Integrated Workspace" }] },
+  { label: "Simulation & Policy", items: [{ href: "/simulation", label: "Simulation" }, { href: "/sandbox", label: "Economic Sandbox" }, { href: "/policy-lab", label: "Policy Lab" }, { href: "/workspace", label: "Integrated Workspace" }] },
   { label: "Practice & Assessment", items: [{ href: "/econbench", label: "EconBench" }, { href: "/experiments", label: "Experiments" }] },
   { label: "Evidence & Research", items: [{ href: "/research", label: "Evidence Lab" }] },
   { label: "Network", items: [{ href: "/league", label: "League" }] },

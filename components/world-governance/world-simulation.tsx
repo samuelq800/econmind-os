@@ -127,19 +127,23 @@ function PageFrame({
   children,
   countryId,
   office,
+  basePath = "/league/world",
+  systemLabel = "EconMind OS League",
 }: {
   children: ReactNode;
   countryId?: string;
   office?: WorldGovernanceOffice;
+  basePath?: string;
+  systemLabel?: string;
 }) {
   return (
     <>
       <WorldStatusBar />
       <div className="mx-auto w-full max-w-[1540px] px-4 py-5 sm:px-6 lg:px-8">
         {countryId ? (
-          <WorldSubnav countryId={countryId} office={office} />
+          <WorldSubnav countryId={countryId} office={office} basePath={basePath} />
         ) : (
-          <WorldTopNav />
+          <WorldTopNav basePath={basePath} systemLabel={systemLabel} />
         )}
         {children}
       </div>
@@ -174,7 +178,7 @@ export function WorldStatusBar() {
   );
 }
 
-function WorldTopNav() {
+function WorldTopNav({ basePath, systemLabel }: { basePath: string; systemLabel: string }) {
   return (
     <nav
       aria-label="World simulation navigation"
@@ -182,7 +186,7 @@ function WorldTopNav() {
     >
       <div>
         <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[var(--accent)]">
-          EconMind OS League
+          {systemLabel}
         </p>
         <h1 className="mt-1 text-2xl font-bold tracking-[-.04em] sm:text-3xl">
           World Simulation
@@ -190,19 +194,19 @@ function WorldTopNav() {
       </div>
       <div className="flex flex-wrap gap-2">
         <Link
-          href="/league/world/contracts"
+          href={`${basePath}/contracts`}
           className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[var(--line)] px-3 text-xs font-bold text-[var(--ink-muted)] hover:bg-[var(--surface-subtle)]"
         >
           <Handshake size={14} /> Contracts
         </Link>
         <Link
-          href="/league/world/diplomacy"
+          href={`${basePath}/diplomacy`}
           className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[var(--line)] px-3 text-xs font-bold text-[var(--ink-muted)] hover:bg-[var(--surface-subtle)]"
         >
           <Network size={14} /> Diplomacy
         </Link>
         <Link
-          href="/league/world/leaderboard"
+          href={`${basePath}/leaderboard`}
           className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[var(--line)] px-3 text-xs font-bold text-[var(--ink-muted)] hover:bg-[var(--surface-subtle)]"
         >
           <LineChart size={14} /> Leaderboard
@@ -215,9 +219,11 @@ function WorldTopNav() {
 function WorldSubnav({
   countryId,
   office,
+  basePath,
 }: {
   countryId: string;
   office?: WorldGovernanceOffice;
+  basePath: string;
 }) {
   const country = createCountry(countryId);
   return (
@@ -227,13 +233,13 @@ function WorldSubnav({
     >
       <div className="flex min-w-max items-center gap-1 overflow-x-auto">
         <Link
-          href="/league/world"
+          href={basePath}
           className="inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-xs font-bold text-[var(--ink-muted)] hover:bg-[var(--surface-subtle)]"
         >
           <ArrowLeft size={14} /> World
         </Link>
         <Link
-          href={`/league/world/country/${countryId}`}
+          href={`${basePath}/country/${countryId}`}
           className={`inline-flex h-9 items-center gap-2 rounded-lg px-3 text-xs font-bold ${!office ? "bg-[var(--accent-soft)] text-[var(--accent)]" : "text-[var(--ink-muted)] hover:bg-[var(--surface-subtle)]"}`}
         >
           <span className="size-2 rounded-full bg-[var(--accent)]" />{" "}
@@ -248,7 +254,7 @@ function WorldSubnav({
           return (
             <Link
               key={item}
-              href={`/league/world/country/${countryId}/${item}`}
+              href={`${basePath}/country/${countryId}/${item}`}
               className={`inline-flex h-9 items-center rounded-lg px-3 text-xs font-bold whitespace-nowrap ${office === item ? "bg-[var(--accent)] text-white" : "text-[var(--ink-muted)] hover:bg-[var(--surface-subtle)]"}`}
             >
               {label}
@@ -288,17 +294,19 @@ function OfficeCard({
   role,
   assigned,
   supervisor,
+  basePath,
 }: {
   countryId: string;
   role: WorldGovernanceRole;
   assigned: boolean;
   supervisor: boolean;
+  basePath: string;
 }) {
   const meta = WORLD_ROLE_META[role];
   const Icon = roleIcon[role];
   return (
     <Link
-      href={`/league/world/country/${countryId}/${role}`}
+      href={`${basePath}/country/${countryId}/${role}`}
       className="group rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4 shadow-[var(--shadow)] transition hover:-translate-y-0.5 hover:border-[var(--accent)]"
     >
       <div className="flex items-start justify-between gap-3">
@@ -388,7 +396,13 @@ function AccessNotice({ countryId }: { countryId: string }) {
   return null;
 }
 
-export function WorldSimulationOverview() {
+export function WorldSimulationOverview({
+  basePath = "/league/world",
+  systemLabel = "EconMind OS League",
+}: {
+  basePath?: string;
+  systemLabel?: string;
+} = {}) {
   const [mode, setMode] = useState<
     "political" | "trade" | "risk" | "resources"
   >("political");
@@ -398,7 +412,7 @@ export function WorldSimulationOverview() {
     access.roles.map((item) => item.countryId),
   ).size;
   return (
-    <PageFrame>
+    <PageFrame basePath={basePath} systemLabel={systemLabel}>
       <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_330px]">
         <div className="space-y-5">
           <Card className="overflow-hidden border-[var(--accent)] p-0">
@@ -426,7 +440,7 @@ export function WorldSimulationOverview() {
                     <Map size={15} /> Select a country
                   </Link>
                   <Link
-                    href="/league/world/contracts"
+                    href={`${basePath}/contracts`}
                     className="inline-flex h-10 items-center gap-2 rounded-lg border border-[var(--line)] bg-[var(--surface)] px-4 text-sm font-bold"
                   >
                     <Handshake size={15} /> Contract desk
@@ -455,7 +469,7 @@ export function WorldSimulationOverview() {
               ))}
             </div>
           </Card>
-          <WorldMap mode={mode} onModeChange={setMode} />
+          <WorldMap mode={mode} onModeChange={setMode} basePath={basePath} />
           <section id="countries">
             <div className="mb-3 flex items-end justify-between gap-3">
               <div>
@@ -475,7 +489,7 @@ export function WorldSimulationOverview() {
               {countries.map((country) => (
                 <Link
                   key={country.id}
-                  href={`/league/world/country/${country.id}`}
+                  href={`${basePath}/country/${country.id}`}
                   className="group rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4 shadow-[var(--shadow)] transition hover:-translate-y-0.5 hover:border-[var(--accent)]"
                 >
                   <div className="flex items-center justify-between gap-2">
@@ -586,7 +600,7 @@ export function WorldSimulationOverview() {
               could rewrite the running world.
             </p>
             <Link
-              href="/league/world/leaderboard"
+              href={`${basePath}/leaderboard`}
               className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[var(--accent)]"
             >
               Open reports & rankings <ChevronRight size={13} />
@@ -600,13 +614,15 @@ export function WorldSimulationOverview() {
 
 export function CountrySimulationWorkspace({
   countryId,
+  basePath = "/league/world",
 }: {
   countryId: string;
+  basePath?: string;
 }) {
   const country = createCountry(countryId);
   const { access, worldSupervisor } = useWorldAccess();
   return (
-    <PageFrame countryId={countryId}>
+    <PageFrame countryId={countryId} basePath={basePath}>
       <div className="space-y-5">
         <section className="rounded-2xl border border-[var(--line)] bg-[linear-gradient(120deg,var(--surface),var(--accent-soft))] p-5 sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
@@ -643,12 +659,13 @@ export function CountrySimulationWorkspace({
                   (item) => item.countryId === countryId && item.role === role,
                 )}
                 supervisor={worldSupervisor}
+                basePath={basePath}
               />
             ),
           )}
         </section>
         <section className="grid gap-5 xl:grid-cols-[1.2fr_.8fr]">
-          <WorldMap selectedCountryId={countryId} compact />
+          <WorldMap selectedCountryId={countryId} compact basePath={basePath} />
           <Card className="p-5">
             <p className="text-[10px] font-bold uppercase tracking-[.15em] text-[var(--accent)]">
               Country briefing
@@ -676,7 +693,7 @@ export function CountrySimulationWorkspace({
               ))}
             </div>
             <Link
-              href={`/league/world/country/${countryId}/reports`}
+              href={`${basePath}/country/${countryId}/reports`}
               className="mt-5 inline-flex items-center gap-1 text-xs font-bold text-[var(--accent)]"
             >
               Open rolling briefing <ChevronRight size={13} />
@@ -691,9 +708,11 @@ export function CountrySimulationWorkspace({
 function OfficeHeader({
   country,
   role,
+  basePath,
 }: {
   country: Country;
   role: WorldGovernanceRole;
+  basePath: string;
 }) {
   const Icon = roleIcon[role];
   const meta = WORLD_ROLE_META[role];
@@ -717,7 +736,7 @@ function OfficeHeader({
           </div>
         </div>
         <Link
-          href={`/league/world/country/${country.id}`}
+          href={`${basePath}/country/${country.id}`}
           className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[var(--line)] px-3 text-xs font-bold text-[var(--ink-muted)] hover:bg-[var(--surface-subtle)]"
         >
           <Map size={14} /> Country overview
@@ -727,7 +746,7 @@ function OfficeHeader({
   );
 }
 
-function CabinetWorkspace({ country }: { country: Country }) {
+function CabinetWorkspace({ country, basePath }: { country: Country; basePath: string }) {
   const roles = Object.keys(WORLD_ROLE_META) as WorldGovernanceRole[];
   return (
     <section className="grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_360px]">
@@ -758,7 +777,7 @@ function CabinetWorkspace({ country }: { country: Country }) {
                 </p>
               </div>
               <Link
-                href={`/league/world/country/${country.id}/${role}`}
+                href={`${basePath}/country/${country.id}/${role}`}
                 className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border border-[var(--line)] px-2.5 text-xs font-bold text-[var(--accent)]"
               >
                 Open desk <ChevronRight size={13} />
@@ -785,7 +804,7 @@ function CabinetWorkspace({ country }: { country: Country }) {
             </span>
           </div>
           <Link
-            href={`/league/world/country/${country.id}/policies`}
+            href={`${basePath}/country/${country.id}/policies`}
             className="inline-flex items-center gap-1 pt-1 text-xs font-bold text-[var(--accent)]"
           >
             Inspect policy register <ChevronRight size={13} />
@@ -906,35 +925,37 @@ function PolicyRegister({ country }: { country: Country }) {
 export function WorldOfficeWorkspace({
   countryId,
   office,
+  basePath = "/league/world",
 }: {
   countryId: string;
   office: WorldGovernanceOffice;
+  basePath?: string;
 }) {
   const country = createCountry(countryId);
   const { access, worldSupervisor } = useWorldAccess();
   if (office === "cabinet")
     return (
-      <PageFrame countryId={countryId} office={office}>
+      <PageFrame countryId={countryId} office={office} basePath={basePath}>
         <div className="space-y-5">
-          <OfficeHeader country={country} role="captain" />
-          <CabinetWorkspace country={country} />
+          <OfficeHeader country={country} role="captain" basePath={basePath} />
+          <CabinetWorkspace country={country} basePath={basePath} />
         </div>
       </PageFrame>
     );
   if (office === "reports")
     return (
-      <PageFrame countryId={countryId} office={office}>
+      <PageFrame countryId={countryId} office={office} basePath={basePath}>
         <div className="space-y-5">
-          <OfficeHeader country={country} role="captain" />
+          <OfficeHeader country={country} role="captain" basePath={basePath} />
           <ReportsWorkspace country={country} />
         </div>
       </PageFrame>
     );
   if (office === "policies")
     return (
-      <PageFrame countryId={countryId} office={office}>
+      <PageFrame countryId={countryId} office={office} basePath={basePath}>
         <div className="space-y-5">
-          <OfficeHeader country={country} role="captain" />
+          <OfficeHeader country={country} role="captain" basePath={basePath} />
           <PolicyRegister country={country} />
         </div>
       </PageFrame>
@@ -944,9 +965,9 @@ export function WorldOfficeWorkspace({
     Boolean(access.world) &&
     mayPublishWorldPolicy(access, countryId, role, worldSupervisor);
   return (
-    <PageFrame countryId={countryId} office={office}>
+    <PageFrame countryId={countryId} office={office} basePath={basePath}>
       <div className="space-y-5">
-        <OfficeHeader country={country} role={role} />
+        <OfficeHeader country={country} role={role} basePath={basePath} />
         <ResourceStrip country={country} />
         <PolicyStudio
           role={role}
@@ -991,14 +1012,20 @@ function SecondaryHeader({
   );
 }
 
-export function WorldContractsPage() {
+export function WorldContractsPage({
+  basePath = "/league/world",
+  systemLabel = "EconMind OS League",
+}: {
+  basePath?: string;
+  systemLabel?: string;
+} = {}) {
   const pairs = [
     ["Asterra", "Lumeria", "Food supply"],
     ["Cyrenia", "Bellune", "Energy & equipment"],
     ["Eryndor", "Iskara", "Port logistics"],
   ];
   return (
-    <PageFrame>
+    <PageFrame basePath={basePath} systemLabel={systemLabel}>
       <SecondaryHeader
         eyebrow="International contract desk"
         title="Trade that settles even when governments change."
@@ -1083,16 +1110,22 @@ export function WorldContractsPage() {
   );
 }
 
-export function WorldDiplomacyPage() {
+export function WorldDiplomacyPage({
+  basePath = "/league/world",
+  systemLabel = "EconMind OS League",
+}: {
+  basePath?: string;
+  systemLabel?: string;
+} = {}) {
   return (
-    <PageFrame>
+    <PageFrame basePath={basePath} systemLabel={systemLabel}>
       <SecondaryHeader
         eyebrow="Foreign relations"
         title="Relationships, exposure and negotiation"
         description="The diplomacy layer turns trade routes into visible dependencies. It distinguishes a proposed deal from an accepted contract and keeps non-financial political consequences explicit."
       />
       <div className="grid gap-5 xl:grid-cols-[1.1fr_.9fr]">
-        <WorldMap mode="trade" />
+        <WorldMap mode="trade" basePath={basePath} />
         <Card className="p-5">
           <p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--accent)]">
             Relationship ledger
@@ -1130,7 +1163,13 @@ export function WorldDiplomacyPage() {
   );
 }
 
-export function WorldLeaderboardPage() {
+export function WorldLeaderboardPage({
+  basePath = "/league/world",
+  systemLabel = "EconMind OS League",
+}: {
+  basePath?: string;
+  systemLabel?: string;
+} = {}) {
   const countries = allCountries().sort(
     (a, b) =>
       (b.resources.find((item) => item.id === "national_stability")?.value ??
@@ -1139,7 +1178,7 @@ export function WorldLeaderboardPage() {
         0),
   );
   return (
-    <PageFrame>
+    <PageFrame basePath={basePath} systemLabel={systemLabel}>
       <SecondaryHeader
         eyebrow="Scoreboard & review"
         title="National performance, role contribution and risk"
@@ -1168,7 +1207,7 @@ export function WorldLeaderboardPage() {
             );
             return (
               <Link
-                href={`/league/world/country/${country.id}/reports`}
+                href={`${basePath}/country/${country.id}/reports`}
                 key={country.id}
                 className="grid grid-cols-[52px_minmax(0,1fr)_90px_90px] items-center gap-3 border-b border-[var(--line)] px-4 py-3.5 text-sm last:border-0 hover:bg-[var(--surface-subtle)]"
               >
