@@ -25,23 +25,37 @@ export const PARTICIPATING_SCHOOLS: readonly ParticipatingSchool[] = [
   { name: "Jiangsu Tianyi High School", city: "Wuxi", region: "East China" },
   { name: "Nanjing Foreign Language School, Xianlin Campus", city: "Nanjing", region: "East China" },
   { name: "Shandong Experimental High School", city: "Jinan", region: "East China" },
-  { name: "Suzhou Industrial Park Xinghai Experimental Senior High School (Shenhu Road Campus)", city: "Suzhou", region: "East China" },
+  { name: "Suzhou Industrial Park Xinghai Experimental Senior High School", city: "Suzhou", region: "East China" },
   { name: "SUZHOU SCIENCE&TECHNOLOGY TOWN FOREIGN LANGUAGE SCHOOL", city: "Suzhou", region: "East China" },
   { name: "Suzhou No.1 High School", city: "Suzhou", region: "East China" },
   { name: "Chengdu Jiaxiang Foreign Language School", city: "Chengdu", region: "West China" },
   { name: "The Experimental School Affiliated with Zhuhai No.1 High School", city: "Zhuhai", region: "South China" },
   { name: "Victoria World Academy", city: "Singapore", region: "International" },
-  { name: "BAID", city: "League partner", region: "League partner" },
   { name: "Beijing National Day School", city: "Beijing", region: "North China" },
   { name: "HD Ningbo School", city: "Ningbo", region: "East China" },
   { name: "International Department of The Affliated High School of South Normal University", city: "League partner", region: "League partner" },
   { name: "MalvernCollegeQingdao", city: "Qingdao", region: "East China" },
   { name: "Shenzhen College of International Education", city: "Shenzhen", region: "South China" },
-  { name: "Suzhou Industrial Park Xinghai Experimental Senior High School", city: "Suzhou", region: "East China" },
-  { name: "Suzhou Scientific Foreign Language High School", city: "Suzhou", region: "East China" },
-  { name: "南外仙林分校", city: "Nanjing", region: "East China" },
   { name: "杭州西子实验学校国际部", city: "Hangzhou", region: "East China" },
-  { name: "苏州一中", city: "Suzhou", region: "East China" },
 ];
 
 export const PARTICIPATING_SCHOOL_COUNT = PARTICIPATING_SCHOOLS.length;
+
+function normaliseSchoolName(name: string) {
+  return name.toLocaleLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]/g, "");
+}
+
+// These aliases were reviewed as one school identity. The public directory
+// preserves the registered record and its Teams, while presenting its agreed
+// canonical school name everywhere a roster is shown.
+const SCHOOL_NAME_ALIASES: Readonly<Record<string, string>> = {
+  baid: "beijingacademyinternationaldepartment",
+  "南外仙林分校": "nanjingforeignlanguageschoolxianlincampus",
+  "苏州一中": "suzhouno1highschool",
+  suzhouscientificforeignlanguagehighschool: "suzhousciencetechnologytownforeignlanguageschool",
+};
+
+export function participatingSchoolKey(name: string) {
+  const normalised = normaliseSchoolName(name);
+  return SCHOOL_NAME_ALIASES[normalised] ?? normalised;
+}

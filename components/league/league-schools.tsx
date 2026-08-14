@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { LEAGUE_ACHIEVEMENTS } from "@/lib/league/league-season";
-import { PARTICIPATING_SCHOOLS } from "@/lib/league/participating-schools";
+import { PARTICIPATING_SCHOOLS, participatingSchoolKey } from "@/lib/league/participating-schools";
 import { getLeagueContext } from "@/lib/supabase/league";
 import type { PublicLeagueSchool, PublicLeagueTeam } from "@/lib/supabase/league-directory";
 import { listPublicLeagueSchools, listPublicLeagueTeams, updateLeagueSchoolProfile } from "@/lib/supabase/league-directory";
@@ -17,7 +17,7 @@ import { listPublicLeagueSchools, listPublicLeagueTeams, updateLeagueSchoolProfi
 type DirectorySchool = PublicLeagueSchool & { region: string; isEditorialRoster: boolean };
 
 function normaliseName(name: string) {
-  return name.toLowerCase().replace(/[^a-z0-9]/g, "");
+  return participatingSchoolKey(name);
 }
 
 function editorialSchool(name: string, city: string, region: string): DirectorySchool {

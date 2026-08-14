@@ -3,17 +3,13 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight, LoaderCircle } from "lucide-react";
-import { PARTICIPATING_SCHOOLS } from "@/lib/league/participating-schools";
+import { PARTICIPATING_SCHOOLS, participatingSchoolKey } from "@/lib/league/participating-schools";
 import type { PublicLeagueSchool } from "@/lib/supabase/league-directory";
 import { listPublicLeagueSchools } from "@/lib/supabase/league-directory";
 
-function normaliseSchoolName(name: string) {
-  return name.toLocaleLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]/g, "");
-}
-
 function editorialDirectorySchool(name: string, city: string): PublicLeagueSchool {
   return {
-    school_id: `editorial-${normaliseSchoolName(name)}`,
+    school_id: `editorial-${participatingSchoolKey(name)}`,
     school_name: name,
     club_name: null,
     city,
@@ -29,13 +25,13 @@ function editorialDirectorySchool(name: string, city: string): PublicLeagueSchoo
 }
 
 function mergeHomeSchools(rows: PublicLeagueSchool[]) {
-  const registered = new Map(rows.map((school) => [normaliseSchoolName(school.school_name), school]));
+  const registered = new Map(rows.map((school) => [participatingSchoolKey(school.school_name), school]));
   const editorialRoster = PARTICIPATING_SCHOOLS.map((school) => {
-    const current = registered.get(normaliseSchoolName(school.name));
+    const current = registered.get(participatingSchoolKey(school.name));
     return current ? { ...current, school_name: school.name, city: current.city ?? school.city } : editorialDirectorySchool(school.name, school.city);
   });
-  const editorialNames = new Set(PARTICIPATING_SCHOOLS.map((school) => normaliseSchoolName(school.name)));
-  const newlyRegistered = rows.filter((school) => !editorialNames.has(normaliseSchoolName(school.school_name)));
+  const editorialNames = new Set(PARTICIPATING_SCHOOLS.map((school) => participatingSchoolKey(school.name)));
+  const newlyRegistered = rows.filter((school) => !editorialNames.has(participatingSchoolKey(school.school_name)));
   return [...editorialRoster, ...newlyRegistered];
 }
 

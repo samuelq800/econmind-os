@@ -33,7 +33,8 @@ describe("editorial public architecture", () => {
     expect(schoolDirectory).toContain("school.school_name");
     expect(schoolRoster).toContain("HD Ningbo School");
     expect(schoolRoster).toContain("MalvernCollegeQingdao");
-    expect(schoolRoster).toContain("Suzhou Scientific Foreign Language High School");
+    expect(schoolRoster).toContain("SUZHOU SCIENCE&TECHNOLOGY TOWN FOREIGN LANGUAGE SCHOOL");
+    expect(schoolRoster).toContain("suzhouscientificforeignlanguagehighschool");
     expect(schoolDirectory).toContain("mergeHomeSchools");
     expect(home.indexOf("HomeLeagueSchoolDirectory")).toBeLessThan(home.indexOf("Platform thesis"));
   });
