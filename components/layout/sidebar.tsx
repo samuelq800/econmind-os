@@ -9,7 +9,7 @@ import { AVAILABLE_MODELS } from "@/lib/models/registry";
 const models = AVAILABLE_MODELS.filter((model) => model.route.startsWith("/models/"));
 
 export function Sidebar() {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   return (
     <aside className="max-h-[calc(100dvh-4rem)] overflow-hidden border-b border-[var(--line)] bg-[var(--canvas)] md:sticky md:top-16 md:h-[calc(100vh-4rem)] md:w-64 md:shrink-0 md:border-r md:border-b-0">
       <div className="h-full overflow-x-auto overflow-y-auto overscroll-contain p-3 pr-2 md:p-5 md:pr-3">

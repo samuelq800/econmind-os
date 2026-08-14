@@ -9,7 +9,7 @@ const readerPage = readFileSync(resolve(process.cwd(), "app/daily-brief/read/pag
 describe("Daily Brief static routing", () => {
   it("opens live Supabase briefs through a static GitHub Pages route", () => {
     expect(list).toContain("/daily-brief/read?brief=${encodeURIComponent(item.slug)}");
-    expect(reader).toContain('useSearchParams().get("brief")');
+    expect(reader).toContain('useSearchParams()?.get("brief")');
   });
 
   it("keeps query-string reading behind a Suspense boundary for static export", () => {

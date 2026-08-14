@@ -101,7 +101,7 @@ export function LeagueSchools({ profileName }: { profileName?: string | null }) 
 
 export function LeagueSchoolProfile() {
   const searchParams = useSearchParams();
-  return <LeagueSchools profileName={searchParams.get("school")} />;
+  return <LeagueSchools profileName={searchParams?.get("school") ?? null} />;
 }
 
 function SchoolCard({ school, index }: { school: DirectorySchool; index: number }) {

@@ -115,7 +115,7 @@ export function ScenarioStudio({
   const [scenarios, setScenarios] = useState<LeagueScenario[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const requestedId = search.get("scenario") ?? "";
+  const requestedId = search?.get("scenario") ?? "";
   const refresh = async () => {
     setLoading(true);
     try {
