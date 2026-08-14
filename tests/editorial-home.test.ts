@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { PARTICIPATING_SCHOOLS } from "@/lib/league/participating-schools";
 
 const home = readFileSync("components/home/editorial-home.tsx", "utf8");
+const schoolDirectory = readFileSync("components/home/home-league-school-directory.tsx", "utf8");
 const nav = readFileSync("components/layout/navbar.tsx", "utf8");
 const gate = readFileSync("components/auth/registered-app-gate.tsx", "utf8");
 const explore = readFileSync("app/explore/page.tsx", "utf8");
@@ -23,22 +23,19 @@ describe("editorial public architecture", () => {
     expect(home).toContain("How EconMind works");
   });
 
-  it("uses one central 22-school public roster, including both Shenzhen BASIS schools", () => {
-    expect(PARTICIPATING_SCHOOLS).toHaveLength(22);
-    expect(PARTICIPATING_SCHOOLS[0]?.name).toBe("Suzhou High School-International Division");
-    expect(PARTICIPATING_SCHOOLS.map((school) => school.name)).toContain("Beijing Aidi International School");
-    expect(PARTICIPATING_SCHOOLS.map((school) => school.name)).toContain("BASIS Bilingual School Shenzhen");
-    expect(PARTICIPATING_SCHOOLS.map((school) => school.name)).toContain("Basis International School Shenzhen");
-    expect(PARTICIPATING_SCHOOLS.map((school) => school.name)).toContain("Chengdu Jiaxiang Foreign Language School");
-    expect(PARTICIPATING_SCHOOLS.map((school) => school.name)).toContain("The Experimental School Affiliated with Zhuhai No.1 High School");
-    expect(PARTICIPATING_SCHOOLS.map((school) => school.name)).toContain("Victoria World Academy");
-    expect(home.indexOf("Participating schools")).toBeLessThan(home.indexOf("Platform thesis"));
+  it("uses the approved League directory instead of a hand-maintained homepage roster", () => {
+    expect(home).toContain("HomeLeagueSchoolDirectory");
+    expect(home).not.toContain("PARTICIPATING_SCHOOLS");
+    expect(schoolDirectory).toContain("listPublicLeagueSchools");
+    expect(schoolDirectory).toContain("Once a school application is approved");
+    expect(schoolDirectory).toContain("school.school_name");
+    expect(home.indexOf("HomeLeagueSchoolDirectory")).toBeLessThan(home.indexOf("Platform thesis"));
   });
 
-  it("uses a fixed city index instead of floating labels around dense map markers", () => {
-    expect(home).toContain('className="home-city-map-index"');
-    expect(home).toContain("School city locations");
-    expect(home).not.toContain("home-city-label-left");
+  it("keeps the League panel free from a second hand-positioned school map", () => {
+    expect(home).toContain("LeagueNetworkMotif");
+    expect(home).not.toContain("SchoolCityMap");
+    expect(home).not.toContain("league-cities-map.png");
   });
 
   it("keeps Explore intentionally short and sends League organisation to its own home", () => {

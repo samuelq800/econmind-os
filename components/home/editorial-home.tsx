@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import {
   ArrowRight,
   BarChart3,
@@ -12,7 +11,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import { HomeDailyBriefPreview } from "@/components/home/home-daily-brief-preview";
-import { PARTICIPATING_SCHOOL_COUNT, PARTICIPATING_SCHOOLS } from "@/lib/league/participating-schools";
+import { HomeLeagueSchoolDirectory } from "@/components/home/home-league-school-directory";
 import { LEAGUE_CHALLENGES_COMING_SOON, LEAGUE_SEASON } from "@/lib/league/league-season";
 
 const zones = [
@@ -38,37 +37,6 @@ const howItWorks = [
   ["05", "Evaluate", "Compare distributional effects, trade-offs and unintended consequences."],
   ["06", "Decide", "Explain what you would do—and what the model cannot decide for you."],
 ] as const;
-
-type LeagueCityPosition = {
-  city: string;
-  x: number;
-  y: number;
-};
-
-// Pin locations are calibrated to the supplied China map. City names live in
-// a fixed index rather than beside their markers, keeping the dense eastern
-// cluster legible at every viewport size.
-const leagueCityPositions: readonly LeagueCityPosition[] = [
-  { city: "Beijing", x: 68.7, y: 34.7 },
-  { city: "Jinan", x: 72.8, y: 42.6 },
-  { city: "Nanjing", x: 75.6, y: 49.1 },
-  { city: "Wuxi", x: 77.1, y: 50.8 },
-  { city: "Suzhou", x: 78.4, y: 51.7 },
-  { city: "Shanghai", x: 80.3, y: 53.4 },
-  { city: "Hangzhou", x: 77.4, y: 55.2 },
-  { city: "Chengdu", x: 47.8, y: 52.6 },
-  { city: "Chongqing", x: 54.6, y: 54.1 },
-  { city: "Nanchang", x: 70.4, y: 58.1 },
-  { city: "Nanning", x: 57.4, y: 65.5 },
-  { city: "Shenzhen", x: 66.2, y: 66.5 },
-  { city: "Zhuhai", x: 64.8, y: 67.4 },
-];
-
-const leagueCityHubs = leagueCityPositions.map((hub) => ({
-  ...hub,
-  schools: PARTICIPATING_SCHOOLS.filter((school) => school.city === hub.city).length,
-}));
-const internationalSchoolCount = PARTICIPATING_SCHOOLS.filter((school) => school.region === "International").length;
 
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return <p className="home-eyebrow">{children}</p>;
@@ -99,8 +67,7 @@ export function EditorialHome() {
       </section>
 
       <section className="home-section home-schools-section">
-        <div className="home-section-heading"><div><Eyebrow>Participating schools</Eyebrow><h2>Built across a growing school network.</h2></div><p className="max-w-md text-sm leading-6 text-[var(--ink-muted)]">Schools are listed here as a public network directory. Team membership, approval and League access remain managed within the existing account system.</p></div>
-        <ol className="home-schools-grid">{PARTICIPATING_SCHOOLS.map((school, index) => <li key={school.name}><span>{String(index + 1).padStart(2, "0")}</span><div><h3>{school.name}</h3><p>{school.city} · {school.region}</p></div></li>)}</ol>
+        <HomeLeagueSchoolDirectory />
       </section>
 
       <section className="home-section border-y border-[var(--line)] py-14">
@@ -148,7 +115,7 @@ export function EditorialHome() {
       </section>
 
       <section className="home-section home-league-section">
-        <div className="home-league-panel"><div><Eyebrow>Inter-school League</Eyebrow><h2>{PARTICIPATING_SCHOOL_COUNT} schools.<br />One connected economic world.</h2><p>Teams learn through one persistent fictional economy: countries remain connected, policies take time to work, and decisions create effects beyond one screen.</p><div className="mt-8 flex flex-wrap gap-3"><Link href="/league" className="home-primary-action">Explore the League <ArrowRight size={17} /></Link><Link href="/league/join" className="home-secondary-action">Join a school team <UsersRound size={16} /></Link></div></div><SchoolCityMap /></div>
+        <div className="home-league-panel"><div><Eyebrow>Inter-school League</Eyebrow><h2>One connected<br />economic world.</h2><p>Teams learn through one persistent fictional economy: countries remain connected, policies take time to work, and decisions create effects beyond one screen.</p><div className="mt-8 flex flex-wrap gap-3"><Link href="/league" className="home-primary-action">Explore the League <ArrowRight size={17} /></Link><Link href="/league/join" className="home-secondary-action">Join a school team <UsersRound size={16} /></Link></div></div><LeagueNetworkMotif /></div>
       </section>
 
       <section className="home-section home-how-section">
@@ -188,9 +155,8 @@ function HomeContextSummary() {
   return <aside className="home-context-summary" aria-label="Daily Brief learning flow"><p>DAILY BRIEF</p><strong>Context before conclusion.</strong><ol><li>Issue</li><li>Evidence</li><li>Question</li></ol></aside>;
 }
 
-function SchoolCityMap() {
-  const mapAsset = process.env.GITHUB_PAGES === "true" ? "/econmind-os/league-cities-map.png" : "/league-cities-map.png";
-  return <div className="home-league-city-map" aria-label="Participating school city network"><div className="home-city-map-art"><Image src={mapAsset} alt="Map of China with Taiwan Island and the South China Sea islands shown, overlaid with participating school cities" width={2356} height={2312} unoptimized /><ol aria-label="School city locations">{leagueCityHubs.map((hub) => <li key={hub.city} aria-label={`${hub.city}: ${hub.schools} participating school${hub.schools === 1 ? "" : "s"}`} data-school-count={hub.schools} style={{ "--city-x": `${hub.x}%`, "--city-y": `${hub.y}%` } as React.CSSProperties}><i /></li>)}</ol></div><div className="home-city-map-caption"><b>{leagueCityHubs.length} China city hubs</b><span>{PARTICIPATING_SCHOOL_COUNT} participating schools</span></div><div className="home-city-map-index" aria-label="School city index"><p>China city hubs</p><ol>{leagueCityHubs.map((hub) => <li key={hub.city}><span>{hub.city}</span><b>{hub.schools}</b></li>)}</ol>{internationalSchoolCount > 0 && <p className="home-city-map-international">+ {internationalSchoolCount} international hub · Singapore</p>}</div></div>;
+function LeagueNetworkMotif() {
+  return <div className="relative grid min-h-[360px] place-items-center overflow-hidden bg-[linear-gradient(145deg,#08295a,#123c78)]" aria-hidden="true"><div className="absolute inset-0 opacity-45 [background-image:linear-gradient(rgba(196,224,255,.16)_1px,transparent_1px),linear-gradient(90deg,rgba(196,224,255,.16)_1px,transparent_1px)] [background-size:42px_42px]" /><i className="absolute size-[82%] rounded-full border border-white/25" /><i className="absolute size-[57%] rounded-full border border-white/20" /><div className="relative grid grid-cols-3 gap-7 sm:gap-10">{[0, 1, 2, 3, 4, 5].map((node) => <span key={node} className="grid size-4 place-items-center rounded-full border-2 border-[#e6f4ff] bg-[#4fa7ff] shadow-[0_0_0_8px_rgba(79,167,255,.16)]"><b className="size-1 rounded-full bg-white" /></span>)}</div><p className="absolute bottom-8 left-8 m-0 border-l-2 border-[#83c7ff] pl-3 text-[10px] font-extrabold uppercase tracking-[.14em] text-[#e6f4ff]">Connected schools · shared economic reasoning</p></div>;
 }
 
 function EvidenceMotif() {
