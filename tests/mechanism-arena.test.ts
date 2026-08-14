@@ -9,6 +9,7 @@ describe("Mechanism Design Arena", () => {
     expect(mechanismScenarios.map((scenario) => scenario.scenario_id)).toContain("MA-01-FIRST-PRICE");
     expect(mechanismScenarios.map((scenario) => scenario.scenario_id)).toContain("MA-10-REPEATED-PD");
     expect(readFileSync("app/mechanism-arena/page.tsx", "utf8")).toContain("MechanismArenaLibrary");
+    expect(readFileSync("app/activities/page.tsx", "utf8")).toContain("MechanismArenaLibrary");
     expect(readFileSync("app/mechanism-arena/[mechanismId]/page.tsx", "utf8")).toContain("generateStaticParams");
   });
 

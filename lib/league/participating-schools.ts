@@ -1,7 +1,7 @@
 export type ParticipatingSchool = {
   name: string;
   city: string;
-  region: "East China" | "North China" | "South China" | "West China" | "Central China" | "International";
+  region: "East China" | "North China" | "South China" | "West China" | "Central China" | "International" | "League partner";
 };
 
 // This is the public editorial roster. It deliberately lives separately from
@@ -31,6 +31,17 @@ export const PARTICIPATING_SCHOOLS: readonly ParticipatingSchool[] = [
   { name: "Chengdu Jiaxiang Foreign Language School", city: "Chengdu", region: "West China" },
   { name: "The Experimental School Affiliated with Zhuhai No.1 High School", city: "Zhuhai", region: "South China" },
   { name: "Victoria World Academy", city: "Singapore", region: "International" },
+  { name: "BAID", city: "League partner", region: "League partner" },
+  { name: "Beijing National Day School", city: "Beijing", region: "North China" },
+  { name: "HD Ningbo School", city: "Ningbo", region: "East China" },
+  { name: "International Department of The Affliated High School of South Normal University", city: "League partner", region: "League partner" },
+  { name: "MalvernCollegeQingdao", city: "Qingdao", region: "East China" },
+  { name: "Shenzhen College of International Education", city: "Shenzhen", region: "South China" },
+  { name: "Suzhou Industrial Park Xinghai Experimental Senior High School", city: "Suzhou", region: "East China" },
+  { name: "Suzhou Scientific Foreign Language High School", city: "Suzhou", region: "East China" },
+  { name: "南外仙林分校", city: "Nanjing", region: "East China" },
+  { name: "杭州西子实验学校国际部", city: "Hangzhou", region: "East China" },
+  { name: "苏州一中", city: "Suzhou", region: "East China" },
 ];
 
 export const PARTICIPATING_SCHOOL_COUNT = PARTICIPATING_SCHOOLS.length;
