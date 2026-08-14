@@ -68,7 +68,7 @@ export function CompetitionBuilder() {
 }
 
 function useCompetitionSnapshot() {
-  const competitionId = useSearchParams().get("competition") ?? ""; const [snapshot, setSnapshot] = useState<CompetitionSnapshot | null>(null); const [loading, setLoading] = useState(Boolean(competitionId)); const [error, setError] = useState("");
+  const competitionId = useSearchParams()?.get("competition") ?? ""; const [snapshot, setSnapshot] = useState<CompetitionSnapshot | null>(null); const [loading, setLoading] = useState(Boolean(competitionId)); const [error, setError] = useState("");
   const refresh = useCallback(async () => { if (!competitionId) return; setLoading(true); try { setSnapshot(await getLeagueCompetition(competitionId)); setError(""); } catch (caught) { setError(caught instanceof Error ? caught.message : "Could not refresh this competition."); } finally { setLoading(false); } }, [competitionId]);
   useEffect(() => { queueMicrotask(() => { void refresh(); }); }, [refresh]);
   useEffect(() => { if (!competitionId) return; const channel = subscribeToLeagueCompetition(competitionId, () => void refresh()); return () => unsubscribeLeagueCompetition(channel); }, [competitionId, refresh]);

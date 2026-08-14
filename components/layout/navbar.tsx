@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ClipboardCheck, Cloud, LogIn, LogOut, Menu, Moon, Sun, UserRound, X } from "lucide-react";
+import { ClipboardCheck, Cloud, Eye, KeyRound, LogIn, LogOut, Menu, Moon, Sun, UserRound, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { availablePrimaryNavigation, MOBILE_NAVIGATION_GROUPS } from "@/lib/platform/feature-flags";
@@ -11,9 +11,9 @@ import { useTheme } from "./theme-provider";
 const publicLinks = availablePrimaryNavigation();
 
 export function Navbar() {
-  const path = usePathname();
+  const path = usePathname() ?? "/";
   const { theme, toggleTheme, ready } = useTheme();
-  const { user, role, loading, openAuth, signOut } = useAuth();
+  const { user, role, worldSupervisor, viewerAccess, viewerLoading, loading, openAuth, signOut, endViewerSession } = useAuth();
   const [open, setOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const links = publicLinks;
@@ -59,39 +59,48 @@ export function Navbar() {
                 <span className="grid size-5 shrink-0 place-items-center rounded-full bg-[var(--accent-soft)] text-[var(--accent)]"><UserRound size={12} /></span>
                 <span className="truncate">{user.email}</span>
               </button>
+            ) : viewerAccess ? (
+              <button
+                type="button"
+                onClick={() => setAccountOpen((current) => !current)}
+                className="flex h-9 items-center gap-2 rounded-lg border border-[var(--accent)] bg-[var(--accent-soft)] px-3 text-xs font-bold text-[var(--accent)]"
+              >
+                <Eye size={14} /> View-only
+              </button>
             ) : (
               <button
                 type="button"
-                disabled={loading}
+                disabled={loading || viewerLoading}
                 onClick={() => openAuth("sign-in")}
                 className="flex h-9 items-center gap-2 rounded-lg bg-[var(--ink)] px-3 text-xs font-bold text-[var(--surface)] disabled:opacity-50"
               >
                 <LogIn size={14} /> {loading ? "Loading" : "Sign in"}
               </button>
             )}
-            {user && accountOpen && (
+            {(user || viewerAccess) && accountOpen && (
               <div className="absolute right-0 top-11 w-64 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-xl">
                 <div className="border-b border-[var(--line)] px-3 py-2">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--ink-faint)]">Signed in</p>
-                  <p className="mt-1 truncate text-xs font-semibold">{user.email}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--ink-faint)]">{viewerAccess ? "Invitation viewer" : "Signed in"}</p>
+                  <p className="mt-1 truncate text-xs font-semibold">{viewerAccess ? viewerAccess.label ?? "Read-only access" : user?.email}</p>
                 </div>
-                <Link href="/dashboard" onClick={() => setAccountOpen(false)} className="mt-1 flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold hover:bg-[var(--surface-subtle)]">
+                {user && <Link href="/dashboard" onClick={() => setAccountOpen(false)} className="mt-1 flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold hover:bg-[var(--surface-subtle)]">
                   <Cloud size={14} /> Economist Workspace
-                </Link>
-                <Link href="/library" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold hover:bg-[var(--surface-subtle)]">
+                </Link>}
+                {user && <Link href="/library" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold hover:bg-[var(--surface-subtle)]">
                   <Cloud size={14} /> My cloud library
-                </Link>
+                </Link>}
                 {role === "teacher" && (
                   <Link href="/admin/daily-brief" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]">
                     <ClipboardCheck size={14} /> Review Daily Brief
                   </Link>
                 )}
+                {worldSupervisor && <Link href="/admin/viewer-invitations" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"><KeyRound size={14} /> Viewing invitations</Link>}
                 <button
                   type="button"
-                  onClick={() => { setAccountOpen(false); void signOut(); }}
+                  onClick={() => { setAccountOpen(false); if (viewerAccess) endViewerSession(); else void signOut(); }}
                   className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--red)] hover:bg-[var(--red-soft)]"
                 >
-                  <LogOut size={14} /> Sign out
+                  <LogOut size={14} /> {viewerAccess ? "Leave viewing mode" : "Sign out"}
                 </button>
               </div>
             )}
@@ -135,6 +144,10 @@ export function Navbar() {
           {user ? (
             <button type="button" onClick={() => { setOpen(false); void signOut(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--red)]">
               <LogOut size={15} /> Sign out
+            </button>
+          ) : viewerAccess ? (
+            <button type="button" onClick={() => { setOpen(false); endViewerSession(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--red)]">
+              <LogOut size={15} /> Leave viewing mode
             </button>
           ) : (
             <button type="button" onClick={() => { setOpen(false); openAuth("sign-in"); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--accent)]">

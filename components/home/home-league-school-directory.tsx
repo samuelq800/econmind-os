@@ -6,6 +6,33 @@ import { ArrowRight, LoaderCircle } from "lucide-react";
 import type { PublicLeagueSchool } from "@/lib/supabase/league-directory";
 import { listPublicLeagueSchools } from "@/lib/supabase/league-directory";
 
+const MANUAL_HOME_SCHOOLS: readonly PublicLeagueSchool[] = [
+  {
+    school_id: "home-invite-hd-ningbo",
+    school_name: "HD Ningbo",
+    club_name: null,
+    city: "Ningbo",
+    description: null,
+    logo_url: null,
+    member_count: 0,
+    team_count: 0,
+    current_season_points: 0,
+    official_challenge_count: 0,
+    official_wins: 0,
+    achievements: [],
+  },
+];
+
+function normaliseSchoolName(name: string) {
+  return name.trim().toLocaleLowerCase();
+}
+
+function mergeHomeSchools(rows: PublicLeagueSchool[]) {
+  const registeredNames = new Set(rows.map((school) => normaliseSchoolName(school.school_name)));
+  return [...rows, ...MANUAL_HOME_SCHOOLS.filter((school) => !registeredNames.has(normaliseSchoolName(school.school_name)))]
+    .sort((left, right) => left.school_name.localeCompare(right.school_name, "en"));
+}
+
 export function HomeLeagueSchoolDirectory() {
   const [schools, setSchools] = useState<PublicLeagueSchool[] | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -16,7 +43,7 @@ export function HomeLeagueSchoolDirectory() {
     void listPublicLeagueSchools()
       .then((rows) => {
         if (!active) return;
-        setSchools([...rows].sort((left, right) => left.school_name.localeCompare(right.school_name, "en")));
+        setSchools(mergeHomeSchools(rows));
       })
       .catch(() => {
         if (!active) return;

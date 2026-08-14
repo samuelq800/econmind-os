@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
  * direct links still follow the same boundary as navigation from the home.
  */
 export function RegisteredAppGate({ children }: { children: React.ReactNode }) {
-  const { user, loading, configured, openAuth } = useAuth();
+  const { user, loading, configured, openAuth, viewerAccess, viewerLoading } = useAuth();
   const pathname = usePathname();
   const normalisedPath = pathname?.replace(/^\/econmind-os(?=\/|$)/, "") || "/";
   const publicLeagueDirectoryPaths = new Set([
@@ -31,7 +31,7 @@ export function RegisteredAppGate({ children }: { children: React.ReactNode }) {
   // the account gate below, including direct URLs.
   if (isPublicEntry) return <>{children}</>;
 
-  if (loading) {
+  if (loading || viewerLoading) {
     return (
       <main className="grid min-h-screen place-items-center bg-[var(--canvas)] px-5" aria-live="polite">
         <div className="flex items-center gap-3 text-sm font-semibold text-[var(--ink-muted)]">
@@ -42,7 +42,7 @@ export function RegisteredAppGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user) {
+  if (!user && !viewerAccess) {
     return (
       <main className="grid min-h-screen place-items-center bg-[var(--canvas)] px-5 py-10">
         <section className="w-full max-w-lg rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-7 text-center shadow-sm sm:p-10">
@@ -50,9 +50,9 @@ export function RegisteredAppGate({ children }: { children: React.ReactNode }) {
             <LockKeyhole size={22} />
           </span>
           <p className="mt-6 text-[10px] font-extrabold uppercase tracking-[.18em] text-[var(--accent)]">Individual access required</p>
-          <h1 className="mt-3 text-3xl font-bold tracking-[-.045em] sm:text-4xl">Create an account to enter EconMind OS.</h1>
+          <h1 className="mt-3 text-3xl font-bold tracking-[-.045em] sm:text-4xl">Create an account or enter with an invitation.</h1>
           <p className="mt-4 text-sm leading-6 text-[var(--ink-muted)]">
-            All models, cases, news and League activities are available only to registered individual accounts.
+            An individual account enables saved work. An invitation code unlocks view-only access without creating an account or joining a school.
           </p>
           {!configured ? (
             <p className="mt-6 rounded-lg bg-[var(--red-soft)] p-3 text-sm text-[var(--red)]">
@@ -62,6 +62,7 @@ export function RegisteredAppGate({ children }: { children: React.ReactNode }) {
             <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
               <Button onClick={() => openAuth("sign-up")}>Create individual account</Button>
               <Button variant="secondary" onClick={() => openAuth("sign-in")}>Sign in</Button>
+              <Button variant="ghost" onClick={() => openAuth("invitation")}>Enter invitation code</Button>
             </div>
           )}
         </section>

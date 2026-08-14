@@ -10,7 +10,7 @@ const explore = readFileSync("app/explore/page.tsx", "utf8");
 describe("editorial public architecture", () => {
   it("keeps the requested public front door while preserving the account gate for tools", () => {
     expect(gate).toContain("publicLeagueDirectoryPaths");
-    expect(gate).toContain("if (!user)");
+    expect(gate).toContain("if (!user && !viewerAccess)");
     expect(nav).toContain("MOBILE_NAVIGATION_GROUPS");
   });
 
@@ -29,6 +29,8 @@ describe("editorial public architecture", () => {
     expect(schoolDirectory).toContain("listPublicLeagueSchools");
     expect(schoolDirectory).toContain("Once a school application is approved");
     expect(schoolDirectory).toContain("school.school_name");
+    expect(schoolDirectory).toContain('school_name: "HD Ningbo"');
+    expect(schoolDirectory).toContain("mergeHomeSchools");
     expect(home.indexOf("HomeLeagueSchoolDirectory")).toBeLessThan(home.indexOf("Platform thesis"));
   });
 

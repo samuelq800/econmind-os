@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { CheckCircle2, LoaderCircle, X } from "lucide-react";
+import { CheckCircle2, Eye, LoaderCircle, X } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -14,10 +14,11 @@ function emailRedirectUrl() {
 }
 
 export function AuthDialog() {
-  const { authOpen, authMode, closeAuth, openAuth, configured } = useAuth();
+  const { authOpen, authMode, closeAuth, openAuth, configured, startViewerSession } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [invitationCode, setInvitationCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -44,7 +45,10 @@ export function AuthDialog() {
 
     setBusy(true);
     try {
-      if (authMode === "sign-in") {
+      if (authMode === "invitation") {
+        await startViewerSession(invitationCode);
+        closeAuth();
+      } else if (authMode === "sign-in") {
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email: email.trim(),
           password,
@@ -88,10 +92,12 @@ export function AuthDialog() {
               Supabase account
             </p>
             <h2 id="auth-title" className="mt-2 text-2xl font-bold tracking-[-.035em]">
-              {authMode === "sign-in" ? "Welcome back" : "Create your account"}
+              {authMode === "invitation" ? "Enter with invitation code" : authMode === "sign-in" ? "Welcome back" : "Create your account"}
             </h2>
             <p className="mt-2 text-sm leading-6 text-[var(--ink-muted)]">
-              {authMode === "sign-in"
+              {authMode === "invitation"
+                ? "Invitation access lets you explore every page without an account, school binding, saved work, or permission to make changes."
+                : authMode === "sign-in"
                 ? "Sign in to access your cloud scenarios and learning history."
                 : "Your saved work stays private under Supabase Row Level Security. After your first sign-in, choose a school path or continue as a visitor."}
             </p>
@@ -112,6 +118,19 @@ export function AuthDialog() {
           </p>
         ) : (
           <form className="mt-6 space-y-4" onSubmit={submit}>
+            {authMode === "invitation" ? (
+              <label className="block text-xs font-bold">
+                Invitation code
+                <input
+                  required
+                  value={invitationCode}
+                  onChange={(event) => setInvitationCode(event.target.value)}
+                  autoComplete="one-time-code"
+                  className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 font-mono text-sm tracking-[.08em] uppercase outline-none focus:border-[var(--accent)]"
+                  placeholder="VIEW-XXXXXXXXXXXX"
+                />
+              </label>
+            ) : <>
             {authMode === "sign-up" && (
               <label className="block text-xs font-bold">
                 Display name
@@ -150,6 +169,7 @@ export function AuthDialog() {
                 placeholder="At least 8 characters"
               />
             </label>
+            </>}
             {error && (
               <p role="alert" className="rounded-lg bg-[var(--red-soft)] p-3 text-xs leading-5 text-[var(--red)]">
                 {error}
@@ -163,13 +183,13 @@ export function AuthDialog() {
             )}
             <Button className="w-full" disabled={busy} type="submit">
               {busy && <LoaderCircle className="animate-spin" size={15} />}
-              {authMode === "sign-in" ? "Sign in" : "Create account"}
+              {authMode === "invitation" ? <><Eye size={15} /> Enter view-only mode</> : authMode === "sign-in" ? "Sign in" : "Create account"}
             </Button>
           </form>
         )}
 
         <p className="mt-5 text-center text-xs text-[var(--ink-muted)]">
-          {authMode === "sign-in" ? "New to EconMind OS?" : "Already have an account?"}{" "}
+          {authMode === "sign-in" ? "New to EconMind OS?" : authMode === "sign-up" ? "Already have an account?" : "Need a full account?"}{" "}
           <button
             type="button"
             className="font-bold text-[var(--accent)]"
@@ -178,6 +198,7 @@ export function AuthDialog() {
             {authMode === "sign-in" ? "Create one" : "Sign in"}
           </button>
         </p>
+        {authMode !== "invitation" && <p className="mt-3 text-center text-xs text-[var(--ink-muted)]">Have a viewing invitation? <button type="button" className="font-bold text-[var(--accent)]" onClick={() => openAuth("invitation")}>Enter code</button></p>}
       </div>
     </div>
   );

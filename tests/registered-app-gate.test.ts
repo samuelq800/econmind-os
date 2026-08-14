@@ -5,11 +5,12 @@ const gate = readFileSync("components/auth/registered-app-gate.tsx", "utf8");
 const layout = readFileSync("app/layout.tsx", "utf8");
 
 describe("registered individual account gate", () => {
-  it("does not render application content until a user session exists", () => {
-    expect(gate).toContain("if (!user)");
-    expect(gate).toContain("All models, cases, news and League activities");
+  it("permits either an individual session or a verified view-only invitation", () => {
+    expect(gate).toContain("if (!user && !viewerAccess)");
+    expect(gate).toContain("An individual account enables saved work");
     expect(gate).toContain('openAuth("sign-up")');
     expect(gate).toContain('openAuth("sign-in")');
+    expect(gate).toContain('openAuth("invitation")');
   });
 
   it("wraps every static route in the root application gate", () => {

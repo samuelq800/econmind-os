@@ -4,13 +4,22 @@ import type { User } from "@supabase/supabase-js";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import type { AppRole } from "@/lib/experiments/types";
+import {
+  clearSavedViewerInvitationCode,
+  readSavedViewerInvitationCode,
+  saveViewerInvitationCode,
+  type ViewerInvitationAccess,
+  validateViewerInvitationCode,
+} from "@/lib/supabase/viewer-invitations";
 
-export type AuthMode = "sign-in" | "sign-up";
+export type AuthMode = "sign-in" | "sign-up" | "invitation";
 
 type AuthContextValue = {
   user: User | null;
   role: AppRole;
   worldSupervisor: boolean;
+  viewerAccess: ViewerInvitationAccess | null;
+  viewerLoading: boolean;
   roleLoading: boolean;
   loading: boolean;
   configured: boolean;
@@ -19,6 +28,8 @@ type AuthContextValue = {
   openAuth: (mode?: AuthMode) => void;
   closeAuth: () => void;
   signOut: () => Promise<void>;
+  startViewerSession: (code: string) => Promise<void>;
+  endViewerSession: () => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -28,6 +39,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<AppRole>("guest");
   const [worldSupervisor, setWorldSupervisor] = useState(false);
+  const [viewerAccess, setViewerAccess] = useState<ViewerInvitationAccess | null>(null);
+  const [viewerLoading, setViewerLoading] = useState(true);
   const [roleLoading, setRoleLoading] = useState(true);
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>("sign-in");
@@ -57,6 +70,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       active = false;
       data.subscription.unsubscribe();
     };
+  }, []);
+
+  useEffect(() => {
+    const savedCode = readSavedViewerInvitationCode();
+    if (!savedCode) {
+      queueMicrotask(() => setViewerLoading(false));
+      return;
+    }
+    let active = true;
+    void validateViewerInvitationCode(savedCode)
+      .then((invitation) => {
+        if (!active) return;
+        if (invitation) setViewerAccess(invitation);
+        else clearSavedViewerInvitationCode();
+      })
+      .catch(() => clearSavedViewerInvitationCode())
+      .finally(() => { if (active) setViewerLoading(false); });
+    return () => { active = false; };
   }, []);
 
   useEffect(() => {
@@ -96,6 +127,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       role,
       worldSupervisor,
+      viewerAccess,
+      viewerLoading,
       roleLoading,
       loading,
       configured,
@@ -109,9 +142,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signOut: async () => {
         const supabase = getSupabaseBrowserClient();
         if (supabase) await supabase.auth.signOut();
+        clearSavedViewerInvitationCode();
+        setViewerAccess(null);
+      },
+      startViewerSession: async (code: string) => {
+        const invitation = await validateViewerInvitationCode(code);
+        if (!invitation) throw new Error("This invitation code is invalid, expired, or disabled.");
+        const supabase = getSupabaseBrowserClient();
+        if (supabase) await supabase.auth.signOut();
+        saveViewerInvitationCode(code);
+        setViewerAccess(invitation);
+      },
+      endViewerSession: () => {
+        clearSavedViewerInvitationCode();
+        setViewerAccess(null);
       },
     }),
-    [user, role, worldSupervisor, roleLoading, loading, configured, authOpen, authMode],
+    [user, role, worldSupervisor, viewerAccess, viewerLoading, roleLoading, loading, configured, authOpen, authMode],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
