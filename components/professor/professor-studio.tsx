@@ -54,7 +54,7 @@ export function ProfessorStudio() {
   const [projects, setProjects] = useState<ProfessorProject[]>([]);
   const [schools, setSchools] = useState<PublicLeagueSchool[]>([]);
   const [projectType, setProjectType] = useState<ProfessorProjectType>("mechanism_arena");
-  const [sourceKey, setSourceKey] = useState("");
+  const [sourceKey, setSourceKey] = useState(() => professorProjectTemplates("mechanism_arena")[0]?.key ?? "");
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
   const [brief, setBrief] = useState("");
@@ -66,10 +66,6 @@ export function ProfessorStudio() {
   const [error, setError] = useState("");
   const templates = useMemo(() => professorProjectTemplates(projectType), [projectType]);
   const selectedTemplate = templates.find((template) => template.key === sourceKey) ?? templates[0];
-
-  useEffect(() => {
-    setSourceKey(professorProjectTemplates(projectType)[0]?.key ?? "");
-  }, [projectType]);
 
   useEffect(() => {
     if (!user || role !== "professor") {
@@ -92,6 +88,7 @@ export function ProfessorStudio() {
 
   function selectType(nextType: ProfessorProjectType) {
     setProjectType(nextType);
+    setSourceKey(professorProjectTemplates(nextType)[0]?.key ?? "");
     setTitle("");
     setSummary("");
     setBrief("");
