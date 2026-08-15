@@ -7,6 +7,7 @@ export type LeagueApplicationStatus = "submitted" | "under_review" | "approved" 
 export type LeagueProfile = {
   user_id: string;
   display_name: string | null;
+  role?: "student" | "teacher" | "professor";
   platform_role: LeaguePlatformRole;
   school_id: string | null;
   graduation_year: number | null;

@@ -45,6 +45,7 @@ import {
   moveLeagueTeamMember,
   renameLeagueTeam,
   reviewLeagueApplication,
+  setAcademicRole,
   setLeaguePlatformRole,
   setLeagueTeamStatus,
 } from "@/lib/supabase/league";
@@ -56,6 +57,12 @@ const roleLabels = {
   team_member: "Team member",
   school_leader: "School leader",
   platform_admin: "Platform admin",
+} as const;
+
+const academicRoleLabels = {
+  student: "Student",
+  teacher: "Teacher",
+  professor: "Professor",
 } as const;
 
 function Metric({ label, value }: { label: string; value: string | number }) {
@@ -303,6 +310,26 @@ export function LeagueDashboard({
         caught instanceof Error
           ? caught.message
           : "Could not update platform role.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function changeAcademicRole(
+    userId: string,
+    academicRole: "student" | "teacher" | "professor",
+  ) {
+    setBusy(true);
+    setError("");
+    try {
+      await setAcademicRole(userId, academicRole);
+      setMessage("Academic role updated. Professor remains independent of school and World Simulation authority.");
+      await load();
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Could not update academic role.",
       );
     } finally {
       setBusy(false);
@@ -644,25 +671,47 @@ export function LeagueDashboard({
                             {profile.school_id
                               ? "School associated"
                               : "No school"}
+                            {" · "}{academicRoleLabels[profile.role ?? "student"]}
                           </p>
                         </div>
-                        <select
-                          value={profile.platform_role}
-                          disabled={busy}
-                          onChange={(event) =>
-                            void changeRole(
-                              profile.user_id,
-                              event.target
-                                .value as LeagueProfile["platform_role"],
-                            )
-                          }
-                          className="h-9 rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-2 text-xs"
-                        >
-                          <option value="user">User</option>
-                          <option value="team_member">Team member</option>
-                          <option value="school_leader">School leader</option>
-                          <option value="platform_admin">Platform admin</option>
-                        </select>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <label className="text-[9px] font-bold uppercase tracking-wide text-[var(--ink-faint)]">League role
+                            <select
+                              value={profile.platform_role}
+                              disabled={busy}
+                              onChange={(event) =>
+                                void changeRole(
+                                  profile.user_id,
+                                  event.target
+                                    .value as LeagueProfile["platform_role"],
+                                )
+                              }
+                              className="mt-1 h-9 rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-2 text-xs normal-case tracking-normal text-[var(--ink)]"
+                            >
+                              <option value="user">User</option>
+                              <option value="team_member">Team member</option>
+                              <option value="school_leader">School leader</option>
+                              <option value="platform_admin">Platform admin</option>
+                            </select>
+                          </label>
+                          <label className="text-[9px] font-bold uppercase tracking-wide text-[var(--ink-faint)]">Academic role
+                            <select
+                              value={profile.role ?? "student"}
+                              disabled={busy}
+                              onChange={(event) =>
+                                void changeAcademicRole(
+                                  profile.user_id,
+                                  event.target.value as "student" | "teacher" | "professor",
+                                )
+                              }
+                              className="mt-1 h-9 rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-2 text-xs normal-case tracking-normal text-[var(--ink)]"
+                            >
+                              <option value="student">Student</option>
+                              <option value="teacher">Teacher</option>
+                              <option value="professor">Professor</option>
+                            </select>
+                          </label>
+                        </div>
                       </div>
                     ))}
                   </div>

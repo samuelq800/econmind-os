@@ -1,7 +1,14 @@
 import type { FocusedModelKey } from "@/lib/experiments/model-runtime";
 import type { MechanismStep } from "@/lib/models/explanations";
 
-export type AppRole = "guest" | "student" | "teacher";
+export type AppRole = "guest" | "student" | "teacher" | "professor";
+
+// Academic authority is deliberately separate from League membership. A
+// Professor can lead a cross-school learning project without being assigned to
+// a school, Team, country, or World Simulation office.
+export function isAcademicAuthor(role: AppRole) {
+  return role === "teacher" || role === "professor";
+}
 export type ExperimentStatus = "draft" | "published" | "closed" | "archived";
 export type PredictionType = "choice" | "numeric" | "text";
 export type ConditionOperator = "gte" | "lte" | "between" | "equals";

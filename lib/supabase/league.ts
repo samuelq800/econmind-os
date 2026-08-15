@@ -12,7 +12,7 @@ function fail(error: { message: string } | null) { if (error) throw new Error(er
 export async function getLeagueContext(userId: string): Promise<LeagueContext> {
   const supabase = client();
   const [{ data: profile, error: profileError }, { data: membership, error: membershipError }] = await Promise.all([
-    supabase.from("profiles").select("user_id,display_name,platform_role,school_id,graduation_year,economics_club_name,role_preference,created_at,updated_at").eq("user_id", userId).maybeSingle(),
+    supabase.from("profiles").select("user_id,display_name,role,platform_role,school_id,graduation_year,economics_club_name,role_preference,created_at,updated_at").eq("user_id", userId).maybeSingle(),
     supabase
       .from("team_members")
       .select("*, team:teams(*, school:schools(*))")
@@ -32,7 +32,7 @@ export async function getLeagueContext(userId: string): Promise<LeagueContext> {
 }
 
 export async function updateLeagueProfile(input: Pick<LeagueProfile, "display_name" | "graduation_year" | "economics_club_name" | "role_preference">) {
-  const { data, error } = await client().from("profiles").update(input).eq("user_id", (await client().auth.getUser()).data.user?.id ?? "").select("user_id,display_name,platform_role,school_id,graduation_year,economics_club_name,role_preference,created_at,updated_at").single();
+  const { data, error } = await client().from("profiles").update(input).eq("user_id", (await client().auth.getUser()).data.user?.id ?? "").select("user_id,display_name,role,platform_role,school_id,graduation_year,economics_club_name,role_preference,created_at,updated_at").single();
   fail(error); return data as LeagueProfile;
 }
 
@@ -119,12 +119,17 @@ export async function reviewLeagueApplication(applicationId: string, status: "ap
 }
 
 export async function listLeagueProfiles() {
-  const { data, error } = await client().from("profiles").select("user_id,display_name,platform_role,school_id,graduation_year,economics_club_name,role_preference,created_at,updated_at").order("created_at", { ascending: false }).limit(100);
+  const { data, error } = await client().from("profiles").select("user_id,display_name,role,platform_role,school_id,graduation_year,economics_club_name,role_preference,created_at,updated_at").order("created_at", { ascending: false }).limit(100);
   fail(error); return (data ?? []) as LeagueProfile[];
 }
 
 export async function setLeaguePlatformRole(userId: string, role: LeaguePlatformRole) {
   const { error } = await client().rpc("set_league_platform_role", { p_user_id: userId, p_platform_role: role });
+  fail(error);
+}
+
+export async function setAcademicRole(userId: string, role: "student" | "teacher" | "professor") {
+  const { error } = await client().rpc("set_econmind_academic_role", { p_user_id: userId, p_role: role });
   fail(error);
 }
 

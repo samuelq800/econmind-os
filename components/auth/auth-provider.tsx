@@ -105,7 +105,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data = created.data;
         }
         if (!active) return;
-        setRole(data?.role === "teacher" ? "teacher" : "student");
+        setRole(
+          data?.role === "teacher" || data?.role === "professor"
+            ? data.role
+            : "student",
+        );
         // School Leaders supervise only the country assigned to their own
         // school Team. World-wide controls are reserved for the platform
         // administrator; the database enforces the same boundary.

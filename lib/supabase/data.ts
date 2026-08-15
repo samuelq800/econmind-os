@@ -12,7 +12,7 @@ export type ProfileRow = {
   display_name: string | null;
   avatar_url: string | null;
   preferred_theme: "light" | "dark" | "system";
-  role: "student" | "teacher";
+  role: "student" | "teacher" | "professor";
   created_at: string;
   updated_at: string;
 };
