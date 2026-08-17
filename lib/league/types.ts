@@ -1,4 +1,5 @@
 import type { CrisisMetrics, CrisisPolicies, CrisisResultType, CrisisScores } from "./crisis-engine";
+import type { CurriculumSystem } from "./curriculum";
 
 export type LeaguePlatformRole = "user" | "team_member" | "school_leader" | "platform_admin";
 export type SchoolStatus = "pending" | "approved" | "rejected";
@@ -24,6 +25,7 @@ export type School = {
   city: string | null;
   description: string | null;
   logo_url: string | null;
+  curriculum_system: CurriculumSystem | null;
   status: SchoolStatus;
   liaison_user_id: string | null;
   created_at: string;
@@ -47,6 +49,7 @@ export type TeamMember = { id: string; team_id: string; user_id: string; team_ro
 
 export type LeagueApplication = {
   id: string; applicant_user_id: string; school_name: string; club_name: string | null; contact_person: string; expected_teams: number; expected_members: number;
+  curriculum_system: CurriculumSystem;
   preferred_language: "English" | "Chinese" | "Bilingual"; preferred_format: "online" | "offline" | "either"; organising_committee_interest: boolean; notes: string | null;
   status: LeagueApplicationStatus; reviewed_by: string | null; reviewed_at: string | null; created_at: string; updated_at: string;
 };

@@ -1,4 +1,5 @@
 import type { CrisisDecision, CrisisRun, LeagueApplication, LeagueContext, LeaguePlatformRole, LeagueProfile, School, Team, TeamMember } from "@/lib/league/types";
+import type { CurriculumSystem } from "@/lib/league/curriculum";
 import { getSupabaseBrowserClient } from "./client";
 
 function client() {
@@ -116,6 +117,15 @@ export async function listAdminLeagueApplications() {
 export async function reviewLeagueApplication(applicationId: string, status: "approved" | "rejected" | "under_review") {
   const { data, error } = await client().rpc("review_league_application", { p_application_id: applicationId, p_status: status });
   fail(error); return data as { application_id: string; status: LeagueApplication["status"]; school_id: string | null };
+}
+
+export async function updateLeagueSchoolCurriculum(input: { schoolId: string; curriculumSystem: CurriculumSystem }) {
+  const { data, error } = await client().rpc("update_league_school_curriculum", {
+    p_school_id: input.schoolId,
+    p_curriculum_system: input.curriculumSystem,
+  });
+  fail(error);
+  return data as School;
 }
 
 export async function listLeagueProfiles() {
