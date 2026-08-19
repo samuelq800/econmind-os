@@ -1,4 +1,5 @@
 import type { Commodity, CountryProfileConfig, CountryTemplate } from "./types.ts";
+import { withBasePath } from "../../base-path.ts";
 
 export const BASE_COUNTRY_CONFIG = {
   populationIndex: 100,
@@ -70,7 +71,7 @@ function country(input: CountryInput): CountryTemplate {
     policySensitivities: input.policy,
     shockSensitivities: input.shocks,
     viableStrategies: input.strategies,
-    visualIdentity: { primary: input.colours[0], secondary: input.colours[1], symbol: input.symbol, flag: `/league/flags/${input.id}.svg`, alt: `${input.name} abstract geometric flag` },
+    visualIdentity: { primary: input.colours[0], secondary: input.colours[1], symbol: input.symbol, flag: withBasePath(`/league/flags/${input.id}.svg`), alt: `${input.name} abstract geometric flag` },
     configHash: `twelve-country-v1-${input.id}`,
     ...input.modifiers,
   };
