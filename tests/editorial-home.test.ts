@@ -6,13 +6,18 @@ const schoolDirectory = readFileSync("components/home/home-league-school-directo
 const schoolRoster = readFileSync("lib/league/participating-schools.ts", "utf8");
 const nav = readFileSync("components/layout/navbar.tsx", "utf8");
 const gate = readFileSync("components/auth/registered-app-gate.tsx", "utf8");
+const accessControl = readFileSync("lib/platform/access-control.ts", "utf8");
 const explore = readFileSync("app/explore/page.tsx", "utf8");
+
 
 describe("editorial public architecture", () => {
   it("keeps the requested public front door while preserving the account gate for tools", () => {
-    expect(gate).toContain("publicLeagueDirectoryPaths");
-    expect(gate).toContain("if (!user && !viewerAccess)");
+    expect(gate).toContain("pageAccessForPath");
+    expect(gate).toContain("accountRequired");
+    expect(accessControl).toContain('{ path: "/about", audience: "public" }');
+    expect(accessControl).toContain('{ path: "/cases", match: "prefix", audience: "public" }');
     expect(nav).toContain("MOBILE_NAVIGATION_GROUPS");
+
   });
 
   it("anchors the homepage in real world, models, simulation, evidence and league", () => {

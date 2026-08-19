@@ -4,8 +4,10 @@ import type { User } from "@supabase/supabase-js";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import type { AppRole } from "@/lib/experiments/types";
+import type { LeaguePlatformRole } from "@/lib/league/types";
 import {
   clearSavedViewerInvitationCode,
+
   readSavedViewerInvitationCode,
   saveViewerInvitationCode,
   type ViewerInvitationAccess,
@@ -17,8 +19,10 @@ export type AuthMode = "sign-in" | "sign-up" | "invitation";
 type AuthContextValue = {
   user: User | null;
   role: AppRole;
+  platformRole: LeaguePlatformRole | null;
   worldSupervisor: boolean;
   viewerAccess: ViewerInvitationAccess | null;
+
   viewerLoading: boolean;
   roleLoading: boolean;
   loading: boolean;
@@ -38,8 +42,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<AppRole>("guest");
-  const [worldSupervisor, setWorldSupervisor] = useState(false);
+  const [platformRole, setPlatformRole] = useState<LeaguePlatformRole | null>(null);
+  const worldSupervisor = platformRole === "platform_admin";
   const [viewerAccess, setViewerAccess] = useState<ViewerInvitationAccess | null>(null);
+
   const [viewerLoading, setViewerLoading] = useState(true);
   const [roleLoading, setRoleLoading] = useState(true);
   const [authOpen, setAuthOpen] = useState(false);
@@ -62,8 +68,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (!session?.user) { setRole("guest"); setWorldSupervisor(false); setRoleLoading(false); }
+      if (!session?.user) { setRole("guest"); setPlatformRole(null); setRoleLoading(false); }
       setLoading(false);
+
     });
 
     return () => {
@@ -92,8 +99,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const supabase = getSupabaseBrowserClient();
-    if (!supabase || !user) { queueMicrotask(() => { setRole("guest"); setWorldSupervisor(false); setRoleLoading(false); }); return; }
+    if (!supabase || !user) { queueMicrotask(() => { setRole("guest"); setPlatformRole(null); setRoleLoading(false); }); return; }
     let active = true;
+
     const refreshRole = () => {
       queueMicrotask(() => { if (active) setRoleLoading(true); });
       void supabase.from("profiles").select("role,platform_role").eq("user_id", user.id).maybeSingle().then(async ({ data }) => {
@@ -110,15 +118,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             ? data.role
             : "student",
         );
-        // School Leaders supervise only the country assigned to their own
-        // school Team. World-wide controls are reserved for the platform
-        // administrator; the database enforces the same boundary.
-        setWorldSupervisor(
-          data?.platform_role === "platform_admin",
+        const nextPlatformRole = data?.platform_role;
+        setPlatformRole(
+          nextPlatformRole === "team_member" ||
+            nextPlatformRole === "school_leader" ||
+            nextPlatformRole === "platform_admin"
+            ? nextPlatformRole
+            : "user",
         );
         setRoleLoading(false);
-      }, () => { if (active) { setRole("student"); setWorldSupervisor(false); setRoleLoading(false); } });
+      }, () => { if (active) { setRole("student"); setPlatformRole(null); setRoleLoading(false); } });
     };
+
     const refreshWhenVisible = () => { if (document.visibilityState === "visible") refreshRole(); };
     refreshRole();
     window.addEventListener("focus", refreshRole);
@@ -130,8 +141,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     () => ({
       user,
       role,
+      platformRole,
       worldSupervisor,
       viewerAccess,
+
       viewerLoading,
       roleLoading,
       loading,
@@ -162,8 +175,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setViewerAccess(null);
       },
     }),
-    [user, role, worldSupervisor, viewerAccess, viewerLoading, roleLoading, loading, configured, authOpen, authMode],
+    [user, role, platformRole, worldSupervisor, viewerAccess, viewerLoading, roleLoading, loading, configured, authOpen, authMode],
   );
+
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
