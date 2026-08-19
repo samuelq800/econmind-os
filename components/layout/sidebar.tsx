@@ -12,7 +12,7 @@ export function Sidebar() {
   const pathname = usePathname() ?? "";
   return (
     <aside className="max-h-[calc(100dvh-4rem)] overflow-hidden border-b border-[var(--line)] bg-[var(--canvas)] md:sticky md:top-16 md:h-[calc(100vh-4rem)] md:w-64 md:shrink-0 md:border-r md:border-b-0">
-      <div className="h-full overflow-x-auto overflow-y-auto overscroll-contain p-3 pr-2 md:p-5 md:pr-3">
+      <div className="scroll-slim h-full overflow-x-auto overflow-y-auto overscroll-contain p-3 pr-2 md:p-5 md:pr-3">
         <p className="mb-3 hidden px-2 text-[10px] font-bold uppercase tracking-[.16em] text-[var(--ink-faint)] md:block">Model library</p>
         <nav className="flex min-w-max gap-1 md:min-w-0 md:flex-col">
           <SidebarLink href="/models" label="Overview" active={pathname === "/models"} icon={LayoutGrid} />

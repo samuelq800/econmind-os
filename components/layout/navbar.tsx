@@ -119,7 +119,7 @@ export function Navbar() {
         </div>
       </div>
       {open && (
-        <nav className="fixed inset-x-0 bottom-0 top-16 overflow-y-auto border-t border-[var(--line)] bg-[var(--canvas)] p-5 shadow-2xl md:hidden" aria-label="Full navigation">
+        <nav className="scroll-slim fixed inset-x-0 bottom-0 top-16 overflow-y-auto border-t border-[var(--line)] bg-[var(--canvas)] p-5 shadow-2xl md:hidden" aria-label="Full navigation">
           <div className="mx-auto max-w-xl">
             <p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-[var(--ink-faint)]">Navigate EconMind</p>
             <div className="mt-3 grid grid-cols-2 gap-2">
@@ -139,29 +139,29 @@ export function Navbar() {
                 </section>
               ))}
             </div>
-          {role === "teacher" && (
-            <Link href="/admin/daily-brief" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--accent)]">
-              <ClipboardCheck size={15} /> Review Daily Brief
-            </Link>
-          )}
-          {role === "professor" && (
-            <Link href="/professor" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--accent)]">
-              <GraduationCap size={15} /> Professor Studio
-            </Link>
-          )}
-          {user ? (
-            <button type="button" onClick={() => { setOpen(false); void signOut(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--red)]">
-              <LogOut size={15} /> Sign out
-            </button>
-          ) : viewerAccess ? (
-            <button type="button" onClick={() => { setOpen(false); endViewerSession(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--red)]">
-              <LogOut size={15} /> Leave viewing mode
-            </button>
-          ) : (
-            <button type="button" onClick={() => { setOpen(false); openAuth("sign-in"); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--accent)]">
-              <LogIn size={15} /> Sign in
-            </button>
-          )}
+            {role === "teacher" && (
+              <Link href="/admin/daily-brief" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--accent)]">
+                <ClipboardCheck size={15} /> Review Daily Brief
+              </Link>
+            )}
+            {role === "professor" && (
+              <Link href="/professor" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--accent)]">
+                <GraduationCap size={15} /> Professor Studio
+              </Link>
+            )}
+            {user ? (
+              <button type="button" onClick={() => { setOpen(false); void signOut(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--red)]">
+                <LogOut size={15} /> Sign out
+              </button>
+            ) : viewerAccess ? (
+              <button type="button" onClick={() => { setOpen(false); endViewerSession(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--red)]">
+                <LogOut size={15} /> Leave viewing mode
+              </button>
+            ) : (
+              <button type="button" onClick={() => { setOpen(false); openAuth("sign-in"); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--accent)]">
+                <LogIn size={15} /> Sign in
+              </button>
+            )}
           </div>
         </nav>
       )}

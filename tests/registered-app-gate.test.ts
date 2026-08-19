@@ -6,11 +6,14 @@ const layout = readFileSync("app/layout.tsx", "utf8");
 
 describe("registered individual account gate", () => {
   it("permits either an individual session or a verified view-only invitation", () => {
-    expect(gate).toContain("if (!user && !viewerAccess)");
+    expect(gate).toContain("if (!user && (!viewerAccess || accountRequired))");
+
     expect(gate).toContain("An individual account enables saved work");
     expect(gate).toContain('openAuth("sign-up")');
     expect(gate).toContain('openAuth("sign-in")');
     expect(gate).toContain('openAuth("invitation")');
+    expect(gate).toContain("hasRequiredPageRole");
+
   });
 
   it("wraps every static route in the root application gate", () => {

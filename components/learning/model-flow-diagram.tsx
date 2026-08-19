@@ -28,7 +28,7 @@ export function ModelFlowDiagram({
       </div>
       <span className="inline-flex items-center gap-1 rounded-full bg-[var(--accent-soft)] px-2.5 py-1 text-[10px] font-bold text-[var(--accent)]"><Sparkles size={12} /> Updates from your choices</span>
     </figcaption>
-    <div className="mt-5 overflow-x-auto pb-1">
+    <div className="scroll-slim mt-5 overflow-x-auto pb-1">
       <ol className="flex min-w-[720px] items-stretch gap-2 sm:min-w-0">
         {stages.map((stage, index) => <li key={`${stage.label}-${stage.title}`} className="flex min-w-0 flex-1 items-center gap-2">
           <div className={`min-h-32 flex-1 rounded-xl border p-3 ${stage.active ? "border-[var(--accent)] bg-[var(--accent-soft)]" : "border-[var(--line)] bg-[var(--surface)]"}`}>

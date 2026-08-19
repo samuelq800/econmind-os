@@ -72,47 +72,47 @@ const allocationMeta: Array<{
   beneficiary: string;
   risk: string;
 }> = [
-  {
-    key: "infrastructure",
-    label: "Infrastructure",
-    immediate: "Supports demand, construction and employment",
-    delayed: "Raises productivity and manufacturing capacity",
-    beneficiary: "Firms and workers",
-    risk: "Raises debt",
-  },
-  {
-    key: "welfare",
-    label: "Welfare",
-    immediate: "Protects purchasing power and confidence",
-    delayed: "No direct productivity effect",
-    beneficiary: "Vulnerable households",
-    risk: "Fiscal pressure",
-  },
-  {
-    key: "energySupport",
-    label: "Energy Support",
-    immediate: "Reduces cost-of-living and firm cost pressure",
-    delayed: "Can create dependency",
-    beneficiary: "Households and energy-intensive firms",
-    risk: "Emissions and price signals",
-  },
-  {
-    key: "greenTransition",
-    label: "Green Transition",
-    immediate: "Builds energy investment",
-    delayed: "Lowers emissions and energy dependence",
-    beneficiary: "Energy resilience",
-    risk: "Benefits arrive with a lag",
-  },
-  {
-    key: "fiscalReserve",
-    label: "Fiscal Reserve",
-    immediate: "Protects credibility and reserves",
-    delayed: "Improves shock capacity",
-    beneficiary: "Future fiscal space",
-    risk: "Less current demand support",
-  },
-];
+    {
+      key: "infrastructure",
+      label: "Infrastructure",
+      immediate: "Supports demand, construction and employment",
+      delayed: "Raises productivity and manufacturing capacity",
+      beneficiary: "Firms and workers",
+      risk: "Raises debt",
+    },
+    {
+      key: "welfare",
+      label: "Welfare",
+      immediate: "Protects purchasing power and confidence",
+      delayed: "No direct productivity effect",
+      beneficiary: "Vulnerable households",
+      risk: "Fiscal pressure",
+    },
+    {
+      key: "energySupport",
+      label: "Energy Support",
+      immediate: "Reduces cost-of-living and firm cost pressure",
+      delayed: "Can create dependency",
+      beneficiary: "Households and energy-intensive firms",
+      risk: "Emissions and price signals",
+    },
+    {
+      key: "greenTransition",
+      label: "Green Transition",
+      immediate: "Builds energy investment",
+      delayed: "Lowers emissions and energy dependence",
+      beneficiary: "Energy resilience",
+      risk: "Benefits arrive with a lag",
+    },
+    {
+      key: "fiscalReserve",
+      label: "Fiscal Reserve",
+      immediate: "Protects credibility and reserves",
+      delayed: "Improves shock capacity",
+      beneficiary: "Future fiscal space",
+      risk: "Less current demand support",
+    },
+  ];
 
 const metric = (
   label: string,
@@ -431,8 +431,8 @@ export function CommandCentreRun({
       setCanManageRun(
         Boolean(
           isPlatformAdmin ||
-            isOwnPersonalRun ||
-            (next.mode === "team" && (isTeamCaptain || isSchoolLeaderForTeam)),
+          isOwnPersonalRun ||
+          (next.mode === "team" && (isTeamCaptain || isSchoolLeaderForTeam)),
         ),
       );
     } catch (caught) {
@@ -517,26 +517,26 @@ export function CommandCentreRun({
       setRun((current) =>
         current
           ? {
-              ...current,
-              ...updated,
-              rounds: [
-                ...current.rounds,
-                {
-                  id: `local-${preview.roundNumber}`,
-                  run_id: current.id,
-                  round_number: preview.roundNumber,
-                  state_before: preview.stateBefore,
-                  policy_package: preview.policy,
-                  shock_applied: preview.shock,
-                  pending_effects_before: preview.stateBefore.pendingEffects,
-                  pending_effects_after: preview.stateAfter.pendingEffects,
-                  state_after: preview.stateAfter,
-                  explanations: preview.explanation,
-                  score_snapshot: preview.scoreSnapshot,
-                  created_at: new Date().toISOString(),
-                },
-              ],
-            }
+            ...current,
+            ...updated,
+            rounds: [
+              ...current.rounds,
+              {
+                id: `local-${preview.roundNumber}`,
+                run_id: current.id,
+                round_number: preview.roundNumber,
+                state_before: preview.stateBefore,
+                policy_package: preview.policy,
+                shock_applied: preview.shock,
+                pending_effects_before: preview.stateBefore.pendingEffects,
+                pending_effects_after: preview.stateAfter.pendingEffects,
+                state_after: preview.stateAfter,
+                explanations: preview.explanation,
+                score_snapshot: preview.scoreSnapshot,
+                created_at: new Date().toISOString(),
+              },
+            ],
+          }
           : current,
       );
       setPhase("transmission");
@@ -616,7 +616,7 @@ export function CommandCentreRun({
           {error}
         </p>
       )}
-      <div className="sticky top-0 z-20 flex gap-1 overflow-x-auto border-b border-[var(--line)] bg-[var(--surface)] px-4 py-2 lg:hidden">
+      <div className="scroll-rail sticky top-0 z-20 flex gap-1 overflow-x-auto border-b border-[var(--line)] bg-[var(--surface)] px-4 py-2 lg:hidden">
         {(
           [
             "overview",
@@ -906,8 +906,8 @@ function PolicyLab({
 }) {
   const cost = Math.round(
     Math.abs(policy.interestRate - state.lastPolicy.interestRate) * 4 +
-      Math.abs(policy.businessTaxRate - state.lastPolicy.businessTaxRate) *
-        0.65,
+    Math.abs(policy.businessTaxRate - state.lastPolicy.businessTaxRate) *
+    0.65,
   );
   return (
     <Card className="p-5">
