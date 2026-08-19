@@ -155,7 +155,7 @@ export function WorldStatusBar() {
   const now = new Date();
   return (
     <div className="sticky top-0 z-40 border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] backdrop-blur-xl">
-      <div className="mx-auto flex max-w-[1540px] items-center gap-3 overflow-x-auto px-4 py-2.5 text-[10px] sm:px-6 lg:px-8">
+      <div className="scroll-rail mx-auto flex max-w-[1540px] items-center gap-3 overflow-x-auto px-4 py-2.5 text-[10px] sm:px-6 lg:px-8">
         <span className="inline-flex shrink-0 items-center gap-1.5 font-bold text-[var(--accent)]">
           <Globe2 size={13} /> Persistent World
         </span>
@@ -231,7 +231,7 @@ function WorldSubnav({
       aria-label="Country workspace navigation"
       className="mb-5 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-[var(--shadow)]"
     >
-      <div className="flex min-w-max items-center gap-1 overflow-x-auto">
+      <div className="scroll-rail flex min-w-max items-center gap-1 overflow-x-auto">
         <Link
           href={basePath}
           className="inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-xs font-bold text-[var(--ink-muted)] hover:bg-[var(--surface-subtle)]"
@@ -1198,12 +1198,12 @@ export function WorldLeaderboardPage({
                 ?.value ?? 0;
             const score = Math.round(
               stability * 0.45 +
-                (country.resources.find((item) => item.id === "fiscal_space")
-                  ?.value ?? 0) *
-                  0.25 +
-                (country.resources.find((item) => item.id === "public_support")
-                  ?.value ?? 0) *
-                  0.3,
+              (country.resources.find((item) => item.id === "fiscal_space")
+                ?.value ?? 0) *
+              0.25 +
+              (country.resources.find((item) => item.id === "public_support")
+                ?.value ?? 0) *
+              0.3,
             );
             return (
               <Link

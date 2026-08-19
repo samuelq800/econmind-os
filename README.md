@@ -1,6 +1,9 @@
 # EconMind OS
 Interactive economics learning and simulation platform.
 
+The product map below — visitor → auth → app journey, the teaching systems,
+the live service paths, and the deployment host.
+
 ## Run
 ```bash
 pnpm install --frozen-lockfile
@@ -32,3 +35,20 @@ site on every push to `main`. It deploys to:
 
 The `GITHUB_PAGES=true` build flag adds the `/econmind-os` base path only during
 the Pages build, so ordinary local development continues to use `/`.
+
+## Testing
+
+Run the workspace checks with:
+
+```powershell
+npx vitest run
+```
+
+Focused suites for the latest dashboard work:
+
+- `tests/continuous-world-dashboard.test.ts` — desktop scrollability gate for the world dashboard history timeline.
+- `tests/world-entrypoint.test.ts` — twelve-country overview and six-office country cabinet entrypoints.
+
+Current module docs:
+
+- `docs/continuous-world-dashboard.md` — dashboard structure, sign-in gate behavior, desktop scrollability contract, and routing notes.

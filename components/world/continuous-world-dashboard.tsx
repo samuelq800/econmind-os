@@ -113,13 +113,13 @@ function countriesOf(world: ContinuousWorldRecord | null): CountryView[] {
     const id = typeof country.id === "string" ? country.id : "";
     return id
       ? [
-          {
-            id,
-            baseline: asRecord(country.baseline),
-            outcomes: asRecord(country.outcomes),
-            dynamics: asRecord(country.dynamics),
-          },
-        ]
+        {
+          id,
+          baseline: asRecord(country.baseline),
+          outcomes: asRecord(country.outcomes),
+          dynamics: asRecord(country.dynamics),
+        },
+      ]
       : [];
   });
 }
@@ -148,7 +148,7 @@ function countryScore(country: CountryView, actions: ContinuousWorldAction[]) {
     "stability",
     (value(country.baseline, "public_support") +
       value(country.baseline, "institutional_trust")) /
-      2,
+    2,
   );
   const trust = value(
     country.dynamics,
@@ -160,33 +160,33 @@ function countryScore(country: CountryView, actions: ContinuousWorldAction[]) {
     Math.min(
       100,
       (55 + growth * 5 - Math.max(0, inflation - 3) * 2) * 0.2 +
-        (100 -
-          Math.max(0, inflation - 2) * 5 -
-          Math.max(0, unemployment - 4) * 5) *
-          0.15 +
-        (100 - Math.max(0, debt - 55) * 0.7) * 0.15 +
-        ((stability +
-          Math.max(0, 100 - value(country.baseline, "poverty_rate", 15) * 4)) /
-          2) *
-          0.15 +
-        (100 - value(country.baseline, "gini", 0.4) * 100) * 0.1 +
-        ((value(country.baseline, "bank_stability", 60) + trust) / 2) * 0.1 +
-        trust * 0.05 +
-        Math.max(
-          0,
-          100 - value(country.baseline, "import_dependency", 40) * 1.25,
-        ) *
-          0.05 +
-        Math.min(
-          100,
-          actions.filter(
-            (action) =>
-              action.country_key === country.id && action.status === "active",
-          ).length *
-            20 +
-            40,
-        ) *
-          0.05,
+      (100 -
+        Math.max(0, inflation - 2) * 5 -
+        Math.max(0, unemployment - 4) * 5) *
+      0.15 +
+      (100 - Math.max(0, debt - 55) * 0.7) * 0.15 +
+      ((stability +
+        Math.max(0, 100 - value(country.baseline, "poverty_rate", 15) * 4)) /
+        2) *
+      0.15 +
+      (100 - value(country.baseline, "gini", 0.4) * 100) * 0.1 +
+      ((value(country.baseline, "bank_stability", 60) + trust) / 2) * 0.1 +
+      trust * 0.05 +
+      Math.max(
+        0,
+        100 - value(country.baseline, "import_dependency", 40) * 1.25,
+      ) *
+      0.05 +
+      Math.min(
+        100,
+        actions.filter(
+          (action) =>
+            action.country_key === country.id && action.status === "active",
+        ).length *
+        20 +
+        40,
+      ) *
+      0.05,
     ),
   );
   return { score, growth, inflation, unemployment, debt, stability };
@@ -433,14 +433,14 @@ function WorldHeader({
           value={
             shocks.length
               ? shocks
-                  .map((event) =>
-                    String(
-                      event.payload.shock_key ??
-                        event.payload.message ??
-                        "Shock",
-                    ),
-                  )
-                  .join(" · ")
+                .map((event) =>
+                  String(
+                    event.payload.shock_key ??
+                    event.payload.message ??
+                    "Shock",
+                  ),
+                )
+                .join(" · ")
               : "No active recorded shock"
           }
         />
@@ -772,9 +772,9 @@ function PolicyDesk({
     available.find((policy) => policy.id === policyId) ?? available[0];
   const bounded = selected
     ? Math.min(
-        selected.allowed_range[1],
-        Math.max(selected.allowed_range[0], change),
-      )
+      selected.allowed_range[1],
+      Math.max(selected.allowed_range[0], change),
+    )
     : 0;
   const ownActions = actions.filter(
     (action) =>
@@ -1182,7 +1182,7 @@ function ContractDesk({
                   {countryName(contract.importer_country_key)}
                 </p>
                 {contract.status === "draft" ||
-                contract.status === "submitted" ? (
+                  contract.status === "submitted" ? (
                   <Button
                     className="mt-2"
                     size="sm"
@@ -1207,8 +1207,8 @@ function ContractDesk({
                     Next settlement:{" "}
                     {contract.next_settlement_at
                       ? new Date(
-                          contract.next_settlement_at,
-                        ).toLocaleDateString()
+                        contract.next_settlement_at,
+                      ).toLocaleDateString()
                       : "after approval"}
                   </p>
                 )}
@@ -1385,10 +1385,10 @@ function CountryRoleWorkspace({
   const canControl = ownRoleIds.size > 0;
   const teamControlsCountry = Boolean(
     teamId &&
-      claims.some(
-        (claim) =>
-          claim.team_id === teamId && claim.country_key === country.id,
-      ),
+    claims.some(
+      (claim) =>
+        claim.team_id === teamId && claim.country_key === country.id,
+    ),
   );
   const execute = async (task: () => Promise<unknown>, success: string) => {
     setBusy(true);
@@ -1581,9 +1581,9 @@ function ScopedPolicyDesk({
     available.find((policy) => policy.id === policyId) ?? available[0];
   const bounded = selected
     ? Math.min(
-        selected.allowed_range[1],
-        Math.max(selected.allowed_range[0], change),
-      )
+      selected.allowed_range[1],
+      Math.max(selected.allowed_range[0], change),
+    )
     : 0;
   const activeActions = actions.filter(
     (action) =>
@@ -1599,13 +1599,13 @@ function ScopedPolicyDesk({
     onPreview(
       selected
         ? {
-            policy: {
-              id: selected.id,
-              allowedRange: selected.allowed_range,
-              effectVector: selected.effectVector,
-            },
-            change: bounded,
-          }
+          policy: {
+            id: selected.id,
+            allowedRange: selected.allowed_range,
+            effectVector: selected.effectVector,
+          },
+          change: bounded,
+        }
         : null,
     );
   }, [bounded, onPreview, selected]);
@@ -1679,9 +1679,9 @@ function ScopedPolicyDesk({
                 setChange(
                   next
                     ? Math.min(
-                        next.allowed_range[1],
-                        Math.max(next.allowed_range[0], 0),
-                      )
+                      next.allowed_range[1],
+                      Math.max(next.allowed_range[0], 0),
+                    )
                     : 0,
                 );
               }}
@@ -1876,7 +1876,7 @@ function CountryMetrics({ country }: { country: CountryView }) {
     [
       "GDP growth",
       metric(country, "real_gdp_growth", "growth_pp") ||
-        metric(country, "real_gdp_growth", "real_gdp_growth_pp"),
+      metric(country, "real_gdp_growth", "real_gdp_growth_pp"),
       "%",
     ],
     ["Inflation", metric(country, "cpi_inflation", "inflation_pp"), "%"],
@@ -1936,29 +1936,29 @@ function Timeline({
   const items =
     tab === "Contracts"
       ? contracts.map((contract) => ({
-          id: contract.id,
-          title: `${contract.template_id} · ${titleCase(contract.status)}`,
-          detail: `${countryName(contract.exporter_country_key)} → ${countryName(contract.importer_country_key)}`,
-          at: contract.created_at,
-        }))
+        id: contract.id,
+        title: `${contract.template_id} · ${titleCase(contract.status)}`,
+        detail: `${countryName(contract.exporter_country_key)} → ${countryName(contract.importer_country_key)}`,
+        at: contract.created_at,
+      }))
       : tab === "Policies"
         ? actions.map((action) => ({
-            id: action.id,
-            title: `${titleCase(action.action_key)} · ${action.status}`,
-            detail: `${countryName(action.country_key)} · effective ${new Date(action.effective_at).toLocaleString()}`,
-            at: action.created_at,
-          }))
+          id: action.id,
+          title: `${titleCase(action.action_key)} · ${action.status}`,
+          detail: `${countryName(action.country_key)} · effective ${new Date(action.effective_at).toLocaleString()}`,
+          at: action.created_at,
+        }))
         : events.map((event) => ({
-            id: event.id,
-            title: titleCase(event.event_type),
-            detail: String(
-              event.payload.message ??
-                event.payload.shock_key ??
-                event.payload.status ??
-                "Recorded world event",
-            ),
-            at: event.created_at,
-          }));
+          id: event.id,
+          title: titleCase(event.event_type),
+          detail: String(
+            event.payload.message ??
+            event.payload.shock_key ??
+            event.payload.status ??
+            "Recorded world event",
+          ),
+          at: event.created_at,
+        }));
   return (
     <Card className="p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -2395,12 +2395,12 @@ export function ContinuousWorldDashboard() {
                 {countries.every(
                   (country) => governance(country) === "normal",
                 ) && (
-                  <p className="rounded-lg bg-[var(--accent-soft)] p-3 text-xs text-[var(--accent)]">
-                    No country currently exceeds the calibrated risk threshold.
-                    Extreme outcomes remain possible through persistent price,
-                    shortage, unemployment, debt and trust pressure.
-                  </p>
-                )}
+                    <p className="rounded-lg bg-[var(--accent-soft)] p-3 text-xs text-[var(--accent)]">
+                      No country currently exceeds the calibrated risk threshold.
+                      Extreme outcomes remain possible through persistent price,
+                      shortage, unemployment, debt and trust pressure.
+                    </p>
+                  )}
               </div>
             </Card>
             <Card className="p-4">

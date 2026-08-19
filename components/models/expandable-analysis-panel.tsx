@@ -64,7 +64,7 @@ export function ExpandableAnalysisPanel({
             <Button size="sm" onClick={close}><X size={16} />Close</Button>
           </div>
         </header>
-        <div className="min-h-0 flex-1 overflow-y-auto p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-8 lg:p-10">
+        <div className="scroll-slim min-h-0 flex-1 overflow-y-auto p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-8 lg:p-10">
           {subtitle && <p className="mb-6 max-w-4xl text-base leading-7 text-[var(--ink-muted)]">{subtitle}</p>}
           <div className="mx-auto max-w-[1500px]">{children}</div>
         </div>

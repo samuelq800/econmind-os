@@ -37,7 +37,7 @@ export function EvidenceLabOverview() {
             project.slug,
             JSON.parse(
               window.localStorage.getItem(evidenceProjectStorageKey(project)) ??
-                "{}",
+              "{}",
             ),
           ] as const;
         } catch {
@@ -128,7 +128,7 @@ function TheoryToEvidenceDiagram() {
       <p className="text-xs font-bold text-[var(--ink-muted)]">
         A transparent research path
       </p>
-      <div className="mt-5 flex items-center gap-1.5 overflow-x-auto pb-1">
+      <div className="scroll-rail mt-5 flex items-center gap-1.5 overflow-x-auto pb-1">
         {nodes.map((node, index) => (
           <div key={node} className="flex shrink-0 items-center gap-1.5">
             <span

@@ -21,7 +21,7 @@ export function LeagueNavigation() {
 
   return (
     <div className="border-b border-[var(--line)] bg-[var(--surface)]">
-      <nav aria-label="League navigation" className="mx-auto flex max-w-[1440px] items-center gap-1 overflow-x-auto px-5 py-2 text-xs font-bold sm:px-8 lg:px-12">
+      <nav aria-label="League navigation" className="scroll-rail mx-auto flex max-w-[1440px] items-center gap-1 overflow-x-auto px-5 py-2 text-xs font-bold sm:px-8 lg:px-12">
         <Link href="/league" className="mr-1 inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-[var(--accent)] hover:bg-[var(--accent-soft)]">
           <GraduationCap size={15} /> EconMind League
         </Link>

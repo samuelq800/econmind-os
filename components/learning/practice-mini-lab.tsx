@@ -142,7 +142,7 @@ export function PracticeMiniLab({ modelId }: { modelId: string }) {
               );
             })}
           </div>
-          <div className="mt-5 overflow-x-auto rounded-xl border border-[var(--line)] bg-[var(--surface-subtle)] px-4 py-5">
+          <div className="scroll-slim mt-5 overflow-x-auto rounded-xl border border-[var(--line)] bg-[var(--surface-subtle)] px-4 py-5">
             <p className="text-[10px] font-bold uppercase tracking-[.12em] text-[var(--ink-faint)]">
               Active relationship
             </p>

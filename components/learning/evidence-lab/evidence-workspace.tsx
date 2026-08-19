@@ -81,7 +81,7 @@ export function EvidenceProjectWorkspace({
         ...restored,
         ...JSON.parse(
           window.localStorage.getItem(evidenceProjectStorageKey(project)) ??
-            "{}",
+          "{}",
         ),
       };
     } catch {
@@ -288,7 +288,7 @@ function ProjectStepNavigation({
       className="no-print xl:sticky xl:top-20 xl:self-start"
       aria-label="Research project sections"
     >
-      <div className="overflow-x-auto rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2 xl:overflow-visible">
+      <div className="scroll-slim overflow-x-auto rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2 xl:overflow-visible">
         <p className="hidden px-2 pb-2 pt-1 text-[10px] font-bold tracking-[.12em] text-[var(--ink-faint)] xl:block">
           PROJECT SECTIONS
         </p>
@@ -723,7 +723,7 @@ function DataDictionary({ project }: { project: EvidenceProject }) {
       <p className="text-xs font-bold text-[var(--ink-faint)]">
         DATA DICTIONARY
       </p>
-      <div className="mt-3 overflow-x-auto rounded-xl border border-[var(--line)]">
+      <div className="scroll-slim mt-3 overflow-x-auto rounded-xl border border-[var(--line)]">
         <table className="w-full min-w-[680px] text-left text-xs">
           <thead className="bg-[var(--surface-subtle)] text-[10px] uppercase tracking-wide text-[var(--ink-faint)]">
             <tr>
@@ -794,8 +794,8 @@ function DataPreviewTable({ project }: { project: EvidenceProject }) {
       sort === "none"
         ? 0
         : String(left[sort]).localeCompare(String(right[sort]), undefined, {
-            numeric: true,
-          }),
+          numeric: true,
+        }),
     );
   return (
     <section className="mt-7">
@@ -864,7 +864,7 @@ function DataPreviewTable({ project }: { project: EvidenceProject }) {
           )}
         </div>
       </div>
-      <div className="mt-3 overflow-x-auto rounded-xl border border-[var(--line)]">
+      <div className="scroll-slim mt-3 overflow-x-auto rounded-xl border border-[var(--line)]">
         <table className="w-full min-w-[760px] text-left text-xs">
           <thead className="bg-[var(--surface-subtle)] text-[10px] uppercase tracking-wide text-[var(--ink-faint)]">
             <tr>
@@ -1117,7 +1117,7 @@ function EquationCard({
         {equation.question}
       </p>
       <div
-        className="mt-4 overflow-x-auto rounded-lg bg-[var(--surface-subtle)] px-4 py-5 text-center font-serif text-base leading-7"
+        className="scroll-slim mt-4 overflow-x-auto rounded-lg bg-[var(--surface-subtle)] px-4 py-5 text-center font-serif text-base leading-7"
         aria-label={equation.plain}
       >
         {equation.expression}

@@ -50,7 +50,7 @@ export function OutcomeComparison({
       </div>
     </div>
     <p className="mt-3 text-xs text-[var(--ink-muted)]">Reference: <strong className="text-[var(--ink)]">{selected.label}</strong>. Arrows indicate numerical movement, not whether an outcome is economically good or bad.</p>
-    <div className="mt-4 overflow-x-auto rounded-lg border border-[var(--line)]">
+    <div className="scroll-slim mt-4 overflow-x-auto rounded-lg border border-[var(--line)]">
       <table className="min-w-[680px] w-full border-collapse text-left text-xs"><thead><tr className="bg-[var(--surface-subtle)] text-[9px] font-bold uppercase tracking-wider text-[var(--ink-faint)]"><th className="p-3">Outcome</th><th className="p-3 text-right">Reference</th><th className="p-3 text-right">Current</th><th className="p-3 text-right">Numerical change</th></tr></thead><tbody>{metrics.map((metric) => {
         const before = selected.results[metric]; const after = current[metric];
         const delta = Number.isFinite(before) && Number.isFinite(after) ? after - before : null;

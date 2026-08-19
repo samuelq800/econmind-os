@@ -77,7 +77,7 @@ function numericChoices(value: number, questionId: number): Choice[] {
   const shifted = candidates.map(
     (_, index) =>
       candidates[
-        (index + (questionId % candidates.length)) % candidates.length
+      (index + (questionId % candidates.length)) % candidates.length
       ],
   );
   return shifted.map((item, index) => ({
@@ -465,7 +465,7 @@ function ScenarioReference({
         These supplied values are locked for this question. The right-hand mini
         model is a separate, safe space to test what changes when inputs move.
       </p>
-      <div className="mt-3 overflow-x-auto rounded-lg bg-[var(--surface-subtle)] px-4 py-3">
+      <div className="scroll-slim mt-3 overflow-x-auto rounded-lg bg-[var(--surface-subtle)] px-4 py-3">
         <MathFormula
           block
           expression={practiceInputLatex(input)}
