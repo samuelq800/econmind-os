@@ -16,7 +16,7 @@ export const FOUNDING_TEAM: readonly TeamMember[] = [
   {
     name: "Samuel",
     role: "Co-Founder",
-    focus: ["Product", "Economic Simulation", "League Development"],
+    focus: ["Product", "Economic Simulation", "Academic Development"],
     image: "/images/team/samuel-yale.jpg",
     imagePosition: "50% 45%",
     contact: { type: "phone", value: "13862162460" },
@@ -24,7 +24,7 @@ export const FOUNDING_TEAM: readonly TeamMember[] = [
   {
     name: "Yale",
     role: "Co-Founder",
-    focus: ["Research", "Academic Development", "Partnerships"],
+    focus: ["Research", "League Development", "Partnerships"],
     image: "/images/team/samuel-yale.jpg",
     imagePosition: "50% 45%",
     contact: { type: "wechat", value: "huhuhu20100220" },
@@ -87,7 +87,14 @@ export const REGIONAL_LEADERS: readonly TeamMember[] = [
     contact: { type: "wechat", value: "HHR_0211" },
   },
   {
-    name: "Sophia",
+    name: "Sophia Cai (蔡依琪)",
+    role: "Zhejiang Regional Lead",
+    image: "/images/team/sophia-cai.jpg",
+    imagePosition: "50% 34%",
+    contact: { type: "wechat", value: "Sophialonglive" },
+  },
+  {
+    name: "Sophia Liu",
     role: "Beijing Regional Lead",
     image: "/images/team/sophia.jpg",
     imagePosition: "50% 46%",
@@ -103,7 +110,8 @@ export const REGIONAL_LEADERS: readonly TeamMember[] = [
 ];
 
 export const REGIONAL_NETWORK = [
-  { region: "Beijing", leads: ["Emma", "Sophia"] },
+  { region: "Beijing", leads: ["Emma", "Sophia Liu"] },
+  { region: "Zhejiang", leads: ["Sophia Cai (蔡依琪)"] },
   { region: "Shandong", leads: ["Rae"] },
   { region: "Jiangsu", leads: ["Clement"] },
   { region: "Jiangxi", leads: ["Jessie"] },
