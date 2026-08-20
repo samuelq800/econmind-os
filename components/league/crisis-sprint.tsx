@@ -7,7 +7,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CRISIS_INITIAL_METRICS, CRISIS_POLICY_OPTIONS, CRISIS_SCENARIO_ID, applyCrisisRound, applyOilPriceShock, buildCrisisReflection, calculateCrisisScores, labelScoreKey, type CrisisMetricKey, type CrisisMetrics, type CrisisPolicies } from "@/lib/league/crisis-engine";
+import { CRISIS_INITIAL_METRICS, CRISIS_POLICY_OPTIONS, applyCrisisRound, applyOilPriceShock, buildCrisisReflection, calculateCrisisScores, labelScoreKey, type CrisisMetricKey, type CrisisMetrics, type CrisisPolicies } from "@/lib/league/crisis-engine";
 import type { CrisisDecision } from "@/lib/league/types";
 import { getLeagueContext, saveCrisisRun } from "@/lib/supabase/league";
 
@@ -58,8 +58,7 @@ export function CrisisSprint({ commandCentrePath = "/league/command-centre" }: {
     if (timeline.length !== 2) return;
     setSaving(true); setSaveError("");
     try {
-      const reflection = buildCrisisReflection(metrics, timeline.map(({ monetary_policy, fiscal_policy, energy_policy }) => ({ monetary: monetary_policy, fiscal: fiscal_policy, energy: energy_policy })));
-      await saveCrisisRun({ user_id: user.id, team_id: teamId, scenario_id: CRISIS_SCENARIO_ID, current_round: 2, initial_metrics: CRISIS_INITIAL_METRICS, final_metrics: metrics, dimension_scores: finalOutcome.scores, total_score: finalOutcome.totalScore, result_type: finalOutcome.resultType, result_summary: reflection }, timeline.map(({ mechanisms, ...decision }) => ({ ...decision, explanation: { mechanisms } })));
+      await saveCrisisRun(teamId, timeline.map(({ mechanisms, ...decision }) => ({ ...decision, explanation: { mechanisms } })));
       setSaveMessage(teamId ? "Saved to your team’s League record." : "Saved to your personal League record.");
     } catch (caught) { setSaveError(caught instanceof Error ? caught.message : "Could not save this run."); } finally { setSaving(false); }
   }
