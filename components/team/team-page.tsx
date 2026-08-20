@@ -1,14 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, MessageCircleMore, Network, Phone } from "lucide-react";
-import { Footer } from "@/components/layout/footer";
-import { Navbar } from "@/components/layout/navbar";
+import { withBasePath } from "@/lib/base-path";
 import { FOUNDING_TEAM, REGIONAL_LEADERS, REGIONAL_NETWORK, contactLabel, type TeamMember } from "@/lib/team/team-data";
 
 export function TeamPage() {
   return (
     <div className="min-h-screen bg-[var(--canvas)]">
-      <Navbar />
       <main>
         <section className="relative overflow-hidden border-b border-[var(--line)]">
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-70 [background-image:linear-gradient(to_right,color-mix(in_srgb,var(--line)_52%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_srgb,var(--line)_52%,transparent)_1px,transparent_1px)] [background-size:56px_56px] [mask-image:linear-gradient(to_bottom,black,transparent_86%)]" />
@@ -30,7 +28,7 @@ export function TeamPage() {
           </div>
           <article className="mt-12 grid overflow-hidden border border-[var(--line)] bg-[var(--surface)] lg:grid-cols-[1.02fr_.98fr]">
             <div className="relative min-h-[390px] bg-[var(--surface-subtle)] sm:min-h-[510px]">
-              <Image src="/images/team/samuel-yale.jpg" alt="Samuel and Yale, Co-Founders of EconMind" fill priority sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" style={{ objectPosition: "50% 45%" }} />
+              <Image src={withBasePath("/images/team/samuel-yale.jpg")} alt="Samuel and Yale, Co-Founders of EconMind" fill priority sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" style={{ objectPosition: "50% 45%" }} />
               <span className="absolute bottom-5 left-5 border border-white/45 bg-black/25 px-3 py-2 text-[9px] font-extrabold uppercase tracking-[.16em] text-white backdrop-blur-sm">Joint founding team</span>
             </div>
             <div className="grid content-between p-6 sm:p-9 lg:p-12">
@@ -88,7 +86,6 @@ export function TeamPage() {
           </div>
         </section>
       </main>
-      <Footer />
     </div>
   );
 }
@@ -124,7 +121,7 @@ function Portrait({ member }: { member: TeamMember }) {
   }
 
   return <div className="relative aspect-[4/5] overflow-hidden bg-[var(--surface-subtle)]">
-    <Image src={member.image} alt={`${member.name}, ${member.role}`} fill sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw" className="object-cover transition-transform duration-500 group-hover:scale-[1.025]" style={{ objectPosition: member.imagePosition }} />
+    <Image src={withBasePath(member.image)} alt={`${member.name}, ${member.role}`} fill sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw" className="object-cover transition-transform duration-500 group-hover:scale-[1.025]" style={{ objectPosition: member.imagePosition }} />
   </div>;
 }
 

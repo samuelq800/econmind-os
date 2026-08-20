@@ -6,7 +6,10 @@
  * `/league/flags/…` paths. Route every absolute public-asset URL through
  * `withBasePath` so flags (and any future assets) resolve on every host.
  */
-const BASE_PATH = (process.env.NEXT_PUBLIC_BASE_PATH ?? "").replace(/\/+$/, "");
+const BASE_PATH = (
+  process.env.NEXT_PUBLIC_BASE_PATH
+  ?? (process.env.GITHUB_PAGES === "true" ? "/econmind-os" : "")
+).replace(/\/+$/, "");
 
 export { BASE_PATH };
 
