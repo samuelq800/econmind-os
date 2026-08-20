@@ -90,13 +90,18 @@ export async function listSchoolTeams(schoolId: string) {
   fail(error); return (data ?? []) as Array<Team & { members: TeamMember[] }>;
 }
 
-export async function saveCrisisRun(input: Omit<CrisisRun, "id" | "created_at" | "updated_at" | "completed_at" | "team">, decisions: CrisisDecision[]) {
-  const { data: run, error: runError } = await client().from("crisis_runs").insert(input).select("*").single();
-  fail(runError);
-  const typedRun = run as CrisisRun;
-  const { error: decisionsError } = await client().from("crisis_decisions").insert(decisions.map((decision) => ({ ...decision, crisis_run_id: typedRun.id })));
-  fail(decisionsError);
-  return typedRun;
+export async function saveCrisisRun(teamId: string | null, decisions: CrisisDecision[]) {
+  const { data, error } = await client().rpc("submit_crisis_run", {
+    p_team_id: teamId,
+    p_decisions: decisions.map((decision) => ({
+      round_number: decision.round_number,
+      monetary_policy: decision.monetary_policy,
+      fiscal_policy: decision.fiscal_policy,
+      energy_policy: decision.energy_policy,
+    })),
+  });
+  fail(error);
+  return data as CrisisRun;
 }
 
 export async function listMyCrisisRuns(userId: string, limit = 10) {

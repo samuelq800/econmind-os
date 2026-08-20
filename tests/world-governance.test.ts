@@ -135,7 +135,7 @@ describe("World Governance continuous model", () => {
     const scopeMigration = readFileSync(
       "supabase/migrations/20260806000000_scope_school_leader_world_access.sql",
       "utf8",
-    );
+    ).replaceAll("\r\n", "\n");
 
     expect(scopeMigration).toContain(
       "create or replace function public.can_manage_continuous_world_country",
