@@ -87,7 +87,7 @@ export const REGIONAL_LEADERS: readonly TeamMember[] = [
     contact: { type: "wechat", value: "HHR_0211" },
   },
   {
-    name: "Sophia Cai (蔡依琪)",
+    name: "Sophia Cai",
     role: "Zhejiang Regional Lead",
     image: "/images/team/sophia-cai.jpg",
     imagePosition: "50% 34%",
@@ -111,7 +111,7 @@ export const REGIONAL_LEADERS: readonly TeamMember[] = [
 
 export const REGIONAL_NETWORK = [
   { region: "Beijing", leads: ["Emma", "Sophia Liu"] },
-  { region: "Zhejiang", leads: ["Sophia Cai (蔡依琪)"] },
+  { region: "Zhejiang", leads: ["Sophia Cai"] },
   { region: "Shandong", leads: ["Rae"] },
   { region: "Jiangsu", leads: ["Clement"] },
   { region: "Jiangxi", leads: ["Jessie"] },
