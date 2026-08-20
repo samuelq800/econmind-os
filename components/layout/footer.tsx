@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-const majorLinks = [{ href: "/", label: "Home" }, { href: "/explore", label: "Explore" }, { href: "/league", label: "League" }, { href: "/research", label: "Evidence" }, { href: "/dashboard", label: "Dashboard" }];
+const majorLinks = [{ href: "/", label: "Home" }, { href: "/explore", label: "Explore" }, { href: "/league", label: "League" }, { href: "/league/schools", label: "Schools" }, { href: "/team", label: "Team" }, { href: "/research", label: "Evidence" }, { href: "/dashboard", label: "Dashboard" }];
 const toolLinks = [{ href: "/daily-brief", label: "Daily Brief" }, { href: "/models", label: "Models" }, { href: "/sandbox", label: "Sandbox" }, { href: "/cases", label: "Cases" }];
 
 export function Footer() {

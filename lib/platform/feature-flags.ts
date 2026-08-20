@@ -40,6 +40,7 @@ export const PLATFORM_NAVIGATION: readonly PlatformNavigationItem[] = [
   { href: "/econbench", label: "EconBench", system: "learning-research", feature: "econBench" },
   { href: "/mechanism-arena", label: "Mechanism Arena", system: "learning-research", feature: "mechanismArena" },
   { href: "/league", label: "League", system: "world-economy", feature: "league" },
+  { href: "/team", label: "Team", system: "shared" },
   { href: "/simulation", label: "Simulation", system: "world-economy", feature: "league" },
   { href: "/research", label: "Evidence Lab", system: "learning-research", feature: "evidenceLab" },
   { href: "/dashboard", label: "Dashboard", system: "shared" },
@@ -53,6 +54,7 @@ export const PRIMARY_NAVIGATION: readonly PlatformNavigationItem[] = [
   { href: "/explore", label: "Explore", system: "learning-research", feature: "dailyBrief" },
   { href: "/activities", label: "Activities", system: "learning-research", feature: "mechanismArena" },
   { href: "/league", label: "League", system: "world-economy", feature: "league" },
+  { href: "/team", label: "Team", system: "shared" },
   { href: "/simulation", label: "Simulation", system: "world-economy", feature: "league" },
   { href: "/research", label: "Evidence", system: "learning-research", feature: "evidenceLab" },
   { href: "/dashboard", label: "Dashboard", system: "shared" },
@@ -64,7 +66,7 @@ export const MOBILE_NAVIGATION_GROUPS = [
   { label: "Simulation & Policy", items: [{ href: "/simulation", label: "Simulation" }, { href: "/sandbox", label: "Economic Sandbox" }, { href: "/policy-lab", label: "Policy Lab" }, { href: "/workspace", label: "Integrated Workspace" }] },
   { label: "Practice & Assessment", items: [{ href: "/econbench", label: "EconBench" }, { href: "/experiments", label: "Experiments" }] },
   { label: "Evidence & Research", items: [{ href: "/research", label: "Evidence Lab" }] },
-  { label: "Network", items: [{ href: "/league", label: "League" }] },
+  { label: "Network", items: [{ href: "/league", label: "League" }, { href: "/league/schools", label: "Schools" }, { href: "/team", label: "Team" }] },
 ] as const;
 
 export function isFeatureEnabled(feature: FeatureFlag | undefined) {
