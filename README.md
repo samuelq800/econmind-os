@@ -31,10 +31,11 @@ No service-role key is used or expected in the frontend.
 The repository includes a GitHub Actions workflow that verifies and exports the
 site on every push to `main`. It deploys to:
 
-`https://samuelq800.github.io/econmind-os/`
+`https://econmind.group/`
 
-The `GITHUB_PAGES=true` build flag adds the `/econmind-os` base path only during
-the Pages build, so ordinary local development continues to use `/`.
+The custom domain serves the Pages artifact from `/`, so the deployment sets an
+empty `NEXT_PUBLIC_BASE_PATH`. The configuration can still use `/econmind-os`
+for a project-site build without a custom domain.
 
 ## Testing
 

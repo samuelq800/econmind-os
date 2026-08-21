@@ -8,7 +8,7 @@
 5. In the GitHub repository, open Settings → Secrets and variables → Actions and create repository secrets with those same two names. The Pages workflow injects them only while building the public frontend.
 6. Run the **Deploy EconMind OS to GitHub Pages** workflow again, or push a new commit to `main`.
 
-If the frontend later moves to Vercel, add the same two public variables under Project Settings → Environment Variables and redeploy. For email confirmation in the Auth version, set the Supabase Site URL to `https://samuelq800.github.io/econmind-os/` and add that URL to the allowed redirect list.
+If the frontend later moves to Vercel, add the same two public variables under Project Settings → Environment Variables and redeploy. For email confirmation, set the production Supabase Site URL to `https://econmind.group/`. During the custom-domain transition, keep `https://econmind.group/`, `https://www.econmind.group/`, and `https://samuelq800.github.io/econmind-os/` in the allowed redirect list.
 
 Never add `SUPABASE_SERVICE_ROLE_KEY` to this frontend.
 
