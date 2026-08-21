@@ -8,16 +8,21 @@ import { Navbar } from "@/components/layout/navbar";
 import { ThemeProvider } from "@/components/layout/theme-provider";
 import "./globals.css";
 
+const siteUrl = new URL(
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://econmind.group",
+);
+const socialImageUrl = new URL("og.png", siteUrl).toString();
+
 export const metadata: Metadata = {
   title: { default: "EconMind OS", template: "%s · EconMind OS" },
   description: "An interactive economics laboratory for models, policy simulation, evidence and cross-school economic experimentation.",
-  metadataBase: new URL("https://samuelq800.github.io/econmind-os/"),
+  metadataBase: siteUrl,
   openGraph: {
     title: "EconMind OS",
     description: "From the real world to economic reasoning.",
-    images: [{ url: "https://samuelq800.github.io/econmind-os/og.png", width: 1920, height: 1080, alt: "EconMind OS economic reasoning diagram" }],
+    images: [{ url: socialImageUrl, width: 1920, height: 1080, alt: "EconMind OS economic reasoning diagram" }],
   },
-  twitter: { card: "summary_large_image", title: "EconMind OS", description: "From the real world to economic reasoning.", images: ["https://samuelq800.github.io/econmind-os/og.png"] },
+  twitter: { card: "summary_large_image", title: "EconMind OS", description: "From the real world to economic reasoning.", images: [socialImageUrl] },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

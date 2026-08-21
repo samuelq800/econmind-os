@@ -4,13 +4,12 @@ import { FormEvent, useEffect, useState } from "react";
 import { CheckCircle2, Eye, LoaderCircle, X } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
+import { BASE_PATH } from "@/lib/base-path";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 function emailRedirectUrl() {
-  const basePath = window.location.pathname.startsWith("/econmind-os")
-    ? "/econmind-os/"
-    : "/";
-  return `${window.location.origin}${basePath}`;
+  const redirectPath = BASE_PATH ? `${BASE_PATH}/` : "/";
+  return new URL(redirectPath, window.location.origin).toString();
 }
 
 export function AuthDialog() {
