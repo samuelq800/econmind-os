@@ -109,6 +109,80 @@ export const REGIONAL_LEADERS: readonly TeamMember[] = [
   },
 ];
 
+export const COMMUNICATIONS_TEAM: readonly TeamMember[] = [
+  {
+    name: "Sophia Cai",
+    role: "Creative Architect",
+    image: "/images/team/sophia-cai.jpg",
+    imagePosition: "50% 34%",
+    contact: { type: "wechat", value: "Sophialonglive" },
+  },
+  {
+    name: "Irene",
+    role: "Douyin",
+    image: "/images/team/comms-irene.jpg",
+    imagePosition: "50% 38%",
+    contact: { type: "phone", value: "13127596838" },
+  },
+  {
+    name: "Regina",
+    role: "Douyin",
+    image: "/images/team/comms-regina.jpg",
+    imagePosition: "50% 36%",
+    contact: { type: "wechat", value: "shellycone" },
+  },
+  {
+    name: "Olivia",
+    role: "Bilibili",
+    image: "/images/team/comms-olivia.jpg",
+    imagePosition: "50% 38%",
+    contact: { type: "wechat", value: "YueSunny229" },
+  },
+  {
+    name: "Aria",
+    role: "Xiaohongshu, Instagram, YouTube & X",
+    image: "/images/team/comms-aria.jpg",
+    imagePosition: "58% 38%",
+    contact: { type: "phone", value: "18222323717" },
+  },
+  {
+    name: "Yale",
+    role: "Design Coordinator",
+    image: "/images/team/comms-yale.jpg",
+    imagePosition: "50% 38%",
+    contact: { type: "wechat", value: "huhuhu20100220" },
+  },
+  {
+    name: "Jessie",
+    role: "WeChat Official Account",
+    contact: { type: "wechat", value: "JessieZhang0501" },
+  },
+];
+
+export const TECHNOLOGY_TEAM: readonly TeamMember[] = [
+  {
+    name: "David",
+    role: "Technology Department",
+    image: "/images/team/tech-david.jpg",
+    imagePosition: "50% 42%",
+    contact: { type: "phone", value: "15062620408" },
+  },
+  {
+    name: "Sophia Cai",
+    role: "Technology Department",
+    image: "/images/team/sophia-cai.jpg",
+    imagePosition: "50% 34%",
+    contact: { type: "wechat", value: "Sophialonglive" },
+  },
+  {
+    name: "Samuel",
+    role: "Technology Department",
+    image: "/images/team/tech-samuel.jpg",
+    imagePosition: "50% 38%",
+    contact: { type: "phone", value: "13862162460" },
+  },
+];
+
 export const REGIONAL_NETWORK = [
   { region: "Beijing", leads: ["Emma", "Sophia Liu"] },
   { region: "Zhejiang", leads: ["Sophia Cai"] },

@@ -2,7 +2,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, MessageCircleMore, Network, Phone } from "lucide-react";
 import { withBasePath } from "@/lib/base-path";
-import { FOUNDING_TEAM, REGIONAL_LEADERS, REGIONAL_NETWORK, contactLabel, type TeamMember } from "@/lib/team/team-data";
+import {
+  COMMUNICATIONS_TEAM,
+  FOUNDING_TEAM,
+  REGIONAL_LEADERS,
+  REGIONAL_NETWORK,
+  TECHNOLOGY_TEAM,
+  contactLabel,
+  type TeamMember,
+} from "@/lib/team/team-data";
 
 export function TeamPage() {
   return (
@@ -59,6 +67,27 @@ export function TeamPage() {
           </div>
         </section>
 
+        <DepartmentSection
+          index="03"
+          eyebrow="Communications Department"
+          title="The team shaping our public voice."
+          description="From short-form platforms and the official account to creative direction and design, this team helps make EconMind visible, approachable and connected."
+          members={COMMUNICATIONS_TEAM}
+          badge="Comms"
+          headingId="communications-team"
+        />
+
+        <DepartmentSection
+          index="04"
+          eyebrow="Technology Department"
+          title="The team building the platform."
+          description="The technology team supports the product infrastructure, implementation and ongoing development behind the EconMind experience."
+          members={TECHNOLOGY_TEAM}
+          badge="Tech"
+          headingId="technology-team"
+          tone="subtle"
+        />
+
         <section className="mx-auto max-w-[1360px] px-5 py-20 sm:px-8 lg:px-12 lg:py-28" aria-labelledby="regional-index">
           <div className="grid gap-12 lg:grid-cols-[.8fr_1.2fr]">
             <div>
@@ -76,7 +105,7 @@ export function TeamPage() {
         <section className="border-t border-[var(--line)] bg-[var(--surface-subtle)]">
           <div className="mx-auto grid max-w-[1360px] gap-12 px-5 py-20 sm:px-8 lg:grid-cols-[1.05fr_.95fr] lg:px-12 lg:py-28">
             <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-[.2em] text-[var(--accent)]">03 · Schools & Wider Network</p>
+              <p className="text-[10px] font-extrabold uppercase tracking-[.2em] text-[var(--accent)]">05 · Schools & Wider Network</p>
               <h2 className="mt-4 max-w-2xl font-serif text-4xl tracking-[-.05em] sm:text-6xl">Built across schools and regions.</h2>
             </div>
             <div className="max-w-xl lg:pt-7">
@@ -101,7 +130,42 @@ function FounderProfile({ member }: { member: TeamMember }) {
   </section>;
 }
 
-function TeamMemberCard({ member }: { member: TeamMember }) {
+function DepartmentSection({
+  index,
+  eyebrow,
+  title,
+  description,
+  members,
+  badge,
+  headingId,
+  tone,
+}: {
+  index: string;
+  eyebrow: string;
+  title: string;
+  description: string;
+  members: readonly TeamMember[];
+  badge: string;
+  headingId: string;
+  tone?: "subtle";
+}) {
+  return <section className={tone === "subtle" ? "border-y border-[var(--line)] bg-[var(--surface-subtle)]" : "border-b border-[var(--line)] bg-[var(--surface)]"} aria-labelledby={headingId}>
+    <div className="mx-auto max-w-[1360px] px-5 py-20 sm:px-8 lg:px-12 lg:py-28">
+      <div className="grid gap-10 border-b border-[var(--line)] pb-12 lg:grid-cols-[1.1fr_.9fr] lg:items-end">
+        <div>
+          <p className="text-[10px] font-extrabold uppercase tracking-[.2em] text-[var(--accent)]">{index} · {eyebrow}</p>
+          <h2 id={headingId} className="mt-4 max-w-2xl font-serif text-4xl tracking-[-.05em] sm:text-6xl">{title}</h2>
+        </div>
+        <p className="max-w-xl text-sm leading-7 text-[var(--ink-muted)]">{description}</p>
+      </div>
+      <div className="mt-10 grid gap-x-4 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+        {members.map((member) => <TeamMemberCard key={`${badge}-${member.name}`} member={member} badge={badge} />)}
+      </div>
+    </div>
+  </section>;
+}
+
+function TeamMemberCard({ member, badge = "Lead" }: { member: TeamMember; badge?: string }) {
   return <article className="group border-b border-[var(--line)] pb-6">
     <Portrait member={member} />
     <div className="mt-5 flex items-start justify-between gap-4">
@@ -109,7 +173,7 @@ function TeamMemberCard({ member }: { member: TeamMember }) {
         <h3 className="text-xl font-bold tracking-[-.04em]">{member.name}</h3>
         <p className="mt-1 min-h-10 text-sm leading-5 text-[var(--ink-muted)]">{member.role}</p>
       </div>
-      <span className="mt-1 text-[10px] font-extrabold uppercase tracking-[.13em] text-[var(--accent)]">Lead</span>
+      <span className="mt-1 text-[10px] font-extrabold uppercase tracking-[.13em] text-[var(--accent)]">{badge}</span>
     </div>
     <Contact member={member} className="mt-5" />
   </article>;
