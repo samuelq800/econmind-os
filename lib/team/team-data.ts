@@ -111,11 +111,11 @@ export const REGIONAL_LEADERS: readonly TeamMember[] = [
 
 export const COMMUNICATIONS_TEAM: readonly TeamMember[] = [
   {
-    name: "Sophia Cai",
-    role: "Creative Architect",
-    image: "/images/team/sophia-cai.jpg",
-    imagePosition: "50% 34%",
-    contact: { type: "wechat", value: "Sophialonglive" },
+    name: "Aria",
+    role: "Xiaohongshu, Instagram, YouTube & X",
+    image: "/images/team/comms-aria.jpg",
+    imagePosition: "58% 38%",
+    contact: { type: "phone", value: "18222323717" },
   },
   {
     name: "Irene",
@@ -125,11 +125,9 @@ export const COMMUNICATIONS_TEAM: readonly TeamMember[] = [
     contact: { type: "phone", value: "13127596838" },
   },
   {
-    name: "Regina",
-    role: "Douyin",
-    image: "/images/team/comms-regina.jpg",
-    imagePosition: "50% 36%",
-    contact: { type: "wechat", value: "shellycone" },
+    name: "Jessie",
+    role: "WeChat Official Account",
+    contact: { type: "wechat", value: "JessieZhang0501" },
   },
   {
     name: "Olivia",
@@ -139,11 +137,18 @@ export const COMMUNICATIONS_TEAM: readonly TeamMember[] = [
     contact: { type: "wechat", value: "YueSunny229" },
   },
   {
-    name: "Aria",
-    role: "Xiaohongshu, Instagram, YouTube & X",
-    image: "/images/team/comms-aria.jpg",
-    imagePosition: "58% 38%",
-    contact: { type: "phone", value: "18222323717" },
+    name: "Regina",
+    role: "Douyin",
+    image: "/images/team/comms-regina.jpg",
+    imagePosition: "50% 36%",
+    contact: { type: "wechat", value: "shellycone" },
+  },
+  {
+    name: "Sophia Cai",
+    role: "Creative Architect",
+    image: "/images/team/sophia-cai.jpg",
+    imagePosition: "50% 34%",
+    contact: { type: "wechat", value: "Sophialonglive" },
   },
   {
     name: "Yale",
@@ -151,11 +156,6 @@ export const COMMUNICATIONS_TEAM: readonly TeamMember[] = [
     image: "/images/team/comms-yale.jpg",
     imagePosition: "50% 38%",
     contact: { type: "wechat", value: "huhuhu20100220" },
-  },
-  {
-    name: "Jessie",
-    role: "WeChat Official Account",
-    contact: { type: "wechat", value: "JessieZhang0501" },
   },
 ];
 
@@ -168,18 +168,18 @@ export const TECHNOLOGY_TEAM: readonly TeamMember[] = [
     contact: { type: "phone", value: "15062620408" },
   },
   {
-    name: "Sophia Cai",
-    role: "Technology Department",
-    image: "/images/team/sophia-cai.jpg",
-    imagePosition: "50% 34%",
-    contact: { type: "wechat", value: "Sophialonglive" },
-  },
-  {
     name: "Samuel",
     role: "Technology Department",
     image: "/images/team/tech-samuel.jpg",
     imagePosition: "50% 38%",
     contact: { type: "phone", value: "13862162460" },
+  },
+  {
+    name: "Sophia Cai",
+    role: "Technology Department",
+    image: "/images/team/sophia-cai.jpg",
+    imagePosition: "50% 34%",
+    contact: { type: "wechat", value: "Sophialonglive" },
   },
 ];
 
