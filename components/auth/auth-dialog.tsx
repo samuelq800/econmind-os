@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { CheckCircle2, Eye, LoaderCircle, X } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { BASE_PATH } from "@/lib/base-path";
+import { LEGAL_DOCUMENTS, registrationConsentValid } from "@/lib/legal/legal-config";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 function emailRedirectUrl() {
@@ -21,6 +23,7 @@ export function AuthDialog() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [legalAcceptance, setLegalAcceptance] = useState({ terms: false, privacy: false });
 
   useEffect(() => {
     if (!authOpen) return;
@@ -41,6 +44,10 @@ export function AuthDialog() {
       setError("Supabase is not configured for this deployment.");
       return;
     }
+    if (authMode === "sign-up" && !registrationConsentValid(legalAcceptance)) {
+      setError("Please read and accept the Terms of Use and Privacy Notice to create an account.");
+      return;
+    }
 
     setBusy(true);
     try {
@@ -59,7 +66,13 @@ export function AuthDialog() {
           email: email.trim(),
           password,
           options: {
-            data: { display_name: displayName.trim() || null },
+            data: {
+              display_name: displayName.trim() || null,
+              legal_acceptance: {
+                terms_version: LEGAL_DOCUMENTS.terms.version,
+                privacy_version: LEGAL_DOCUMENTS.privacy.version,
+              },
+            },
             emailRedirectTo: emailRedirectUrl(),
           },
         });
@@ -168,6 +181,31 @@ export function AuthDialog() {
                 placeholder="At least 8 characters"
               />
             </label>
+            {authMode === "sign-up" && (
+              <fieldset className="grid gap-3 rounded-xl border border-[var(--line)] bg-[var(--canvas)] p-4">
+                <legend className="sr-only">Legal acknowledgements</legend>
+                <label className="flex cursor-pointer items-start gap-3 text-xs leading-5 text-[var(--ink-muted)]">
+                  <input
+                    required
+                    type="checkbox"
+                    checked={legalAcceptance.terms}
+                    onChange={(event) => setLegalAcceptance((current) => ({ ...current, terms: event.target.checked }))}
+                    className="mt-1 size-4 accent-[var(--accent)]"
+                  />
+                  <span>I have read and agree to the <Link href="/terms" target="_blank" className="font-bold text-[var(--accent)]">Terms of Use</Link>.</span>
+                </label>
+                <label className="flex cursor-pointer items-start gap-3 text-xs leading-5 text-[var(--ink-muted)]">
+                  <input
+                    required
+                    type="checkbox"
+                    checked={legalAcceptance.privacy}
+                    onChange={(event) => setLegalAcceptance((current) => ({ ...current, privacy: event.target.checked }))}
+                    className="mt-1 size-4 accent-[var(--accent)]"
+                  />
+                  <span>I have read the <Link href="/privacy" target="_blank" className="font-bold text-[var(--accent)]">Privacy Notice</Link>.</span>
+                </label>
+              </fieldset>
+            )}
             </>}
             {error && (
               <p role="alert" className="rounded-lg bg-[var(--red-soft)] p-3 text-xs leading-5 text-[var(--red)]">
@@ -180,7 +218,7 @@ export function AuthDialog() {
                 {message}
               </p>
             )}
-            <Button className="w-full" disabled={busy} type="submit">
+            <Button className="w-full" disabled={busy || (authMode === "sign-up" && !registrationConsentValid(legalAcceptance))} type="submit">
               {busy && <LoaderCircle className="animate-spin" size={15} />}
               {authMode === "invitation" ? <><Eye size={15} /> Enter view-only mode</> : authMode === "sign-in" ? "Sign in" : "Create account"}
             </Button>

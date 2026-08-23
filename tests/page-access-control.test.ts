@@ -6,6 +6,10 @@ describe("central frontend page access policy", () => {
     for (const path of [
       "/",
       "/about",
+      "/privacy",
+      "/terms",
+      "/community-guidelines",
+      "/integrity",
       "/explore",
       "/daily-brief",
       "/daily-brief/read",
@@ -23,6 +27,12 @@ describe("central frontend page access policy", () => {
   it("keeps personal case history behind an individual account", () => {
     expect(pageAccessForPath("/cases/history").audience).toBe("account");
     expect(pageAccessForPath("/cases/history/older").audience).toBe("account");
+  });
+
+  it("keeps the support form and governance workspace behind the intended account boundaries", () => {
+    expect(pageAccessForPath("/contact").audience).toBe("account");
+    expect(pageAccessForPath("/admin/governance").audience).toBe("account");
+    expect(pageAccessForPath("/admin/governance").platformRoles).toEqual(["platform_admin"]);
   });
 
   it("keeps unlisted tools account-or-viewer gated", () => {

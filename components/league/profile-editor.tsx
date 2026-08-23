@@ -3,15 +3,72 @@
 import { FormEvent, useEffect, useState } from "react";
 import { CheckCircle2, LoaderCircle, LogIn } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
+import { ProfilePrivacyControls } from "@/components/governance/profile-privacy-controls";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { getLeagueContext, updateLeagueProfile } from "@/lib/supabase/league";
 import type { LeagueProfile } from "@/lib/league/types";
+import { getLeagueContext, updateLeagueProfile } from "@/lib/supabase/league";
 
 export function ProfileEditor() {
-  const { user, openAuth } = useAuth(); const [profile, setProfile] = useState<LeagueProfile | null>(null); const [busy, setBusy] = useState(false); const [error, setError] = useState(""); const [message, setMessage] = useState("");
-  useEffect(() => { if (user) void getLeagueContext(user.id).then((context) => setProfile(context.profile)).catch((caught) => setError(caught instanceof Error ? caught.message : "Could not load profile.")); }, [user]);
-  if (!user) return <main className="mx-auto grid min-h-[65vh] max-w-xl place-items-center px-5 text-center"><div><h1 className="text-3xl font-bold">Sign in to edit your profile</h1><Button className="mt-5" onClick={() => openAuth("sign-in")}><LogIn size={15} />Sign in</Button></div></main>;
-  async function save(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (!profile) return; setBusy(true); setError(""); try { const next = await updateLeagueProfile({ display_name: profile.display_name?.trim() || null, graduation_year: profile.graduation_year, economics_club_name: profile.economics_club_name?.trim() || null, role_preference: profile.role_preference }); setProfile(next); setMessage("Profile saved."); } catch (caught) { setError(caught instanceof Error ? caught.message : "Could not save profile."); } finally { setBusy(false); } }
-  return <main className="mx-auto min-h-screen max-w-3xl px-5 py-12 sm:px-8"><header><p className="text-[10px] font-bold uppercase tracking-[.18em] text-[var(--accent)]">Account profile</p><h1 className="mt-3 text-4xl font-bold">Your League profile</h1><p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">These details are optional. Your platform role and school association are controlled securely in the database.</p></header><Card className="mt-8 p-6">{profile ? <form onSubmit={(event) => void save(event)} className="grid gap-5"><label className="text-xs font-bold">Display Name<input value={profile.display_name ?? ""} onChange={(event) => setProfile({ ...profile, display_name: event.target.value })} maxLength={80} className="mt-2 h-10 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 text-sm" /></label><div className="grid gap-5 sm:grid-cols-2"><label className="text-xs font-bold">Graduation Year (optional)<input type="number" min="2024" max="2045" value={profile.graduation_year ?? ""} onChange={(event) => setProfile({ ...profile, graduation_year: event.target.value ? Number(event.target.value) : null })} className="mt-2 h-10 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 text-sm" /></label><label className="text-xs font-bold">Economics Club Name<input value={profile.economics_club_name ?? ""} onChange={(event) => setProfile({ ...profile, economics_club_name: event.target.value })} maxLength={160} className="mt-2 h-10 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 text-sm" /></label></div><label className="text-xs font-bold">Role Preference<select value={profile.role_preference ?? ""} onChange={(event) => setProfile({ ...profile, role_preference: (event.target.value || null) as LeagueProfile["role_preference"] })} className="mt-2 h-10 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 text-sm"><option value="">No preference</option><option value="participant">Participant</option><option value="team_lead">Team lead</option><option value="school_liaison">School liaison</option></select></label>{error && <p role="alert" className="rounded-lg bg-[var(--red-soft)] p-3 text-xs text-[var(--red)]">{error}</p>}{message && <p className="flex items-center gap-2 rounded-lg bg-[var(--accent-soft)] p-3 text-xs font-bold text-[var(--accent)]"><CheckCircle2 size={14} />{message}</p>}<Button type="submit" disabled={busy}>{busy && <LoaderCircle className="animate-spin" size={14} />}{busy ? "Saving…" : "Save profile"}</Button></form> : <p className="text-sm text-[var(--ink-muted)]">Loading profile…</p>}</Card></main>;
+  const { user, openAuth } = useAuth();
+  const [profile, setProfile] = useState<LeagueProfile | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    if (!user) return;
+    void getLeagueContext(user.id)
+      .then((context) => setProfile(context.profile))
+      .catch((caught) => setError(caught instanceof Error ? caught.message : "Could not load profile."));
+  }, [user]);
+
+  if (!user) {
+    return <main className="mx-auto grid min-h-[65vh] max-w-xl place-items-center px-5 text-center"><div><h1 className="text-3xl font-bold">Sign in to edit your profile</h1><Button className="mt-5" onClick={() => openAuth("sign-in")}><LogIn size={15} />Sign in</Button></div></main>;
+  }
+
+  async function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!profile) return;
+    setBusy(true);
+    setError("");
+    try {
+      const next = await updateLeagueProfile({
+        display_name: profile.display_name?.trim() || null,
+        graduation_year: profile.graduation_year,
+        economics_club_name: profile.economics_club_name?.trim() || null,
+        role_preference: profile.role_preference,
+      });
+      setProfile(next);
+      setMessage("Profile saved.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not save profile.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <main className="mx-auto min-h-screen max-w-3xl px-5 py-12 sm:px-8">
+      <header>
+        <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[var(--accent)]">Account profile</p>
+        <h1 className="mt-3 text-4xl font-bold">Your League profile</h1>
+        <p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">These details are optional. Your platform role and school association are controlled securely in the database.</p>
+      </header>
+      <Card className="mt-8 p-6">
+        {profile ? <form onSubmit={(event) => void save(event)} className="grid gap-5">
+          <label className="text-xs font-bold">Display Name<input value={profile.display_name ?? ""} onChange={(event) => setProfile({ ...profile, display_name: event.target.value })} maxLength={80} className="mt-2 h-10 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 text-sm" /></label>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <label className="text-xs font-bold">Graduation Year (optional)<input type="number" min="2024" max="2045" value={profile.graduation_year ?? ""} onChange={(event) => setProfile({ ...profile, graduation_year: event.target.value ? Number(event.target.value) : null })} className="mt-2 h-10 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 text-sm" /></label>
+            <label className="text-xs font-bold">Economics Club Name<input value={profile.economics_club_name ?? ""} onChange={(event) => setProfile({ ...profile, economics_club_name: event.target.value })} maxLength={160} className="mt-2 h-10 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 text-sm" /></label>
+          </div>
+          <label className="text-xs font-bold">Role Preference<select value={profile.role_preference ?? ""} onChange={(event) => setProfile({ ...profile, role_preference: (event.target.value || null) as LeagueProfile["role_preference"] })} className="mt-2 h-10 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 text-sm"><option value="">No preference</option><option value="participant">Participant</option><option value="team_lead">Team lead</option><option value="school_liaison">School liaison</option></select></label>
+          {error && <p role="alert" className="rounded-lg bg-[var(--red-soft)] p-3 text-xs text-[var(--red)]">{error}</p>}
+          {message && <p className="flex items-center gap-2 rounded-lg bg-[var(--accent-soft)] p-3 text-xs font-bold text-[var(--accent)]"><CheckCircle2 size={14} />{message}</p>}
+          <Button type="submit" disabled={busy}>{busy && <LoaderCircle className="animate-spin" size={14} />}{busy ? "Saving…" : "Save profile"}</Button>
+        </form> : <p className="text-sm text-[var(--ink-muted)]">Loading profile…</p>}
+      </Card>
+      <ProfilePrivacyControls email={user.email} />
+    </main>
+  );
 }
