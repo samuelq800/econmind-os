@@ -6,6 +6,8 @@ describe("central frontend page access policy", () => {
     for (const path of [
       "/",
       "/about",
+      "/community",
+      "/legal",
       "/privacy",
       "/terms",
       "/community-guidelines",

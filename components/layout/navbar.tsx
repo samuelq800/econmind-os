@@ -9,6 +9,15 @@ import { availablePrimaryNavigation, MOBILE_NAVIGATION_GROUPS } from "@/lib/plat
 import { useTheme } from "./theme-provider";
 
 const publicLinks = availablePrimaryNavigation();
+const governanceLinks = [
+  { href: "/community", label: "Community", activePrefixes: ["/community", "/community-guidelines", "/integrity"] },
+  { href: "/legal", label: "Legal", activePrefixes: ["/legal", "/privacy", "/terms"] },
+] as const;
+
+function isActiveNavigationLink(path: string, link: { href: string; activePrefixes?: readonly string[] }) {
+  const prefixes = link.activePrefixes ?? [link.href];
+  return prefixes.some((prefix) => prefix === "/" ? path === "/" : path === prefix || path.startsWith(`${prefix}/`));
+}
 
 export function Navbar() {
   const path = usePathname() ?? "/";
@@ -16,7 +25,7 @@ export function Navbar() {
   const { user, role, worldSupervisor, viewerAccess, viewerLoading, loading, openAuth, signOut, endViewerSession } = useAuth();
   const [open, setOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
-  const links = publicLinks;
+  const links = [...publicLinks, ...governanceLinks];
 
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--canvas)_88%,transparent)] backdrop-blur-xl">
@@ -26,14 +35,14 @@ export function Navbar() {
           <span className="text-sm font-extrabold">EconMind OS</span>
           <span className="hidden rounded border border-[var(--line)] px-1.5 py-.5 text-[9px] font-bold uppercase tracking-widest text-[var(--ink-faint)] sm:inline">Beta</span>
         </Link>
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-0.5 lg:flex">
           {links.map((link) => {
-            const active = link.href === "/" ? path === "/" : path.startsWith(link.href);
+            const active = isActiveNavigationLink(path, link);
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`rounded-lg px-3 py-2 text-sm font-medium ${active ? "bg-[var(--surface-strong)]" : "text-[var(--ink-muted)] hover:text-[var(--ink)]"}`}
+                className={`rounded-lg px-2.5 py-2 text-sm font-medium ${active ? "bg-[var(--surface-strong)]" : "text-[var(--ink-muted)] hover:text-[var(--ink)]"}`}
               >
                 {link.label}
               </Link>
