@@ -35,7 +35,7 @@ export function Navbar() {
           <span className="text-sm font-extrabold">EconMind OS</span>
           <span className="hidden rounded border border-[var(--line)] px-1.5 py-.5 text-[9px] font-bold uppercase tracking-widest text-[var(--ink-faint)] sm:inline">Beta</span>
         </Link>
-        <nav className="hidden items-center gap-0.5 lg:flex">
+        <nav className="hidden items-center gap-0.5 xl:flex">
           {links.map((link) => {
             const active = isActiveNavigationLink(path, link);
             return (
@@ -125,14 +125,14 @@ export function Navbar() {
           <button
             aria-label="Toggle navigation"
             onClick={() => setOpen((current) => !current)}
-            className="grid size-9 place-items-center rounded-lg border border-[var(--line)] bg-[var(--surface)] md:hidden"
+            className="grid size-9 place-items-center rounded-lg border border-[var(--line)] bg-[var(--surface)] xl:hidden"
           >
             {open ? <X size={17} /> : <Menu size={17} />}
           </button>
         </div>
       </div>
       {open && (
-        <nav className="scroll-slim fixed inset-x-0 bottom-0 top-16 overflow-y-auto border-t border-[var(--line)] bg-[var(--canvas)] p-5 shadow-2xl md:hidden" aria-label="Full navigation">
+        <nav className="scroll-slim fixed inset-x-0 bottom-0 top-16 overflow-y-auto border-t border-[var(--line)] bg-[var(--canvas)] p-5 shadow-2xl xl:hidden" aria-label="Full navigation">
           <div className="mx-auto max-w-xl">
             <p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-[var(--ink-faint)]">Navigate EconMind</p>
             <div className="mt-3 grid grid-cols-2 gap-2">

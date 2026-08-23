@@ -5,6 +5,8 @@ import { pageAccessForPath } from "@/lib/platform/access-control";
 
 const migration = readFileSync("supabase/migrations/20260823000000_governance_privacy_legal.sql", "utf8");
 const authDialog = readFileSync("components/auth/auth-dialog.tsx", "utf8");
+const about = readFileSync("app/about/page.tsx", "utf8");
+const featureFlags = readFileSync("lib/platform/feature-flags.ts", "utf8");
 
 describe("governance, privacy, and legal foundation", () => {
   it("requires both legal acknowledgements for a new account", () => {
@@ -31,6 +33,14 @@ describe("governance, privacy, and legal foundation", () => {
     }
     expect(pageAccessForPath("/contact").audience).toBe("account");
     expect(pageAccessForPath("/admin/governance").platformRoles).toEqual(["platform_admin"]);
+  });
+
+  it("makes the full About statement a primary public destination", () => {
+    expect(featureFlags).toContain('{ href: "/about", label: "About", system: "shared" }');
+    expect(about).toContain("Economics beyond the classroom.");
+    expect(about).toContain("Student-initiated. Independently operated. Non-profit in purpose.");
+    expect(about).toContain("A modelled result is an outcome within a set of assumptions");
+    expect(about).toContain("not designed to solicit personal information from children under 14");
   });
 
   it("keeps user requests, legal acknowledgements, and internal audit history behind RLS", () => {

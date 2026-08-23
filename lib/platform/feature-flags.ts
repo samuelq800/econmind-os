@@ -51,6 +51,7 @@ export const PLATFORM_NAVIGATION: readonly PlatformNavigationItem[] = [
 // existing systems and compatibility consumers.
 export const PRIMARY_NAVIGATION: readonly PlatformNavigationItem[] = [
   { href: "/", label: "Home", system: "shared" },
+  { href: "/about", label: "About", system: "shared" },
   { href: "/explore", label: "Explore", system: "learning-research", feature: "dailyBrief" },
   { href: "/activities", label: "Activities", system: "learning-research", feature: "mechanismArena" },
   { href: "/league", label: "League", system: "world-economy", feature: "league" },
