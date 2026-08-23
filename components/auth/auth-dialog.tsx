@@ -22,6 +22,11 @@ import {
   OFFICIAL_CONTACT_MAILTO,
 } from "@/lib/platform/contact";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  EMAIL_OTP_LENGTH,
+  normaliseEmailOtp,
+  rejectUnexpectedSignupSession,
+} from "@/lib/supabase/signup-verification";
 
 function emailRedirectUrl(flow?: "recovery" | "confirmed") {
   const redirectPath = BASE_PATH ? `${BASE_PATH}/` : "/";
@@ -218,13 +223,15 @@ export function AuthDialog() {
           },
         });
         if (signUpError) throw signUpError;
-        if (data.session) closeAuth();
-        else
-          showOtpStep(
-            "verify-sign-up",
-            targetEmail,
-            "Check your inbox for the email verification code.",
-          );
+        setPassword("");
+        await rejectUnexpectedSignupSession(data.session, () =>
+          supabase.auth.signOut(),
+        );
+        showOtpStep(
+          "verify-sign-up",
+          targetEmail,
+          "Check your inbox for the email verification code.",
+        );
       } else if (authMode === "verify-sign-up") {
         const { error: verificationError } = await supabase.auth.verifyOtp({
           email: verificationEmail,
@@ -390,13 +397,16 @@ export function AuthDialog() {
                   autoFocus
                   value={otp}
                   onChange={(event) =>
-                    setOtp(event.target.value.replace(/\s/g, ""))
+                    setOtp(normaliseEmailOtp(event.target.value))
                   }
                   autoComplete="one-time-code"
                   inputMode="numeric"
-                  maxLength={12}
+                  minLength={EMAIL_OTP_LENGTH}
+                  maxLength={EMAIL_OTP_LENGTH}
+                  pattern="[0-9]{8}"
+                  title="Enter the 8-digit code from your email"
                   className="mt-2 h-12 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-center font-mono text-lg font-bold tracking-[.24em] outline-none focus:border-[var(--accent)]"
-                  placeholder="CODE"
+                  placeholder="8-DIGIT CODE"
                 />
               </label>
             )}

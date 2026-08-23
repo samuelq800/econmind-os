@@ -23,12 +23,14 @@ are stored in:
 - `supabase/templates/confirmation.html`
 - `supabase/templates/recovery.html`
 
-`supabase/config.toml` loads these files for local Supabase. A hosted project
-does not receive Auth templates from `supabase db push`, so copy the matching
-HTML into **Dashboard → Authentication → Email Templates** for the production
-project. Keep `{{ .ConfirmationURL }}` in each template as a secure-link
-fallback, and disable link tracking in the SMTP provider so security scanners
-do not rewrite or pre-open Auth links.
+`supabase/config.toml` is the source of truth for both local and hosted Auth
+settings. A hosted project does not receive Auth settings or templates from
+`supabase db push`; deploy them separately with the **Apply Auth configuration**
+checkbox in the **Deploy Supabase backend** workflow. That checkbox runs
+`supabase config push` and is intentionally disabled by default. Keep
+`{{ .ConfirmationURL }}` in each template as a secure-link fallback, and
+disable link tracking in the SMTP provider so security scanners do not rewrite
+or pre-open Auth links.
 
 In **Authentication → Sign In / Providers → Email**, keep **Confirm email**
 enabled. In **Authentication → URL Configuration**, use the canonical site URL
@@ -42,7 +44,9 @@ and allow all deployed callback origins:
 Registration uses `verifyOtp(..., type: "email")`. Password recovery sends a
 code with `resetPasswordForEmail`, verifies it with `type: "recovery"`, and
 only then calls `updateUser({ password })`. Recovery links remain supported via
-the `PASSWORD_RECOVERY` Auth event.
+the `PASSWORD_RECOVERY` Auth event. The frontend treats a sign-up response that
+already contains a session as a configuration error, signs it out immediately,
+and never bypasses the verification-code screen.
 
 ## Safe personal-account deletion
 

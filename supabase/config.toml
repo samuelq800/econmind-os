@@ -5,13 +5,24 @@ schemas = ["public", "graphql_public"]
 extra_search_path = ["public", "extensions"]
 [auth]
 enabled = true
-site_url = "http://localhost:3000"
-additional_redirect_urls = ["http://localhost:3000/**"]
+site_url = "https://econmind.group"
+additional_redirect_urls = [
+  "https://econmind.group/**",
+  "https://www.econmind.group/**",
+  "https://samuelq800.github.io/econmind-os/**",
+  "http://localhost:3000/**",
+]
 enable_signup = true
 [auth.email]
 enable_signup = true
 double_confirm_changes = true
 enable_confirmations = true
+max_frequency = "1m0s"
+otp_length = 8
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
 
 [auth.email.template.confirmation]
 subject = "Your EconMind OS verification code"
@@ -20,6 +31,12 @@ content_path = "./supabase/templates/confirmation.html"
 [auth.email.template.recovery]
 subject = "Reset your EconMind OS password"
 content_path = "./supabase/templates/recovery.html"
+
+# Keep hosted-project Storage Vector disabled. Leaving this implicit causes a
+# config push to request a paid Vector Buckets feature that this project does
+# not use.
+[storage.vector]
+enabled = false
 
 # The collector verifies either a teacher session or DAILY_BRIEF_CRON_SECRET
 # inside the function. The scheduled call uses the latter, which is not a JWT.
