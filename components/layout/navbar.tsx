@@ -162,6 +162,7 @@ export function Navbar() {
                 <GraduationCap size={15} /> Professor Studio
               </Link>
             )}
+            {user && <Link href="/profile" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--ink-muted)]"><UserRound size={15} /> Profile & privacy</Link>}
             {user ? (
               <button type="button" onClick={() => { setOpen(false); void signOut(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--red)]">
                 <LogOut size={15} /> Sign out

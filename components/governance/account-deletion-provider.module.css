@@ -1,0 +1,617 @@
+.backdrop {
+  position: fixed;
+  z-index: 180;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: max(1rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+  background: rgba(4, 7, 8, 0.78);
+}
+
+.dialog {
+  position: relative;
+  width: min(100%, 610px);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--line-strong) 76%, #71d7ff 24%);
+  border-radius: 3px;
+  background:
+    linear-gradient(rgba(113, 215, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(113, 215, 255, 0.045) 1px, transparent 1px),
+    color-mix(in srgb, var(--surface) 96%, #061014);
+  background-size: 28px 28px;
+  box-shadow: 0 32px 100px rgba(0, 0, 0, 0.52);
+}
+
+.dialog::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #71d7ff 30%,
+    #ff5c35 70%,
+    transparent
+  );
+  content: "";
+}
+
+.dialogTopline {
+  display: flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--line);
+  padding: 0 4.25rem 0 1.25rem;
+  color: var(--ink-faint);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.closeButton {
+  position: absolute;
+  z-index: 2;
+  top: 6px;
+  right: 8px;
+  display: grid;
+  width: 30px;
+  height: 24px;
+  place-items: center;
+  border: 1px solid var(--line);
+  color: var(--ink-muted);
+}
+
+.statePanel {
+  display: grid;
+  justify-items: start;
+  padding: clamp(1.5rem, 5vw, 2.8rem);
+}
+
+.stateIcon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 48%, var(--line));
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.warningIcon,
+.dangerIcon {
+  border-color: color-mix(in srgb, var(--red) 52%, var(--line));
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.eyebrow {
+  margin: 1.35rem 0 0;
+  color: var(--accent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.statePanel h2 {
+  margin: 0.55rem 0 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.7rem, 5vw, 2.65rem);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 0.98;
+}
+
+.statePanel > p:not(.eyebrow) {
+  max-width: 500px;
+  margin: 1rem 0 1.4rem;
+  color: var(--ink-muted);
+  font-size: 0.86rem;
+  line-height: 1.7;
+}
+
+.blockerList {
+  display: grid;
+  width: 100%;
+  gap: 1px;
+  margin: 0 0 1.4rem;
+  padding: 1px;
+  background: var(--line);
+  list-style: none;
+}
+
+.blockerList li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  background: color-mix(in srgb, var(--surface) 96%, var(--red-soft));
+  padding: 0.8rem 0.9rem;
+  color: var(--ink-muted);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.blockerList svg {
+  flex: 0 0 auto;
+  margin-top: 0.12rem;
+  color: var(--red);
+}
+
+.impactGrid {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin-bottom: 1.4rem;
+  padding: 1px;
+  background: var(--line);
+}
+
+.impactGrid span {
+  display: flex;
+  min-height: 46px;
+  align-items: center;
+  gap: 0.55rem;
+  background: var(--surface);
+  padding: 0.65rem 0.75rem;
+  color: var(--ink-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.impactGrid svg {
+  color: var(--red);
+}
+
+.confirmLabel {
+  display: grid;
+  width: 100%;
+  gap: 0.55rem;
+  color: var(--ink-muted);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.confirmLabel strong {
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.confirmLabel input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  outline: none;
+  background: var(--canvas);
+  padding: 0 0.9rem;
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: max(16px, 0.82rem);
+}
+
+.confirmLabel input:focus {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--red) 13%, transparent);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.4rem;
+}
+
+.supportLink {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  padding: 0 0.9rem;
+  color: var(--accent);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.progressTrack {
+  width: 100%;
+  height: 2px;
+  overflow: hidden;
+  background: var(--line);
+}
+
+.progressTrack span {
+  display: block;
+  width: 38%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, #71d7ff, #ff5c35);
+  animation: deletionProgress 1s ease-in-out infinite alternate;
+  transform: translate3d(-35%, 0, 0);
+}
+
+.sequence {
+  position: fixed;
+  z-index: 220;
+  inset: 0;
+  min-height: 100dvh;
+  overflow: hidden;
+  contain: layout paint style;
+  isolation: isolate;
+  background: #050708;
+  color: #e9eef0;
+  animation: sequenceWake 0.28s ease-out both;
+}
+
+.telemetryGrid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.32;
+  background:
+    radial-gradient(
+      circle at 50% 38%,
+      rgba(113, 215, 255, 0.12),
+      transparent 34%
+    ),
+    linear-gradient(rgba(113, 215, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(113, 215, 255, 0.07) 1px, transparent 1px);
+  background-size:
+    auto,
+    42px 42px,
+    42px 42px;
+}
+
+.telemetryGrid::after {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, transparent 34%, #050708 88%);
+  content: "";
+}
+
+.sequenceHeader {
+  position: absolute;
+  z-index: 2;
+  top: max(1.2rem, env(safe-area-inset-top));
+  right: max(1.2rem, env(safe-area-inset-right));
+  left: max(1.2rem, env(safe-area-inset-left));
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(233, 238, 240, 0.18);
+  padding-bottom: 0.65rem;
+  color: rgba(233, 238, 240, 0.52);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: clamp(7px, 1.2vw, 10px);
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.rocketStage {
+  position: absolute;
+  z-index: 3;
+  inset: 4.2rem 1rem 1.2rem;
+  display: grid;
+  place-items: center;
+  animation: rocketMission 1.68s cubic-bezier(0.2, 0.72, 0.2, 1) both;
+  transform-origin: 50% 52%;
+}
+
+.rocket {
+  width: min(48vw, 330px);
+  max-height: 78dvh;
+  filter: drop-shadow(0 0 24px rgba(113, 215, 255, 0.12));
+}
+
+.rocketOutline {
+  color: rgba(233, 238, 240, 0.92);
+}
+
+.rocketStructure {
+  color: #71d7ff;
+  opacity: 0;
+  animation: structureLock 0.72s 0.28s ease-out forwards;
+}
+
+.rocketCallouts {
+  color: rgba(113, 215, 255, 0.66);
+  opacity: 0;
+  animation: structureLock 0.55s 0.58s ease-out forwards;
+}
+
+.rocketLabels {
+  color: rgba(233, 238, 240, 0.7);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  opacity: 0;
+  animation: structureLock 0.5s 0.7s ease-out forwards;
+}
+
+.scanLine {
+  position: absolute;
+  z-index: 4;
+  top: 5%;
+  left: 50%;
+  width: min(70vw, 560px);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #71d7ff, transparent);
+  box-shadow: 0 0 14px rgba(113, 215, 255, 0.5);
+  animation: scanRocket 0.82s 0.22s ease-in-out both;
+  transform: translate3d(-50%, 0, 0);
+}
+
+.telemetryCopy {
+  position: absolute;
+  right: max(1rem, 8vw);
+  bottom: 8%;
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 0.3rem 0.7rem;
+  color: rgba(233, 238, 240, 0.42);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 8px;
+  letter-spacing: 0.13em;
+}
+
+.telemetryCopy b {
+  color: #71d7ff;
+}
+
+.hatch {
+  position: absolute;
+  z-index: 8;
+  top: 0;
+  bottom: 0;
+  width: 50.12vw;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(#111719, #050708 52%, #0c1113);
+  background-size:
+    76px 100%,
+    auto;
+  will-change: transform;
+}
+
+.hatch::before,
+.hatch::after {
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: rgba(233, 238, 240, 0.11);
+  content: "";
+}
+
+.hatch::before {
+  top: 28%;
+}
+.hatch::after {
+  bottom: 28%;
+}
+
+.hatch i {
+  position: absolute;
+  top: 50%;
+  width: 44px;
+  height: 120px;
+  border: 1px solid rgba(113, 215, 255, 0.24);
+  transform: translateY(-50%);
+}
+
+.leftHatch {
+  left: 0;
+  border-right: 1px solid rgba(233, 238, 240, 0.34);
+  animation: hatchLeft 0.62s 1.48s cubic-bezier(0.72, 0, 0.18, 1) both;
+}
+
+.leftHatch i {
+  right: 20px;
+  border-radius: 12px 0 0 12px;
+}
+
+.rightHatch {
+  right: 0;
+  border-left: 1px solid rgba(233, 238, 240, 0.34);
+  animation: hatchRight 0.62s 1.48s cubic-bezier(0.72, 0, 0.18, 1) both;
+}
+
+.rightHatch i {
+  left: 20px;
+  border-radius: 0 12px 12px 0;
+}
+
+.crtScene {
+  position: absolute;
+  z-index: 12;
+  inset: 0;
+  background: #e9eef0;
+  opacity: 0;
+  animation: crtCollapse 0.34s 2.06s cubic-bezier(0.65, 0, 0.35, 1) both;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+.crtBeam {
+  position: absolute;
+  z-index: 13;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 3px;
+  background: #fff;
+  box-shadow:
+    0 0 11px 2px rgba(255, 255, 255, 0.88),
+    0 0 32px 7px rgba(113, 215, 255, 0.45);
+  opacity: 0;
+  animation: crtBeamOut 0.48s 2.28s cubic-bezier(0.7, 0, 0.84, 0) both;
+  transform: translate3d(-50%, -50%, 0) scaleX(1);
+  will-change: transform, opacity;
+}
+
+@keyframes deletionProgress {
+  to {
+    transform: translate3d(200%, 0, 0);
+  }
+}
+
+@keyframes sequenceWake {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes structureLock {
+  from {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+  to {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+}
+
+@keyframes scanRocket {
+  0% {
+    opacity: 0;
+    transform: translate3d(-50%, -40px, 0);
+  }
+  18%,
+  80% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-50%, 62dvh, 0);
+  }
+}
+
+@keyframes rocketMission {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0) scale(0.985);
+  }
+  16%,
+  68% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -34px, 0) scale(0.975);
+  }
+}
+
+@keyframes hatchLeft {
+  from {
+    transform: translate3d(-101%, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes hatchRight {
+  from {
+    transform: translate3d(101%, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes crtCollapse {
+  0% {
+    opacity: 0;
+    transform: scaleY(1);
+  }
+  8% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 1;
+    transform: scaleY(0.006);
+  }
+}
+
+@keyframes crtBeamOut {
+  0% {
+    opacity: 1;
+    transform: translate3d(-50%, -50%, 0) scaleX(1);
+  }
+  65% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-50%, -50%, 0) scaleX(0);
+  }
+}
+
+@media (max-width: 620px) {
+  .dialogTopline span:last-child {
+    display: none;
+  }
+  .impactGrid {
+    grid-template-columns: 1fr;
+  }
+  .actions {
+    width: 100%;
+  }
+  .actions > * {
+    flex: 1 1 auto;
+  }
+  .rocket {
+    width: min(76vw, 310px);
+  }
+  .rocketLabels {
+    font-size: 9px;
+  }
+  .telemetryCopy {
+    display: none;
+  }
+  .sequenceHeader span:first-child {
+    display: none;
+  }
+  .sequenceHeader {
+    justify-content: flex-end;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sequence::after {
+    position: absolute;
+    z-index: 20;
+    right: 0;
+    bottom: 8%;
+    left: 0;
+    color: rgba(233, 238, 240, 0.76);
+    content: "ACCOUNT DELETED · SECURE SESSION CLOSED";
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-align: center;
+  }
+
+  .rocketStructure,
+  .rocketCallouts,
+  .rocketLabels {
+    opacity: 0.88;
+  }
+}

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { CheckCircle2, LoaderCircle, ShieldCheck, Trash2 } from "lucide-react";
+import { useAccountDeletion } from "@/components/governance/account-deletion-provider";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { createSupportRequest, listMySupportRequests, type SupportRequest } from "@/lib/supabase/governance";
@@ -12,6 +13,7 @@ function statusLabel(status: SupportRequest["status"]) {
 }
 
 export function ProfilePrivacyControls({ email }: { email: string | undefined }) {
+  const { openAccountDeletion } = useAccountDeletion();
   const [requests, setRequests] = useState<SupportRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletionOpen, setDeletionOpen] = useState(false);
@@ -86,8 +88,9 @@ export function ProfilePrivacyControls({ email }: { email: string | undefined })
       </Card>
 
       <Card className="border-[color-mix(in_srgb,var(--red)_35%,var(--line))] p-6">
-        <div className="flex gap-4"><span className="grid size-10 shrink-0 place-items-center rounded-lg bg-[var(--red-soft)] text-[var(--red)]"><Trash2 size={18} /></span><div><p className="text-sm font-bold">Request account deletion</p><p className="mt-2 text-sm leading-6 text-[var(--ink-muted)]">Deletion is reviewed by a platform administrator to protect shared work and League records. Private account information and personal workspace data are removed or anonymised where appropriate.</p></div></div>
-        {!deletionOpen ? <Button variant="danger" className="mt-5" onClick={() => { setError(""); setMessage(""); setDeletionOpen(true); }}>Start deletion request</Button> : <form className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--canvas)] p-4" onSubmit={(event) => void requestDeletion(event)}><label className="grid gap-2 text-xs font-bold">Type DELETE to confirm this request<input value={confirmation} onChange={(event) => setConfirmation(event.target.value)} className="h-10 rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 text-sm" autoComplete="off" /></label><div className="mt-4 flex gap-3"><Button variant="danger" type="submit" disabled={busy}>{busy && <LoaderCircle size={14} className="animate-spin" />}Submit for review</Button><Button variant="secondary" type="button" onClick={() => { setDeletionOpen(false); setConfirmation(""); }}>Cancel</Button></div></form>}
+        <div className="flex gap-4"><span className="grid size-10 shrink-0 place-items-center rounded-lg bg-[var(--red-soft)] text-[var(--red)]"><Trash2 size={18} /></span><div><p className="text-sm font-bold">Permanently delete account</p><p className="mt-2 text-sm leading-6 text-[var(--ink-muted)]">A standard personal account can be deleted immediately only when it has no school, team, League, World, or shared-content responsibility. Eligibility is enforced atomically by the database so shared records cannot be damaged.</p></div></div>
+        <div className="mt-5 flex flex-wrap gap-3"><Button variant="danger" onClick={() => { setError(""); setMessage(""); openAccountDeletion(); }}>Check & delete personal account</Button>{!deletionOpen && <Button variant="secondary" onClick={() => { setError(""); setMessage(""); setDeletionOpen(true); }}>Request administrator review</Button>}</div>
+        {deletionOpen && <form className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--canvas)] p-4" onSubmit={(event) => void requestDeletion(event)}><p className="mb-4 text-xs leading-5 text-[var(--ink-muted)]">Use this path if the safety check finds an organisation or shared-record responsibility that needs administrator review.</p><label className="grid gap-2 text-xs font-bold">Type DELETE to confirm this request<input value={confirmation} onChange={(event) => setConfirmation(event.target.value)} className="h-10 rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 text-sm" autoComplete="off" /></label><div className="mt-4 flex gap-3"><Button variant="danger" type="submit" disabled={busy}>{busy && <LoaderCircle size={14} className="animate-spin" />}Submit for review</Button><Button variant="secondary" type="button" onClick={() => { setDeletionOpen(false); setConfirmation(""); }}>Cancel</Button></div></form>}
         {error && <p role="alert" className="mt-4 rounded-lg bg-[var(--red-soft)] p-3 text-xs leading-5 text-[var(--red)]">{error}</p>}
         {message && <p className="mt-4 flex gap-2 rounded-lg bg-[var(--accent-soft)] p-3 text-xs leading-5 text-[var(--accent)]"><CheckCircle2 className="mt-.5 shrink-0" size={15} />{message}</p>}
       </Card>

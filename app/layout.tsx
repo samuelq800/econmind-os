@@ -3,6 +3,7 @@ import { AuthDialog } from "@/components/auth/auth-dialog";
 import { AccountOnboarding } from "@/components/auth/account-onboarding";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { RegisteredAppGate } from "@/components/auth/registered-app-gate";
+import { AccountDeletionProvider } from "@/components/governance/account-deletion-provider";
 import { LegalConsentGate } from "@/components/legal/legal-consent-gate";
 import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
@@ -27,5 +28,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return <html lang="en" suppressHydrationWarning><body><ThemeProvider><AuthProvider><RegisteredAppGate><Navbar />{children}<Footer /></RegisteredAppGate><AuthDialog /><AccountOnboarding /><LegalConsentGate /></AuthProvider></ThemeProvider></body></html>;
+  return <html lang="en" suppressHydrationWarning><body><ThemeProvider><AuthProvider><AccountDeletionProvider><RegisteredAppGate><Navbar />{children}<Footer /></RegisteredAppGate><AuthDialog /><AccountOnboarding /><LegalConsentGate /></AccountDeletionProvider></AuthProvider></ThemeProvider></body></html>;
 }

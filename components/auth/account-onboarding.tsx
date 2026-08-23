@@ -28,7 +28,7 @@ const paths: Array<{ id: OnboardingPath; title: string; description: string; ico
 ];
 
 export function AccountOnboarding() {
-  const { user, roleLoading, viewerAccess } = useAuth();
+  const { user, roleLoading, viewerAccess, authOpen } = useAuth();
   const userId = user?.id ?? null;
   const [checkedUserId, setCheckedUserId] = useState<string | null>(null);
   const [completedUserId, setCompletedUserId] = useState<string | null>(null);
@@ -70,7 +70,7 @@ export function AccountOnboarding() {
     return () => { active = false; };
   }, [step]);
 
-  if (viewerAccess || !user || roleLoading || checkedUserId !== userId || completedUserId === userId) return null;
+  if (authOpen || viewerAccess || !user || roleLoading || checkedUserId !== userId || completedUserId === userId) return null;
 
   function choose(next: OnboardingPath) {
     setError("");

@@ -23,5 +23,6 @@ describe("first-session school path", () => {
     expect(component).toContain("econmind.account-onboarding.completed.");
     expect(component).toContain("localStorage");
     expect(component).toContain("saveOnboardingChoice(userId)");
+    expect(component).toContain("if (authOpen || viewerAccess || !user");
   });
 });

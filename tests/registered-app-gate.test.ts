@@ -17,7 +17,8 @@ describe("registered individual account gate", () => {
   });
 
   it("wraps every static route in the root application gate", () => {
-    expect(layout).toContain("<RegisteredAppGate><Navbar />{children}<Footer /></RegisteredAppGate>");
+    expect(layout).toContain("<AccountDeletionProvider><RegisteredAppGate><Navbar />{children}<Footer /></RegisteredAppGate>");
     expect(layout).toContain("<AuthDialog />");
+    expect(layout).toContain("<LegalConsentGate /></AccountDeletionProvider>");
   });
 });

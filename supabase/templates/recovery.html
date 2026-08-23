@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <body
+    style="
+      margin: 0;
+      background: #f3f5f2;
+      color: #12201c;
+      font-family: Arial, sans-serif;
+    "
+  >
+    <table
+      role="presentation"
+      width="100%"
+      cellspacing="0"
+      cellpadding="0"
+      style="padding: 32px 16px"
+    >
+      <tr>
+        <td align="center">
+          <table
+            role="presentation"
+            width="100%"
+            cellspacing="0"
+            cellpadding="0"
+            style="
+              max-width: 560px;
+              border: 1px solid #d8dfdb;
+              border-radius: 16px;
+              background: #ffffff;
+              padding: 32px;
+            "
+          >
+            <tr>
+              <td
+                style="
+                  font-size: 11px;
+                  font-weight: 700;
+                  letter-spacing: 2px;
+                  color: #147a5b;
+                "
+              >
+                ECONMIND OS · SECURE RECOVERY
+              </td>
+            </tr>
+            <tr>
+              <td style="padding-top: 14px; font-size: 26px; font-weight: 700">
+                Reset your password
+              </td>
+            </tr>
+            <tr>
+              <td
+                style="
+                  padding-top: 12px;
+                  font-size: 15px;
+                  line-height: 24px;
+                  color: #52615c;
+                "
+              >
+                Enter this one-time code in the recovery dialog. You can choose
+                a new password only after the code is verified:
+              </td>
+            </tr>
+            <tr>
+              <td
+                align="center"
+                style="
+                  padding: 28px 0 24px;
+                  font-family: monospace;
+                  font-size: 34px;
+                  font-weight: 700;
+                  letter-spacing: 8px;
+                  color: #0d6149;
+                "
+              >
+                {{ .Token }}
+              </td>
+            </tr>
+            <tr>
+              <td style="font-size: 13px; line-height: 21px; color: #6d7874">
+                You may also
+                <a
+                  href="{{ .ConfirmationURL }}"
+                  style="color: #147a5b; font-weight: 700"
+                  >continue with the secure recovery link</a
+                >.
+              </td>
+            </tr>
+            <tr>
+              <td
+                style="
+                  padding-top: 18px;
+                  font-size: 12px;
+                  line-height: 19px;
+                  color: #87908d;
+                "
+              >
+                If you did not request a password reset, ignore this email and
+                do not share the code.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

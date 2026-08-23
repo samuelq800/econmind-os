@@ -38,7 +38,8 @@ This document is an implementation map for the public Privacy Notice. It describ
 - A signed-in account submits privacy, access, correction, deletion, report, appeal, or security requests through `/contact`.
 - The request appears on `/profile` with status and any final response intended for the requester.
 - Platform administrators process requests in `/admin/governance`; internal notes and moderation records are not exposed to the requester.
-- Account deletion is a review workflow. Private account and personal workspace data are removed or anonymised as appropriate; shared League records may be retained in de-identified form where needed to preserve an activity's integrity.
+- Eligible standard personal accounts can self-delete only when the database finds no school, team, League, World, privileged role, or shared-content responsibility; the checks and Auth deletion run in one transaction.
+- Ineligible accounts keep the administrator-review workflow so shared records can be handled safely before any deletion.
 
 ## Change management
 

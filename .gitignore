@@ -10,3 +10,4 @@ coverage
 *.tsbuildinfo
 supabase/.temp/
 .continue/
+/local-secrets.txt

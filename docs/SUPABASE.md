@@ -1,6 +1,7 @@
 # Supabase backend guide
 
 ## Create and connect
+
 1. Create a free project named `EconMind OS` in the Singapore region.
 2. Open SQL Editor, paste `supabase/migrations/20260722000000_initial_schema.sql`, and run it once.
 3. Copy Project URL and the public anon/publishable key from Project Settings → API.
@@ -12,7 +13,55 @@ If the frontend later moves to Vercel, add the same two public variables under P
 
 Never add `SUPABASE_SERVICE_ROLE_KEY` to this frontend.
 
+## Email verification codes and password recovery
+
+SMTP delivery and Auth email templates are separate settings. The frontend
+expects both the **Confirm signup** and **Reset password** messages to contain
+the one-time code exposed by Supabase as `{{ .Token }}`. Repository templates
+are stored in:
+
+- `supabase/templates/confirmation.html`
+- `supabase/templates/recovery.html`
+
+`supabase/config.toml` loads these files for local Supabase. A hosted project
+does not receive Auth templates from `supabase db push`, so copy the matching
+HTML into **Dashboard → Authentication → Email Templates** for the production
+project. Keep `{{ .ConfirmationURL }}` in each template as a secure-link
+fallback, and disable link tracking in the SMTP provider so security scanners
+do not rewrite or pre-open Auth links.
+
+In **Authentication → Sign In / Providers → Email**, keep **Confirm email**
+enabled. In **Authentication → URL Configuration**, use the canonical site URL
+and allow all deployed callback origins:
+
+- `https://econmind.group/**`
+- `https://www.econmind.group/**`
+- `https://samuelq800.github.io/econmind-os/**`
+- `http://localhost:3000/**`
+
+Registration uses `verifyOtp(..., type: "email")`. Password recovery sends a
+code with `resetPasswordForEmail`, verifies it with `type: "recovery"`, and
+only then calls `updateUser({ password })`. Recovery links remain supported via
+the `PASSWORD_RECOVERY` Auth event.
+
+## Safe personal-account deletion
+
+Apply `supabase/migrations/20260824000000_safe_personal_account_deletion.sql`
+before enabling the Profile deletion button in production. It removes the old
+permission to delete only the `profiles` row and adds two authenticated RPCs:
+
+- `get_self_account_deletion_eligibility()` returns stable blocker codes.
+- `delete_self_personal_account(text)` locks and re-checks the signed-in Auth
+  user and profile, removes private support correspondence, and hard-deletes
+  `auth.users` in one PostgreSQL transaction.
+
+The deletion RPC never accepts a user ID from the browser. It derives the only
+possible target from `auth.uid()` and rejects school, team, privileged,
+League/World, or shared-content owners. Any foreign-key or trigger failure
+rolls the entire deletion back.
+
 ## Tables
+
 - `profiles`: one profile per Auth user; created automatically by an Auth trigger.
 - `model_runs`: named scenarios and experiments. Both `parameters` and `results` are `jsonb`, so new models need no table redesign.
 - `favorites`: one favorite row per user/model.
@@ -21,6 +70,7 @@ Never add `SUPABASE_SERVICE_ROLE_KEY` to this frontend.
 All four tables use RLS. Every select/insert/update/delete policy requires `auth.uid() = user_id`.
 
 ## Current Auth and sync
+
 The application now uses email `signUp`, `signInWithPassword`, and `signOut`. Supabase JS persists and refreshes sessions in the browser. Signed-in users can save named model runs, favorite models, and track learning progress. RLS remains the security boundary for every cloud query.
 
 The sliders and economic calculations never write to Supabase. Network requests happen only for authentication, opening a signed-in model, explicitly changing a favorite, explicitly saving a named run, or loading My Library.
@@ -46,4 +96,5 @@ where user_id = (select id from auth.users where email = 'YOUR_EMAIL');
 Do not add a role selector to the public client. The migration removes authenticated permission to change the `role` column.
 
 ## Adding a model
+
 Use a stable lowercase `model_key` such as `price-controls`. Save its parameter and result objects in the existing `jsonb` columns. No migration is required unless the model introduces shared relational data.

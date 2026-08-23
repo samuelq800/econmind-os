@@ -19,7 +19,7 @@ describe("view-only invitation access", () => {
   });
 
   it("adds an invitation-only entry flow and permits it through the application gate", () => {
-    expect(provider).toContain('AuthMode = "sign-in" | "sign-up" | "invitation"');
+    for (const mode of ["sign-in", "sign-up", "verify-sign-up", "forgot-password", "verify-recovery", "reset-password", "invitation"]) expect(provider).toContain(`"${mode}"`);
     expect(provider).toContain("startViewerSession");
     expect(dialog).toContain("Enter with invitation code");
     expect(gate).toContain("viewerAccess");
@@ -29,7 +29,7 @@ describe("view-only invitation access", () => {
   });
 
   it("skips school selection for invitation viewers and keeps code creation administrator-only", () => {
-    expect(onboarding).toContain("if (viewerAccess || !user");
+    expect(onboarding).toContain("if (authOpen || viewerAccess || !user");
     expect(manager).toContain("Create view-only code");
     expect(manager).toContain("Platform administrator access required");
   });

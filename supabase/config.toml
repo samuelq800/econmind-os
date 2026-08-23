@@ -13,6 +13,14 @@ enable_signup = true
 double_confirm_changes = true
 enable_confirmations = true
 
+[auth.email.template.confirmation]
+subject = "Your EconMind OS verification code"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Reset your EconMind OS password"
+content_path = "./supabase/templates/recovery.html"
+
 # The collector verifies either a teacher session or DAILY_BRIEF_CRON_SECRET
 # inside the function. The scheduled call uses the latter, which is not a JWT.
 [functions.collect-daily-economic-brief]

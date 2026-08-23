@@ -63,14 +63,14 @@ export const PRIVACY_SECTIONS: readonly LegalSection[] = [
     heading: "6. Retention and account deletion",
     paragraphs: [
       "We keep account and learning information only for as long as it is useful for the educational service, support, security, and legitimate record-keeping needs. The appropriate period depends on the type of record and whether it forms part of a shared League activity.",
-      "You can submit an account-deletion request from your Profile page. A platform administrator reviews it to avoid accidentally removing shared team or League records that affect other participants. Private account information and personal workspace records are removed or anonymised where appropriate; shared historical records may be retained in de-identified form when needed to preserve the integrity of an activity.",
+      "A standard personal account with no school, team, League, World, privileged-role, or shared-content responsibility can be permanently deleted from the Profile page after a server-side eligibility check and explicit confirmation. The Auth identity, personal profile, private workspace records, and private support correspondence are deleted together. Accounts connected to an organisation or shared records use administrator review so that another participant's records are not accidentally removed; shared historical records may be retained in de-identified form when needed to preserve an activity.",
     ],
   },
   {
     id: "choices",
     heading: "7. Your choices and requests",
     paragraphs: [
-      "You can edit optional profile information from your Profile page and submit a privacy, access, correction, or deletion request through the in-site Contact form. Your request status and the administrator's final response are visible in your profile. For security, account-deletion requests must be made from the signed-in account concerned.",
+      "You can edit optional profile information from your Profile page and use its deletion control for an eligible personal account. Privacy, access, correction, or administrator-reviewed deletion requests can also be submitted through the in-site Contact form; their status and the administrator's final response are visible in your profile. For security, self-service deletion and reviewed account-deletion requests must originate from the signed-in account concerned.",
       "The platform does not currently operate behavioural advertising cookies or a third-party marketing analytics programme. Essential browser storage is used for authentication, preferences, and local drafts. If that changes materially, this notice and the consent flow will be updated before the change is relied upon.",
     ],
   },

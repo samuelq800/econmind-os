@@ -14,7 +14,7 @@ import {
   validateViewerInvitationCode,
 } from "@/lib/supabase/viewer-invitations";
 
-export type AuthMode = "sign-in" | "sign-up" | "invitation";
+export type AuthMode = "sign-in" | "sign-up" | "verify-sign-up" | "forgot-password" | "verify-recovery" | "reset-password" | "invitation";
 
 type AuthContextValue = {
   user: User | null;
@@ -63,12 +63,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     void supabase.auth.getSession().then(({ data }) => {
       if (!active) return;
       setUser(data.session?.user ?? null);
+      const authMarker = new URLSearchParams(window.location.search).get("auth");
+      if (data.session?.user && authMarker === "recovery") {
+        setAuthMode("reset-password");
+        setAuthOpen(true);
+      }
+      if (authMarker === "recovery" || authMarker === "confirmed") {
+        const cleanUrl = new URL(window.location.href);
+        cleanUrl.searchParams.delete("auth");
+        window.history.replaceState({}, "", cleanUrl.toString());
+      }
       setLoading(false);
     });
 
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       if (!session?.user) { setRole("guest"); setPlatformRole(null); setRoleLoading(false); }
+      if (event === "PASSWORD_RECOVERY") {
+        setAuthMode("reset-password");
+        setAuthOpen(true);
+        const cleanUrl = new URL(window.location.href);
+        cleanUrl.searchParams.delete("auth");
+        window.history.replaceState({}, "", cleanUrl.toString());
+      }
       setLoading(false);
 
     });
