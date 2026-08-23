@@ -137,6 +137,13 @@ export const COMMUNICATIONS_TEAM: readonly TeamMember[] = [
     contact: { type: "wechat", value: "YueSunny229" },
   },
   {
+    name: "Philip",
+    role: "Douyin Propagandist",
+    image: "/images/team/comms-philip.jpg",
+    imagePosition: "50% 34%",
+    contact: { type: "phone", value: "15712962581" },
+  },
+  {
     name: "Regina",
     role: "Douyin",
     image: "/images/team/comms-regina.jpg",
