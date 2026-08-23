@@ -1,4 +1,5 @@
 import { LEGAL_DOCUMENTS } from "@/lib/legal/legal-config";
+import { OFFICIAL_CONTACT_EMAIL } from "@/lib/platform/contact";
 
 export type LegalSection = {
   id: string;
@@ -85,7 +86,7 @@ export const PRIVACY_SECTIONS: readonly LegalSection[] = [
     heading: "9. Updates and contact",
     paragraphs: [
       "This notice is versioned so changes can be understood. Existing users are not interrupted for routine wording or operational updates. For a material change, EconMind OS may request renewed acknowledgement before a relevant feature is used again.",
-      `Current version: Privacy Notice v${LEGAL_DOCUMENTS.privacy.version}, effective ${LEGAL_DOCUMENTS.privacy.effectiveDate}. For questions or requests, use the signed-in Contact form so the appropriate platform administrator can respond securely.`,
+      `Current version: Privacy Notice v${LEGAL_DOCUMENTS.privacy.version}, effective ${LEGAL_DOCUMENTS.privacy.effectiveDate}. Use the signed-in Contact form for requests that need account verification or a recorded response. For general privacy questions or if you cannot sign in, contact ${OFFICIAL_CONTACT_EMAIL}. Account-deletion requests cannot be actioned from an unauthenticated email alone.`,
     ],
   },
 ];
@@ -138,7 +139,7 @@ export const TERMS_SECTIONS: readonly LegalSection[] = [
     heading: "6. Enforcement and reporting",
     paragraphs: [
       "Platform administrators may review reports and take proportionate steps, including clarifying a rule, limiting a feature, hiding content, invalidating an attempt, changing an administrative status, or suspending access when necessary to protect the service or participants. Material decisions are recorded in the internal moderation history.",
-      "You can report a concern through the signed-in Contact form. The form is not an emergency service and should not be used for urgent threats or situations requiring local emergency support.",
+      `You can report a concern through the signed-in Contact form. If you cannot access your account, contact ${OFFICIAL_CONTACT_EMAIL}. Neither route is an emergency service and neither should be used for urgent threats or situations requiring local emergency support.`,
     ],
   },
   {
@@ -174,7 +175,7 @@ export const COMMUNITY_SECTIONS: readonly LegalSection[] = [
     id: "report",
     heading: "How to raise a concern",
     paragraphs: [
-      "Use the signed-in Contact form to report a conduct, safety, privacy, or integrity concern. Include enough context for an administrator to understand the issue, but do not add unnecessary sensitive information. You can follow the request from your Profile page.",
+      `Use the signed-in Contact form to report a conduct, safety, privacy, or integrity concern. Include enough context for an administrator to understand the issue, but do not add unnecessary sensitive information. You can follow the request from your Profile page. If you cannot sign in, contact ${OFFICIAL_CONTACT_EMAIL}.`,
     ],
   },
   {
@@ -209,7 +210,7 @@ export const INTEGRITY_SECTIONS: readonly LegalSection[] = [
     id: "review",
     heading: "Review and correction",
     paragraphs: [
-      "If an integrity concern affects a challenge, project, or shared record, a platform administrator may review the relevant activity record and take a proportionate action. This can include clarification, correction, removal from a released view, invalidation of an official attempt, or a temporary feature restriction. Affected users may submit context through the Contact form.",
+      `If an integrity concern affects a challenge, project, or shared record, a platform administrator may review the relevant activity record and take a proportionate action. This can include clarification, correction, removal from a released view, invalidation of an official attempt, or a temporary feature restriction. Affected users may submit context through the Contact form or, if they cannot sign in, ${OFFICIAL_CONTACT_EMAIL}.`,
     ],
   },
 ];

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { LegalSection } from "@/lib/legal/legal-content";
+import { OFFICIAL_CONTACT_EMAIL, OFFICIAL_CONTACT_MAILTO } from "@/lib/platform/contact";
 
 export function LegalPage({
   eyebrow,
@@ -43,6 +44,8 @@ export function LegalPage({
           </nav>
           <div className="mt-6 border-t border-[var(--line)] pt-5 text-xs leading-6 text-[var(--ink-muted)]">
             Need help? <Link className="font-bold text-[var(--accent)]" href="/contact">Use the secure Contact form</Link>.
+            <br />
+            General enquiries: <a className="font-bold text-[var(--accent)]" href={OFFICIAL_CONTACT_MAILTO}>{OFFICIAL_CONTACT_EMAIL}</a>.
           </div>
         </aside>
       </div>

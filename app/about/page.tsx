@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   UsersRound,
 } from "lucide-react";
+import { OFFICIAL_CONTACT_EMAIL, OFFICIAL_CONTACT_MAILTO } from "@/lib/platform/contact";
 
 const learningPath = ["Observe", "Model", "Simulate", "Test", "Evaluate", "Decide"] as const;
 
@@ -168,6 +169,7 @@ export default function AboutPage() {
           <p className="text-[10px] font-extrabold uppercase tracking-[.2em] text-[var(--accent)]">About the initiative</p>
           <h2 className="mt-4 text-3xl font-bold tracking-[-.045em] sm:text-5xl">Student-initiated. Independently operated. Non-profit in purpose.</h2>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-[var(--ink-muted)]">EconMind is built for economics education and academic exchange. It is not a separately registered charitable or non-profit legal entity, and its inclusion of any institution, resource, or point of view does not imply endorsement.</p>
+          <p className="mt-6 text-sm leading-7 text-[var(--ink-muted)]">For general enquiries, contact <a href={OFFICIAL_CONTACT_MAILTO} className="font-bold text-[var(--accent)] hover:underline">{OFFICIAL_CONTACT_EMAIL}</a>.</p>
           <p className="mt-8 font-serif text-2xl italic tracking-[-.025em]">Economics beyond the classroom.</p>
         </div>
       </section>

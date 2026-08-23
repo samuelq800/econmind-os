@@ -4,13 +4,13 @@ export const LEGAL_DOCUMENTS = {
   terms: {
     key: "terms",
     title: "Terms of Use",
-    version: "1.0",
+    version: "1.1",
     effectiveDate: LEGAL_EFFECTIVE_DATE,
   },
   privacy: {
     key: "privacy",
     title: "Privacy Notice",
-    version: "1.0",
+    version: "1.1",
     effectiveDate: LEGAL_EFFECTIVE_DATE,
   },
 } as const;

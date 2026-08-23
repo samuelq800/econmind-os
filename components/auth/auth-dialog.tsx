@@ -7,6 +7,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { BASE_PATH } from "@/lib/base-path";
 import { LEGAL_DOCUMENTS, registrationConsentValid } from "@/lib/legal/legal-config";
+import { OFFICIAL_CONTACT_EMAIL, OFFICIAL_CONTACT_MAILTO } from "@/lib/platform/contact";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 function emailRedirectUrl() {
@@ -235,6 +236,7 @@ export function AuthDialog() {
             {authMode === "sign-in" ? "Create one" : "Sign in"}
           </button>
         </p>
+        {authMode === "sign-in" && <p className="mt-3 text-center text-xs leading-5 text-[var(--ink-muted)]">Need account access support? <a href={OFFICIAL_CONTACT_MAILTO} className="font-bold text-[var(--accent)]">{OFFICIAL_CONTACT_EMAIL}</a></p>}
         {authMode !== "invitation" && <p className="mt-3 text-center text-xs text-[var(--ink-muted)]">Have a viewing invitation? <button type="button" className="font-bold text-[var(--accent)]" onClick={() => openAuth("invitation")}>Enter code</button></p>}
       </div>
     </div>

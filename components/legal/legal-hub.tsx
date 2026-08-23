@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import { OFFICIAL_CONTACT_EMAIL, OFFICIAL_CONTACT_MAILTO } from "@/lib/platform/contact";
 
 type HubItem = {
   href: string;
@@ -36,6 +37,10 @@ export function LegalHub({
           </Link>
         ))}
       </section>
+
+      <p className="mt-8 border-t border-[var(--line)] pt-5 text-sm leading-7 text-[var(--ink-muted)]">
+        General enquiries or sign-in access support: <a href={OFFICIAL_CONTACT_MAILTO} className="font-bold text-[var(--accent)] hover:underline">{OFFICIAL_CONTACT_EMAIL}</a>. For requests involving private records, account deletion, or an appeal, use the signed-in Contact form so the request can be handled securely.
+      </p>
     </main>
   );
 }
