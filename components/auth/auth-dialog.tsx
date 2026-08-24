@@ -23,7 +23,10 @@ import {
 } from "@/lib/platform/contact";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
+  authEmailRequestErrorMessage,
   EMAIL_OTP_LENGTH,
+  EMAIL_RESEND_COOLDOWN_SECONDS,
+  isAuthEmailRateLimitError,
   normaliseEmailOtp,
   rejectUnexpectedSignupSession,
 } from "@/lib/supabase/signup-verification";
@@ -63,11 +66,11 @@ function descriptionForMode(mode: AuthMode, verificationEmail: string) {
     case "sign-up":
       return "Your saved work stays private under Supabase Row Level Security. We verify your email before activating the account.";
     case "verify-sign-up":
-      return `Enter the one-time code sent to ${verificationEmail || "your email"}.`;
+      return `Enter the latest one-time code for ${verificationEmail || "your email"} if this address is eligible for registration.`;
     case "forgot-password":
       return "Enter your account email. If it matches an account, Supabase will send a one-time recovery code.";
     case "verify-recovery":
-      return `Confirm the one-time code sent to ${verificationEmail || "your email"} before choosing a new password.`;
+      return `Enter the latest recovery code for ${verificationEmail || "your email"} if this address belongs to an account.`;
     case "reset-password":
       return "Your email has been verified. Choose a new password to finish the secure recovery session.";
   }
@@ -93,6 +96,7 @@ export function AuthDialog() {
   const [invitationCode, setInvitationCode] = useState("");
   const [otp, setOtp] = useState("");
   const [busy, setBusy] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [legalAcceptance, setLegalAcceptance] = useState({
@@ -107,6 +111,15 @@ export function AuthDialog() {
       setMessage("");
     });
   }, [authOpen]);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timeout = window.setTimeout(
+      () => setResendCooldown((current) => Math.max(0, current - 1)),
+      1_000,
+    );
+    return () => window.clearTimeout(timeout);
+  }, [resendCooldown]);
 
   useEffect(() => {
     if (!authOpen) return;
@@ -139,13 +152,21 @@ export function AuthDialog() {
   ) {
     setVerificationEmail(targetEmail);
     setOtp("");
+    setResendCooldown(EMAIL_RESEND_COOLDOWN_SECONDS);
     openAuth(mode);
     setMessage(nextMessage);
   }
 
   async function resendCode() {
     const supabase = getSupabaseBrowserClient();
-    if (!supabase || !verificationEmail || !otpModes.includes(authMode)) return;
+    if (
+      !supabase ||
+      !verificationEmail ||
+      !otpModes.includes(authMode) ||
+      busy ||
+      resendCooldown > 0
+    )
+      return;
     setBusy(true);
     setError("");
     setMessage("");
@@ -164,14 +185,23 @@ export function AuthDialog() {
           });
         if (resendError) throw resendError;
       }
+      setResendCooldown(EMAIL_RESEND_COOLDOWN_SECONDS);
       setMessage(
-        "A new code has been sent. Use the latest email; older codes may no longer work.",
+        authMode === "verify-sign-up"
+          ? "If this email is eligible for registration, a new verification code has been requested. Use the latest email if one arrives."
+          : "If this address belongs to an account, a new recovery code has been requested. Use the latest email if one arrives.",
       );
     } catch (caught) {
+      if (isAuthEmailRateLimitError(caught)) {
+        setResendCooldown(EMAIL_RESEND_COOLDOWN_SECONDS);
+      }
       setError(
-        caught instanceof Error
-          ? caught.message
-          : "Could not resend the verification code.",
+        authEmailRequestErrorMessage(
+          caught,
+          authMode === "verify-sign-up"
+            ? "Could not request another verification email. Please try again."
+            : "Could not request another recovery email. Please try again.",
+        ),
       );
     } finally {
       setBusy(false);
@@ -222,7 +252,15 @@ export function AuthDialog() {
             emailRedirectTo: emailRedirectUrl("confirmed"),
           },
         });
-        if (signUpError) throw signUpError;
+        if (signUpError) {
+          setError(
+            authEmailRequestErrorMessage(
+              signUpError,
+              "Could not submit the registration request. Please try again.",
+            ),
+          );
+          return;
+        }
         setPassword("");
         await rejectUnexpectedSignupSession(data.session, () =>
           supabase.auth.signOut(),
@@ -230,7 +268,7 @@ export function AuthDialog() {
         showOtpStep(
           "verify-sign-up",
           targetEmail,
-          "Check your inbox for the email verification code.",
+          "If this email is eligible for registration, a verification code has been requested. If you already have an account, sign in or reset your password.",
         );
       } else if (authMode === "verify-sign-up") {
         const { error: verificationError } = await supabase.auth.verifyOtp({
@@ -248,11 +286,19 @@ export function AuthDialog() {
           await supabase.auth.resetPasswordForEmail(targetEmail, {
             redirectTo: emailRedirectUrl("recovery"),
           });
-        if (recoveryError) throw recoveryError;
+        if (recoveryError) {
+          setError(
+            authEmailRequestErrorMessage(
+              recoveryError,
+              "Could not submit the recovery request. Please try again.",
+            ),
+          );
+          return;
+        }
         showOtpStep(
           "verify-recovery",
           targetEmail,
-          "If that address belongs to an account, a recovery code has been sent.",
+          "If that address belongs to an account, a recovery code has been requested. Use the email if one arrives.",
         );
       } else if (authMode === "verify-recovery") {
         const { error: verificationError } = await supabase.auth.verifyOtp({
@@ -278,9 +324,20 @@ export function AuthDialog() {
         closeAuth();
       }
     } catch (caught) {
-      setError(
-        caught instanceof Error ? caught.message : "Authentication failed.",
-      );
+      if (authMode === "sign-up" || authMode === "forgot-password") {
+        setError(
+          authEmailRequestErrorMessage(
+            caught,
+            authMode === "sign-up"
+              ? "Could not submit the registration request. Please try again."
+              : "Could not submit the recovery request. Please try again.",
+          ),
+        );
+      } else {
+        setError(
+          caught instanceof Error ? caught.message : "Authentication failed.",
+        );
+      }
     } finally {
       setBusy(false);
     }
@@ -535,10 +592,10 @@ export function AuthDialog() {
               ) : authMode === "sign-in" ? (
                 "Sign in"
               ) : authMode === "sign-up" ? (
-                "Create account & send code"
+                "Submit registration"
               ) : authMode === "forgot-password" ? (
                 <>
-                  <KeyRound size={15} /> Send recovery code
+                  <KeyRound size={15} /> Request recovery code
                 </>
               ) : authMode === "reset-password" ? (
                 "Save new password"
@@ -552,14 +609,48 @@ export function AuthDialog() {
             {isOtpStep && (
               <button
                 type="button"
-                disabled={busy}
+                disabled={busy || resendCooldown > 0}
                 onClick={() => void resendCode()}
                 className="w-full text-center text-xs font-bold text-[var(--accent)] disabled:opacity-45"
               >
-                Send a new code
+                {resendCooldown > 0
+                  ? `Request a new code in ${resendCooldown}s`
+                  : "Request a new code"}
               </button>
             )}
           </form>
+        )}
+
+        {authMode === "verify-sign-up" && (
+          <p className="mt-5 text-center text-xs text-[var(--ink-muted)]">
+            Already have access?{" "}
+            <button
+              type="button"
+              disabled={busy}
+              className="font-bold text-[var(--accent)] disabled:opacity-45"
+              onClick={() => {
+                setError("");
+                setMessage("");
+                openAuth("sign-in");
+              }}
+            >
+              Sign in
+            </button>{" "}
+            or{" "}
+            <button
+              type="button"
+              disabled={busy}
+              className="font-bold text-[var(--accent)] disabled:opacity-45"
+              onClick={() => {
+                setError("");
+                setMessage("");
+                openAuth("forgot-password");
+              }}
+            >
+              reset your password
+            </button>
+            .
+          </p>
         )}
 
         {authMode === "sign-in" && (
@@ -576,7 +667,7 @@ export function AuthDialog() {
           </button>
         )}
 
-        {!isResetStep && (
+        {!isResetStep && authMode !== "verify-sign-up" && (
           <p className="mt-5 text-center text-xs text-[var(--ink-muted)]">
             {authMode === "sign-in"
               ? "New to EconMind OS?"
