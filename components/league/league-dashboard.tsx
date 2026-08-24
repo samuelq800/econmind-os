@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   Archive,
@@ -14,8 +14,10 @@ import {
   LogIn,
   Pencil,
   Plus,
+  Search,
   ShieldCheck,
   Undo2,
+  X,
 } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Badge } from "@/components/ui/badge";
@@ -110,6 +112,7 @@ export function LeagueDashboard({
   const [teamName, setTeamName] = useState("");
   const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
   const [renamedTeam, setRenamedTeam] = useState("");
+  const [profileSearch, setProfileSearch] = useState("");
   const [busy, setBusy] = useState(false);
   const load = useCallback(async () => {
     if (!userId) return;
@@ -161,6 +164,28 @@ export function LeagueDashboard({
       void load();
     });
   }, [load]);
+  const schoolsById = useMemo(
+    () => new Map(schools.map((school) => [school.id, school.name])),
+    [schools],
+  );
+  const filteredProfiles = useMemo(() => {
+    const query = profileSearch.trim().toLocaleLowerCase();
+    if (!query) return profiles;
+
+    return profiles.filter((profile) => {
+      const searchableValues = [
+        profile.display_name,
+        profile.user_id,
+        roleLabels[profile.platform_role],
+        academicRoleLabels[profile.role ?? "student"],
+        profile.school_id ? schoolsById.get(profile.school_id) : "No school",
+      ];
+
+      return searchableValues.some((value) =>
+        value?.toLocaleLowerCase().includes(query),
+      );
+    });
+  }, [profileSearch, profiles, schoolsById]);
   if (!userId)
     return (
       <main className="mx-auto grid min-h-[65vh] max-w-xl place-items-center px-5 text-center">
@@ -655,9 +680,45 @@ export function LeagueDashboard({
                   </div>
                 </Card>
                 <Card className="p-6">
-                  <h3 className="font-bold">Users and League roles</h3>
+                  <div className="flex flex-wrap items-end justify-between gap-3">
+                    <div>
+                      <h3 className="font-bold">Users and League roles</h3>
+                      <p className="mt-1 text-[10px] text-[var(--ink-faint)]">
+                        {profileSearch.trim()
+                          ? `${filteredProfiles.length} of ${profiles.length} users`
+                          : `${profiles.length} users`}
+                      </p>
+                    </div>
+                    <label className="relative min-w-0 flex-1 sm:max-w-72">
+                      <span className="sr-only">Search users</span>
+                      <Search
+                        aria-hidden="true"
+                        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ink-faint)]"
+                        size={15}
+                      />
+                      <input
+                        type="search"
+                        value={profileSearch}
+                        onChange={(event) =>
+                          setProfileSearch(event.target.value)
+                        }
+                        placeholder="Search name, ID, school or role"
+                        className="h-10 w-full appearance-none rounded-lg border border-[var(--line)] bg-[var(--canvas)] pl-9 pr-9 text-xs outline-none transition [&::-webkit-search-cancel-button]:hidden focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)]"
+                      />
+                      {profileSearch && (
+                        <button
+                          type="button"
+                          aria-label="Clear user search"
+                          onClick={() => setProfileSearch("")}
+                          className="absolute right-1.5 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-md text-[var(--ink-faint)] transition hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+                    </label>
+                  </div>
                   <div className="mt-4 space-y-3">
-                    {profiles.map((profile) => (
+                    {filteredProfiles.map((profile) => (
                       <div
                         key={profile.user_id}
                         className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] pb-3 last:border-0"
@@ -669,7 +730,8 @@ export function LeagueDashboard({
                           </p>
                           <p className="text-[10px] text-[var(--ink-faint)]">
                             {profile.school_id
-                              ? "School associated"
+                              ? schoolsById.get(profile.school_id) ??
+                                "School associated"
                               : "No school"}
                             {" · "}{academicRoleLabels[profile.role ?? "student"]}
                           </p>
@@ -714,6 +776,19 @@ export function LeagueDashboard({
                         </div>
                       </div>
                     ))}
+                    {filteredProfiles.length === 0 && (
+                      <div className="rounded-lg border border-dashed border-[var(--line)] px-4 py-8 text-center">
+                        <Search
+                          aria-hidden="true"
+                          className="mx-auto text-[var(--ink-faint)]"
+                          size={20}
+                        />
+                        <p className="mt-3 text-sm font-bold">No users found</p>
+                        <p className="mt-1 text-xs text-[var(--ink-muted)]">
+                          Try a name, user ID, school or role.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </Card>
               </div>
