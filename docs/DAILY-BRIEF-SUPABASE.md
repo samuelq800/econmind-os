@@ -1,14 +1,14 @@
 # Daily Brief: free Supabase setup
 
-Daily Brief is deliberately small and review-first. It fetches only RSS or Atom feeds that a teacher configures, stores brief metadata and a short feed summary, scores candidates with deterministic TypeScript rules, and publishes only reviewed items by default. It uses no AI API, scraping service, or paid server.
+Daily Brief is deliberately small and review-first. It fetches only RSS or Atom feeds, stores a source-attributed excerpt of at most 360 characters, scores current candidates with deterministic TypeScript rules, and publishes only reviewed items. It uses no AI API, article-page scraping service, image copying, or paid server.
 
 ## 1. Apply the schema migration
 
-Run `supabase/migrations/20260728010000_real_world_cases_daily_brief.sql` in the Supabase SQL editor after the existing migrations. It creates:
+Apply all pending migrations in timestamp order. The initial `20260728010000_real_world_cases_daily_brief.sql` creates the feature tables; `20260824010000_repair_daily_brief_freshness.sql` adds the short-excerpt provenance, source-date and review-only constraints, restores the minimum quality score, and seeds the attributed WTO feed. With a linked project, use `npx supabase db push --linked`.
 
-- `daily_brief_sources` — teacher-managed official feed URLs;
+- `daily_brief_sources` — feed URLs verified and managed by a teacher;
 - `daily_brief_items` — candidates, review state, scores, original URL, topic and case links;
-- `daily_brief_settings` — `review` or `automatic` publication and a score threshold;
+- `daily_brief_settings` — the review-first publication policy and a score threshold;
 - `daily_brief_jobs` — minimal collection audit records.
 
 All tables have RLS. The public can only read `published` items. Only the existing `teacher` role can manage sources, settings, or editorial status. Case runs remain owner-only.
@@ -36,7 +36,7 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ```
 
-The collector accepts either a teacher’s authenticated manual request from `/admin/daily-brief` or the cron secret. It fetches the feed XML with a timeout, reads at most 20 entries per source, deduplicates by stable fingerprint, and never fetches full news article pages.
+The collector accepts either a teacher’s authenticated manual request from `/admin/daily-brief` or the cron secret. It fetches feed XML without an HTTP cache, with a timeout and a 1 MB response limit. It reads at most 20 entries per source and requires a valid source date, title, short RSS/Atom summary, and HTTPS original-article URL. Items older than seven days or more than one day in the future are skipped. Existing database fingerprints are removed **before** the four-item limit is applied, so older duplicates cannot block newer news. The collector never fetches full news article pages and never falls back to `<content>` or `<content:encoded>` bodies.
 
 ### CLI commands
 
@@ -74,13 +74,38 @@ where jobname = 'econmind-daily-brief-singapore-0700';
 
 Sign in with a profile whose `role` is `teacher`, then open `/admin/daily-brief`.
 
-1. Add an official public RSS or Atom feed URL.
+The migration seeds the official public `WTO News` feed as an attribution-labelled source. This name identifies the publisher; it does not imply an EconMind partnership, endorsement, or affiliation. The [WTO RSS guidance](https://www.wto.org/english/res_e/webcas_e/rss_e.htm) encourages syndication with attribution as “WTO news” and prohibits use of the WTO logo or presenting it as another source. A teacher can disable it or add other verified public RSS/Atom feeds.
+
+1. Add or enable a verified public RSS or Atom feed URL.
 2. Keep **Review mode** selected.
 3. Choose **Collect now** to test the feed.
 4. Publish or reject each candidate after reading the original source.
 
-Examples of suitable source families are official agencies or international organisations with public feeds, such as IEA, World Bank, IMF, OECD, WTO, UN agencies, or national statistical offices. Verify each particular feed URL in the source’s own site before adding it.
+Examples of suitable source families are agencies or international organisations with public feeds, such as IEA, World Bank, IMF, OECD, WTO, UN agencies, or national statistical offices. Verify each particular feed URL on the publisher’s own site before adding it. The publisher name is attribution only: do not enter names such as `EconMind × WTO`, `official partner`, or other wording that suggests a relationship.
+
+Before publishing a candidate, use the administration card’s original-source link to check the headline, source date, excerpt, and context. Public cards display the source date rather than the internal review date and link directly to the original article. Current excerpts are source-feed text, not an EconMind or AI-generated translation.
+
+## 5. Verify freshness and scheduling
+
+The administration page records source failures, fresh candidates, duplicates skipped, and inserts for each run. For a database-level health check:
+
+```sql
+select jobname, schedule, active
+from cron.job
+where jobname = 'econmind-daily-brief-singapore-0700';
+
+select started_at, status, sources_checked, candidates_found, items_inserted,
+       error_message, metadata
+from public.daily_brief_jobs
+order by started_at desc
+limit 10;
+
+select source_name, title, published_source_at, fetched_at, status, canonical_url
+from public.daily_brief_items
+order by fetched_at desc
+limit 20;
+```
 
 ## Deployment note
 
-The Cases library and main Daily Brief/archive pages work with the existing GitHub Pages static build. A newly generated individual Daily Brief permalink requires a server-capable deployment such as Vercel because a static export cannot pre-create an unknown future dynamic path. The free Vercel Hobby plan can host the Next frontend; Supabase remains the single backend.
+The Cases library, Daily Brief list/archive, and individual live briefs work with the existing GitHub Pages static build. Live brief links use the exported `/daily-brief/read?brief=<slug>` route and load the reviewed record from Supabase in the browser; no server-rendered dynamic route is required.

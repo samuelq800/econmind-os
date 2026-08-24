@@ -10,6 +10,20 @@ import { getPublishedBrief } from "@/lib/supabase/daily-brief";
 
 type LoadedBrief = { slug: string; item: DailyBriefItem | null; error: string | null };
 
+const SUMMARY_DISPLAY_LIMIT = 360;
+
+function shortSourceSummary(summary: string) {
+  const value = summary.trim();
+  return value.length > SUMMARY_DISPLAY_LIMIT ? `${value.slice(0, SUMMARY_DISPLAY_LIMIT - 1).trimEnd()}…` : value;
+}
+
+function sourceDate(value: string | null) {
+  if (!value) return "Source date unavailable";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Source date unavailable";
+  return `Source date ${new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" }).format(date)} UTC`;
+}
+
 export function BriefDetail({ slug }: { slug: string }) {
   const [record, setRecord] = useState<LoadedBrief>({ slug: "", item: null, error: null });
   useEffect(() => {
@@ -26,8 +40,17 @@ export function BriefDetail({ slug }: { slug: string }) {
   const item = record.item;
   return <main className="mx-auto min-h-screen max-w-3xl px-5 py-12 sm:px-8">
     <BackLink />
-    <header className="mt-8"><p className="text-[10px] font-bold uppercase tracking-[.18em] text-[var(--accent)]">{item.source_name} · {new Date(item.published_at ?? item.created_at).toLocaleDateString()}</p><h1 className="mt-3 text-4xl font-bold tracking-[-.05em]">{item.title}</h1><div className="mt-4 flex flex-wrap gap-1.5">{item.topic_tags.map((tag) => <span key={tag} className="rounded bg-[var(--accent-soft)] px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-[var(--accent)]">{tag}</span>)}</div></header>
-    <article className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6 text-base leading-8 text-[var(--ink-muted)]"><p>{item.summary}</p><a href={item.canonical_url} target="_blank" rel="noreferrer" className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-[var(--accent)]">Read the original source <ExternalLink size={14} /></a></article>
+    <header className="mt-8">
+      <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[var(--accent)]">Source: {item.source_name} · {sourceDate(item.published_source_at)}</p>
+      <h1 className="mt-3 text-4xl font-bold tracking-[-.05em]">{item.title}</h1>
+      <div className="mt-4 flex flex-wrap gap-1.5">{item.topic_tags.map((tag) => <span key={tag} className="rounded bg-[var(--accent-soft)] px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-[var(--accent)]">{tag}</span>)}</div>
+    </header>
+    <article className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6 text-base leading-8 text-[var(--ink-muted)]">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--ink-faint)]">Short RSS/Atom source summary · not AI-generated</p>
+      <p className="mt-3">{shortSourceSummary(item.summary)}</p>
+      <p className="mt-4 text-xs leading-5 text-[var(--ink-faint)]">Source attribution identifies the publisher only; it does not imply endorsement, affiliation, or partnership with EconMind OS.</p>
+      <a href={item.canonical_url} target="_blank" rel="noreferrer" className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-[var(--accent)]">Read the original source <ExternalLink size={14} /></a>
+    </article>
     <Card className="mt-6 p-5"><div className="flex items-center gap-2 text-sm font-bold"><FlaskConical size={16} className="text-[var(--accent)]" /> Try a related case</div><p className="mt-2 text-sm leading-6 text-[var(--ink-muted)]">The link is keyword-based and intentionally labelled as a teaching connection, not a causal conclusion.</p><div className="mt-4 flex flex-wrap gap-2">{item.case_slugs.map((caseSlug) => CASE_BY_SLUG[caseSlug] ? <Link key={caseSlug} href={`/cases/${caseSlug}`} className="rounded-lg border border-[var(--accent)] px-3 py-2 text-xs font-bold text-[var(--accent)]">{CASE_BY_SLUG[caseSlug].title}</Link> : null)}{item.case_slugs.length === 0 && <span className="text-xs text-[var(--ink-faint)]">No direct case match was assigned.</span>}</div></Card>
     <p className="mt-6 text-xs leading-5 text-[var(--ink-faint)]">Teaching relevance score: {Math.round(item.teaching_score)}/100. This score uses source, topic, and summary signals only; it is not a measure of truth, importance, or policy quality.</p>
   </main>;
