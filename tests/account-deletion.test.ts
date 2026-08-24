@@ -79,12 +79,26 @@ describe("safe personal-account deletion", () => {
     expect(client).toContain('signOut({ scope: "local" })');
   });
 
-  it("uses composited aerospace and CRT motion with a reduced-motion completion path", () => {
-    expect(provider).toContain("PAYLOAD FAIRING");
-    expect(provider).toContain("THRUST STRUCTURE");
-    expect(styles).toContain("@keyframes hatchLeft");
-    expect(styles).toContain("@keyframes hatchRight");
-    expect(styles).toContain("@keyframes crtBeamOut");
+  it("keeps the success motion compact inside the message box until final shutdown", () => {
+    const dialog = provider.indexOf("styles.sequenceDialog");
+    const tinyRocket = provider.indexOf("styles.tinyRocket");
+    const shutdown = provider.indexOf("styles.shutdownCurtain");
+    expect(dialog).toBeGreaterThan(0);
+    expect(tinyRocket).toBeGreaterThan(dialog);
+    expect(shutdown).toBeGreaterThan(tinyRocket);
+    expect(styles).toContain("width: min(100%, 360px)");
+    expect(provider).not.toContain("PAYLOAD FAIRING");
+    expect(provider).not.toContain("THRUST STRUCTURE");
+    expect(provider).not.toContain("telemetryGrid");
+  });
+
+  it("finishes with untextured black panels and one reduced-motion-safe CRT flash", () => {
+    expect(styles).toContain("background: #000;");
+    expect(styles).toContain("@keyframes shutdownPanelLeft");
+    expect(styles).toContain("@keyframes shutdownPanelRight");
+    expect(styles).toContain("@keyframes shutdownFlash");
     expect(styles).toContain("prefers-reduced-motion: reduce");
+    expect(styles).not.toContain("crtScene");
+    expect(styles).not.toContain("rocketCallouts");
   });
 });

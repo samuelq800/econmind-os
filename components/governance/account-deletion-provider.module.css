@@ -244,219 +244,188 @@
   position: fixed;
   z-index: 220;
   inset: 0;
+  display: grid;
   min-height: 100dvh;
+  place-items: center;
   overflow: hidden;
+  padding: max(1rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
   contain: layout paint style;
   isolation: isolate;
-  background: #050708;
-  color: #e9eef0;
-  animation: sequenceWake 0.28s ease-out both;
+  background: rgba(0, 0, 0, 0.76);
+  animation: sequenceBackdropIn 0.18s ease-out both;
 }
 
-.telemetryGrid {
-  position: absolute;
-  inset: 0;
-  opacity: 0.32;
-  background:
-    radial-gradient(
-      circle at 50% 38%,
-      rgba(113, 215, 255, 0.12),
-      transparent 34%
-    ),
-    linear-gradient(rgba(113, 215, 255, 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(113, 215, 255, 0.07) 1px, transparent 1px);
-  background-size:
-    auto,
-    42px 42px,
-    42px 42px;
-}
-
-.telemetryGrid::after {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at center, transparent 34%, #050708 88%);
-  content: "";
-}
-
-.sequenceHeader {
-  position: absolute;
+.sequenceDialog {
+  position: relative;
   z-index: 2;
-  top: max(1.2rem, env(safe-area-inset-top));
-  right: max(1.2rem, env(safe-area-inset-right));
-  left: max(1.2rem, env(safe-area-inset-left));
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  border-bottom: 1px solid rgba(233, 238, 240, 0.18);
-  padding-bottom: 0.65rem;
-  color: rgba(233, 238, 240, 0.52);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: clamp(7px, 1.2vw, 10px);
-  font-weight: 800;
-  letter-spacing: 0.16em;
-}
-
-.rocketStage {
-  position: absolute;
-  z-index: 3;
-  inset: 4.2rem 1rem 1.2rem;
   display: grid;
-  place-items: center;
-  animation: rocketMission 1.68s cubic-bezier(0.2, 0.72, 0.2, 1) both;
-  transform-origin: 50% 52%;
-}
-
-.rocket {
-  width: min(48vw, 330px);
-  max-height: 78dvh;
-  filter: drop-shadow(0 0 24px rgba(113, 215, 255, 0.12));
-}
-
-.rocketOutline {
-  color: rgba(233, 238, 240, 0.92);
-}
-
-.rocketStructure {
-  color: #71d7ff;
-  opacity: 0;
-  animation: structureLock 0.72s 0.28s ease-out forwards;
-}
-
-.rocketCallouts {
-  color: rgba(113, 215, 255, 0.66);
-  opacity: 0;
-  animation: structureLock 0.55s 0.58s ease-out forwards;
-}
-
-.rocketLabels {
-  color: rgba(233, 238, 240, 0.7);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 8px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  opacity: 0;
-  animation: structureLock 0.5s 0.7s ease-out forwards;
-}
-
-.scanLine {
-  position: absolute;
-  z-index: 4;
-  top: 5%;
-  left: 50%;
-  width: min(70vw, 560px);
-  height: 1px;
-  background: linear-gradient(90deg, transparent, #71d7ff, transparent);
-  box-shadow: 0 0 14px rgba(113, 215, 255, 0.5);
-  animation: scanRocket 0.82s 0.22s ease-in-out both;
-  transform: translate3d(-50%, 0, 0);
-}
-
-.telemetryCopy {
-  position: absolute;
-  right: max(1rem, 8vw);
-  bottom: 8%;
-  display: grid;
-  grid-template-columns: auto auto;
-  gap: 0.3rem 0.7rem;
-  color: rgba(233, 238, 240, 0.42);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 8px;
-  letter-spacing: 0.13em;
-}
-
-.telemetryCopy b {
-  color: #71d7ff;
-}
-
-.hatch {
-  position: absolute;
-  z-index: 8;
-  top: 0;
-  bottom: 0;
-  width: 50.12vw;
-  overflow: hidden;
-  background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(#111719, #050708 52%, #0c1113);
-  background-size:
-    76px 100%,
-    auto;
-  will-change: transform;
-}
-
-.hatch::before,
-.hatch::after {
-  position: absolute;
-  right: 0;
-  left: 0;
-  height: 1px;
-  background: rgba(233, 238, 240, 0.11);
-  content: "";
-}
-
-.hatch::before {
-  top: 28%;
-}
-.hatch::after {
-  bottom: 28%;
-}
-
-.hatch i {
-  position: absolute;
-  top: 50%;
-  width: 44px;
-  height: 120px;
-  border: 1px solid rgba(113, 215, 255, 0.24);
-  transform: translateY(-50%);
-}
-
-.leftHatch {
-  left: 0;
-  border-right: 1px solid rgba(233, 238, 240, 0.34);
-  animation: hatchLeft 0.62s 1.48s cubic-bezier(0.72, 0, 0.18, 1) both;
-}
-
-.leftHatch i {
-  right: 20px;
-  border-radius: 12px 0 0 12px;
-}
-
-.rightHatch {
-  right: 0;
-  border-left: 1px solid rgba(233, 238, 240, 0.34);
-  animation: hatchRight 0.62s 1.48s cubic-bezier(0.72, 0, 0.18, 1) both;
-}
-
-.rightHatch i {
-  left: 20px;
-  border-radius: 0 12px 12px 0;
-}
-
-.crtScene {
-  position: absolute;
-  z-index: 12;
-  inset: 0;
-  background: #e9eef0;
-  opacity: 0;
-  animation: crtCollapse 0.34s 2.06s cubic-bezier(0.65, 0, 0.35, 1) both;
+  width: min(100%, 360px);
+  justify-items: center;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  border-radius: 4px;
+  background: #f4f4f1;
+  padding: 1.5rem 1.5rem 1.35rem;
+  color: #080909;
+  box-shadow: 0 24px 72px rgba(0, 0, 0, 0.42);
+  text-align: center;
+  animation: sequenceDialogCycle 1.82s cubic-bezier(0.22, 1, 0.36, 1) both;
   transform-origin: center;
   will-change: transform, opacity;
 }
 
-.crtBeam {
+.tinyFlightStage {
+  position: relative;
+  display: grid;
+  width: 84px;
+  height: 104px;
+  place-items: center;
+  margin-bottom: 0.85rem;
+}
+
+.tinyRocket {
+  position: relative;
+  z-index: 1;
+  width: 56px;
+  height: 88px;
+  overflow: visible;
+  color: #050505;
+  animation: tinyRocketFlight 1.64s 0.08s cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: transform, opacity;
+}
+
+.tinyRocketShell,
+.tinyRocketDetail,
+.tinyRocketPlume {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.tinyRocketShell {
+  fill: #f4f4f1;
+  stroke-width: 1.8;
+}
+
+.tinyRocketDetail,
+.tinyRocketPlume {
+  stroke-width: 1.25;
+}
+
+.tinyRocketWindow {
+  fill: currentColor;
+}
+
+.engineGlow {
   position: absolute;
-  z-index: 13;
+  z-index: 0;
+  bottom: 2px;
+  left: 50%;
+  width: 16px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.2);
+  filter: blur(6px);
+  animation: enginePulse 1.12s 0.18s ease-in-out both;
+  transform: translate3d(-50%, 0, 0) scaleY(0.7);
+}
+
+.sequenceEyebrow {
+  margin: 0;
+  color: #3f4240;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.sequenceDialog h2 {
+  margin: 0.45rem 0 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.72rem;
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1;
+}
+
+.sequenceCopy {
+  max-width: 270px;
+  margin: 0.75rem 0 1rem;
+  color: #555957;
+  font-size: 0.76rem;
+  line-height: 1.55;
+}
+
+.sequenceStatus {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 0.48rem;
+  border-radius: 999px;
+  background: #080909;
+  padding: 0.35rem 0.7rem;
+  color: #f4f4f1;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.sequenceStatus span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #f4f4f1;
+  animation: statusPulse 1.1s ease-in-out infinite;
+}
+
+.shutdownCurtain {
+  position: fixed;
+  z-index: 10;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.shutdownPanel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50.1%;
+  background: #000;
+  will-change: transform;
+}
+
+.shutdownPanelLeft {
+  left: 0;
+  animation: shutdownPanelLeft 0.5s 1.72s cubic-bezier(0.76, 0, 0.24, 1) both;
+}
+
+.shutdownPanelRight {
+  right: 0;
+  animation: shutdownPanelRight 0.5s 1.72s cubic-bezier(0.76, 0, 0.24, 1) both;
+}
+
+.shutdownFlash {
+  position: absolute;
+  z-index: 2;
   top: 50%;
   left: 50%;
-  width: 100%;
-  height: 3px;
-  background: #fff;
-  box-shadow:
-    0 0 11px 2px rgba(255, 255, 255, 0.88),
-    0 0 32px 7px rgba(113, 215, 255, 0.45);
+  width: min(78vw, 1100px);
+  height: 2px;
+  overflow: visible;
+  stroke: rgba(255, 255, 255, 0.86);
+  stroke-linecap: round;
+  stroke-width: 1.4;
+  vector-effect: non-scaling-stroke;
   opacity: 0;
-  animation: crtBeamOut 0.48s 2.28s cubic-bezier(0.7, 0, 0.84, 0) both;
-  transform: translate3d(-50%, -50%, 0) scaleX(1);
+  animation: shutdownFlash 0.62s 2.22s cubic-bezier(0.7, 0, 0.84, 0) both;
+  transform: translate3d(-50%, -50%, 0) scaleX(0.96);
+  transform-origin: center;
   will-change: transform, opacity;
 }
 
@@ -466,7 +435,7 @@
   }
 }
 
-@keyframes sequenceWake {
+@keyframes sequenceBackdropIn {
   from {
     opacity: 0;
   }
@@ -475,49 +444,60 @@
   }
 }
 
-@keyframes structureLock {
-  from {
-    opacity: 0;
-    transform: scale(0.985);
-  }
-  to {
-    opacity: 0.9;
-    transform: scale(1);
-  }
-}
-
-@keyframes scanRocket {
+@keyframes sequenceDialogCycle {
   0% {
     opacity: 0;
-    transform: translate3d(-50%, -40px, 0);
+    transform: translate3d(0, 8px, 0) scale(0.985);
   }
-  18%,
-  80% {
-    opacity: 0.9;
+  17%,
+  78% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translate3d(-50%, 62dvh, 0);
+    transform: translate3d(0, -4px, 0) scale(0.99);
   }
 }
 
-@keyframes rocketMission {
+@keyframes tinyRocketFlight {
   0% {
     opacity: 0;
-    transform: translate3d(0, 18px, 0) scale(0.985);
+    transform: translate3d(0, 7px, 0) scale(0.98);
   }
-  16%,
+  18%,
   68% {
     opacity: 1;
     transform: translate3d(0, 0, 0) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translate3d(0, -34px, 0) scale(0.975);
+    transform: translate3d(0, -10px, 0) scale(0.97);
   }
 }
 
-@keyframes hatchLeft {
+@keyframes enginePulse {
+  0% {
+    opacity: 0;
+    transform: translate3d(-50%, -4px, 0) scaleY(0.35);
+  }
+  42% {
+    opacity: 0.38;
+    transform: translate3d(-50%, 1px, 0) scaleY(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-50%, -2px, 0) scaleY(0.6);
+  }
+}
+
+@keyframes statusPulse {
+  50% {
+    opacity: 0.38;
+  }
+}
+
+@keyframes shutdownPanelLeft {
   from {
     transform: translate3d(-101%, 0, 0);
   }
@@ -526,7 +506,7 @@
   }
 }
 
-@keyframes hatchRight {
+@keyframes shutdownPanelRight {
   from {
     transform: translate3d(101%, 0, 0);
   }
@@ -535,27 +515,15 @@
   }
 }
 
-@keyframes crtCollapse {
+@keyframes shutdownFlash {
   0% {
     opacity: 0;
-    transform: scaleY(1);
+    transform: translate3d(-50%, -50%, 0) scaleX(0.96);
   }
-  8% {
-    opacity: 0.95;
-  }
-  100% {
-    opacity: 1;
-    transform: scaleY(0.006);
-  }
-}
-
-@keyframes crtBeamOut {
-  0% {
-    opacity: 1;
-    transform: translate3d(-50%, -50%, 0) scaleX(1);
-  }
-  65% {
-    opacity: 0.9;
+  12%,
+  34% {
+    opacity: 0.86;
+    transform: translate3d(-50%, -50%, 0) scaleX(0.96);
   }
   100% {
     opacity: 0;
@@ -576,42 +544,49 @@
   .actions > * {
     flex: 1 1 auto;
   }
-  .rocket {
-    width: min(76vw, 310px);
+  .sequenceDialog {
+    width: min(100%, 336px);
+    padding: 1.3rem 1.2rem 1.2rem;
   }
-  .rocketLabels {
-    font-size: 9px;
+  .tinyFlightStage {
+    width: 72px;
+    height: 88px;
   }
-  .telemetryCopy {
-    display: none;
-  }
-  .sequenceHeader span:first-child {
-    display: none;
-  }
-  .sequenceHeader {
-    justify-content: flex-end;
+  .tinyRocket {
+    width: 48px;
+    height: 74px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sequence::after {
-    position: absolute;
-    z-index: 20;
-    right: 0;
-    bottom: 8%;
-    left: 0;
-    color: rgba(233, 238, 240, 0.76);
-    content: "ACCOUNT DELETED · SECURE SESSION CLOSED";
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: 9px;
-    font-weight: 800;
-    letter-spacing: 0.14em;
-    text-align: center;
+  .sequence {
+    animation-duration: 1ms;
   }
 
-  .rocketStructure,
-  .rocketCallouts,
-  .rocketLabels {
-    opacity: 0.88;
+  .sequenceDialog,
+  .tinyRocket,
+  .engineGlow,
+  .sequenceStatus span {
+    animation: none;
+  }
+
+  .tinyRocket {
+    opacity: 1;
+    transform: none;
+  }
+
+  .engineGlow {
+    opacity: 0.16;
+  }
+
+  .shutdownPanelLeft,
+  .shutdownPanelRight {
+    animation-delay: 0.4s;
+    animation-duration: 1ms;
+  }
+
+  .shutdownFlash {
+    animation-delay: 0.42s;
+    animation-duration: 1ms;
   }
 }

@@ -247,7 +247,7 @@ function AccountDeletionDialog({
     ).matches;
     const fallback = window.setTimeout(
       () => void finishSequence(),
-      reducedMotion ? 450 : 3800,
+      reducedMotion ? 650 : 3300,
     );
     return () => window.clearTimeout(fallback);
   }, [finishSequence, phase]);
@@ -440,106 +440,50 @@ function DecommissionSequence({ onFinished }: { onFinished: () => void }) {
       aria-live="polite"
       aria-label="Account deleted. Closing the secure session."
     >
-      <div className={styles.telemetryGrid} aria-hidden="true" />
-      <div className={styles.sequenceHeader} aria-hidden="true">
-        <span>ECONMIND FLIGHT SYSTEMS</span>
-        <span>ACCOUNT DECOMMISSION // FINAL</span>
-      </div>
-      <div className={styles.rocketStage} aria-hidden="true">
-        <div className={styles.scanLine} />
-        <svg
-          className={styles.rocket}
-          viewBox="0 0 360 620"
-          role="presentation"
-        >
-          <g
-            className={styles.rocketOutline}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            vectorEffect="non-scaling-stroke"
+      <section className={styles.sequenceDialog}>
+        <div className={styles.tinyFlightStage} aria-hidden="true">
+          <span className={styles.engineGlow} />
+          <svg
+            className={styles.tinyRocket}
+            viewBox="0 0 72 112"
+            role="presentation"
           >
-            <path d="M180 28 C143 68 126 112 126 177 L126 427 L98 486 L98 528 L145 503 L151 547 L209 547 L215 503 L262 528 L262 486 L234 427 L234 177 C234 112 217 68 180 28Z" />
-            <path d="M151 547 L142 579 M170 547 L166 592 M190 547 L194 592 M209 547 L218 579" />
-          </g>
-          <g
-            className={styles.rocketStructure}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.2"
-            vectorEffect="non-scaling-stroke"
-          >
-            <path d="M137 124 H223 M127 178 H233 M127 287 H233 M127 321 H233 M127 430 H233 M146 503 H214" />
-            <ellipse cx="180" cy="205" rx="42" ry="15" />
-            <ellipse cx="180" cy="263" rx="42" ry="15" />
-            <ellipse cx="180" cy="348" rx="42" ry="15" />
-            <ellipse cx="180" cy="410" rx="42" ry="15" />
-            <path d="M138 205 V263 M222 205 V263 M138 348 V410 M222 348 V410" />
-            <rect x="147" y="137" width="66" height="27" rx="4" />
-            <path d="M153 452 L180 494 L207 452 M163 452 L180 477 L197 452" />
-            <path d="M180 42 V536" strokeDasharray="5 7" />
-          </g>
-          <g
-            className={styles.rocketCallouts}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1"
-            vectorEffect="non-scaling-stroke"
-          >
-            <path d="M210 83 H302" />
-            <path d="M214 151 H319" />
-            <path d="M222 232 H326" />
-            <path d="M222 371 H326" />
-            <path d="M207 469 H306" />
-            <path d="M150 303 H43" />
-            <path d="M145 513 H36" />
-          </g>
-          <g className={styles.rocketLabels} fill="currentColor">
-            <text x="307" y="87">
-              PAYLOAD FAIRING
-            </text>
-            <text x="324" y="155">
-              AVIONICS
-            </text>
-            <text x="331" y="236">
-              UPPER STAGE // LOX
-            </text>
-            <text x="331" y="375">
-              CORE STAGE // CH4
-            </text>
-            <text x="311" y="473">
-              ENGINE MANIFOLD
-            </text>
-            <text x="38" y="307" textAnchor="end">
-              INTERSTAGE
-            </text>
-            <text x="31" y="517" textAnchor="end">
-              THRUST STRUCTURE
-            </text>
-          </g>
-        </svg>
-        <div className={styles.telemetryCopy}>
-          <span>IDENTITY PURGE</span>
-          <b>COMPLETE</b>
-          <span>DATA BOUNDARY</span>
-          <b>SEALED</b>
+            <path
+              className={styles.tinyRocketShell}
+              d="M36 5C24 18 19 34 19 55v27l-9 14 14-5 4 13h16l4-13 14 5-9-14V55C53 34 48 18 36 5Z"
+            />
+            <path className={styles.tinyRocketDetail} d="M20 58h32M28 84h16" />
+            <circle className={styles.tinyRocketWindow} cx="36" cy="38" r="5" />
+            <path className={styles.tinyRocketPlume} d="M31 104l5 6 5-6" />
+          </svg>
         </div>
+        <p className={styles.sequenceEyebrow}>Deletion confirmed</p>
+        <h2>Account deleted</h2>
+        <p className={styles.sequenceCopy}>
+          Your identity boundary is sealed. The secure session is closing now.
+        </p>
+        <div className={styles.sequenceStatus} aria-hidden="true">
+          <span />
+          SECURE SESSION // CLOSING
+        </div>
+      </section>
+
+      <div className={styles.shutdownCurtain} aria-hidden="true">
+        <span
+          className={`${styles.shutdownPanel} ${styles.shutdownPanelLeft}`}
+        />
+        <span
+          className={`${styles.shutdownPanel} ${styles.shutdownPanelRight}`}
+        />
+        <svg
+          className={styles.shutdownFlash}
+          viewBox="0 0 100 2"
+          preserveAspectRatio="none"
+          onAnimationEnd={onFinished}
+        >
+          <path d="M0 1H100" />
+        </svg>
       </div>
-      <div className={`${styles.hatch} ${styles.leftHatch}`} aria-hidden="true">
-        <i />
-      </div>
-      <div
-        className={`${styles.hatch} ${styles.rightHatch}`}
-        aria-hidden="true"
-      >
-        <i />
-      </div>
-      <div className={styles.crtScene} aria-hidden="true" />
-      <div
-        className={styles.crtBeam}
-        aria-hidden="true"
-        onAnimationEnd={onFinished}
-      />
     </div>
   );
 }
