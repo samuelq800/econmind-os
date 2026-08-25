@@ -66,7 +66,7 @@ export function EditorialHome() {
         {[["REAL WORLD", "↓"], ["MODEL", "↓"], ["SIMULATE", "↓"], ["EVIDENCE", "↓"], ["DECIDE", ""]].map(([label, arrow]) => <span key={label}>{label} {arrow}</span>)}
       </section>
 
-      <section className="home-section home-schools-section">
+      <section className="home-section home-schools-section" id="league-schools">
         <HomeLeagueSchoolDirectory />
       </section>
 

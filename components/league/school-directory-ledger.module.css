@@ -1,0 +1,209 @@
+.ledger {
+  background: var(--surface);
+  padding: clamp(1.1rem, 2.4vw, 2rem);
+}
+
+.header {
+  display: grid;
+  align-items: end;
+  gap: 1.25rem;
+  padding-bottom: 1.4rem;
+  grid-template-columns: minmax(0, 1.25fr) minmax(260px, .75fr);
+}
+
+.header > div > p,
+.groupHeader > span {
+  margin: 0;
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+}
+
+.header h3 {
+  max-width: 760px;
+  margin: .5rem 0 0;
+  font-size: clamp(1.65rem, 3vw, 2.7rem);
+  letter-spacing: -.055em;
+  line-height: .98;
+}
+
+.headerNote {
+  max-width: 520px;
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: .72rem;
+  line-height: 1.65;
+}
+
+.groups {
+  border-top: 1px solid var(--line-strong);
+}
+
+.group {
+  display: grid;
+  border-bottom: 1px solid var(--line-strong);
+  grid-template-columns: minmax(145px, .25fr) minmax(0, 1.75fr);
+}
+
+.groupHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: .8rem;
+  border-right: 1px solid var(--line);
+  padding: 1rem 1rem 1rem 0;
+}
+
+.groupHeader > span {
+  padding-top: .14rem;
+}
+
+.groupHeader h4 {
+  margin: 0;
+  font-size: .86rem;
+  letter-spacing: -.025em;
+}
+
+.groupHeader p {
+  margin: .25rem 0 0;
+  color: var(--ink-faint);
+  font-size: .62rem;
+  font-weight: 750;
+}
+
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rows li {
+  display: grid;
+  min-height: 58px;
+  align-items: center;
+  gap: .75rem;
+  padding: .7rem 0 .7rem 1rem;
+  grid-template-columns: 2.1rem minmax(0, 1.7fr) minmax(120px, .65fr) 64px 72px;
+}
+
+.rows li + li {
+  border-top: 1px solid var(--line);
+}
+
+.rowNumber {
+  align-self: start;
+  padding-top: .16rem;
+  color: var(--ink-faint);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: .61rem;
+  font-weight: 700;
+}
+
+.schoolIdentity {
+  display: grid;
+  min-width: 0;
+  gap: .28rem;
+}
+
+.schoolIdentity strong {
+  font-size: .78rem;
+  letter-spacing: -.018em;
+  line-height: 1.34;
+  overflow-wrap: anywhere;
+}
+
+.schoolIdentity span,
+.activity {
+  color: var(--ink-faint);
+  font-size: .61rem;
+  line-height: 1.35;
+}
+
+.activity {
+  overflow-wrap: anywhere;
+}
+
+.locationStatus {
+  color: var(--amber);
+  font-size: .58rem;
+  font-weight: 850;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.locationStatus[data-mapped="true"] {
+  color: var(--accent);
+}
+
+.rows a {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .28rem;
+  color: var(--accent);
+  font-size: .65rem;
+  font-weight: 850;
+}
+
+.rows a:focus-visible {
+  border-radius: 5px;
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.compact {
+  border-top: 1px solid var(--line-strong);
+}
+
+@media (max-width: 900px) {
+  .header {
+    grid-template-columns: 1fr;
+  }
+
+  .group {
+    grid-template-columns: 1fr;
+  }
+
+  .groupHeader {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    padding-right: 0;
+  }
+
+  .rows li {
+    padding-left: 0;
+    grid-template-columns: 2.1rem minmax(0, 1fr) minmax(115px, .45fr) 64px 34px;
+  }
+
+  .rows a span {
+    display: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .ledger {
+    padding: 1rem;
+  }
+
+  .header h3 {
+    font-size: 1.55rem;
+  }
+
+  .rows li {
+    gap: .55rem;
+    grid-template-columns: 1.65rem minmax(0, 1fr) 30px;
+  }
+
+  .activity,
+  .locationStatus {
+    display: none;
+  }
+}
+
+@media (max-width: 370px) {
+  .rows li {
+    grid-template-columns: 1.55rem minmax(0, 1fr) 28px;
+  }
+}
