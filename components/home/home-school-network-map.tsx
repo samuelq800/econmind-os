@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { MapPinOff } from "lucide-react";
-import { SchoolDirectoryLedger } from "@/components/league/school-directory-ledger";
+import Link from "next/link";
+import { ArrowRight, MapPinOff } from "lucide-react";
 import { withBasePath } from "@/lib/base-path";
 import type { LeagueDirectorySchool } from "@/lib/league/school-directory";
 import { SCHOOL_LOCATION_SOURCE, type SchoolCityLocation } from "@/lib/league/school-locations";
@@ -192,7 +192,10 @@ export function HomeSchoolNetworkMap({
         </div>
       </section>
 
-      <SchoolDirectoryLedger schools={model.schools} compact />
+      <Link href="/league/schools/" className={styles.directoryLink}>
+        <span>View all participating schools</span>
+        <ArrowRight size={15} aria-hidden="true" />
+      </Link>
     </div>
   );
 }

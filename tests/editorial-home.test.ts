@@ -56,7 +56,8 @@ describe("editorial public architecture", () => {
     expect(schoolNetworkMap).toContain("/league/maps/world-land.svg");
     expect(schoolNetworkMap).toContain("buildSchoolNetworkModel");
     expect(schoolNetworkMap).toContain("Partner network");
-    expect(schoolNetworkMap).toContain("SchoolDirectoryLedger");
+    expect(schoolNetworkMap).not.toContain("SchoolDirectoryLedger");
+    expect(schoolNetworkMap).toContain('href="/league/schools/"');
     expect(schoolLedger).toContain("Complete school register");
     expect(leagueSchools).toContain("SchoolDirectoryLedger");
     expect(leagueSchools).not.toContain("decodeURIComponent");
