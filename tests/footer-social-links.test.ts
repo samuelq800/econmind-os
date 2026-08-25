@@ -10,6 +10,7 @@ describe("footer social links", () => {
       "https://www.xiaohongshu.com/user/profile/69be61b90000000034018bcc",
       "https://www.instagram.com/econmind_os/",
       "https://www.youtube.com/@EconmindGroup",
+      "https://www.linkedin.com/in/league-econmind-3a6b68430/",
     ]) {
       expect(footer).toContain(`href: "${href}"`);
     }
@@ -26,6 +27,7 @@ describe("footer social links", () => {
       "XiaohongshuIcon",
       "InstagramIcon",
       "YouTubeIcon",
+      "LinkedInIcon",
     ]) {
       expect(footer).toContain(`function ${icon}()`);
     }
