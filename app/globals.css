@@ -2806,30 +2806,24 @@ input[type=range]::-webkit-slider-thumb {
    }
 }
 
-/* The homepage entry visual uses a bounded learning journey rather than a
-   decorative chart: its reading order remains clear at every zoom level. */
-.home-hero-lens {
+/* A short, accessible motion layer gives the original teaching framework a
+   sense of life without reintroducing the unstable decorative charts. */
+.home-hero-summary {
    display: flex;
    min-height: 430px;
    flex-direction: column;
-   gap: 1.1rem;
-   overflow: hidden;
-   border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--line));
-   border-radius: 18px;
-   background: linear-gradient(145deg, color-mix(in srgb, var(--surface) 94%, var(--canvas)), color-mix(in srgb, var(--accent-soft) 52%, var(--surface)));
-   box-shadow: 0 24px 70px color-mix(in srgb, var(--accent) 10%, transparent);
-   padding: clamp(1.3rem, 2.5vw, 2rem)
-}
-
-.home-hero-lens-header {
-   display: flex;
-   align-items: center;
    justify-content: space-between;
-   gap: 1rem
+   gap: 2rem;
+   overflow: hidden;
+   border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--line));
+   border-radius: 18px;
+   background: linear-gradient(145deg, color-mix(in srgb, var(--surface) 92%, var(--canvas)), color-mix(in srgb, var(--accent-soft) 46%, var(--surface)));
+   background-size: 160% 160%;
+   box-shadow: 0 24px 70px color-mix(in srgb, var(--accent) 10%, transparent);
+   padding: clamp(1.5rem, 3vw, 2.35rem)
 }
 
-.home-hero-lens-header p,
-.home-hero-lens-question>span {
+.home-hero-summary-kicker {
    margin: 0;
    color: var(--accent);
    font-size: 10px;
@@ -2839,163 +2833,135 @@ input[type=range]::-webkit-slider-thumb {
    text-transform: uppercase
 }
 
-.home-hero-lens-header>span {
-   display: inline-flex;
-   align-items: center;
-   gap: .45rem;
-   color: var(--ink-faint);
-   font-size: 10px;
-   font-weight: 800
-}
-
-.home-hero-lens-header i {
-   width: 7px;
-   height: 7px;
-   border-radius: 50%;
-   background: var(--accent);
-   box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent)
-}
-
-.home-hero-lens-question {
-   border-left: 2px solid var(--accent);
-   padding: .35rem 0 .35rem 1rem
-}
-
-.home-hero-lens-question h2 {
-   max-width: 510px;
-   margin: .5rem 0 0;
-   font-size: clamp(1.65rem, 2.55vw, 2.7rem);
-   font-weight: 760;
-   letter-spacing: -.06em;
-   line-height: .98
-}
-
-.home-hero-lens-question p {
-   max-width: 500px;
-   margin: .7rem 0 0;
-   color: var(--ink-muted);
-   font-size: .82rem;
-   line-height: 1.5
-}
-
-.home-hero-lens-path {
+.home-hero-summary-steps {
    display: grid;
    gap: 1px;
-   margin: .15rem 0 0;
-   padding: 1px;
-   list-style: none;
+   border: 1px solid var(--line);
    background: var(--line)
 }
 
-.home-hero-lens-path li {
+.home-hero-summary-steps section {
    display: grid;
-   min-height: 58px;
+   min-height: 82px;
    align-items: center;
-   gap: .8rem;
+   gap: 1rem;
    background: color-mix(in srgb, var(--surface) 92%, var(--canvas));
-   padding: .7rem .8rem;
-   grid-template-columns: 1.5rem minmax(0, 1fr) auto
+   padding: 1.05rem 1.15rem;
+   grid-template-columns: 2.1rem 1fr;
+   transition: background-color .25s ease, box-shadow .25s ease, transform .25s ease
 }
 
-.home-hero-lens-path li>span {
+.home-hero-summary-steps section:hover {
+   z-index: 1;
+   background: color-mix(in srgb, var(--accent-soft) 68%, var(--surface));
+   box-shadow: inset 3px 0 0 var(--accent);
+   transform: translateX(4px)
+}
+
+.home-hero-summary-steps section>span {
    color: var(--accent);
-   font-size: 9px;
+   font-size: 10px;
    font-weight: 850;
-   letter-spacing: .1em
+   letter-spacing: .12em
 }
 
-.home-hero-lens-path b {
-   display: block;
-   font-size: .86rem;
+.home-hero-summary-steps b {
+   font-size: 1rem;
    letter-spacing: -.02em
 }
 
-.home-hero-lens-path p {
-   margin: .13rem 0 0;
+.home-hero-summary-steps p {
+   margin: .28rem 0 0;
    color: var(--ink-muted);
-   font-size: .7rem;
-   line-height: 1.35
+   font-size: .8rem;
+   line-height: 1.45
 }
 
-.home-hero-lens-path em {
-   border: 1px solid var(--line-strong);
-   border-radius: 999px;
-   padding: .3rem .48rem;
+.home-hero-summary-foot {
+   display: flex;
+   align-items: end;
+   justify-content: space-between;
+   gap: 1.25rem;
+   border-top: 1px solid var(--line);
+   padding-top: 1rem
+}
+
+.home-hero-summary-foot p {
+   margin: 0;
+   color: var(--blue);
+   font-family: Georgia, serif;
+   font-size: clamp(1rem, 1.55vw, 1.35rem);
+   font-style: italic
+}
+
+.home-hero-summary-foot span {
+   max-width: 220px;
    color: var(--ink-faint);
    font-size: 9px;
-   font-style: normal;
    font-weight: 850;
-   letter-spacing: .08em;
+   letter-spacing: .12em;
+   line-height: 1.5;
+   text-align: right;
    text-transform: uppercase
 }
 
-.home-hero-lens-actions {
-   display: grid;
-   gap: 1px;
-   margin-top: auto;
-   border: 1px solid var(--line);
-   background: var(--line);
-   grid-template-columns: repeat(3, minmax(0, 1fr))
+@media (prefers-reduced-motion: no-preference) {
+   .home-hero-summary {
+      animation: home-summary-glow 12s ease-in-out infinite alternate
+   }
+
+   .home-hero-summary-kicker {
+      animation: home-summary-appear .5s ease both
+   }
+
+   .home-hero-summary-steps section {
+      animation: home-summary-appear .58s cubic-bezier(.2, .75, .25, 1) both
+   }
+
+   .home-hero-summary-steps section:nth-child(1) { animation-delay: .12s }
+   .home-hero-summary-steps section:nth-child(2) { animation-delay: .24s }
+   .home-hero-summary-steps section:nth-child(3) { animation-delay: .36s }
+
+   .home-hero-summary-foot p {
+      animation: home-summary-formula 5s ease-in-out infinite
+   }
 }
 
-.home-hero-lens-actions a {
-   display: grid;
-   min-height: 72px;
-   align-items: center;
-   gap: .45rem;
-   background: var(--surface);
-   padding: .7rem;
-   color: var(--ink);
-   grid-template-columns: auto minmax(0, 1fr) auto;
-   transition: background-color .2s ease, color .2s ease
+@keyframes home-summary-appear {
+   from { opacity: 0; transform: translateY(10px) }
+   to { opacity: 1; transform: translateY(0) }
 }
 
-.home-hero-lens-actions a:hover {
-   background: var(--accent);
-   color: #fff
+@keyframes home-summary-glow {
+   from { background-position: 0% 40% }
+   to { background-position: 100% 60% }
 }
 
-.home-hero-lens-actions svg:first-child {
-   color: var(--accent)
-}
-
-.home-hero-lens-actions a:hover svg:first-child {
-   color: #d7f6e8
-}
-
-.home-hero-lens-actions span {
-   font-size: .72rem;
-   font-weight: 850;
-   letter-spacing: -.015em
+@keyframes home-summary-formula {
+   0%, 100% { opacity: .72; transform: translateX(0) }
+   50% { opacity: 1; transform: translateX(5px) }
 }
 
 @media(max-width:700px) {
-   .home-hero-lens {
-      min-height: 390px;
-      gap: .9rem;
-      padding: 1.15rem
+   .home-hero-summary {
+      min-height: 360px;
+      gap: 1.25rem;
+      padding: 1.3rem
    }
 
-   .home-hero-lens-question h2 {
-      font-size: 1.8rem
+   .home-hero-summary-steps section {
+      min-height: 70px;
+      padding: .8rem .9rem
    }
 
-   .home-hero-lens-path li {
-      min-height: 54px;
-      grid-template-columns: 1.4rem minmax(0, 1fr) auto
+   .home-hero-summary-foot {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: .45rem
    }
 
-   .home-hero-lens-path em {
-      display: none
-   }
-
-   .home-hero-lens-actions a {
-      min-height: 62px;
-      padding: .55rem
-   }
-
-   .home-hero-lens-actions span {
-      font-size: .64rem
+   .home-hero-summary-foot span {
+      text-align: left
    }
 }
 
