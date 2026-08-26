@@ -1,6 +1,11 @@
 import type { CrisisDecision, CrisisRun, LeagueApplication, LeagueContext, LeaguePlatformRole, LeagueProfile, School, Team, TeamMember } from "@/lib/league/types";
 import type { CurriculumSystem } from "@/lib/league/curriculum";
-import type { CanonicalSchoolLocationInput, SchoolLocationSubmission } from "@/lib/league/geographic-areas";
+import {
+  getCountryOrArea,
+  type CanonicalSchoolLocationInput,
+  type SchoolLocationCatalogEntry,
+  type SchoolLocationSubmission,
+} from "@/lib/league/geographic-areas";
 import { getSupabaseBrowserClient } from "./client";
 
 function client() {
@@ -198,6 +203,49 @@ export async function verifyLeagueApplicationLocation(applicationId: string, loc
   });
   fail(error);
   return data as { application_id: string; location_status: "verified"; location_key: string };
+}
+
+export async function findSchoolLocationCatalogEntry(geonameId: number): Promise<SchoolLocationCatalogEntry | null> {
+  const { data, error } = await client()
+    .from("school_location_catalog")
+    .select("location_key,geoname_id,city,area_key,area_label,administrative_area,latitude,longitude")
+    .eq("geoname_id", geonameId)
+    .maybeSingle();
+  fail(error);
+  if (!data) return null;
+
+  const parsedGeonameId = Number(data.geoname_id);
+  const latitude = Number(data.latitude);
+  const longitude = Number(data.longitude);
+  const area = typeof data.area_key === "string" ? getCountryOrArea(data.area_key) : null;
+  if (
+    typeof data.location_key !== "string"
+    || !Number.isSafeInteger(parsedGeonameId)
+    || parsedGeonameId <= 0
+    || typeof data.city !== "string"
+    || data.city.trim().length < 2
+    || !area
+    || data.area_label !== area.label
+    || !Number.isFinite(latitude)
+    || latitude < -90
+    || latitude > 90
+    || !Number.isFinite(longitude)
+    || longitude < -180
+    || longitude > 180
+  ) {
+    throw new Error("The existing location catalog record is malformed and must be reviewed in Supabase.");
+  }
+
+  return {
+    locationKey: data.location_key,
+    geonameId: parsedGeonameId,
+    city: data.city,
+    areaKey: area.key,
+    areaLabel: area.label,
+    administrativeArea: typeof data.administrative_area === "string" ? data.administrative_area : "",
+    latitude,
+    longitude,
+  };
 }
 
 export async function requestLeagueApplicationLocationCorrection(applicationId: string, publicNote: string) {

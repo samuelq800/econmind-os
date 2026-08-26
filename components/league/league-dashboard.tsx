@@ -34,10 +34,11 @@ import type {
   Team,
   TeamMember,
 } from "@/lib/league/types";
-import type { CanonicalSchoolLocationInput } from "@/lib/league/geographic-areas";
+import type { CanonicalSchoolLocationInput, SchoolLocationCatalogEntry } from "@/lib/league/geographic-areas";
 import type { LeagueChallenge } from "@/lib/league/async-challenge-types";
 import {
   createLeagueTeam,
+  findSchoolLocationCatalogEntry,
   getLeagueContext,
   joinLeagueTeam,
   listAdminCrisisRuns,
@@ -343,8 +344,10 @@ export function LeagueDashboard({
       const result = await matchLeagueApplicationLocation(applicationId, evidenceUrl, note);
       setMessage(`${result.city} matched to ${result.location_key}.`);
       await load();
+      return true;
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not match this location.");
+      return false;
     } finally {
       setBusy(false);
     }
@@ -356,8 +359,10 @@ export function LeagueDashboard({
       const result = await verifyLeagueApplicationLocation(applicationId, location);
       setMessage(`Location verified as ${result.location_key}.`);
       await load();
+      return true;
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not verify this location.");
+      return false;
     } finally {
       setBusy(false);
     }
@@ -369,8 +374,10 @@ export function LeagueDashboard({
       await requestLeagueApplicationLocationCorrection(applicationId, note);
       setMessage("The location was returned to the applicant for correction.");
       await load();
+      return true;
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not request a location correction.");
+      return false;
     } finally {
       setBusy(false);
     }
@@ -382,8 +389,10 @@ export function LeagueDashboard({
       const result = await verifyLeagueSchoolLocation(schoolId, location);
       setMessage(`School location verified as ${result.location_key}.`);
       await load();
+      return true;
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not verify this school location.");
+      return false;
     } finally {
       setBusy(false);
     }
@@ -395,10 +404,22 @@ export function LeagueDashboard({
       await requestLeagueSchoolLocationCorrection(schoolId, note);
       setMessage("The school location was removed from the public map and returned to the review queue.");
       await load();
+      return true;
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not withdraw this school location.");
+      return false;
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function findCatalogLocation(geonameId: number): Promise<SchoolLocationCatalogEntry | null> {
+    setError("");
+    try {
+      return await findSchoolLocationCatalogEntry(geonameId);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not check the verified location catalog.");
+      throw caught;
     }
   }
   async function changeRole(
@@ -715,6 +736,7 @@ export function LeagueDashboard({
                       key={school.id}
                       school={school}
                       busy={busy}
+                      onFindCatalogLocation={findCatalogLocation}
                       onVerify={(location) => verifySchoolLocation(school.id, location)}
                     />
                   ))}
@@ -761,6 +783,7 @@ export function LeagueDashboard({
                         <ApplicationLocationReview
                           application={application}
                           busy={busy}
+                          onFindCatalogLocation={findCatalogLocation}
                           onMatch={(evidenceUrl, note) => matchApplicationLocation(application.id, evidenceUrl, note)}
                           onVerify={(location) => verifyApplicationLocation(application.id, location)}
                           onRequestCorrection={(note) => requestApplicationLocationCorrection(application.id, note)}

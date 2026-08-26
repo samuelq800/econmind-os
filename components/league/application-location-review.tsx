@@ -1,15 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ExternalLink, MapPinCheck, ShieldQuestion, TriangleAlert } from "lucide-react";
+import { ExternalLink, LoaderCircle, MapPinCheck, ShieldQuestion, TriangleAlert } from "lucide-react";
+import { ExistingLocationMatch } from "@/components/league/existing-location-match";
 import { SchoolLocationFields } from "@/components/league/school-location-fields";
 import { Button } from "@/components/ui/button";
 import {
+  canonicalLocationFromCatalogEntry,
   isCompleteSchoolLocation,
   isValidCoordinate,
   isValidGeonameId,
   isValidIndependentLocationEvidenceUrl,
   type CanonicalSchoolLocationInput,
+  type SchoolLocationCatalogEntry,
   type SchoolLocationSubmission,
 } from "@/lib/league/geographic-areas";
 import type { LeagueApplication } from "@/lib/league/types";
@@ -26,15 +29,17 @@ type ReviewMode = "match" | "verify" | "correction" | null;
 export function ApplicationLocationReview({
   application,
   busy,
+  onFindCatalogLocation,
   onMatch,
   onVerify,
   onRequestCorrection,
 }: {
   application: LeagueApplication;
   busy: boolean;
-  onMatch: (evidenceUrl: string, note: string) => Promise<void>;
-  onVerify: (location: CanonicalSchoolLocationInput) => Promise<void>;
-  onRequestCorrection: (note: string) => Promise<void>;
+  onFindCatalogLocation: (geonameId: number) => Promise<SchoolLocationCatalogEntry | null>;
+  onMatch: (evidenceUrl: string, note: string) => Promise<boolean>;
+  onVerify: (location: CanonicalSchoolLocationInput) => Promise<boolean>;
+  onRequestCorrection: (note: string) => Promise<boolean>;
 }) {
   const [mode, setMode] = useState<ReviewMode>(null);
   const [canonicalLocation, setCanonicalLocation] = useState<SchoolLocationSubmission>({
@@ -49,6 +54,9 @@ export function ApplicationLocationReview({
   const [evidenceUrl, setEvidenceUrl] = useState("");
   const [reviewNote, setReviewNote] = useState("");
   const [correctionNote, setCorrectionNote] = useState("");
+  const [checking, setChecking] = useState(false);
+  const [catalogEntry, setCatalogEntry] = useState<SchoolLocationCatalogEntry | null>(null);
+  const [catalogMiss, setCatalogMiss] = useState(false);
   const activeApplication = application.status === "submitted" || application.status === "under_review";
 
   const geonamesSearchUrl = useMemo(() => {
@@ -67,28 +75,58 @@ export function ApplicationLocationReview({
   );
 
   async function verify() {
-    if (!canVerify) return;
-    await onVerify({
-      ...canonicalLocation,
-      geonameId: Number(geonameId),
-      latitude: Number(latitude),
-      longitude: Number(longitude),
-      evidenceUrl: evidenceUrl.trim(),
-      note: reviewNote.trim(),
-    });
-    setMode(null);
+    if (!isValidGeonameId(geonameId)) return;
+    setChecking(true);
+    setCatalogMiss(false);
+    try {
+      const parsedGeonameId = Number(geonameId);
+      const existingEntry = await onFindCatalogLocation(parsedGeonameId);
+      if (existingEntry) {
+        setCatalogEntry(existingEntry);
+        return;
+      }
+      if (!canVerify) {
+        setCatalogMiss(true);
+        return;
+      }
+      const saved = await onVerify({
+        ...canonicalLocation,
+        geonameId: parsedGeonameId,
+        latitude: Number(latitude),
+        longitude: Number(longitude),
+        evidenceUrl: evidenceUrl.trim(),
+        note: reviewNote.trim(),
+      });
+      if (saved) setMode(null);
+    } catch {
+      // The dashboard presents the request error. Preserve every entered field
+      // and leave this review panel open for a correction or retry.
+    } finally {
+      setChecking(false);
+    }
+  }
+
+  async function confirmCatalogEntry() {
+    if (!catalogEntry) return;
+    setChecking(true);
+    const saved = await onVerify(canonicalLocationFromCatalogEntry(catalogEntry, evidenceUrl, reviewNote));
+    setChecking(false);
+    if (saved) {
+      setCatalogEntry(null);
+      setMode(null);
+    }
   }
 
   async function match() {
     if (!isValidIndependentLocationEvidenceUrl(evidenceUrl)) return;
-    await onMatch(evidenceUrl.trim(), reviewNote.trim());
-    setMode(null);
+    const saved = await onMatch(evidenceUrl.trim(), reviewNote.trim());
+    if (saved) setMode(null);
   }
 
   async function requestCorrection() {
     if (correctionNote.trim().length < 2) return;
-    await onRequestCorrection(correctionNote.trim());
-    setMode(null);
+    const saved = await onRequestCorrection(correctionNote.trim());
+    if (saved) setMode(null);
   }
 
   return (
@@ -116,7 +154,7 @@ export function ApplicationLocationReview({
           >
             <MapPinCheck size={13} /> Match verified city
           </Button>
-          <Button size="sm" type="button" variant="secondary" aria-expanded={mode === "verify"} aria-controls={`verify-location-${application.id}`} disabled={busy} onClick={() => setMode(mode === "verify" ? null : "verify")}>
+          <Button size="sm" type="button" variant="secondary" aria-expanded={mode === "verify"} aria-controls={`verify-location-${application.id}`} disabled={busy} onClick={() => { setCatalogEntry(null); setMode(mode === "verify" ? null : "verify"); }}>
             Verify new place
           </Button>
           <Button size="sm" type="button" variant="secondary" aria-expanded={mode === "correction"} aria-controls={`correct-location-${application.id}`} disabled={busy} onClick={() => setMode(mode === "correction" ? null : "correction")}>
@@ -148,21 +186,40 @@ export function ApplicationLocationReview({
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs font-bold">Bind a canonical city</p>
-              <p className="mt-1 text-[10px] leading-4 text-[var(--ink-faint)]">Check GeoNames and an independent school or institutional source. Coordinates must be the city centre, never a campus address.</p>
+              <p className="mt-1 text-[10px] leading-4 text-[var(--ink-faint)]">The GeoNames ID is the number in the place page URL. Copy that city record&apos;s coordinates, never a campus address. GeoNames does not count as the independent evidence URL.</p>
             </div>
             <a href={geonamesSearchUrl} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center gap-1 text-[10px] font-bold text-[var(--accent)]">GeoNames <ExternalLink size={11} /></a>
           </div>
           <div className="mt-4">
-            <SchoolLocationFields value={canonicalLocation} onChange={setCanonicalLocation} idPrefix={`verify-${application.id}`} />
+            <SchoolLocationFields
+              value={canonicalLocation}
+              onChange={(nextLocation) => {
+                setCatalogEntry(null);
+                setCanonicalLocation(nextLocation);
+              }}
+              idPrefix={`verify-${application.id}`}
+            />
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <label className="text-[11px] font-bold">GeoNames ID<input required inputMode="numeric" value={geonameId} onChange={(event) => setGeonameId(event.target.value)} className="mt-1.5 h-10 w-full rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 text-xs" /></label>
-            <label className="text-[11px] font-bold">City-centre latitude<input required inputMode="decimal" value={latitude} onChange={(event) => setLatitude(event.target.value)} className="mt-1.5 h-10 w-full rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 text-xs" /></label>
-            <label className="text-[11px] font-bold">City-centre longitude<input required inputMode="decimal" value={longitude} onChange={(event) => setLongitude(event.target.value)} className="mt-1.5 h-10 w-full rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 text-xs" /></label>
+            <label className="text-[11px] font-bold">GeoNames ID <span className="font-normal text-[var(--ink-faint)]">(URL number)</span><input required inputMode="numeric" value={geonameId} onChange={(event) => { setCatalogEntry(null); setCatalogMiss(false); setGeonameId(event.target.value); }} className="mt-1.5 h-10 w-full rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 text-xs" /></label>
+            <label className="text-[11px] font-bold">City-centre latitude<input required inputMode="decimal" value={latitude} onChange={(event) => { setCatalogEntry(null); setLatitude(event.target.value); }} className="mt-1.5 h-10 w-full rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 text-xs" /></label>
+            <label className="text-[11px] font-bold">City-centre longitude<input required inputMode="decimal" value={longitude} onChange={(event) => { setCatalogEntry(null); setLongitude(event.target.value); }} className="mt-1.5 h-10 w-full rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 text-xs" /></label>
           </div>
           <label className="mt-3 block text-[11px] font-bold">Independent evidence URL<input required type="url" value={evidenceUrl} onChange={(event) => setEvidenceUrl(event.target.value)} placeholder="https://official-school-or-registry.example/…" className="mt-1.5 h-10 w-full rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 text-xs" /></label>
           <label className="mt-3 block text-[11px] font-bold">Internal review note <span className="font-normal text-[var(--ink-faint)]">(optional, never public)</span><textarea maxLength={2000} rows={2} value={reviewNote} onChange={(event) => setReviewNote(event.target.value)} className="mt-1.5 w-full rounded-lg border border-[var(--line)] bg-[var(--surface)] p-3 text-xs" /></label>
-          <Button className="mt-3" size="sm" type="button" disabled={busy || !canVerify} onClick={() => void verify()}>Confirm canonical location</Button>
+          {catalogMiss && (
+            <p className="mt-3 rounded-lg border border-[var(--line)] bg-[var(--surface-subtle)] p-3 text-[10px] leading-5 text-[var(--ink-muted)]">
+              This ID is not in the verified directory yet. Complete the canonical place fields, city-centre coordinates and independent evidence before confirming it.
+            </p>
+          )}
+          {catalogEntry ? (
+            <ExistingLocationMatch entry={catalogEntry} busy={busy || checking} canUse={isValidIndependentLocationEvidenceUrl(evidenceUrl)} onUse={() => void confirmCatalogEntry()} onEdit={() => setCatalogEntry(null)} />
+          ) : (
+            <Button className="mt-3" size="sm" type="button" disabled={busy || checking || !isValidGeonameId(geonameId)} onClick={() => void verify()}>
+              {checking && <LoaderCircle className="animate-spin" size={13} aria-hidden="true" />}
+              {canVerify ? "Check and confirm location" : "Check GeoNames ID"}
+            </Button>
+          )}
         </div>
       )}
 

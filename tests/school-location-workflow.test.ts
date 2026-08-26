@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   COUNTRY_OR_AREA_OPTIONS,
   GEOGRAPHIC_LABEL_DISCLAIMER,
+  canonicalLocationFromCatalogEntry,
   getCountryOrArea,
   isCompleteSchoolLocation,
   isValidCoordinate,
@@ -16,6 +17,8 @@ const onboarding = readFileSync("components/auth/account-onboarding.tsx", "utf8"
 const join = readFileSync("components/league/join-league.tsx", "utf8");
 const locationFields = readFileSync("components/league/school-location-fields.tsx", "utf8");
 const adminReview = readFileSync("components/league/application-location-review.tsx", "utf8");
+const schoolReview = readFileSync("components/league/school-location-review.tsx", "utf8");
+const existingLocationMatch = readFileSync("components/league/existing-location-match.tsx", "utf8");
 const dashboard = readFileSync("components/league/league-dashboard.tsx", "utf8");
 const leagueClient = readFileSync("lib/supabase/league.ts", "utf8");
 const publicDirectory = readFileSync("lib/supabase/league-directory.ts", "utf8");
@@ -54,6 +57,44 @@ describe("school location review workflow", () => {
     expect(isValidHttpsEvidenceUrl("https://user:secret@school.example/")).toBe(false);
     expect(isValidIndependentLocationEvidenceUrl("https://school.example/location")).toBe(true);
     expect(isValidIndependentLocationEvidenceUrl("https://www.geonames.org/1816670/")).toBe(false);
+  });
+
+  it("requires an explicit, lossless reuse of an existing GeoNames catalog record", () => {
+    const catalogEntry = {
+      locationKey: "geonames:1886760",
+      geonameId: 1886760,
+      areaKey: "geoarea:CN",
+      areaLabel: "China — mainland areas",
+      administrativeArea: "Jiangsu",
+      city: "Suzhou",
+      latitude: 31.30408,
+      longitude: 120.59538,
+    };
+
+    expect(canonicalLocationFromCatalogEntry(catalogEntry, " https://school.example/about ", " checked ")).toEqual({
+      areaKey: "geoarea:CN",
+      areaLabel: "China — mainland areas",
+      administrativeArea: "Jiangsu",
+      city: "Suzhou",
+      geonameId: 1886760,
+      latitude: 31.30408,
+      longitude: 120.59538,
+      evidenceUrl: "https://school.example/about",
+      note: "checked",
+    });
+    expect(leagueClient).toContain('.from("school_location_catalog")');
+    expect(leagueClient).toContain('.eq("geoname_id", geonameId)');
+    expect(existingLocationMatch).toContain("Use catalog record");
+    expect(existingLocationMatch).toContain("Open GeoNames");
+    expect(schoolReview).toContain("Search GeoNames");
+    expect(schoolReview).toContain("Check GeoNames ID");
+    expect(adminReview).toContain("URL number");
+  });
+
+  it("keeps location review panels open when a save fails", () => {
+    expect(schoolReview).toContain("if (saved) setOpen(false)");
+    expect(adminReview).toContain("if (saved) setMode(null)");
+    expect(dashboard).toContain("return false");
   });
 
   it("requires area, applicable administrative area and a city in both registration entry points", () => {

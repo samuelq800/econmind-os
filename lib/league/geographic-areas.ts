@@ -24,6 +24,13 @@ export type CanonicalSchoolLocationInput = SchoolLocationSubmission & {
   note: string;
 };
 
+export type SchoolLocationCatalogEntry = SchoolLocationSubmission & {
+  locationKey: string;
+  geonameId: number;
+  latitude: number;
+  longitude: number;
+};
+
 export type CountryOrAreaOption = {
   key: string;
   label: string;
@@ -123,6 +130,24 @@ export function isValidIndependentLocationEvidenceUrl(value: string) {
   if (!isValidHttpsEvidenceUrl(value)) return false;
   const hostname = new URL(value.trim()).hostname.toLocaleLowerCase("en-US");
   return hostname !== "geonames.org" && !hostname.endsWith(".geonames.org");
+}
+
+export function canonicalLocationFromCatalogEntry(
+  entry: SchoolLocationCatalogEntry,
+  evidenceUrl: string,
+  note: string,
+): CanonicalSchoolLocationInput {
+  return {
+    areaKey: entry.areaKey,
+    areaLabel: entry.areaLabel,
+    administrativeArea: entry.administrativeArea,
+    city: entry.city,
+    geonameId: entry.geonameId,
+    latitude: entry.latitude,
+    longitude: entry.longitude,
+    evidenceUrl: evidenceUrl.trim(),
+    note: note.trim(),
+  };
 }
 
 export const GEOGRAPHIC_LABEL_DISCLAIMER =
