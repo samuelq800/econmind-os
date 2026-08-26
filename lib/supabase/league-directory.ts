@@ -14,6 +14,15 @@ export type PublicLeagueSchool = {
   official_challenge_count: number;
   official_wins: number;
   achievements: string[];
+  location_status: "missing" | "verified" | "needs_correction";
+  location_source: "verified_roster_backfill" | "application_review" | "admin_review" | null;
+  location_key: string | null;
+  location_city: string | null;
+  location_area_key: string | null;
+  location_area_label: string | null;
+  location_administrative_area: string | null;
+  location_latitude: number | null;
+  location_longitude: number | null;
 };
 
 export type PublicLeagueTeam = {
@@ -57,7 +66,15 @@ function fail(error: { message: string } | null) {
 }
 
 export async function listPublicLeagueSchools() {
-  const { data, error } = await client().rpc("get_public_league_directory");
+  const supabase = client();
+  let { data, error } = await supabase.rpc("get_public_league_directory_v2");
+  let legacyResponse = false;
+  if (error) {
+    const legacy = await supabase.rpc("get_public_league_directory");
+    data = legacy.data;
+    error = legacy.error;
+    legacyResponse = true;
+  }
   fail(error);
   const rows = (data ?? []) as PublicLeagueSchoolRpcRow[];
   return rows.map((row) => {
@@ -70,6 +87,15 @@ export async function listPublicLeagueSchools() {
     official_challenge_count: Number(row.official_challenge_count ?? 0),
     official_wins: Number(row.official_wins ?? 0),
     achievements: achievementValues.filter((item): item is string => typeof item === "string"),
+    location_status: legacyResponse ? "missing" : row.location_status,
+    location_source: legacyResponse ? null : row.location_source,
+    location_key: legacyResponse ? null : row.location_key,
+    location_city: legacyResponse ? null : row.location_city,
+    location_area_key: legacyResponse ? null : row.location_area_key,
+    location_area_label: legacyResponse ? null : row.location_area_label,
+    location_administrative_area: legacyResponse ? null : row.location_administrative_area,
+    location_latitude: legacyResponse || row.location_latitude == null ? null : Number(row.location_latitude),
+    location_longitude: legacyResponse || row.location_longitude == null ? null : Number(row.location_longitude),
   };
   }) as PublicLeagueSchool[];
 }

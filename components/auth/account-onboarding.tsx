@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { Building2, CheckCircle2, GraduationCap, LoaderCircle, MapPin, School2, UserRound } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
+import { EMPTY_SCHOOL_LOCATION, SchoolLocationFields } from "@/components/league/school-location-fields";
 import { Button } from "@/components/ui/button";
 import { CURRICULUM_SYSTEM_LABELS, CURRICULUM_SYSTEMS, type CurriculumSystem } from "@/lib/league/curriculum";
+import { isCompleteSchoolLocation } from "@/lib/league/geographic-areas";
 import { completeAccountOnboarding, getAccountOnboarding, listApprovedSchoolChoices, type ApprovedSchoolChoice, type OnboardingPath } from "@/lib/supabase/account-onboarding";
 
 type SetupStep = "choose" | OnboardingPath;
@@ -38,6 +40,7 @@ export function AccountOnboarding() {
   const [schoolName, setSchoolName] = useState("");
   const [clubName, setClubName] = useState("");
   const [curriculumSystem, setCurriculumSystem] = useState<"" | CurriculumSystem>("");
+  const [schoolLocation, setSchoolLocation] = useState(EMPTY_SCHOOL_LOCATION);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -89,6 +92,7 @@ export function AccountOnboarding() {
         schoolName: path === "create_school" ? schoolName.trim() : undefined,
         clubName: path === "create_school" ? clubName.trim() : undefined,
         curriculumSystem: path === "create_school" && curriculumSystem ? curriculumSystem : undefined,
+        location: path === "create_school" ? schoolLocation : undefined,
       });
       setMessage(result.path === "create_school" ? "School application submitted for teacher approval." : "Account setup complete.");
       saveOnboardingChoice(userId);
@@ -110,7 +114,43 @@ export function AccountOnboarding() {
 
       {step === "school" && <div className="mt-7"><div className="flex items-center justify-between gap-3"><h3 className="text-base font-bold">Choose an approved school</h3><button type="button" onClick={() => setStep("choose")} className="text-xs font-bold text-[var(--accent)]">Back</button></div><p className="mt-2 text-xs leading-5 text-[var(--ink-muted)]">After choosing, use your team’s invite code to become a League participant. A school selection alone cannot claim a country.</p><div className="scroll-slim mt-4 max-h-64 space-y-2 overflow-y-auto pr-1">{schools.map((school) => <label key={school.id} className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 ${selectedSchoolId === school.id ? "border-[var(--accent)] bg-[var(--accent-soft)]" : "border-[var(--line)] bg-[var(--canvas)]"}`}><input type="radio" name="school" value={school.id} checked={selectedSchoolId === school.id} onChange={() => setSelectedSchoolId(school.id)} className="accent-[var(--accent)]" /><span className="min-w-0"><span className="block text-sm font-bold">{school.name}</span><span className="mt-0.5 flex items-center gap-1 text-[11px] text-[var(--ink-muted)]">{school.city && <><MapPin size={11} />{school.city}</>}{school.city && school.club_name && <span>·</span>}{school.club_name}</span></span></label>)}{schools.length === 0 && <p className="rounded-lg bg-[var(--surface-subtle)] p-4 text-sm text-[var(--ink-muted)]">No approved schools are listed yet. You can submit a school instead or continue as a visitor.</p>}</div><Button className="mt-5 w-full" disabled={!selectedSchoolId || busy} onClick={() => void finish("school")}>{busy && <LoaderCircle className="animate-spin" size={15} />}Continue with selected school</Button></div>}
 
-      {step === "create_school" && <div className="mt-7"><div className="flex items-center justify-between gap-3"><h3 className="text-base font-bold">Submit a school for approval</h3><button type="button" onClick={() => setStep("choose")} className="text-xs font-bold text-[var(--accent)]">Back</button></div><p className="mt-2 text-xs leading-5 text-[var(--ink-muted)]">A teacher administrator reviews this request before the school can create teams or participate in the world.</p><label className="mt-5 block text-xs font-bold">School name<input autoFocus required maxLength={160} value={schoolName} onChange={(event) => setSchoolName(event.target.value)} className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-sm outline-none focus:border-[var(--accent)]" placeholder="Your school" /></label><label className="mt-4 block text-xs font-bold">Curriculum system<select required value={curriculumSystem} onChange={(event) => setCurriculumSystem(event.target.value as "" | CurriculumSystem)} className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-sm outline-none focus:border-[var(--accent)]"><option value="">Select curriculum</option>{CURRICULUM_SYSTEMS.map((system) => <option key={system} value={system}>{CURRICULUM_SYSTEM_LABELS[system]}</option>)}</select></label><label className="mt-4 block text-xs font-bold">Economics club name <span className="font-normal text-[var(--ink-faint)]">(optional)</span><input maxLength={160} value={clubName} onChange={(event) => setClubName(event.target.value)} className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-sm outline-none focus:border-[var(--accent)]" placeholder="Economics Club" /></label><Button className="mt-5 w-full" disabled={schoolName.trim().length < 2 || !curriculumSystem || busy} onClick={() => void finish("create_school")}>{busy && <LoaderCircle className="animate-spin" size={15} />}Submit for approval</Button></div>}
+      {step === "create_school" && (
+        <div className="mt-7">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-base font-bold">Submit a school for approval</h3>
+            <button type="button" onClick={() => setStep("choose")} className="text-xs font-bold text-[var(--accent)]">Back</button>
+          </div>
+          <p className="mt-2 text-xs leading-5 text-[var(--ink-muted)]">
+            A teacher administrator reviews the school and its city-level location before either becomes public.
+          </p>
+          <label className="mt-5 block text-xs font-bold">
+            School name
+            <input autoFocus required maxLength={160} value={schoolName} onChange={(event) => setSchoolName(event.target.value)} className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-sm outline-none focus:border-[var(--accent)]" placeholder="Your school" />
+          </label>
+          <label className="mt-4 block text-xs font-bold">
+            Curriculum system
+            <select required value={curriculumSystem} onChange={(event) => setCurriculumSystem(event.target.value as "" | CurriculumSystem)} className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-sm outline-none focus:border-[var(--accent)]">
+              <option value="">Select curriculum</option>
+              {CURRICULUM_SYSTEMS.map((system) => <option key={system} value={system}>{CURRICULUM_SYSTEM_LABELS[system]}</option>)}
+            </select>
+          </label>
+          <label className="mt-4 block text-xs font-bold">
+            Economics club name <span className="font-normal text-[var(--ink-faint)]">(optional)</span>
+            <input maxLength={160} value={clubName} onChange={(event) => setClubName(event.target.value)} className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-sm outline-none focus:border-[var(--accent)]" placeholder="Economics Club" />
+          </label>
+          <div className="mt-5">
+            <SchoolLocationFields value={schoolLocation} onChange={setSchoolLocation} idPrefix="onboarding-school-location" />
+          </div>
+          <Button
+            className="mt-5 w-full"
+            disabled={schoolName.trim().length < 2 || !curriculumSystem || !isCompleteSchoolLocation(schoolLocation) || busy}
+            onClick={() => void finish("create_school")}
+          >
+            {busy && <LoaderCircle className="animate-spin" size={15} />}
+            Submit for approval
+          </Button>
+        </div>
+      )}
 
       {step === "visitor" && <div className="mt-7 rounded-xl border border-[var(--line)] bg-[var(--canvas)] p-5"><GraduationCap className="text-[var(--accent)]" size={21} /><h3 className="mt-4 text-base font-bold">Learn as an individual first</h3><p className="mt-2 text-sm leading-6 text-[var(--ink-muted)]">You will have access to the individual learning systems. League team membership and the persistent World Simulation remain school-and-team based.</p><Button className="mt-5" disabled={busy} onClick={() => void finish("visitor")}>{busy && <LoaderCircle className="animate-spin" size={15} />}Continue as visitor</Button></div>}
 

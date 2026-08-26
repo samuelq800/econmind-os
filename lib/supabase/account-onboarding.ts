@@ -1,5 +1,6 @@
 import { getSupabaseBrowserClient } from "./client";
 import type { CurriculumSystem } from "@/lib/league/curriculum";
+import type { SchoolLocationSubmission } from "@/lib/league/geographic-areas";
 
 export type OnboardingPath = "school" | "create_school" | "visitor";
 export type OnboardingProfile = { onboarding_path: OnboardingPath | null; school_id: string | null };
@@ -27,13 +28,17 @@ export async function listApprovedSchoolChoices() {
   return (data ?? []) as ApprovedSchoolChoice[];
 }
 
-export async function completeAccountOnboarding(input: { path: OnboardingPath; schoolId?: string | null; schoolName?: string; clubName?: string; curriculumSystem?: CurriculumSystem }) {
+export async function completeAccountOnboarding(input: { path: OnboardingPath; schoolId?: string | null; schoolName?: string; clubName?: string; curriculumSystem?: CurriculumSystem; location?: SchoolLocationSubmission }) {
   const { data, error } = await client().rpc("complete_econmind_onboarding", {
     p_path: input.path,
     p_school_id: input.schoolId ?? null,
     p_school_name: input.schoolName ?? null,
     p_club_name: input.clubName ?? null,
     p_curriculum_system: input.curriculumSystem ?? null,
+    p_submitted_area_key: input.location?.areaKey ?? null,
+    p_submitted_area_label: input.location?.areaLabel ?? null,
+    p_submitted_administrative_area: input.location?.administrativeArea ?? null,
+    p_submitted_city: input.location?.city ?? null,
   });
   fail(error);
   return data as { path: OnboardingPath; school_id?: string; school_name?: string; application_id?: string; status?: string };

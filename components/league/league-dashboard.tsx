@@ -20,6 +20,8 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
+import { ApplicationLocationReview } from "@/components/league/application-location-review";
+import { SchoolLocationReview, VerifiedSchoolLocationControl } from "@/components/league/school-location-review";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -32,6 +34,7 @@ import type {
   Team,
   TeamMember,
 } from "@/lib/league/types";
+import type { CanonicalSchoolLocationInput } from "@/lib/league/geographic-areas";
 import type { LeagueChallenge } from "@/lib/league/async-challenge-types";
 import {
   createLeagueTeam,
@@ -44,12 +47,17 @@ import {
   listMyCrisisRuns,
   listSchoolCrisisRuns,
   listSchoolTeams,
+  matchLeagueApplicationLocation,
   moveLeagueTeamMember,
   renameLeagueTeam,
   reviewLeagueApplication,
+  requestLeagueApplicationLocationCorrection,
+  requestLeagueSchoolLocationCorrection,
   setAcademicRole,
   setLeaguePlatformRole,
   setLeagueTeamStatus,
+  verifyLeagueApplicationLocation,
+  verifyLeagueSchoolLocation,
 } from "@/lib/supabase/league";
 import { listLeagueChallenges, setLeagueChallengeStatus } from "@/lib/supabase/league-challenges";
 
@@ -166,6 +174,14 @@ export function LeagueDashboard({
   }, [load]);
   const schoolsById = useMemo(
     () => new Map(schools.map((school) => [school.id, school.name])),
+    [schools],
+  );
+  const schoolsAwaitingLocation = useMemo(
+    () => schools.filter((school) => (school.location_status ?? "missing") !== "verified"),
+    [schools],
+  );
+  const schoolsWithVerifiedLocation = useMemo(
+    () => schools.filter((school) => school.location_status === "verified"),
     [schools],
   );
   const filteredProfiles = useMemo(() => {
@@ -316,6 +332,71 @@ export function LeagueDashboard({
           ? caught.message
           : "Could not review application.",
       );
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function matchApplicationLocation(applicationId: string, evidenceUrl: string, note: string) {
+    setBusy(true);
+    setError("");
+    try {
+      const result = await matchLeagueApplicationLocation(applicationId, evidenceUrl, note);
+      setMessage(`${result.city} matched to ${result.location_key}.`);
+      await load();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not match this location.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function verifyApplicationLocation(applicationId: string, location: CanonicalSchoolLocationInput) {
+    setBusy(true);
+    setError("");
+    try {
+      const result = await verifyLeagueApplicationLocation(applicationId, location);
+      setMessage(`Location verified as ${result.location_key}.`);
+      await load();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not verify this location.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function requestApplicationLocationCorrection(applicationId: string, note: string) {
+    setBusy(true);
+    setError("");
+    try {
+      await requestLeagueApplicationLocationCorrection(applicationId, note);
+      setMessage("The location was returned to the applicant for correction.");
+      await load();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not request a location correction.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function verifySchoolLocation(schoolId: string, location: CanonicalSchoolLocationInput) {
+    setBusy(true);
+    setError("");
+    try {
+      const result = await verifyLeagueSchoolLocation(schoolId, location);
+      setMessage(`School location verified as ${result.location_key}.`);
+      await load();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not verify this school location.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function requestSchoolLocationCorrection(schoolId: string, note: string) {
+    setBusy(true);
+    setError("");
+    try {
+      await requestLeagueSchoolLocationCorrection(schoolId, note);
+      setMessage("The school location was removed from the public map and returned to the review queue.");
+      await load();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not withdraw this school location.");
     } finally {
       setBusy(false);
     }
@@ -618,6 +699,48 @@ export function LeagueDashboard({
                   value={allRuns.length ? "100%" : "—"}
                 />
               </section>
+              <Card className="mt-5 p-6">
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <div>
+                    <h3 className="font-bold">Pending school locations</h3>
+                    <p className="mt-2 max-w-2xl text-xs leading-5 text-[var(--ink-muted)]">
+                      Historic schools without a verified city stay off the map. Confirm GeoNames and independent evidence here; never use a campus address.
+                    </p>
+                  </div>
+                  <span className="text-xs font-bold text-[var(--ink-faint)]">{schoolsAwaitingLocation.length} pending</span>
+                </div>
+                <div className="mt-4">
+                  {schoolsAwaitingLocation.map((school) => (
+                    <SchoolLocationReview
+                      key={school.id}
+                      school={school}
+                      busy={busy}
+                      onVerify={(location) => verifySchoolLocation(school.id, location)}
+                    />
+                  ))}
+                  {schoolsAwaitingLocation.length === 0 && <p className="text-sm text-[var(--ink-muted)]">Every persisted school has a verified city-level location.</p>}
+                </div>
+                {schoolsWithVerifiedLocation.length > 0 && (
+                  <details className="mt-5 border-t border-[var(--line)] pt-4">
+                    <summary className="cursor-pointer text-xs font-bold text-[var(--ink-muted)]">
+                      Review {schoolsWithVerifiedLocation.length} verified map point{schoolsWithVerifiedLocation.length === 1 ? "" : "s"}
+                    </summary>
+                    <p className="mt-3 text-xs leading-5 text-[var(--ink-muted)]">
+                      If later evidence shows a city is wrong, withdraw it immediately. The school stays in the directory but remains off-map until re-verified.
+                    </p>
+                    <div className="mt-2">
+                      {schoolsWithVerifiedLocation.map((school) => (
+                        <VerifiedSchoolLocationControl
+                          key={school.id}
+                          school={school}
+                          busy={busy}
+                          onRequestCorrection={(note) => requestSchoolLocationCorrection(school.id, note)}
+                        />
+                      ))}
+                    </div>
+                  </details>
+                )}
+              </Card>
               <div className="mt-6 grid gap-5 xl:grid-cols-2">
                 <Card className="p-6">
                   <h3 className="font-bold">School applications</h3>
@@ -635,13 +758,20 @@ export function LeagueDashboard({
                           {application.expected_teams} team(s) ·{" "}
                           {application.status}
                         </p>
+                        <ApplicationLocationReview
+                          application={application}
+                          busy={busy}
+                          onMatch={(evidenceUrl, note) => matchApplicationLocation(application.id, evidenceUrl, note)}
+                          onVerify={(location) => verifyApplicationLocation(application.id, location)}
+                          onRequestCorrection={(note) => requestApplicationLocationCorrection(application.id, note)}
+                        />
                         {["submitted", "under_review"].includes(
                           application.status,
                         ) && (
                           <div className="mt-3 flex flex-wrap gap-2">
                             <Button
                               size="sm"
-                              disabled={busy}
+                              disabled={busy || application.location_status !== "verified"}
                               onClick={() =>
                                 void review(application.id, "approved")
                               }

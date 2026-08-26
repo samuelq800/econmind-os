@@ -42,6 +42,22 @@ jobs:
           pnpm lint
           pnpm test
 
+      - name: Verify required Supabase schema
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          test -n "$NEXT_PUBLIC_SUPABASE_URL"
+          test -n "$NEXT_PUBLIC_SUPABASE_ANON_KEY"
+          curl --fail --silent --show-error --retry 3 --retry-all-errors \
+            --request POST \
+            --header "apikey: $NEXT_PUBLIC_SUPABASE_ANON_KEY" \
+            --header "Authorization: Bearer $NEXT_PUBLIC_SUPABASE_ANON_KEY" \
+            --header "Content-Type: application/json" \
+            --data '{}' \
+            --output /dev/null \
+            "${NEXT_PUBLIC_SUPABASE_URL%/}/rest/v1/rpc/get_public_league_directory_v2"
+
       - name: Export static website
         env:
           GITHUB_PAGES: "true"

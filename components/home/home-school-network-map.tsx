@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowRight, MapPinOff } from "lucide-react";
 import { withBasePath } from "@/lib/base-path";
 import type { LeagueDirectorySchool } from "@/lib/league/school-directory";
-import { SCHOOL_LOCATION_SOURCE, type SchoolCityLocation } from "@/lib/league/school-locations";
+import { SCHOOL_LOCATION_SOURCE, schoolLocationAreaLabel, type SchoolCityLocation } from "@/lib/league/school-locations";
 import { buildSchoolNetworkModel } from "@/lib/league/school-network";
 import styles from "./home-school-network-map.module.css";
 
@@ -104,7 +104,7 @@ export function HomeSchoolNetworkMap({
 
           {selectedHub && (
             <section className={styles.selection} aria-live="polite">
-              <p>{selectedHub.location.countryCode} · {selectedHub.location.administrativeArea ?? "City-state"}</p>
+              <p>{schoolLocationAreaLabel(selectedHub.location)} · {selectedHub.location.administrativeArea ?? "City-state"}</p>
               <div>
                 <h3>{selectedHub.location.city}</h3>
                 <span>{selectedHub.schools.length} school{selectedHub.schools.length === 1 ? "" : "s"}</span>
@@ -112,7 +112,7 @@ export function HomeSchoolNetworkMap({
               <ul>
                 {selectedHub.schools.slice(0, 3).map((school) => <li key={school.school_id}>{school.school_name}</li>)}
               </ul>
-              {selectedHub.schools.length > 3 && <small>+ {selectedHub.schools.length - 3} more in the register below</small>}
+              {selectedHub.schools.length > 3 && <small>+ {selectedHub.schools.length - 3} more in the school directory</small>}
             </section>
           )}
 

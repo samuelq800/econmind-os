@@ -2,7 +2,7 @@ import type { LeagueDirectorySchool } from "@/lib/league/school-directory";
 import {
   SCHOOL_CITY_LOCATIONS,
   getSchoolLocationByKey,
-  type CatalogSchoolCityLocation,
+  type SchoolCityLocation,
 } from "@/lib/league/school-locations";
 
 export const SCHOOL_NETWORK_REGIONS = [
@@ -11,7 +11,7 @@ export const SCHOOL_NETWORK_REGIONS = [
   "South China",
   "West China",
   "Central China",
-  "International",
+  "Other locations",
 ] as const;
 
 export type SchoolNetworkRegion = (typeof SCHOOL_NETWORK_REGIONS)[number];
@@ -29,7 +29,7 @@ export const REGION_BY_LOCATION_KEY = {
   "geonames:1797929": "East China",
   "geonames:1796236": "East China",
   "geonames:1795565": "South China",
-  "geonames:1880252": "International",
+  "geonames:1880252": "Other locations",
   "geonames:1886760": "East China",
   "geonames:1790923": "East China",
   "geonames:1790437": "South China",
@@ -40,12 +40,12 @@ export const REGION_BY_LOCATION_KEY = {
 
 export type SchoolNetworkEntry = {
   school: LeagueDirectorySchool;
-  location: CatalogSchoolCityLocation | null;
+  location: SchoolCityLocation | null;
   region: SchoolNetworkRegion | null;
 };
 
 export type SchoolLocationHub = {
-  location: CatalogSchoolCityLocation;
+  location: SchoolCityLocation;
   region: SchoolNetworkRegion;
   schools: LeagueDirectorySchool[];
 };
@@ -78,6 +78,57 @@ function compareEntries(left: SchoolNetworkEntry, right: SchoolNetworkEntry) {
   return cityComparison || nameCollator.compare(left.school.school_name, right.school.school_name);
 }
 
+const MAINLAND_REGION_BY_ADMINISTRATIVE_AREA: Readonly<Record<string, SchoolNetworkRegion>> = {
+  anhui: "East China",
+  beijing: "North China",
+  chongqing: "West China",
+  fujian: "East China",
+  gansu: "West China",
+  guangdong: "South China",
+  guangxi: "South China",
+  guizhou: "West China",
+  hainan: "South China",
+  hebei: "North China",
+  heilongjiang: "North China",
+  henan: "Central China",
+  hubei: "Central China",
+  hunan: "Central China",
+  "inner mongolia": "North China",
+  jiangsu: "East China",
+  jiangxi: "Central China",
+  jilin: "North China",
+  liaoning: "North China",
+  ningxia: "West China",
+  qinghai: "West China",
+  shaanxi: "West China",
+  shandong: "East China",
+  shanghai: "East China",
+  shanxi: "North China",
+  sichuan: "West China",
+  tianjin: "North China",
+  tibet: "West China",
+  xinjiang: "West China",
+  yunnan: "West China",
+  zhejiang: "East China",
+};
+
+export function networkRegionForLocation(location: SchoolCityLocation): SchoolNetworkRegion {
+  const catalogRegion = REGION_BY_LOCATION_KEY[location.locationKey as keyof typeof REGION_BY_LOCATION_KEY];
+  if (catalogRegion) return catalogRegion;
+
+  // Country-or-area codes are used only to disambiguate a verified place. They
+  // do not create a sovereignty hierarchy. Any place outside the explicitly
+  // defined mainland operational regions uses the neutral public bucket below.
+  if (location.countryCode !== "CN" || !location.administrativeArea) return "Other locations";
+  return MAINLAND_REGION_BY_ADMINISTRATIVE_AREA[location.administrativeArea.toLocaleLowerCase("en-US")]
+    ?? "Other locations";
+}
+
+export function networkRegionForSchool(school: LeagueDirectorySchool): SchoolNetworkRegion | null {
+  const location = school.mapLocation ?? getSchoolLocationByKey(school.mapLocationKey);
+  return location ? networkRegionForLocation(location) : null;
+}
+
 export function buildSchoolNetworkModel(inputSchools: LeagueDirectorySchool[]) {
   const schools = dedupeSchools(inputSchools);
   const hubsByLocation = new Map<string, SchoolLocationHub>();
@@ -87,14 +138,14 @@ export function buildSchoolNetworkModel(inputSchools: LeagueDirectorySchool[]) {
   const unclassifiedEntries: SchoolNetworkEntry[] = [];
 
   for (const school of schools) {
-    const location = getSchoolLocationByKey(school.mapLocationKey);
+    const location = school.mapLocation ?? getSchoolLocationByKey(school.mapLocationKey);
 
     if (!location) {
       unclassifiedEntries.push({ school, location: null, region: null });
       continue;
     }
 
-    const region = REGION_BY_LOCATION_KEY[location.locationKey];
+    const region = networkRegionForLocation(location);
     const entry = { school, location, region } satisfies SchoolNetworkEntry;
     entriesByRegion.get(region)?.push(entry);
 

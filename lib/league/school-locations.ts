@@ -3,7 +3,8 @@ export type SchoolLocationKey = `geonames:${number}`;
 export type SchoolCityLocation = Readonly<{
   locationKey: SchoolLocationKey;
   city: string;
-  countryCode: "CN" | "SG";
+  countryCode: string;
+  areaLabel?: string | null;
   administrativeArea: string | null;
   latitude: number;
   longitude: number;
@@ -195,6 +196,13 @@ export function getSchoolLocationByKey(
 ): CatalogSchoolCityLocation | null {
   if (!locationKey) return null;
   return LOCATION_BY_KEY.get(locationKey as CatalogSchoolCityLocation["locationKey"]) ?? null;
+}
+
+export function schoolLocationAreaLabel(location: SchoolCityLocation) {
+  if (location.areaLabel?.trim()) return location.areaLabel.trim();
+  if (location.countryCode === "CN") return "China — mainland areas";
+  if (location.countryCode === "SG") return "Singapore";
+  return "Other location";
 }
 
 export type SchoolLocationResolution =

@@ -154,6 +154,42 @@ $$;
 revoke all on function public.complete_econmind_onboarding(text, uuid, text, text, text) from public, anon;
 grant execute on function public.complete_econmind_onboarding(text, uuid, text, text, text) to authenticated;
 
+-- Keep identity helpers in the same migration that first consumes them so a
+-- clean database replay does not depend on functions created out of band.
+create or replace function public.econmind_school_identity_key(p_name text)
+returns text
+language sql
+immutable
+set search_path = public
+as $$
+  with cleaned as (
+    select regexp_replace(lower(trim(coalesce(p_name, ''))), '[^[:alnum:]一-鿿]+', '', 'g') as value
+  )
+  select case value
+    when 'baid' then 'beijingacademyinternationaldepartment'
+    when '南外仙林分校' then 'nanjingforeignlanguageschoolxianlincampus'
+    when '苏州一中' then 'suzhouno1highschool'
+    when 'suzhouscientificforeignlanguagehighschool' then 'suzhousciencetechnologytownforeignlanguageschool'
+    else value
+  end
+  from cleaned;
+$$;
+
+create or replace function public.econmind_canonical_school_name(p_identity_key text)
+returns text
+language sql
+immutable
+set search_path = public
+as $$
+  select case p_identity_key
+    when 'beijingacademyinternationaldepartment' then 'Beijing Academy International Department'
+    when 'nanjingforeignlanguageschoolxianlincampus' then 'Nanjing Foreign Language School, Xianlin Campus'
+    when 'suzhouno1highschool' then 'Suzhou No.1 High School'
+    when 'suzhousciencetechnologytownforeignlanguageschool' then 'SUZHOU SCIENCE&TECHNOLOGY TOWN FOREIGN LANGUAGE SCHOOL'
+    else null
+  end;
+$$;
+
 -- When a new application is approved, its stated curriculum is copied to the
 -- new school. If a pre-existing school identity is found, its confirmed value
 -- remains authoritative.

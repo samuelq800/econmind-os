@@ -19,6 +19,12 @@ describe("first-session school path", () => {
     expect(migration).toContain("grant execute on function public.complete_econmind_onboarding");
   });
 
+  it("requires a structured city-level location when a new school is submitted", () => {
+    expect(component).toContain("SchoolLocationFields");
+    expect(component).toContain("isCompleteSchoolLocation(schoolLocation)");
+    expect(component).toContain('location: path === "create_school" ? schoolLocation : undefined');
+  });
+
   it("remembers a completed choice per account so refresh does not reopen setup", () => {
     expect(component).toContain("econmind.account-onboarding.completed.");
     expect(component).toContain("localStorage");

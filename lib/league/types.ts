@@ -1,5 +1,6 @@
 import type { CrisisMetrics, CrisisPolicies, CrisisResultType, CrisisScores } from "./crisis-engine";
 import type { CurriculumSystem } from "./curriculum";
+import type { LocationReviewStatus } from "./geographic-areas";
 
 export type LeaguePlatformRole = "user" | "team_member" | "school_leader" | "platform_admin";
 export type SchoolStatus = "pending" | "approved" | "rejected";
@@ -27,6 +28,12 @@ export type School = {
   logo_url: string | null;
   curriculum_system: CurriculumSystem | null;
   status: SchoolStatus;
+  location_status: Exclude<LocationReviewStatus, "pending_review">;
+  location_key: string | null;
+  location_source: "verified_roster_backfill" | "application_review" | "admin_review" | null;
+  location_public_note: string | null;
+  location_verified_by: string | null;
+  location_verified_at: string | null;
   liaison_user_id: string | null;
   created_at: string;
   updated_at: string;
@@ -51,6 +58,9 @@ export type LeagueApplication = {
   id: string; applicant_user_id: string; school_name: string; club_name: string | null; contact_person: string; expected_teams: number; expected_members: number;
   curriculum_system: CurriculumSystem;
   preferred_language: "English" | "Chinese" | "Bilingual"; preferred_format: "online" | "offline" | "either"; organising_committee_interest: boolean; notes: string | null;
+  submitted_area_key: string | null; submitted_area_label: string | null; submitted_administrative_area: string | null; submitted_city: string | null;
+  location_status: LocationReviewStatus; location_key: string | null; location_source: "catalog_match" | "admin_review" | null; location_public_note: string | null;
+  location_reviewed_by: string | null; location_reviewed_at: string | null;
   status: LeagueApplicationStatus; reviewed_by: string | null; reviewed_at: string | null; created_at: string; updated_at: string;
 };
 

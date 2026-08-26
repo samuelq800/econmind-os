@@ -33,6 +33,6 @@ describe("school curriculum systems", () => {
     expect(joinPage).toContain("curriculum_system: \"\" as \"\" | CurriculumSystem");
     expect(joinPage).toContain("<select required value={form.curriculum_system}");
     expect(onboarding).toContain("const [curriculumSystem, setCurriculumSystem]");
-    expect(onboarding).toContain("!curriculumSystem || busy");
+    expect(onboarding).toContain("!curriculumSystem || !isCompleteSchoolLocation(schoolLocation) || busy");
   });
 });

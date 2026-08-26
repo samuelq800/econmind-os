@@ -2,19 +2,28 @@
 
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
-import { CheckCircle2, LoaderCircle } from "lucide-react";
+import { CheckCircle2, LoaderCircle, MapPin, PencilLine } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
+import { EMPTY_SCHOOL_LOCATION, SchoolLocationFields } from "@/components/league/school-location-fields";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CURRICULUM_SYSTEM_LABELS, CURRICULUM_SYSTEMS, type CurriculumSystem } from "@/lib/league/curriculum";
+import { isCompleteSchoolLocation, type SchoolLocationSubmission } from "@/lib/league/geographic-areas";
 import type { LeagueApplication } from "@/lib/league/types";
-import { listMyLeagueApplications, submitLeagueApplication } from "@/lib/supabase/league";
+import { listMyLeagueApplications, resubmitLeagueApplicationLocation, submitLeagueApplication } from "@/lib/supabase/league";
 
 const statusCopy: Record<LeagueApplication["status"], string> = {
   submitted: "Submitted",
   under_review: "Under Review",
   approved: "Approved",
   rejected: "Rejected",
+};
+
+const locationStatusCopy: Record<LeagueApplication["location_status"], string> = {
+  missing: "Location missing",
+  pending_review: "Location pending review",
+  verified: "Location verified",
+  needs_correction: "Location needs correction",
 };
 
 const initialForm = {
@@ -28,6 +37,7 @@ const initialForm = {
   preferred_format: "either" as LeagueApplication["preferred_format"],
   organising_committee_interest: false,
   notes: "",
+  location: EMPTY_SCHOOL_LOCATION,
 };
 
 export function JoinLeague() {
@@ -38,6 +48,8 @@ export function JoinLeague() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [correctionApplicationId, setCorrectionApplicationId] = useState<string | null>(null);
+  const [correctionLocation, setCorrectionLocation] = useState<SchoolLocationSubmission>(EMPTY_SCHOOL_LOCATION);
 
   useEffect(() => {
     if (!user) return;
@@ -48,7 +60,7 @@ export function JoinLeague() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!userId || !form.curriculum_system) return;
+    if (!userId || !form.curriculum_system || !isCompleteSchoolLocation(form.location)) return;
     setBusy(true);
     setError("");
     setMessage("");
@@ -64,12 +76,49 @@ export function JoinLeague() {
         preferred_format: form.preferred_format,
         organising_committee_interest: form.organising_committee_interest,
         notes: form.notes.trim() || null,
-      }, userId);
+        location: form.location,
+      });
       setApplications((current) => [application, ...current]);
       setMessage("Your League application has been submitted.");
       setForm(initialForm);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not submit your application.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function beginLocationCorrection(application: LeagueApplication) {
+    setCorrectionApplicationId(application.id);
+    setCorrectionLocation({
+      areaKey: application.submitted_area_key ?? "",
+      areaLabel: application.submitted_area_label ?? "",
+      administrativeArea: application.submitted_administrative_area ?? "",
+      city: application.submitted_city ?? "",
+    });
+    setError("");
+  }
+
+  async function saveLocationCorrection(applicationId: string) {
+    if (!isCompleteSchoolLocation(correctionLocation)) return;
+    setBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      await resubmitLeagueApplicationLocation(applicationId, correctionLocation);
+      setApplications((current) => current.map((application) => application.id === applicationId ? {
+        ...application,
+        submitted_area_key: correctionLocation.areaKey,
+        submitted_area_label: correctionLocation.areaLabel,
+        submitted_administrative_area: correctionLocation.administrativeArea || null,
+        submitted_city: correctionLocation.city,
+        location_status: "pending_review",
+        location_public_note: null,
+      } : application));
+      setCorrectionApplicationId(null);
+      setMessage("Your corrected location has been returned to the review queue.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not update the location.");
     } finally {
       setBusy(false);
     }
@@ -87,6 +136,7 @@ export function JoinLeague() {
         <form className="mt-6 grid gap-4" onSubmit={(event) => void submit(event)}>
           <label className="text-xs font-bold">School Name<input required maxLength={160} value={form.school_name} onChange={(event) => setForm({ ...form, school_name: event.target.value })} className="mt-2 h-10 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 text-sm" /></label>
           <label className="text-xs font-bold">Curriculum system<select required value={form.curriculum_system} onChange={(event) => setForm({ ...form, curriculum_system: event.target.value as "" | CurriculumSystem })} className="mt-2 h-10 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 text-sm"><option value="">Select curriculum</option>{CURRICULUM_SYSTEMS.map((system) => <option key={system} value={system}>{CURRICULUM_SYSTEM_LABELS[system]}</option>)}</select></label>
+          <SchoolLocationFields value={form.location} onChange={(location) => setForm({ ...form, location })} idPrefix="league-application-location" />
           <label className="text-xs font-bold">Economics Club Name<input maxLength={160} value={form.club_name} onChange={(event) => setForm({ ...form, club_name: event.target.value })} className="mt-2 h-10 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 text-sm" /></label>
           <label className="text-xs font-bold">Contact Person<input required maxLength={120} value={form.contact_person} onChange={(event) => setForm({ ...form, contact_person: event.target.value })} className="mt-2 h-10 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 text-sm" /></label>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -101,13 +151,46 @@ export function JoinLeague() {
           <label className="text-xs font-bold">Additional Notes<textarea maxLength={2000} rows={4} value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} className="mt-2 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] p-3 text-sm" /></label>
           {error && <p role="alert" className="rounded-lg bg-[var(--red-soft)] p-3 text-xs text-[var(--red)]">{error}</p>}
           {message && <p className="flex items-center gap-2 rounded-lg bg-[var(--accent-soft)] p-3 text-xs font-bold text-[var(--accent)]"><CheckCircle2 size={14} />{message}</p>}
-          <Button disabled={busy || !form.curriculum_system} type="submit">{busy && <LoaderCircle className="animate-spin" size={14} />}{busy ? "Submitting…" : "Submit application"}</Button>
+          <Button disabled={busy || !form.curriculum_system || !isCompleteSchoolLocation(form.location)} type="submit">{busy && <LoaderCircle className="animate-spin" size={14} />}{busy ? "Submitting…" : "Submit application"}</Button>
         </form>
       </Card>
       <aside>
         <h2 className="text-lg font-bold">Your applications</h2>
         <div className="mt-4 space-y-3">
-          {applications.map((application) => <Card key={application.id} className="p-5"><p className="text-[10px] font-bold uppercase tracking-[.12em] text-[var(--accent)]">{statusCopy[application.status]}</p><h3 className="mt-2 text-sm font-bold">{application.school_name}</h3><p className="mt-2 text-xs leading-5 text-[var(--ink-muted)]">{CURRICULUM_SYSTEM_LABELS[application.curriculum_system]} · Submitted {new Date(application.created_at).toLocaleDateString()}</p></Card>)}
+          {applications.map((application) => (
+            <Card key={application.id} className="p-5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[10px] font-bold uppercase tracking-[.12em] text-[var(--accent)]">{statusCopy[application.status]}</p>
+                <span className="text-[10px] font-bold text-[var(--ink-faint)]">{locationStatusCopy[application.location_status]}</span>
+              </div>
+              <h3 className="mt-2 text-sm font-bold">{application.school_name}</h3>
+              <p className="mt-2 text-xs leading-5 text-[var(--ink-muted)]">{CURRICULUM_SYSTEM_LABELS[application.curriculum_system]} · Submitted {new Date(application.created_at).toLocaleDateString()}</p>
+              {application.submitted_city && (
+                <p className="mt-2 flex items-start gap-1.5 text-xs leading-5 text-[var(--ink-muted)]">
+                  <MapPin className="mt-0.5 shrink-0" size={12} aria-hidden="true" />
+                  <span>{[application.submitted_city, application.submitted_administrative_area, application.submitted_area_label].filter(Boolean).join(" · ")}</span>
+                </p>
+              )}
+              {application.location_public_note && <p className="mt-3 rounded-lg bg-[var(--amber-soft)] p-3 text-xs leading-5 text-[var(--ink-muted)]">{application.location_public_note}</p>}
+              {application.location_status === "needs_correction"
+                && (application.status === "submitted" || application.status === "under_review")
+                && correctionApplicationId !== application.id && (
+                <Button className="mt-3" size="sm" variant="secondary" onClick={() => beginLocationCorrection(application)}>
+                  <PencilLine size={13} /> Correct location
+                </Button>
+              )}
+              {correctionApplicationId === application.id
+                && (application.status === "submitted" || application.status === "under_review") && (
+                <div className="mt-4">
+                  <SchoolLocationFields value={correctionLocation} onChange={setCorrectionLocation} idPrefix={`correction-${application.id}`} />
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button size="sm" disabled={busy || !isCompleteSchoolLocation(correctionLocation)} onClick={() => void saveLocationCorrection(application.id)}>Resubmit location</Button>
+                    <Button size="sm" variant="secondary" disabled={busy} onClick={() => setCorrectionApplicationId(null)}>Cancel</Button>
+                  </div>
+                </div>
+              )}
+            </Card>
+          ))}
           {applications.length === 0 && <Card className="p-6 text-sm leading-6 text-[var(--ink-muted)]">Your submission status will appear here: Submitted, Under Review, Approved or Rejected.</Card>}
         </div>
       </aside>

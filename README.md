@@ -37,6 +37,11 @@ The custom domain serves the Pages artifact from `/`, so the deployment sets an
 empty `NEXT_PUBLIC_BASE_PATH`. The configuration can still use `/econmind-os`
 for a project-site build without a custom domain.
 
+Database migrations must be applied before pushing a frontend commit that
+depends on them. The Pages workflow probes the required public directory RPC
+and fails closed before deployment when the linked Supabase schema is behind;
+the previously deployed site remains available.
+
 ## Testing
 
 Run the workspace checks with:
