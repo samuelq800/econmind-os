@@ -130,23 +130,29 @@ export function EditorialHome() {
 
 function HeroVisual() {
   return (
-    <aside className="home-hero-summary" aria-label="Economic reasoning mechanism">
-      <p className="home-hero-summary-kicker">ONE CLEAR MECHANISM</p>
-      <div className="home-hero-summary-steps">
-        <section>
-          <span>01</span>
-          <div><b>Assumption</b><p>State the market, agents and constraints.</p></div>
-        </section>
-        <section>
-          <span>02</span>
-          <div><b>Mechanism</b><p>Trace how incentives change demand or supply.</p></div>
-        </section>
-        <section>
-          <span>03</span>
-          <div><b>Interpretation</b><p>Compare the outcome with the real-world question.</p></div>
-        </section>
+    <aside className="home-hero-lens" aria-label="Economic reasoning preview">
+      <header className="home-hero-lens-header">
+        <p>ECONOMIC LENS</p>
+        <span><i /> Interactive preview</span>
+      </header>
+
+      <section className="home-hero-lens-question">
+        <span>SCENARIO 01</span>
+        <h2>What happens when energy costs rise?</h2>
+        <p>Follow one shock through firms, households and policy choices—before deciding what it means.</p>
+      </section>
+
+      <ol className="home-hero-lens-path" aria-label="Economic transmission pathway">
+        <li><span>01</span><div><b>Cost shock</b><p>Energy input costs rise.</p></div><em>Start</em></li>
+        <li><span>02</span><div><b>Market response</b><p>Firms face new price and output choices.</p></div><em>Trace</em></li>
+        <li><span>03</span><div><b>Household effect</b><p>Real purchasing power changes.</p></div><em>Compare</em></li>
+      </ol>
+
+      <div className="home-hero-lens-actions">
+        <Link href="/daily-brief"><BookOpenCheck size={16} /><span>Read the world</span><ArrowRight size={14} /></Link>
+        <Link href="/models"><BarChart3 size={16} /><span>Open a model</span><ArrowRight size={14} /></Link>
+        <Link href="/simulation"><Globe2 size={16} /><span>Run a scenario</span><ArrowRight size={14} /></Link>
       </div>
-      <div className="home-hero-summary-foot"><p>Y = C + I + G + (X − M)</p><span>Assumptions → mechanism → interpretation</span></div>
     </aside>
   );
 }
