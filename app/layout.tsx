@@ -8,21 +8,40 @@ import { LegalConsentGate } from "@/components/legal/legal-consent-gate";
 import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
 import { ThemeProvider } from "@/components/layout/theme-provider";
+import { withBasePath } from "@/lib/base-path";
 import "./globals.css";
 
 const siteUrl = new URL(
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://econmind.group",
 );
-const socialImageUrl = new URL("og.png", siteUrl).toString();
+const badgePaths = {
+  icon48: withBasePath("/brand/econmind-badge-48.png"),
+  icon192: withBasePath("/brand/econmind-badge-192.png"),
+  icon512: withBasePath("/brand/econmind-badge-512.png"),
+  apple: withBasePath("/brand/econmind-badge-180.png"),
+  social: withBasePath("/brand/econmind-badge-social.png"),
+};
+const socialImageUrl = new URL(badgePaths.social, siteUrl).toString();
 
 export const metadata: Metadata = {
   title: { default: "EconMind OS", template: "%s · EconMind OS" },
   description: "An interactive economics laboratory for models, policy simulation, evidence and cross-school economic experimentation.",
+  applicationName: "EconMind OS",
   metadataBase: siteUrl,
+  manifest: withBasePath("/manifest.webmanifest"),
+  icons: {
+    icon: [
+      { url: badgePaths.icon48, sizes: "48x48", type: "image/png" },
+      { url: badgePaths.icon192, sizes: "192x192", type: "image/png" },
+      { url: badgePaths.icon512, sizes: "512x512", type: "image/png" },
+    ],
+    shortcut: badgePaths.icon48,
+    apple: [{ url: badgePaths.apple, sizes: "180x180", type: "image/png" }],
+  },
   openGraph: {
     title: "EconMind OS",
     description: "From the real world to economic reasoning.",
-    images: [{ url: socialImageUrl, width: 1920, height: 1080, alt: "EconMind OS economic reasoning diagram" }],
+    images: [{ url: socialImageUrl, width: 1200, height: 630, alt: "EconMind official badge" }],
   },
   twitter: { card: "summary_large_image", title: "EconMind OS", description: "From the real world to economic reasoning.", images: [socialImageUrl] },
 };

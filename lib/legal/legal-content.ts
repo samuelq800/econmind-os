@@ -128,15 +128,24 @@ export const TERMS_SECTIONS: readonly LegalSection[] = [
     ],
   },
   {
+    id: "brand",
+    heading: "5. EconMind name and badge",
+    paragraphs: [
+      "Unless EconMind gives written permission, the EconMind name, official badge, and associated original brand artwork are proprietary intellectual property of EconMind. The badge artwork is protected by copyright.",
+      "You may not copy, reproduce, modify, crop, remove attribution from, or otherwise misuse the EconMind badge. You may not use it in a way that suggests an affiliation, endorsement, approval, partnership, or official status that EconMind has not expressly granted. Any authorised use must preserve the badge's appearance and any required attribution.",
+      `To report suspected misuse of the EconMind name or badge, use the signed-in Contact form or contact ${OFFICIAL_CONTACT_EMAIL}.`,
+    ],
+  },
+  {
     id: "availability",
-    heading: "5. Availability and changes",
+    heading: "6. Availability and changes",
     paragraphs: [
       "We aim to keep EconMind OS available and accurate, but the service may change, be unavailable, or contain errors. We may update, pause, or retire features where necessary for safety, maintenance, educational quality, or capacity. We will avoid unnecessary disruption to existing learning records where practical.",
     ],
   },
   {
     id: "enforcement",
-    heading: "6. Enforcement and reporting",
+    heading: "7. Enforcement and reporting",
     paragraphs: [
       "Platform administrators may review reports and take proportionate steps, including clarifying a rule, limiting a feature, hiding content, invalidating an attempt, changing an administrative status, or suspending access when necessary to protect the service or participants. Material decisions are recorded in the internal moderation history.",
       `You can report a concern through the signed-in Contact form. If you cannot access your account, contact ${OFFICIAL_CONTACT_EMAIL}. Neither route is an emergency service and neither should be used for urgent threats or situations requiring local emergency support.`,
@@ -144,7 +153,7 @@ export const TERMS_SECTIONS: readonly LegalSection[] = [
   },
   {
     id: "changes",
-    heading: "7. Changes to these terms",
+    heading: "8. Changes to these terms",
     paragraphs: [
       "We may update these Terms when the service, legal context, or safety requirements change. Routine updates do not interrupt existing users. If a material update requires fresh acknowledgement, the platform will present the updated version before it is relied upon for the relevant use.",
       `Current version: Terms of Use v${LEGAL_DOCUMENTS.terms.version}, effective ${LEGAL_DOCUMENTS.terms.effectiveDate}.`,
