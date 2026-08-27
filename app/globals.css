@@ -2806,8 +2806,74 @@ input[type=range]::-webkit-slider-thumb {
    }
 }
 
-/* The official badge replaces the old hero mechanism card. Its motion is
-   deliberately restrained, leaving the badge itself as the reading focus. */
+/* The small navigation seal and the hero badge share the same navy-and-gold
+   metalwork so the official artwork reads as an emblem, not a loose image. */
+.brand-badge-mini {
+   position: relative;
+   display: grid;
+   width: 2.25rem;
+   height: 2.25rem;
+   flex: 0 0 auto;
+   place-items: center;
+   overflow: hidden;
+   border: 1px solid #6f4814;
+   border-radius: 50%;
+   background: conic-gradient(from 215deg, #8d5c18, #f5d77e 15%, #fff0ad 27%, #bd8128 45%, #f0c760 63%, #815113 79%, #e4b84e);
+   box-shadow: 0 0 0 1px rgba(6, 35, 65, .9), 0 0 0 2px rgba(226, 184, 84, .58), 0 5px 13px rgba(5, 29, 51, .2);
+   padding: 2px;
+   isolation: isolate
+}
+
+.brand-badge-mini::before,
+.brand-badge-mini::after {
+   position: absolute;
+   z-index: 2;
+   border-radius: inherit;
+   content: "";
+   pointer-events: none
+}
+
+.brand-badge-mini::before {
+   inset: -30% 42%;
+   background: linear-gradient(90deg, transparent, rgba(255, 249, 218, .72), transparent);
+   opacity: 0;
+   transform: translateX(-310%) rotate(16deg)
+}
+
+.brand-badge-mini::after {
+   inset: 2px;
+   border: 1px solid rgba(255, 235, 163, .78);
+   box-shadow: inset 0 0 0 1px rgba(3, 31, 58, .5)
+}
+
+.brand-badge-mini-image {
+   position: relative;
+   z-index: 1;
+   width: 100%;
+   height: 100%;
+   border-radius: 50%;
+   object-fit: cover;
+   pointer-events: none;
+   user-select: none;
+   -webkit-user-drag: none
+}
+
+.brand-home-link {
+   -webkit-user-drag: none
+}
+
+.brand-home-link:hover .brand-badge-mini {
+   box-shadow: 0 0 0 1px rgba(6, 35, 65, .92), 0 0 0 2px rgba(240, 200, 101, .82), 0 7px 17px rgba(5, 29, 51, .25)
+}
+
+.brand-home-link:focus-visible {
+   border-radius: 6px;
+   outline: 2px solid var(--accent);
+   outline-offset: 5px
+}
+
+/* The hero seal moves like a suspended enamel medallion: a slow lift, orbiting
+   reference points and an occasional reflected highlight across its face. */
 .home-hero-summary {
    position: relative;
    display: flex;
@@ -2853,32 +2919,105 @@ input[type=range]::-webkit-slider-thumb {
    z-index: 0;
    width: 78%;
    height: 28%;
-   border: 1px solid color-mix(in srgb, var(--blue) 44%, transparent);
+   border: 1px solid color-mix(in srgb, var(--blue) 38%, transparent);
    border-radius: 50%;
-   opacity: .66;
+   opacity: .72;
    transform: rotate(-22deg)
+}
+
+.home-hero-badge-orbit::before,
+.home-hero-badge-orbit::after {
+   position: absolute;
+   top: 50%;
+   width: 7px;
+   height: 7px;
+   border: 1px solid rgba(255, 236, 165, .9);
+   border-radius: 50%;
+   background: #d8a93e;
+   box-shadow: 0 0 0 4px rgba(215, 169, 62, .12), 0 0 14px rgba(215, 169, 62, .36);
+   content: "";
+   transform: translateY(-50%)
+}
+
+.home-hero-badge-orbit::before {
+   left: -4px
+}
+
+.home-hero-badge-orbit::after {
+   right: -4px
 }
 
 .home-hero-badge-orbit-two {
    width: 68%;
    border-color: color-mix(in srgb, var(--accent) 42%, transparent);
-   opacity: .45;
+   opacity: .52;
    transform: rotate(28deg)
 }
 
 .home-hero-badge-wrap {
    position: relative;
    z-index: 1;
+   display: grid;
    width: min(78%, 410px);
    aspect-ratio: 1;
+   place-items: center;
+   overflow: hidden;
+   border: 1px solid #704710;
+   border-radius: 50%;
+   background: conic-gradient(from 218deg, #7f4f11, #dcae42 10%, #fff0a8 21%, #be8329 34%, #f8da80 49%, #9a6218 63%, #f1ca63 78%, #71440d 91%, #d7a53a);
+   box-shadow: 0 0 0 1px rgba(255, 241, 181, .72), 0 0 0 4px rgba(5, 37, 68, .88), 0 0 0 5px rgba(218, 174, 72, .72), 0 30px 66px color-mix(in srgb, var(--ink) 32%, transparent), 0 8px 20px rgba(5, 35, 63, .18);
+   padding: clamp(5px, .72vw, 8px);
+   isolation: isolate;
+   user-select: none
+}
+
+.home-hero-badge-wrap::before,
+.home-hero-badge-wrap::after {
+   position: absolute;
+   z-index: 3;
+   border-radius: 50%;
+   content: "";
+   pointer-events: none
+}
+
+.home-hero-badge-wrap::before {
+   inset: 1px;
+   border: 1px solid rgba(255, 245, 196, .8);
+   box-shadow: inset 0 0 0 1px rgba(92, 53, 6, .34)
+}
+
+.home-hero-badge-wrap::after {
+   inset: clamp(5px, .72vw, 8px);
+   border: 1px solid rgba(4, 29, 54, .72);
+   box-shadow: 0 0 0 1px rgba(255, 224, 132, .42), inset 0 0 16px rgba(3, 25, 47, .22)
+}
+
+.home-hero-badge-image-shell {
+   position: relative;
+   z-index: 1;
+   width: 100%;
+   height: 100%;
    overflow: hidden;
    border-radius: 50%;
-   background: white;
-   box-shadow: 0 28px 52px color-mix(in srgb, var(--ink) 28%, transparent), 0 0 0 1px color-mix(in srgb, var(--blue) 24%, transparent)
+   background: white
+}
+
+.home-hero-badge-image-shell::after {
+   position: absolute;
+   inset: -30%;
+   z-index: 2;
+   background: linear-gradient(105deg, transparent 38%, rgba(255, 244, 192, .06) 44%, rgba(255, 255, 244, .42) 50%, rgba(255, 232, 154, .08) 56%, transparent 62%);
+   content: "";
+   mix-blend-mode: screen;
+   pointer-events: none;
+   transform: translateX(-115%) rotate(8deg)
 }
 
 .home-hero-badge {
-   object-fit: cover
+   object-fit: cover;
+   pointer-events: none;
+   user-select: none;
+   -webkit-user-drag: none
 }
 
 .home-hero-badge-caption {
@@ -2903,26 +3042,72 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 @media (prefers-reduced-motion: no-preference) {
+   .brand-badge-mini {
+      transition: box-shadow .35s ease, transform .35s cubic-bezier(.2, .75, .25, 1)
+   }
+
+   .brand-badge-mini::before {
+      transition: opacity .25s ease, transform .8s cubic-bezier(.2, .7, .2, 1)
+   }
+
+   .brand-home-link:hover .brand-badge-mini {
+      transform: translateY(-1px) scale(1.025)
+   }
+
+   .brand-home-link:hover .brand-badge-mini::before {
+      opacity: 1;
+      transform: translateX(310%) rotate(16deg)
+   }
+
    .home-hero-summary {
-      animation: home-summary-glow 12s ease-in-out infinite alternate
+      animation: home-summary-glow 14s ease-in-out infinite alternate
    }
 
    .home-hero-badge-wrap {
-      animation: home-badge-float 6s ease-in-out infinite
+      animation: home-badge-float 8s cubic-bezier(.45, 0, .25, 1) infinite
+   }
+
+   .home-hero-badge-image-shell {
+      animation: home-badge-settle .9s cubic-bezier(.16, 1, .3, 1) both
+   }
+
+   .home-hero-badge-image-shell::after {
+      animation: home-badge-sheen 9s cubic-bezier(.3, .1, .25, 1) 1.4s infinite
    }
 
    .home-hero-badge-orbit-one {
-      animation: home-badge-orbit 18s linear infinite
+      animation: home-badge-orbit 20s linear infinite
    }
 
    .home-hero-badge-orbit-two {
-      animation: home-badge-orbit 24s linear infinite reverse
+      animation: home-badge-orbit 27s linear infinite reverse
+   }
+
+   .home-hero-summary::after {
+      animation: home-badge-aura 6s ease-in-out infinite
    }
 }
 
 @keyframes home-badge-float {
-   0%, 100% { transform: translateY(0) scale(1) }
-   50% { transform: translateY(-8px) scale(1.012) }
+   0%, 100% { transform: translateY(0) rotate(-.35deg) scale(1) }
+   50% { transform: translateY(-10px) rotate(.35deg) scale(1.009) }
+}
+
+@keyframes home-badge-settle {
+   from { opacity: 0; transform: scale(.93) rotate(-2deg) }
+   to { opacity: 1; transform: scale(1) rotate(0) }
+}
+
+@keyframes home-badge-sheen {
+   0%, 68% { opacity: 0; transform: translateX(-115%) rotate(8deg) }
+   72% { opacity: .85 }
+   84% { opacity: .85; transform: translateX(115%) rotate(8deg) }
+   88%, 100% { opacity: 0; transform: translateX(115%) rotate(8deg) }
+}
+
+@keyframes home-badge-aura {
+   0%, 100% { opacity: .65; transform: scale(.96) }
+   50% { opacity: 1; transform: scale(1.04) }
 }
 
 @keyframes home-summary-glow {

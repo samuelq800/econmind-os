@@ -23,6 +23,18 @@ describe("official EconMind badge", () => {
     expect(footer).toContain("econmind-badge-96.png");
   });
 
+  it("prevents the interactive brand placements from initiating native image drags", () => {
+    expect(home).toMatch(
+      /className="home-hero-badge"\s+draggable=\{false\}/,
+    );
+    expect(navbar).toContain(
+      '<Link href="/" className="brand-home-link flex items-center gap-3" onClick={() => setOpen(false)} draggable={false}>',
+    );
+    expect(navbar).toMatch(
+      /draggable=\{false\}\s+className="brand-badge-mini-image"/,
+    );
+  });
+
   it("makes the badge copyright and anti-misuse rule visible in the Terms", () => {
     expect(terms).toContain('id: "brand"');
     expect(terms).toContain("badge artwork is protected by copyright");

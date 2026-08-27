@@ -32,9 +32,17 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--canvas)_88%,transparent)] backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between px-5 lg:px-8">
-        <Link href="/" className="flex items-center gap-3" onClick={() => setOpen(false)}>
-          <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-full bg-white shadow-sm ring-1 ring-[color-mix(in_srgb,var(--accent)_24%,transparent)]">
-            <Image src={withBasePath("/brand/econmind-badge-96.png")} alt="EconMind badge" width={36} height={36} priority />
+        <Link href="/" className="brand-home-link flex items-center gap-3" onClick={() => setOpen(false)} draggable={false}>
+          <span className="brand-badge-mini">
+            <Image
+              src={withBasePath("/brand/econmind-badge-96.png")}
+              alt=""
+              width={36}
+              height={36}
+              priority
+              draggable={false}
+              className="brand-badge-mini-image"
+            />
           </span>
           <span className="text-sm font-extrabold">EconMind OS</span>
           <span className="hidden rounded border border-[var(--line)] px-1.5 py-.5 text-[9px] font-bold uppercase tracking-widest text-[var(--ink-faint)] sm:inline">Beta</span>
