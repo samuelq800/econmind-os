@@ -104,6 +104,9 @@ export function Navbar() {
                 {user && <Link href="/library" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold hover:bg-[var(--surface-subtle)]">
                   <Cloud size={14} /> My cloud library
                 </Link>}
+                {user && <Link href="/profile" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold hover:bg-[var(--surface-subtle)]">
+                  <UserRound size={14} /> Profile & privacy
+                </Link>}
                 {role === "professor" && <Link href="/professor" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]">
                   <GraduationCap size={14} /> Professor Studio
                 </Link>}

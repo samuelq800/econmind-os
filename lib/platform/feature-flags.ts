@@ -105,13 +105,11 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
     ],
   },
   {
-    id: "community-legal", label: "Community & Legal", href: "/discussions", system: "shared",
+    id: "community-legal", label: "Community & Legal", href: "/community", system: "shared",
     description: "Existing community spaces and governance information.",
     children: [
-      { href: "/discussions", label: "Community", system: "shared", description: "Current discussion space." },
-      { href: "/questions", label: "Questions", system: "shared", description: "Current inquiry archive." },
-      { href: "/events", label: "Events", system: "shared", description: "Current community events." },
-      { href: "/about", label: "About", system: "shared", description: "Current community and organisation information." },
+      { href: "/community", label: "Community", system: "shared", description: "Network participation, updates and shared spaces." },
+      { href: "/about", label: "About", system: "shared" },
       { href: "/community-guidelines", label: "Community Guidelines", system: "shared", description: "Participation and conduct expectations." },
       { href: "/integrity", label: "Integrity", system: "shared", description: "Academic integrity and platform standards." },
       { href: "/legal", label: "Legal", system: "shared", description: "Legal notices and rights information." },
