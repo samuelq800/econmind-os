@@ -791,10 +791,16 @@ export function LeagueDashboard({
                         {["submitted", "under_review"].includes(
                           application.status,
                         ) && (
-                          <div className="mt-3 flex flex-wrap gap-2">
+                          <div className="mt-3">
+                            {application.location_status !== "verified" && (
+                              <p className="mb-2 text-xs leading-5 text-[var(--ink-muted)]">
+                                City review is optional for approval. Until it is confirmed, this school remains off the public map.
+                              </p>
+                            )}
+                            <div className="flex flex-wrap gap-2">
                             <Button
                               size="sm"
-                              disabled={busy || application.location_status !== "verified"}
+                              disabled={busy}
                               onClick={() =>
                                 void review(application.id, "approved")
                               }
@@ -821,6 +827,7 @@ export function LeagueDashboard({
                             >
                               Reject
                             </Button>
+                            </div>
                           </div>
                         )}
                       </div>

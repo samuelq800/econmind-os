@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowRight,
   BarChart3,
@@ -13,6 +14,7 @@ import {
 import { HomeDailyBriefPreview } from "@/components/home/home-daily-brief-preview";
 import { HomeLeagueSchoolDirectory } from "@/components/home/home-league-school-directory";
 import { LEAGUE_CHALLENGES_COMING_SOON, LEAGUE_SEASON } from "@/lib/league/league-season";
+import { withBasePath } from "@/lib/base-path";
 
 const zones = [
   { number: "01", title: "Real World", detail: "Daily Brief · Cases", href: "/daily-brief", icon: Newspaper, description: "Start from a current issue, a published case or a concrete economic decision." },
@@ -130,23 +132,26 @@ export function EditorialHome() {
 
 function HeroVisual() {
   return (
-    <aside className="home-hero-summary" aria-label="Economic reasoning mechanism">
-      <p className="home-hero-summary-kicker">ONE CLEAR MECHANISM</p>
-      <div className="home-hero-summary-steps">
-        <section>
-          <span>01</span>
-          <div><b>Assumption</b><p>State the market, agents and constraints.</p></div>
-        </section>
-        <section>
-          <span>02</span>
-          <div><b>Mechanism</b><p>Trace how incentives change demand or supply.</p></div>
-        </section>
-        <section>
-          <span>03</span>
-          <div><b>Interpretation</b><p>Compare the outcome with the real-world question.</p></div>
-        </section>
+    <aside className="home-hero-summary" aria-label="EconMind official badge">
+      <span className="home-hero-badge-orbit home-hero-badge-orbit-one" aria-hidden="true" />
+      <span className="home-hero-badge-orbit home-hero-badge-orbit-two" aria-hidden="true" />
+      <div className="home-hero-badge-wrap">
+        <div className="home-hero-badge-image-shell">
+          <Image
+            src={withBasePath("/brand/econmind-badge-1050.png")}
+            alt="EconMind official badge"
+            fill
+            priority
+            sizes="(min-width: 1024px) 38vw, 72vw"
+            className="home-hero-badge"
+            draggable={false}
+          />
+        </div>
       </div>
-      <div className="home-hero-summary-foot"><p>Y = C + I + G + (X − M)</p><span>Assumptions → mechanism → interpretation</span></div>
+      <div className="home-hero-badge-caption">
+        <span>Official EconMind badge</span>
+        <p>Economics beyond the classroom.</p>
+      </div>
     </aside>
   );
 }

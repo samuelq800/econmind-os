@@ -1,10 +1,10 @@
-export const LEGAL_EFFECTIVE_DATE = "2026-08-23";
+export const LEGAL_EFFECTIVE_DATE = "2026-08-27";
 
 export const LEGAL_DOCUMENTS = {
   terms: {
     key: "terms",
     title: "Terms of Use",
-    version: "1.1",
+    version: "1.2",
     effectiveDate: LEGAL_EFFECTIVE_DATE,
   },
   privacy: {

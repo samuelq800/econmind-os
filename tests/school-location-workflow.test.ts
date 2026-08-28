@@ -13,6 +13,7 @@ import {
 } from "@/lib/league/geographic-areas";
 
 const migration = readFileSync("supabase/migrations/20260826000000_school_location_review_workflow.sql", "utf8");
+const approvalMigration = readFileSync("supabase/migrations/20260827000000_unblock_school_approval_location_review.sql", "utf8");
 const onboarding = readFileSync("components/auth/account-onboarding.tsx", "utf8");
 const join = readFileSync("components/league/join-league.tsx", "utf8");
 const locationFields = readFileSync("components/league/school-location-fields.tsx", "utf8");
@@ -126,11 +127,15 @@ describe("school location review workflow", () => {
     expect(migration).toContain("drop function if exists public.complete_econmind_onboarding(text, uuid, text, text, text)");
   });
 
-  it("keeps school approval and location review as separate guarded state machines", () => {
+  it("keeps location review optional when an administrator approves a school", () => {
     for (const status of ["missing", "pending_review", "verified", "needs_correction"]) {
       expect(migration).toContain(`'${status}'`);
     }
-    expect(migration).toContain("Verify the school location before approving this application");
+    expect(approvalMigration).not.toContain("Verify the school location before approving this application");
+    expect(approvalMigration).toContain("application_location_verified boolean := false");
+    expect(approvalMigration).toContain("'location_review_required', not application_location_verified");
+    expect(approvalMigration).toContain("case when application_location_verified then 'verified' else 'missing' end");
+    expect(approvalMigration).toContain("case when application_location_verified then selected_location.city else nullif(trim(application.submitted_city), '') end");
     expect(migration).toContain("select * into application from public.league_applications where id = p_application_id for update");
     expect(migration).toContain("school_location_review_events");
     expect(migration).toContain("Platform administrator role required");
@@ -142,7 +147,13 @@ describe("school location review workflow", () => {
     expect(adminReview).toContain("Match verified city");
     expect(adminReview).toContain("Exact catalog matching only resolves the city record");
     expect(adminReview).toContain("Request correction");
-    expect(dashboard).toContain('application.location_status !== "verified"');
+    const approveControl = dashboard.slice(
+      dashboard.indexOf('void review(application.id, "approved")') - 200,
+      dashboard.indexOf('void review(application.id, "approved")') + 120,
+    );
+    expect(approveControl).toContain("disabled={busy}");
+    expect(approveControl).not.toContain("location_status");
+    expect(dashboard).toContain("City review is optional for approval.");
     expect(dashboard).toContain("Pending school locations");
     expect(dashboard.indexOf('{role === "platform_admin" && (')).toBeLessThan(dashboard.indexOf("Pending school locations"));
     expect(adminReview).toContain('application.status === "submitted" || application.status === "under_review"');

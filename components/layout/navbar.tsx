@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ChevronDown, ClipboardCheck, Cloud, Eye, GraduationCap, KeyRound, LogIn, LogOut, Menu, Moon, ShieldCheck, Sun, UserRound, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { availableNavigationSections, isNavigationSectionActive, MOBILE_NAVIGATION_GROUPS } from "@/lib/platform/feature-flags";
+import { withBasePath } from "@/lib/base-path";
 import { useTheme } from "./theme-provider";
 
 const navigationSections = availableNavigationSections();
@@ -22,8 +24,18 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--canvas)_88%,transparent)] backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between px-5 lg:px-8">
-        <Link href="/" className="flex items-center gap-3" onClick={() => setOpen(false)}>
-          <span className="grid size-8 place-items-center rounded-lg bg-[var(--ink)] text-sm font-black text-[var(--surface)]">E</span>
+        <Link href="/" className="brand-home-link flex items-center gap-3" onClick={() => setOpen(false)} draggable={false}>
+          <span className="brand-badge-mini">
+            <Image
+              src={withBasePath("/brand/econmind-badge-96.png")}
+              alt=""
+              width={36}
+              height={36}
+              priority
+              draggable={false}
+              className="brand-badge-mini-image"
+            />
+          </span>
           <span className="text-sm font-extrabold">EconMind OS</span>
           <span className="hidden rounded border border-[var(--line)] px-1.5 py-.5 text-[9px] font-bold uppercase tracking-widest text-[var(--ink-faint)] sm:inline">Beta</span>
         </Link>

@@ -1,4 +1,6 @@
 import Link from "next/link";
+import Image from "next/image";
+import { withBasePath } from "@/lib/base-path";
 import {
   OFFICIAL_CONTACT_EMAIL,
   OFFICIAL_CONTACT_MAILTO,
@@ -55,7 +57,12 @@ export function Footer() {
     <footer className="border-t border-[var(--line)] bg-[var(--surface)] px-5 py-10 text-sm sm:px-8 lg:px-12">
       <div className="mx-auto grid max-w-[1560px] gap-8 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
         <div>
-          <p className="font-extrabold tracking-[-.03em]">EconMind OS</p>
+          <div className="flex items-center gap-3">
+            <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-white ring-1 ring-[color-mix(in_srgb,var(--accent)_24%,transparent)]">
+              <Image src={withBasePath("/brand/econmind-badge-96.png")} alt="EconMind badge" width={40} height={40} />
+            </span>
+            <p className="font-extrabold tracking-[-.03em]">EconMind OS</p>
+          </div>
           <p className="mt-3 max-w-sm text-xs leading-6 text-[var(--ink-muted)]">
             An interactive economics laboratory for disciplined reasoning from
             real-world questions to models, simulations and evidence.
@@ -94,7 +101,7 @@ export function Footer() {
         <FooterLinks label="Legal" links={legalLinks} />
       </div>
       <div className="mx-auto mt-10 flex max-w-[1560px] flex-col justify-between gap-3 border-t border-[var(--line)] pt-5 text-[11px] text-[var(--ink-faint)] sm:flex-row">
-        <p>© 2026 EconMind OS. Built for economic intuition.</p>
+        <p>© 2026 EconMind OS. The EconMind badge is protected brand artwork.</p>
         <p>Models are simplified educational representations, not forecasts.</p>
       </div>
     </footer>
