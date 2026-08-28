@@ -24,6 +24,10 @@ const legalLinks = [
   { href: "/privacy", label: "Privacy Notice" },
   { href: "/terms", label: "Terms of Use" },
 ];
+const partnerLinks = [
+  { href: "http://www.uhhc.com.cn/", label: "UHHC · 简体中文" },
+  { href: "http://en.uhhc.com.cn/", label: "UHHC · English" },
+] as const;
 const socialLinks = [
   {
     href: "https://x.com/EconmindGroup",
@@ -55,7 +59,7 @@ const socialLinks = [
 export function Footer() {
   return (
     <footer className="border-t border-[var(--line)] bg-[var(--surface)] px-5 py-10 text-sm sm:px-8 lg:px-12">
-      <div className="mx-auto grid max-w-[1560px] gap-8 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
+      <div className="mx-auto grid max-w-[1560px] gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[1.4fr_repeat(5,minmax(0,1fr))]">
         <div>
           <div className="flex items-center gap-3">
             <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-white ring-1 ring-[color-mix(in_srgb,var(--accent)_24%,transparent)]">
@@ -99,12 +103,42 @@ export function Footer() {
         <FooterLinks label="Explore" links={toolLinks} />
         <FooterLinks label="Community" links={governanceLinks} />
         <FooterLinks label="Legal" links={legalLinks} />
+        <ExternalFooterLinks label="Partner websites" links={partnerLinks} />
       </div>
       <div className="mx-auto mt-10 flex max-w-[1560px] flex-col justify-between gap-3 border-t border-[var(--line)] pt-5 text-[11px] text-[var(--ink-faint)] sm:flex-row">
         <p>© 2026 EconMind OS. The EconMind badge is protected brand artwork.</p>
         <p>Models are simplified educational representations, not forecasts.</p>
       </div>
     </footer>
+  );
+}
+
+function ExternalFooterLinks({
+  label,
+  links,
+}: {
+  label: string;
+  links: readonly { href: string; label: string }[];
+}) {
+  return (
+    <div>
+      <p className="text-[10px] font-extrabold uppercase tracking-[.16em] text-[var(--ink-faint)]">
+        {label}
+      </p>
+      <div className="mt-3 grid gap-2">
+        {links.map((link) => (
+          <a
+            key={link.href}
+            href={link.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-semibold text-[var(--ink-muted)] hover:text-[var(--accent)]"
+          >
+            {link.label}
+          </a>
+        ))}
+      </div>
+    </div>
   );
 }
 

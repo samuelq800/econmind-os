@@ -32,4 +32,13 @@ describe("footer social links", () => {
       expect(footer).toContain(`function ${icon}()`);
     }
   });
+
+  it("includes the two UHHC partner websites as safe external links", () => {
+    expect(footer).toContain('label="Partner websites"');
+    expect(footer).toContain('href: "http://www.uhhc.com.cn/"');
+    expect(footer).toContain('href: "http://en.uhhc.com.cn/"');
+    expect(footer).toContain('label: "UHHC · 简体中文"');
+    expect(footer).toContain('label: "UHHC · English"');
+    expect(footer).toContain("function ExternalFooterLinks(");
+  });
 });
