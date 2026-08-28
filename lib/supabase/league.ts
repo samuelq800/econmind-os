@@ -6,15 +6,10 @@ import {
   type SchoolLocationCatalogEntry,
   type SchoolLocationSubmission,
 } from "@/lib/league/geographic-areas";
-import { getSupabaseBrowserClient } from "./client";
-
-function client() {
-  const supabase = getSupabaseBrowserClient();
-  if (!supabase) throw new Error("Supabase is not configured.");
-  return supabase;
-}
-
-function fail(error: { message: string } | null) { if (error) throw new Error(error.message); }
+import {
+  requireSupabaseBrowserClient as client,
+  throwIfSupabaseError as fail,
+} from "./client";
 
 function normaliseLeagueApplication(row: Partial<LeagueApplication>): LeagueApplication {
   return {

@@ -1,4 +1,7 @@
-import { getSupabaseBrowserClient } from "./client";
+import {
+  requireSupabaseBrowserClient as client,
+  throwIfSupabaseError as fail,
+} from "./client";
 
 export const VIEWER_INVITATION_STORAGE_KEY = "econmind.viewer-invitation-code";
 
@@ -12,16 +15,6 @@ export type ViewerInvitation = ViewerInvitationAccess & {
   isActive: boolean;
   createdAt: string;
 };
-
-function client() {
-  const supabase = getSupabaseBrowserClient();
-  if (!supabase) throw new Error("Supabase is not configured.");
-  return supabase;
-}
-
-function fail(error: { message: string } | null) {
-  if (error) throw new Error(error.message);
-}
 
 function normaliseInvitationCode(code: string) {
   return code.replace(/[^a-z0-9]/gi, "").toUpperCase();

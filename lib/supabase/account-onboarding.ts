@@ -1,20 +1,13 @@
-import { getSupabaseBrowserClient } from "./client";
+import {
+  requireSupabaseBrowserClient as client,
+  throwIfSupabaseError as fail,
+} from "./client";
 import type { CurriculumSystem } from "@/lib/league/curriculum";
 import type { SchoolLocationSubmission } from "@/lib/league/geographic-areas";
 
 export type OnboardingPath = "school" | "create_school" | "visitor";
 export type OnboardingProfile = { onboarding_path: OnboardingPath | null; school_id: string | null };
 export type ApprovedSchoolChoice = { id: string; name: string; club_name: string | null; city: string | null };
-
-function client() {
-  const supabase = getSupabaseBrowserClient();
-  if (!supabase) throw new Error("Supabase is not configured.");
-  return supabase;
-}
-
-function fail(error: { message: string } | null) {
-  if (error) throw new Error(error.message);
-}
 
 export async function getAccountOnboarding() {
   const { data, error } = await client().from("profiles").select("onboarding_path,school_id").maybeSingle();

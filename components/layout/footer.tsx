@@ -3,16 +3,9 @@ import {
   OFFICIAL_CONTACT_EMAIL,
   OFFICIAL_CONTACT_MAILTO,
 } from "@/lib/platform/contact";
+import { availableNavigationSections } from "@/lib/platform/feature-flags";
 
-const majorLinks = [
-  { href: "/", label: "Home" },
-  { href: "/explore", label: "Explore" },
-  { href: "/league", label: "League" },
-  { href: "/league/schools", label: "Schools" },
-  { href: "/team", label: "Team" },
-  { href: "/research", label: "Evidence" },
-  { href: "/dashboard", label: "Dashboard" },
-];
+const primaryLinks = availableNavigationSections().map(({ href, label }) => ({ href, label }));
 const toolLinks = [
   { href: "/daily-brief", label: "Daily Brief" },
   { href: "/models", label: "Models" },
@@ -95,7 +88,7 @@ export function Footer() {
             ))}
           </nav>
         </div>
-        <FooterLinks label="Platform" links={majorLinks} />
+        <FooterLinks label="Platform" links={primaryLinks} />
         <FooterLinks label="Explore" links={toolLinks} />
         <FooterLinks label="Community" links={governanceLinks} />
         <FooterLinks label="Legal" links={legalLinks} />

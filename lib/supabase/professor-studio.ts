@@ -1,5 +1,8 @@
 import type { ProfessorProjectType } from "@/lib/professor-studio/catalog";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  requireSupabaseBrowserClient as client,
+  throwIfSupabaseError as fail,
+} from "@/lib/supabase/client";
 
 export type ProfessorProjectStatus = "draft" | "published" | "closed" | "archived";
 export type ProfessorProjectScope = "open" | "invited";
@@ -27,16 +30,6 @@ export type ProfessorProjectAudience = {
   audienceType: "school" | "team" | "account";
   targetId: string;
 };
-
-function client() {
-  const supabase = getSupabaseBrowserClient();
-  if (!supabase) throw new Error("Supabase is not configured.");
-  return supabase;
-}
-
-function fail(error: { message: string } | null) {
-  if (error) throw new Error(error.message);
-}
 
 export async function listMyProfessorProjects() {
   const { data, error } = await client().rpc("list_my_professor_projects");

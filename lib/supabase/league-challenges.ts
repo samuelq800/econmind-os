@@ -9,17 +9,10 @@ import type {
   LeagueGhostStrategy,
   LeagueLeaderboardRow,
 } from "@/lib/league/async-challenge-types";
-import { getSupabaseBrowserClient } from "./client";
-
-function client() {
-  const supabase = getSupabaseBrowserClient();
-  if (!supabase) throw new Error("Supabase is not configured.");
-  return supabase;
-}
-
-function fail(error: { message: string } | null) {
-  if (error) throw new Error(error.message);
-}
+import {
+  requireSupabaseBrowserClient as client,
+  throwIfSupabaseError as fail,
+} from "./client";
 
 export async function listLeagueChallenges() {
   const { data, error } = await client()
@@ -100,6 +93,28 @@ export async function listMyChallengeAttempts(teamId: string, challengeId?: stri
   const { data, error } = await query;
   fail(error);
   return (data ?? []) as LeagueChallengeAttempt[];
+}
+
+/**
+ * Returns submitted-attempt totals for a known set of Teams in one scoped query.
+ * RLS remains the source of truth: inaccessible attempts are never returned.
+ */
+export async function listSubmittedChallengeAttemptCounts(teamIds: readonly string[]) {
+  if (!teamIds.length) return {} as Record<string, number>;
+
+  const { data, error } = await client()
+    .from("league_challenge_attempts")
+    .select("team_id")
+    .in("team_id", [...teamIds])
+    .eq("status", "submitted");
+  fail(error);
+
+  const counts = Object.fromEntries(teamIds.map((teamId) => [teamId, 0])) as Record<string, number>;
+  for (const row of data ?? []) {
+    const teamId = row.team_id as string;
+    if (teamId in counts) counts[teamId] += 1;
+  }
+  return counts;
 }
 
 export async function listChallengeAttemptDecisions(attemptId: string) {

@@ -4,6 +4,14 @@ const mocks = vi.hoisted(() => ({ getClient: vi.fn() }));
 
 vi.mock("@/lib/supabase/client", () => ({
   getSupabaseBrowserClient: mocks.getClient,
+  requireSupabaseBrowserClient: () => {
+    const client = mocks.getClient();
+    if (!client) throw new Error("Supabase is not configured.");
+    return client;
+  },
+  throwIfSupabaseError: (error: { message: string } | null | undefined) => {
+    if (error) throw new Error(error.message);
+  },
 }));
 
 import { listLearningProgress } from "@/lib/supabase/data";

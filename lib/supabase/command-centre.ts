@@ -1,9 +1,9 @@
 import type { AdvanceQuarterResult, CommandCentreState } from "@/lib/economics/command-centre";
 import type { SandboxMode, SandboxRound, SandboxRun, SandboxScenario } from "@/lib/league/command-centre-types";
-import { getSupabaseBrowserClient } from "./client";
-
-function client() { const supabase = getSupabaseBrowserClient(); if (!supabase) throw new Error("Supabase is not configured."); return supabase; }
-function fail(error: { message: string } | null) { if (error) throw new Error(error.message); }
+import {
+  requireSupabaseBrowserClient as client,
+  throwIfSupabaseError as fail,
+} from "./client";
 
 export async function getCommandCentreScenario(slug = "energy-inflation-dilemma") {
   const { data, error } = await client().from("sandbox_scenarios").select("*").eq("slug", slug).maybeSingle();

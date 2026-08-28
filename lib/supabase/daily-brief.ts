@@ -1,7 +1,8 @@
 import type { DailyBriefItem, DailyBriefJob, DailyBriefSettings, DailyBriefSource } from "@/lib/daily-brief/types";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-function client() { const value = getSupabaseBrowserClient(); if (!value) throw new Error("Supabase is not configured."); return value; }
-function fail(error: { message: string } | null) { if (error) throw new Error(error.message); }
+import {
+  requireSupabaseBrowserClient as client,
+  throwIfSupabaseError as fail,
+} from "@/lib/supabase/client";
 export async function listPublishedBriefs() { const { data, error } = await client().from("daily_brief_items").select("*").eq("status", "published").order("published_source_at", { ascending: false, nullsFirst: false }).order("published_at", { ascending: false }); fail(error); return (data ?? []) as DailyBriefItem[]; }
 export async function getPublishedBrief(slug: string) { const { data, error } = await client().from("daily_brief_items").select("*").eq("slug", slug).eq("status", "published").maybeSingle(); fail(error); return data as DailyBriefItem | null; }
 export async function listBriefItemsForReview() { const { data, error } = await client().from("daily_brief_items").select("*").order("created_at", { ascending: false }); fail(error); return (data ?? []) as DailyBriefItem[]; }
@@ -10,7 +11,7 @@ export async function listBriefJobs() { const { data, error } = await client().f
 export async function getBriefSettings() { const { data, error } = await client().from("daily_brief_settings").select("*").eq("id", true).maybeSingle(); fail(error); return data as DailyBriefSettings | null; }
 export async function reviewBriefItem(id: string, status: DailyBriefItem["status"], note = "") { const published = status === "published" ? new Date().toISOString() : null; const { error } = await client().from("daily_brief_items").update({ status, review_note: note, reviewed_at: new Date().toISOString(), published_at: published }).eq("id", id); fail(error); }
 export async function updateBriefSettings(input: Pick<DailyBriefSettings, "publication_mode" | "minimum_score">) { const { error } = await client().from("daily_brief_settings").update(input).eq("id", true); fail(error); }
-export async function triggerBriefCollection() { const { data, error } = await client().functions.invoke("collect-daily-economic-brief", { body: { trigger: "manual" } }); if (error) throw new Error(error.message); return data as { ok: boolean; message?: string; sourcesChecked?: number; candidatesFound?: number; freshCandidates?: number; staleSkipped?: number; duplicatesSkipped?: number; remainingSlots?: number; itemsInserted?: number; sourceFailures?: Array<{ source: string; error: string }> }; }
+export async function triggerBriefCollection() { const { data, error } = await client().functions.invoke("collect-daily-economic-brief", { body: { trigger: "manual" } }); fail(error); return data as { ok: boolean; message?: string; sourcesChecked?: number; candidatesFound?: number; freshCandidates?: number; staleSkipped?: number; duplicatesSkipped?: number; remainingSlots?: number; itemsInserted?: number; sourceFailures?: Array<{ source: string; error: string }> }; }
 export async function addBriefSource(input: Pick<DailyBriefSource, "name" | "feed_url" | "source_type" | "priority">) { const { data: { user } } = await client().auth.getUser(); const { data, error } = await client().from("daily_brief_sources").insert({ ...input, created_by: user?.id ?? null }).select().single(); fail(error); return data as DailyBriefSource; }
 export async function setBriefSourceEnabled(id: string, enabled: boolean) { const { error } = await client().from("daily_brief_sources").update({ enabled }).eq("id", id); fail(error); }
 export async function listEconomicCasesForAdmin() { const { data, error } = await client().from("economic_cases").select("*").order("title"); fail(error); return (data ?? []) as Array<{ id: string; slug: string; title: string; status: "draft" | "published" | "archived"; updated_at: string }>; }

@@ -1,4 +1,7 @@
-import { getSupabaseBrowserClient } from "./client";
+import {
+  requireSupabaseBrowserClient as client,
+  throwIfSupabaseError as fail,
+} from "./client";
 
 export type ContinuousWorldRecord = {
   id: string;
@@ -83,16 +86,6 @@ function centralEffect(value: unknown) {
   if (typeof value !== "string") return 0;
   const parts = value.split("/").map(Number);
   return Number.isFinite(parts[1]) ? parts[1] : 0;
-}
-
-function client() {
-  const supabase = getSupabaseBrowserClient();
-  if (!supabase) throw new Error("Supabase is not configured.");
-  return supabase;
-}
-
-function fail(error: { message: string } | null) {
-  if (error) throw new Error(error.message);
 }
 
 export async function listContinuousWorlds() {

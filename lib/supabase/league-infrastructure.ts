@@ -1,10 +1,11 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import type { AgreementType, CompetitionRole, CompetitionStatus, InstitutionType } from "@/lib/economics/world";
 import type { CompetitionSnapshot, LeagueAgreement, LeagueCompetition, LeagueCompetitionCountry, LeagueCompetitionRole, LeagueCompetitionRound, LeagueCountryResult, LeagueCountrySubmission, LeagueCountryTemplate, LeagueEvent, LeagueInstitutionDraft, LeagueScenario, LeagueTradeFlow } from "@/lib/league/world-league-types";
-import { getSupabaseBrowserClient } from "./client";
-
-function client() { const supabase = getSupabaseBrowserClient(); if (!supabase) throw new Error("Supabase is not configured."); return supabase; }
-function fail(error: { message: string } | null) { if (error) throw new Error(error.message); }
+import {
+  getSupabaseBrowserClient,
+  requireSupabaseBrowserClient as client,
+  throwIfSupabaseError as fail,
+} from "./client";
 
 export async function listLeagueCompetitions() {
   const { data, error } = await client().from("competitions").select("*, scenario:scenario_definitions(*)").order("updated_at", { ascending: false });
@@ -42,9 +43,10 @@ export async function listMyScenarioEditorAccess(userId: string) {
 }
 
 export async function getLeagueScenario(scenarioId: string) {
+  const supabase = client();
   const [{ data: scenario, error }, { data: templates, error: templatesError }] = await Promise.all([
-    client().from("scenario_definitions").select("*").eq("id", scenarioId).maybeSingle(),
-    client().from("country_templates").select("*").eq("scenario_id", scenarioId).order("slug"),
+    supabase.from("scenario_definitions").select("*").eq("id", scenarioId).maybeSingle(),
+    supabase.from("country_templates").select("*").eq("scenario_id", scenarioId).order("slug"),
   ]);
   fail(error); fail(templatesError); return { scenario: scenario as LeagueScenario | null, templates: (templates ?? []) as LeagueCountryTemplate[] };
 }
@@ -104,7 +106,7 @@ export async function processLeagueWorldRound(competitionId: string, roundId: st
   const { data: session } = await client().auth.getSession();
   if (!session.session?.access_token) throw new Error("Please sign in again before settling a round.");
   const { data, error } = await client().functions.invoke("process-league-world-round", { body: { competitionId, roundId, idempotencyKey: crypto.randomUUID() }, headers: { Authorization: `Bearer ${session.session.access_token}` } });
-  if (error) throw new Error(error.message); if (!data?.ok) throw new Error(data?.message ?? "World clearing did not complete."); return data as { ok: true; idempotent: boolean; settlementHash: string | null; round?: number };
+  fail(error); if (!data?.ok) throw new Error(data?.message ?? "World clearing did not complete."); return data as { ok: true; idempotent: boolean; settlementHash: string | null; round?: number };
 }
 
 export async function assignCompetitionCountry(input: { countryId: string; schoolId: string; teamId: string }) {

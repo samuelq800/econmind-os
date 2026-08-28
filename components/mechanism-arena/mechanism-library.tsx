@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, BarChart3, CheckCircle2, Filter, GitCompareArrows, SlidersHorizontal } from "lucide-react";
+import { ArrowRight, Filter, GitCompareArrows, SlidersHorizontal } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { MECHANISM_CATEGORIES, MECHANISM_CONCEPTS, displayMechanismConcept, mechanismPath, mechanismScenarios, type MechanismScenario } from "@/lib/mechanism-arena/catalog";

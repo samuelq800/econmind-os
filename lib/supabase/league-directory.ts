@@ -1,5 +1,8 @@
 import type { School } from "@/lib/league/types";
-import { getSupabaseBrowserClient } from "./client";
+import {
+  requireSupabaseBrowserClient as client,
+  throwIfSupabaseError as fail,
+} from "./client";
 
 export type PublicLeagueSchool = {
   school_id: string;
@@ -54,16 +57,6 @@ type PublicLeagueTeamRpcRow = Omit<PublicLeagueTeam, "member_count" | "current_s
   official_challenge_count: number | string | null;
   official_wins: number | string | null;
 };
-
-function client() {
-  const supabase = getSupabaseBrowserClient();
-  if (!supabase) throw new Error("Supabase is not configured.");
-  return supabase;
-}
-
-function fail(error: { message: string } | null) {
-  if (error) throw new Error(error.message);
-}
 
 export async function listPublicLeagueSchools() {
   const supabase = client();

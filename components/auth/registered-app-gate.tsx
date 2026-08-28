@@ -94,4 +94,3 @@ export function RegisteredAppGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-

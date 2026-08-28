@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Check, Dices, Info, Play, RotateCcw, Save } from "lucide-react";
+import { ArrowLeft, Check, Dices, Play, RotateCcw, Save } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth/auth-provider";
 import { usePersistentState } from "@/lib/hooks/use-persistent-state";
 import { saveModelRun } from "@/lib/supabase/data";
-import { displayMechanismConcept, type MechanismScenario } from "@/lib/mechanism-arena/catalog";
+import { type MechanismScenario } from "@/lib/mechanism-arena/catalog";
 
 type GenericDraft = { stage: number; seed: number; parameters: Record<string, string | number>; completed: boolean; reflection: string };
 const stages = ["Understand", "Configure", "Act", "Settle", "Analyse"];

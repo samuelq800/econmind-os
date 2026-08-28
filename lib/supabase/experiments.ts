@@ -1,6 +1,9 @@
 import type { ExperimentStatus, ParameterPermission, PredictionConfig, ResultVisibility, ScoringWeights, SuccessCondition } from "@/lib/experiments/types";
 import type { FocusedModelKey } from "@/lib/experiments/model-runtime";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  requireSupabaseBrowserClient as client,
+  throwIfSupabaseError as fail,
+} from "@/lib/supabase/client";
 
 export type ExperimentRow = {
   id: string; teacher_id: string; code: string; title: string; model_key: FocusedModelKey; context: string; objective: string; status: ExperimentStatus;
@@ -14,9 +17,6 @@ export type ParticipantRow = { id: string; experiment_id: string; student_id: st
 export type AttemptRow = { id: string; experiment_id: string; participant_id: string; student_id: string; attempt_epoch: number; attempt_number: number; parameters: Record<string, number>; results: Record<string, number>; mechanism_chain: unknown[]; score_details: Record<string, unknown>; created_at: string };
 export type SubmissionRow = { id: string; experiment_id: string; participant_id: string; attempt_id: string; student_id: string; attempt_number?: number; prediction: unknown; final_parameters: Record<string, number>; calculated_results: Record<string, number>; mechanism_chain: unknown[]; explanation: { schemaVersion?: number; schema_version?: number; response: string }; auto_score: number; final_score: number; feedback_released: boolean; completion_status: string; created_at: string; experiment?: ExperimentRow; feedback?: FeedbackRow[] };
 export type FeedbackRow = { id: string; submission_id: string; teacher_id: string; explanation_score: number | null; feedback: string; override_final_score: number | null; released_at: string | null; updated_at: string };
-
-function client() { const value = getSupabaseBrowserClient(); if (!value) throw new Error("Supabase is not configured."); return value; }
-function fail(error: { message: string } | null) { if (error) throw new Error(error.message); }
 
 export async function listPublishedExperiments() {
   const { data, error } = await client().rpc("list_public_experiments");

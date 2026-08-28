@@ -2,22 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ClipboardCheck, Cloud, Eye, GraduationCap, KeyRound, LogIn, LogOut, Menu, Moon, ShieldCheck, Sun, UserRound, X } from "lucide-react";
+import { ChevronDown, ClipboardCheck, Cloud, Eye, GraduationCap, KeyRound, LogIn, LogOut, Menu, Moon, ShieldCheck, Sun, UserRound, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
-import { availablePrimaryNavigation, MOBILE_NAVIGATION_GROUPS } from "@/lib/platform/feature-flags";
+import { availableNavigationSections, isNavigationSectionActive, MOBILE_NAVIGATION_GROUPS } from "@/lib/platform/feature-flags";
 import { useTheme } from "./theme-provider";
 
-const publicLinks = availablePrimaryNavigation();
-const governanceLinks = [
-  { href: "/community", label: "Community", activePrefixes: ["/community", "/community-guidelines", "/integrity"] },
-  { href: "/legal", label: "Legal", activePrefixes: ["/legal", "/privacy", "/terms"] },
-] as const;
-
-function isActiveNavigationLink(path: string, link: { href: string; activePrefixes?: readonly string[] }) {
-  const prefixes = link.activePrefixes ?? [link.href];
-  return prefixes.some((prefix) => prefix === "/" ? path === "/" : path === prefix || path.startsWith(`${prefix}/`));
-}
+const navigationSections = availableNavigationSections();
 
 export function Navbar() {
   const path = usePathname() ?? "/";
@@ -25,7 +16,8 @@ export function Navbar() {
   const { user, role, worldSupervisor, viewerAccess, viewerLoading, loading, openAuth, signOut, endViewerSession } = useAuth();
   const [open, setOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
-  const links = [...publicLinks, ...governanceLinks];
+  const [openSection, setOpenSection] = useState<string | null>(null);
+  const links = navigationSections;
 
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--canvas)_88%,transparent)] backdrop-blur-xl">
@@ -35,17 +27,31 @@ export function Navbar() {
           <span className="text-sm font-extrabold">EconMind OS</span>
           <span className="hidden rounded border border-[var(--line)] px-1.5 py-.5 text-[9px] font-bold uppercase tracking-widest text-[var(--ink-faint)] sm:inline">Beta</span>
         </Link>
-        <nav className="hidden items-center gap-0.5 xl:flex">
-          {links.map((link) => {
-            const active = isActiveNavigationLink(path, link);
+        <nav className="hidden items-center gap-0.5 xl:flex" aria-label="Primary navigation">
+          {links.map((section) => {
+            const active = isNavigationSectionActive(section, path);
+            const hasChildren = section.children.length > 0;
             return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`rounded-lg px-2.5 py-2 text-sm font-medium ${active ? "bg-[var(--surface-strong)]" : "text-[var(--ink-muted)] hover:text-[var(--ink)]"}`}
-              >
-                {link.label}
-              </Link>
+              <div key={section.id} className="relative" onMouseEnter={() => hasChildren && setOpenSection(section.id)} onMouseLeave={() => setOpenSection(null)}>
+                <div className={`flex items-center rounded-lg ${active ? "bg-[var(--surface-strong)]" : "text-[var(--ink-muted)] hover:text-[var(--ink)]"}`}>
+                  <Link href={section.href} aria-current={active ? "page" : undefined} className="whitespace-nowrap px-2.5 py-2 text-xs font-semibold 2xl:px-3 2xl:text-sm" onClick={() => setOpenSection(null)}>{section.label}</Link>
+                  {hasChildren && <button type="button" aria-label={`Open ${section.label} navigation`} aria-expanded={openSection === section.id} onClick={() => setOpenSection((current) => current === section.id ? null : section.id)} className="-ml-1 grid size-6 place-items-center rounded-md hover:bg-[var(--surface-subtle)]"><ChevronDown size={13} /></button>}
+                </div>
+                {hasChildren && openSection === section.id && (
+                  <div className="absolute left-0 top-full z-50 w-[19rem] pt-2">
+                    <div className="overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-xl">
+                      <p className="px-3 pb-2 pt-1 text-[10px] font-extrabold uppercase tracking-[.14em] text-[var(--ink-faint)]">{section.description}</p>
+                      {section.children.map((item) => {
+                        const itemActive = path === item.href || path.startsWith(`${item.href}/`);
+                        return <Link key={item.href} href={item.href} onClick={() => setOpenSection(null)} className={`block rounded-lg px-3 py-2.5 ${itemActive ? "bg-[var(--accent-soft)] text-[var(--accent)]" : "hover:bg-[var(--surface-subtle)]"}`}>
+                          <span className="block text-xs font-bold">{item.label}</span>
+                          {item.description && <span className="mt-0.5 block text-[11px] leading-4 text-[var(--ink-muted)]">{item.description}</span>}
+                        </Link>;
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
             );
           })}
         </nav>
@@ -93,13 +99,10 @@ export function Navbar() {
                   <p className="mt-1 truncate text-xs font-semibold">{viewerAccess ? viewerAccess.label ?? "Read-only access" : user?.email}</p>
                 </div>
                 {user && <Link href="/dashboard" onClick={() => setAccountOpen(false)} className="mt-1 flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold hover:bg-[var(--surface-subtle)]">
-                  <Cloud size={14} /> Economist Workspace
+                  <Cloud size={14} /> Workspace dashboard
                 </Link>}
                 {user && <Link href="/library" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold hover:bg-[var(--surface-subtle)]">
                   <Cloud size={14} /> My cloud library
-                </Link>}
-                {user && <Link href="/profile" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold hover:bg-[var(--surface-subtle)]">
-                  <UserRound size={14} /> Profile & privacy
                 </Link>}
                 {role === "professor" && <Link href="/professor" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]">
                   <GraduationCap size={14} /> Professor Studio
@@ -132,50 +135,49 @@ export function Navbar() {
         </div>
       </div>
       {open && (
-        <nav className="scroll-slim fixed inset-x-0 bottom-0 top-16 overflow-y-auto border-t border-[var(--line)] bg-[var(--canvas)] p-5 shadow-2xl xl:hidden" aria-label="Full navigation">
+        <nav className="fixed inset-x-0 bottom-0 top-16 overflow-y-auto border-t border-[var(--line)] bg-[var(--canvas)] p-5 shadow-2xl xl:hidden" aria-label="Full navigation">
           <div className="mx-auto max-w-xl">
             <p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-[var(--ink-faint)]">Navigate EconMind</p>
             <div className="mt-3 grid grid-cols-2 gap-2">
-              {links.map((link) => (
-                <Link key={link.href} href={link.href} onClick={() => setOpen(false)} className={`rounded-xl border px-4 py-3 text-sm font-bold ${path === link.href ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]" : "border-[var(--line)] bg-[var(--surface)]"}`}>
-                  {link.label}
+              {links.map((section) => (
+                <Link key={section.id} href={section.href} onClick={() => setOpen(false)} aria-current={isNavigationSectionActive(section, path) ? "page" : undefined} className={`rounded-xl border px-4 py-3 text-sm font-bold ${isNavigationSectionActive(section, path) ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]" : "border-[var(--line)] bg-[var(--surface)]"}`}>
+                  {section.label}
                 </Link>
               ))}
             </div>
             <div className="mt-8 grid gap-6">
-              {MOBILE_NAVIGATION_GROUPS.map((group) => (
+              {MOBILE_NAVIGATION_GROUPS.filter((group) => links.some((section) => section.label === group.label)).map((group) => (
                 <section key={group.label}>
                   <p className="text-[10px] font-extrabold uppercase tracking-[.16em] text-[var(--ink-faint)]">{group.label}</p>
-                  <div className="mt-2 grid grid-cols-2 gap-1">
+                  {group.items.length > 0 && <div className="mt-2 grid grid-cols-2 gap-1">
                     {group.items.map((item) => <Link key={item.href} href={item.href} onClick={() => setOpen(false)} className="rounded-lg px-2 py-2.5 text-sm font-semibold text-[var(--ink-muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]">{item.label}</Link>)}
-                  </div>
+                  </div>}
                 </section>
               ))}
             </div>
-            {role === "teacher" && (
-              <Link href="/admin/daily-brief" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--accent)]">
-                <ClipboardCheck size={15} /> Review Daily Brief
-              </Link>
-            )}
-            {role === "professor" && (
-              <Link href="/professor" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--accent)]">
-                <GraduationCap size={15} /> Professor Studio
-              </Link>
-            )}
-            {user && <Link href="/profile" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--ink-muted)]"><UserRound size={15} /> Profile & privacy</Link>}
-            {user ? (
-              <button type="button" onClick={() => { setOpen(false); void signOut(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--red)]">
-                <LogOut size={15} /> Sign out
-              </button>
-            ) : viewerAccess ? (
-              <button type="button" onClick={() => { setOpen(false); endViewerSession(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--red)]">
-                <LogOut size={15} /> Leave viewing mode
-              </button>
-            ) : (
-              <button type="button" onClick={() => { setOpen(false); openAuth("sign-in"); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--accent)]">
-                <LogIn size={15} /> Sign in
-              </button>
-            )}
+          {role === "teacher" && (
+            <Link href="/admin/daily-brief" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--accent)]">
+              <ClipboardCheck size={15} /> Review Daily Brief
+            </Link>
+          )}
+          {role === "professor" && (
+            <Link href="/professor" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--accent)]">
+              <GraduationCap size={15} /> Professor Studio
+            </Link>
+          )}
+          {user ? (
+            <button type="button" onClick={() => { setOpen(false); void signOut(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--red)]">
+              <LogOut size={15} /> Sign out
+            </button>
+          ) : viewerAccess ? (
+            <button type="button" onClick={() => { setOpen(false); endViewerSession(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--red)]">
+              <LogOut size={15} /> Leave viewing mode
+            </button>
+          ) : (
+            <button type="button" onClick={() => { setOpen(false); openAuth("sign-in"); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--accent)]">
+              <LogIn size={15} /> Sign in
+            </button>
+          )}
           </div>
         </nav>
       )}

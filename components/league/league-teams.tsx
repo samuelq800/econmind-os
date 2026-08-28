@@ -10,7 +10,7 @@ import type { Team, TeamMember } from "@/lib/league/types";
 import { createLeagueTeam, getLeagueContext, listSchoolTeams } from "@/lib/supabase/league";
 import type { PublicLeagueTeam } from "@/lib/supabase/league-directory";
 import { listPublicLeagueTeams } from "@/lib/supabase/league-directory";
-import { listMyChallengeAttempts } from "@/lib/supabase/league-challenges";
+import { listSubmittedChallengeAttemptCounts } from "@/lib/supabase/league-challenges";
 
 type TeamWithMembers = Team & { members: TeamMember[] };
 
@@ -39,8 +39,7 @@ export function LeagueTeams() {
       if (!context.school?.id) return;
       const listed = await listSchoolTeams(context.school.id);
       setTeams(listed);
-      const counts = await Promise.all(listed.map(async (team) => [team.id, (await listMyChallengeAttempts(team.id)).filter((attempt) => attempt.status === "submitted").length] as const));
-      setAttemptCounts(Object.fromEntries(counts));
+      setAttemptCounts(await listSubmittedChallengeAttemptCounts(listed.map((team) => team.id)));
     } catch (caught) { setError(caught instanceof Error ? caught.message : "Could not load your school Teams."); } finally { setPrivateLoading(false); }
   }, [user]);
 

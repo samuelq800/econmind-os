@@ -1,4 +1,7 @@
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  requireSupabaseBrowserClient as client,
+  throwIfSupabaseError as fail,
+} from "@/lib/supabase/client";
 import type { ModelSlug } from "@/lib/models/registry";
 
 export type ModelKey = ModelSlug;
@@ -64,15 +67,9 @@ export type RecentActivityRow = {
   updated_at: string;
 };
 
-function client() {
-  const supabase = getSupabaseBrowserClient();
-  if (!supabase) throw new Error("Supabase is not configured.");
-  return supabase;
-}
-
 export async function getProfile(userId: string) {
   const { data, error } = await client().from("profiles").select("*").eq("user_id", userId).maybeSingle();
-  if (error) throw new Error(error.message);
+  fail(error);
   return data as ProfileRow | null;
 }
 
@@ -96,7 +93,7 @@ export async function saveModelRun(input: {
     })
     .select()
     .single();
-  if (error) throw new Error(error.message);
+  fail(error);
   return data as ModelRunRow;
 }
 
@@ -107,7 +104,7 @@ export async function getModelRun(userId: string, runId: string) {
     .eq("user_id", userId)
     .eq("id", runId)
     .maybeSingle();
-  if (error) throw new Error(error.message);
+  fail(error);
   return data as ModelRunRow | null;
 }
 
@@ -115,7 +112,7 @@ export async function listModelRuns(userId: string, limit?: number) {
   let query = client().from("model_runs").select("*").eq("user_id", userId).order("created_at", { ascending: false });
   if (limit) query = query.limit(limit);
   const { data, error } = await query;
-  if (error) throw new Error(error.message);
+  fail(error);
   return (data ?? []) as ModelRunRow[];
 }
 
@@ -132,34 +129,34 @@ export async function duplicateModelRun(userId: string, run: ModelRunRow) {
 
 export async function deleteModelRun(userId: string, runId: string) {
   const { error } = await client().from("model_runs").delete().eq("user_id", userId).eq("id", runId);
-  if (error) throw new Error(error.message);
+  fail(error);
 }
 
 export async function isFavorite(userId: string, modelKey: ModelKey) {
   const { data, error } = await client().from("favorites").select("id").eq("user_id", userId).eq("model_key", modelKey).maybeSingle();
-  if (error) throw new Error(error.message);
+  fail(error);
   return Boolean(data);
 }
 
 export async function setFavorite(userId: string, modelKey: ModelKey, favorite: boolean) {
   if (favorite) {
     const { error } = await client().from("favorites").upsert({ user_id: userId, model_key: modelKey }, { onConflict: "user_id,model_key" });
-    if (error) throw new Error(error.message);
+    fail(error);
   } else {
     const { error } = await client().from("favorites").delete().eq("user_id", userId).eq("model_key", modelKey);
-    if (error) throw new Error(error.message);
+    fail(error);
   }
 }
 
 export async function listFavorites(userId: string) {
   const { data, error } = await client().from("favorites").select("*").eq("user_id", userId).order("created_at", { ascending: false });
-  if (error) throw new Error(error.message);
+  fail(error);
   return (data ?? []) as FavoriteRow[];
 }
 
 export async function markModelVisited(modelKey: ModelKey, parameters: JsonObject = {}) {
   const { error } = await client().rpc("record_module_visit", { p_module_slug: modelKey, p_parameters: parameters });
-  if (error) throw new Error(error.message);
+  fail(error);
 }
 
 export async function recordModuleActivity(modelKey: ModelKey, activityType: "simulation_run", metadata: JsonObject = {}) {
@@ -168,22 +165,22 @@ export async function recordModuleActivity(modelKey: ModelKey, activityType: "si
     p_activity_type: activityType,
     p_metadata: metadata,
   });
-  if (error) throw new Error(error.message);
+  fail(error);
 }
 
 export async function markModelComplete(modelKey: ModelKey) {
   const { error } = await client().rpc("mark_module_complete", { p_module_slug: modelKey });
-  if (error) throw new Error(error.message);
+  fail(error);
 }
 
 export async function listLearningProgress(userId: string) {
   const { data, error } = await client().from("learning_progress").select("*").eq("user_id", userId).order("last_visited_at", { ascending: false });
-  if (error) throw new Error(error.message);
+  fail(error);
   return (data ?? []) as LearningProgressRow[];
 }
 
 export async function listRecentActivity(userId: string) {
   const { data, error } = await client().from("recent_activity").select("*").eq("user_id", userId).order("last_seen_at", { ascending: false });
-  if (error) throw new Error(error.message);
+  fail(error);
   return (data ?? []) as RecentActivityRow[];
 }

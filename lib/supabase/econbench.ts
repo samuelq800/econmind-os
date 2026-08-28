@@ -1,4 +1,7 @@
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  requireSupabaseBrowserClient as client,
+  throwIfSupabaseError,
+} from "@/lib/supabase/client";
 
 export type EconBenchProgressSnapshot = {
   selectedModels: string[];
@@ -24,12 +27,6 @@ export type EconBenchProgressRow = {
 export const econBenchProgressKey = (challengeId: string) =>
   `econbench-${challengeId.toLowerCase()}`;
 
-function client() {
-  const supabase = getSupabaseBrowserClient();
-  if (!supabase) throw new Error("Supabase is not configured.");
-  return supabase;
-}
-
 export async function listEconBenchProgress(userId: string) {
   const { data, error } = await client()
     .from("learning_progress")
@@ -38,7 +35,7 @@ export async function listEconBenchProgress(userId: string) {
     )
     .eq("user_id", userId)
     .like("model_key", "econbench-%");
-  if (error) throw new Error(error.message);
+  throwIfSupabaseError(error);
   return (data ?? []) as EconBenchProgressRow[];
 }
 
@@ -66,5 +63,5 @@ export async function saveEconBenchProgress(input: {
       },
       { onConflict: "user_id,model_key" },
     );
-  if (error) throw new Error(error.message);
+  throwIfSupabaseError(error);
 }
