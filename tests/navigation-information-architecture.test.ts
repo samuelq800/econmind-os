@@ -9,6 +9,8 @@ const teamPage = readFileSync("components/team/team-page.tsx", "utf8");
 const simulationNavigation = readFileSync("components/simulation/simulation-navigation.tsx", "utf8");
 
 const expectedTopLevelLabels = [
+  "Home",
+  "About",
   "Explore",
   "Learn",
   "Lab",
@@ -24,7 +26,7 @@ function routeHasPage(route: string) {
 }
 
 describe("Phase 2 information architecture", () => {
-  it("uses the agreed eight primary navigation destinations in the agreed order", () => {
+  it("keeps Home and About as direct primary destinations in the agreed order", () => {
     expect(NAVIGATION_SECTIONS.map((section) => section.label)).toEqual(expectedTopLevelLabels);
     expect(availableNavigationSections().map((section) => section.label)).toEqual(expectedTopLevelLabels);
     expect(MOBILE_NAVIGATION_GROUPS.map((group) => group.label)).toEqual(expectedTopLevelLabels);
@@ -42,6 +44,8 @@ describe("Phase 2 information architecture", () => {
     expect(navbar).toContain("availableNavigationSections");
     expect(navbar).toContain("MOBILE_NAVIGATION_GROUPS");
     expect(navbar).toContain("isNavigationSectionActive");
+    expect(navbar).toContain("compactDesktopSectionIds");
+    expect(navbar).toContain("2xl:flex");
     expect(footer).toContain("availableNavigationSections");
     expect(footer).toContain("primaryLinks");
   });

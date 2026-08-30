@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { AuthDialog } from "@/components/auth/auth-dialog";
 import { AccountOnboarding } from "@/components/auth/account-onboarding";
 import { AuthProvider } from "@/components/auth/auth-provider";
@@ -7,6 +7,7 @@ import { AccountDeletionProvider } from "@/components/governance/account-deletio
 import { LegalConsentGate } from "@/components/legal/legal-consent-gate";
 import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
+import { PwaRegistration } from "@/components/pwa/pwa-registration";
 import { ThemeProvider } from "@/components/layout/theme-provider";
 import { withBasePath } from "@/lib/base-path";
 import "./globals.css";
@@ -27,6 +28,12 @@ export const metadata: Metadata = {
   title: { default: "EconMind OS", template: "%s · EconMind OS" },
   description: "An interactive economics laboratory for models, policy simulation, evidence and cross-school economic experimentation.",
   applicationName: "EconMind OS",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "EconMind OS",
+  },
+  formatDetection: { telephone: false, date: false, address: false, email: false, url: false },
   metadataBase: siteUrl,
   manifest: withBasePath("/manifest.webmanifest"),
   icons: {
@@ -46,6 +53,15 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: "EconMind OS", description: "From the real world to economic reasoning.", images: [socialImageUrl] },
 };
 
+export const viewport: Viewport = {
+  colorScheme: "light dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f5f7f4" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b1814" },
+  ],
+  viewportFit: "cover",
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return <html lang="en" suppressHydrationWarning><body><ThemeProvider><AuthProvider><AccountDeletionProvider><RegisteredAppGate><Navbar />{children}<Footer /></RegisteredAppGate><AuthDialog /><AccountOnboarding /><LegalConsentGate /></AccountDeletionProvider></AuthProvider></ThemeProvider></body></html>;
+  return <html lang="en" suppressHydrationWarning><body><ThemeProvider><PwaRegistration /><AuthProvider><AccountDeletionProvider><RegisteredAppGate><Navbar />{children}<Footer /></RegisteredAppGate><AuthDialog /><AccountOnboarding /><LegalConsentGate /></AccountDeletionProvider></AuthProvider></ThemeProvider></body></html>;
 }

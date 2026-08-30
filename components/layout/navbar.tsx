@@ -11,6 +11,7 @@ import { withBasePath } from "@/lib/base-path";
 import { useTheme } from "./theme-provider";
 
 const navigationSections = availableNavigationSections();
+const compactDesktopSectionIds = new Set(["home", "about", "explore", "learn", "lab", "simulation", "league"]);
 
 export function Navbar() {
   const path = usePathname() ?? "/";
@@ -20,11 +21,13 @@ export function Navbar() {
   const [accountOpen, setAccountOpen] = useState(false);
   const [openSection, setOpenSection] = useState<string | null>(null);
   const links = navigationSections;
+  const compactDesktopLinks = links.filter((section) => compactDesktopSectionIds.has(section.id));
+  const compactOverflowLinks = links.filter((section) => !compactDesktopSectionIds.has(section.id));
 
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--canvas)_88%,transparent)] backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between px-5 lg:px-8">
-        <Link href="/" className="brand-home-link flex items-center gap-3" onClick={() => setOpen(false)} draggable={false}>
+      <div className="mx-auto flex h-16 max-w-[1720px] items-center gap-3 px-5 lg:px-8">
+        <Link href="/" className="brand-home-link flex shrink-0 items-center gap-3" onClick={() => setOpen(false)} draggable={false}>
           <span className="brand-badge-mini">
             <Image
               src={withBasePath("/brand/econmind-badge-96.png")}
@@ -39,12 +42,12 @@ export function Navbar() {
           <span className="text-sm font-extrabold">EconMind OS</span>
           <span className="hidden rounded border border-[var(--line)] px-1.5 py-.5 text-[9px] font-bold uppercase tracking-widest text-[var(--ink-faint)] sm:inline">Beta</span>
         </Link>
-        <nav className="hidden items-center gap-0.5 xl:flex" aria-label="Primary navigation">
+        <nav className="hidden min-w-0 flex-1 flex-nowrap items-center justify-center gap-0.5 2xl:flex" aria-label="Primary navigation">
           {links.map((section) => {
             const active = isNavigationSectionActive(section, path);
             const hasChildren = section.children.length > 0;
             return (
-              <div key={section.id} className="relative" onMouseEnter={() => hasChildren && setOpenSection(section.id)} onMouseLeave={() => setOpenSection(null)}>
+              <div key={section.id} className="relative shrink-0" onMouseEnter={() => hasChildren && setOpenSection(section.id)} onMouseLeave={() => setOpenSection(null)}>
                 <div className={`flex items-center rounded-lg ${active ? "bg-[var(--surface-strong)]" : "text-[var(--ink-muted)] hover:text-[var(--ink)]"}`}>
                   <Link href={section.href} aria-current={active ? "page" : undefined} className="whitespace-nowrap px-2.5 py-2 text-xs font-semibold 2xl:px-3 2xl:text-sm" onClick={() => setOpenSection(null)}>{section.label}</Link>
                   {hasChildren && <button type="button" aria-label={`Open ${section.label} navigation`} aria-expanded={openSection === section.id} onClick={() => setOpenSection((current) => current === section.id ? null : section.id)} className="-ml-1 grid size-6 place-items-center rounded-md hover:bg-[var(--surface-subtle)]"><ChevronDown size={13} /></button>}
@@ -67,7 +70,44 @@ export function Navbar() {
             );
           })}
         </nav>
-        <div className="flex items-center gap-2">
+        <nav className="relative hidden min-w-0 flex-1 flex-nowrap items-center justify-center gap-0.5 xl:flex 2xl:hidden" aria-label="Primary navigation">
+          {compactDesktopLinks.map((section) => {
+            const active = isNavigationSectionActive(section, path);
+            const hasChildren = section.children.length > 0;
+            return (
+              <div key={section.id} className="relative shrink-0" onMouseEnter={() => hasChildren && setOpenSection(section.id)} onMouseLeave={() => setOpenSection(null)}>
+                <div className={`flex items-center rounded-lg ${active ? "bg-[var(--surface-strong)]" : "text-[var(--ink-muted)] hover:text-[var(--ink)]"}`}>
+                  <Link href={section.href} aria-current={active ? "page" : undefined} className="whitespace-nowrap px-2.5 py-2 text-xs font-semibold" onClick={() => setOpenSection(null)}>{section.label}</Link>
+                  {hasChildren && <button type="button" aria-label={`Open ${section.label} navigation`} aria-expanded={openSection === section.id} onClick={() => setOpenSection((current) => current === section.id ? null : section.id)} className="-ml-1 grid size-6 place-items-center rounded-md hover:bg-[var(--surface-subtle)]"><ChevronDown size={13} /></button>}
+                </div>
+                {hasChildren && openSection === section.id && (
+                  <div className="absolute left-0 top-full z-50 w-[19rem] pt-2">
+                    <div className="overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-xl">
+                      <p className="px-3 pb-2 pt-1 text-[10px] font-extrabold uppercase tracking-[.14em] text-[var(--ink-faint)]">{section.description}</p>
+                      {section.children.map((item) => <Link key={item.href} href={item.href} onClick={() => setOpenSection(null)} className="block rounded-lg px-3 py-2.5 hover:bg-[var(--surface-subtle)]"><span className="block text-xs font-bold">{item.label}</span></Link>)}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          <div className="relative shrink-0" onMouseEnter={() => setOpenSection("desktop-more")} onMouseLeave={() => setOpenSection(null)}>
+            <button type="button" aria-label="Open more navigation" aria-expanded={openSection === "desktop-more"} onClick={() => setOpenSection((current) => current === "desktop-more" ? null : "desktop-more")} className={`flex items-center gap-1 rounded-lg px-2.5 py-2 text-xs font-semibold ${compactOverflowLinks.some((section) => isNavigationSectionActive(section, path)) ? "bg-[var(--surface-strong)]" : "text-[var(--ink-muted)] hover:text-[var(--ink)]"}`}>More <ChevronDown size={13} /></button>
+            {openSection === "desktop-more" && (
+              <div className="absolute right-0 top-full z-50 w-[18rem] pt-2">
+                <div className="overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-xl">
+                  {compactOverflowLinks.map((section) => (
+                    <div key={section.id} className="border-b border-[var(--line)] py-1 last:border-b-0">
+                      <Link href={section.href} onClick={() => setOpenSection(null)} className="block rounded-lg px-3 py-2 text-xs font-extrabold hover:bg-[var(--surface-subtle)]">{section.label}</Link>
+                      {section.children.map((item) => <Link key={item.href} href={item.href} onClick={() => setOpenSection(null)} className="block rounded-lg px-5 py-1.5 text-[11px] text-[var(--ink-muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]">{item.label}</Link>)}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </nav>
+        <div className="ml-auto flex shrink-0 items-center gap-2">
           <button
             aria-label="Toggle color theme"
             onClick={toggleTheme}
@@ -161,7 +201,9 @@ export function Navbar() {
               ))}
             </div>
             <div className="mt-8 grid gap-6">
-              {MOBILE_NAVIGATION_GROUPS.filter((group) => links.some((section) => section.label === group.label)).map((group) => (
+              {MOBILE_NAVIGATION_GROUPS.filter(
+                (group) => group.items.length > 0 && links.some((section) => section.label === group.label),
+              ).map((group) => (
                 <section key={group.label}>
                   <p className="text-[10px] font-extrabold uppercase tracking-[.16em] text-[var(--ink-faint)]">{group.label}</p>
                   {group.items.length > 0 && <div className="mt-2 grid grid-cols-2 gap-1">
