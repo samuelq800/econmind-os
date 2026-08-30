@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
-import { HomeMappedSchoolRegister } from "@/components/home/home-mapped-school-register";
 import { HomeSchoolNetworkMap } from "@/components/home/home-school-network-map";
 import {
   mergeLeagueDirectory,
@@ -48,7 +47,6 @@ export function HomeLeagueSchoolDirectory() {
       </div>
 
       <HomeSchoolNetworkMap schools={schools} syncStatus={syncStatus} />
-      <HomeMappedSchoolRegister schools={schools} />
 
       <div className="mt-6 flex flex-wrap gap-3">
         <Link href="/league/schools" className="home-text-link">Explore school profiles <ArrowRight size={15} /></Link>

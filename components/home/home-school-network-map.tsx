@@ -190,6 +190,29 @@ export function HomeSchoolNetworkMap({
             </div>
           )}
         </div>
+
+        <section className={styles.mappedRegister} aria-labelledby="mapped-school-register-title">
+          <div className={styles.mappedRegisterHeading}>
+            <div>
+              <p>Verified locations</p>
+              <h4 id="mapped-school-register-title">Mapped schools</h4>
+            </div>
+            <span>{model.mappedSchoolCount} schools · {hubs.length} cities</span>
+          </div>
+          <p className={styles.mappedRegisterNote}>Every plotted school is named here. Coordinates are city centroids, not campus addresses.</p>
+          <div className={styles.mappedCityGrid}>
+            {hubs.map((hub) => (
+              <article className={styles.mappedCity} key={hub.location.locationKey}>
+                <div>
+                  <p>{schoolLocationAreaLabel(hub.location)}</p>
+                  <h5>{hub.location.city}</h5>
+                </div>
+                <ul>{hub.schools.map((school) => <li key={school.school_id}>{school.school_name}</li>)}</ul>
+                <small>{hub.location.longitude.toFixed(4)}°E · {hub.location.latitude.toFixed(4)}°N</small>
+              </article>
+            ))}
+          </div>
+        </section>
       </section>
 
       <Link href="/league/schools/" className={styles.directoryLink}>
