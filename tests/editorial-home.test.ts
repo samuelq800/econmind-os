@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 const home = readFileSync("components/home/editorial-home.tsx", "utf8");
 const schoolDirectory = readFileSync("components/home/home-league-school-directory.tsx", "utf8");
+const mappedSchoolRegister = readFileSync("components/home/home-mapped-school-register.tsx", "utf8");
 const schoolNetworkMap = readFileSync("components/home/home-school-network-map.tsx", "utf8");
 const schoolLedger = readFileSync("components/league/school-directory-ledger.tsx", "utf8");
 const leagueSchools = readFileSync("components/league/league-schools.tsx", "utf8");
@@ -52,6 +53,9 @@ describe("editorial public architecture", () => {
 
   it("uses a land-only world distribution plate instead of a school-card wall", () => {
     expect(schoolDirectory).toContain("HomeSchoolNetworkMap");
+    expect(schoolDirectory).toContain("HomeMappedSchoolRegister");
+    expect(mappedSchoolRegister).toContain("Mapped school register");
+    expect(mappedSchoolRegister).toContain("Every school with a reviewed city coordinate");
     expect(schoolDirectory).not.toContain("home-schools-grid");
     expect(schoolNetworkMap).toContain("/league/maps/world-land.svg");
     expect(schoolNetworkMap).toContain("buildSchoolNetworkModel");
