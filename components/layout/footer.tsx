@@ -27,6 +27,7 @@ const legalLinks = [
 const partnerLinks = [
   { href: "http://www.uhhc.com.cn/", label: "UHHC · 简体中文" },
   { href: "http://en.uhhc.com.cn/", label: "UHHC · English" },
+  { href: "https://bominds.org", label: "BoMinds" },
 ] as const;
 const socialLinks = [
   {
