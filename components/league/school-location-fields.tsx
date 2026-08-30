@@ -7,6 +7,7 @@ import {
   getCountryOrArea,
   type SchoolLocationSubmission,
 } from "@/lib/league/geographic-areas";
+import { SCHOOL_CITY_LOCATIONS } from "@/lib/league/school-locations";
 
 export const EMPTY_SCHOOL_LOCATION: SchoolLocationSubmission = {
   areaKey: "",
@@ -26,6 +27,10 @@ export function SchoolLocationFields({
 }) {
   const selectedArea = getCountryOrArea(value.areaKey);
   const hasAdministrativeAreas = Boolean(selectedArea?.administrativeAreas.length);
+  const catalogCities = SCHOOL_CITY_LOCATIONS
+    .filter((location) => `geoarea:${location.countryCode}` === value.areaKey)
+    .sort((left, right) => left.city.localeCompare(right.city));
+  const cityListId = `${idPrefix}-catalog-cities`;
 
   return (
     <fieldset className="border-l-2 border-[var(--accent)] bg-[var(--surface-subtle)] px-4 py-4">
@@ -103,11 +108,31 @@ export function SchoolLocationFields({
           minLength={2}
           maxLength={100}
           value={value.city}
-          onChange={(event) => onChange({ ...value, city: event.target.value })}
+          list={catalogCities.length > 0 ? cityListId : undefined}
+          onChange={(event) => {
+            const city = event.target.value;
+            const catalogCity = catalogCities.find(
+              (location) => location.city.localeCompare(city, undefined, { sensitivity: "accent" }) === 0,
+            );
+            onChange({
+              ...value,
+              city,
+              administrativeArea: catalogCity?.administrativeArea ?? value.administrativeArea,
+            });
+          }}
           className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-sm outline-none focus:border-[var(--accent)]"
           placeholder="City-level location only"
         />
+        {catalogCities.length > 0 ? (
+          <datalist id={cityListId}>
+            {catalogCities.map((location) => <option key={location.locationKey} value={location.city} />)}
+          </datalist>
+        ) : null}
       </label>
+
+      <p className="mt-2 text-[10px] leading-4 text-[var(--ink-muted)]">
+        Select a listed city to verify its map marker automatically. New cities remain available and will be reviewed.
+      </p>
 
       <p className="mt-3 text-[10px] leading-4 text-[var(--ink-faint)]">{GEOGRAPHIC_LABEL_DISCLAIMER}</p>
     </fieldset>

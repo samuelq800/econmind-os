@@ -17,9 +17,15 @@ export const SCHOOL_NETWORK_REGIONS = [
 export type SchoolNetworkRegion = (typeof SCHOOL_NETWORK_REGIONS)[number];
 
 export const REGION_BY_LOCATION_KEY = {
+  "geonames:2158177": "Other locations",
   "geonames:1816670": "North China",
+  "geonames:1815456": "East China",
   "geonames:1815286": "West China",
   "geonames:1814906": "West China",
+  "geonames:1810845": "South China",
+  "geonames:1809858": "South China",
+  "geonames:1808722": "East China",
+  "geonames:1819729": "Other locations",
   "geonames:1808926": "East China",
   "geonames:1805753": "East China",
   "geonames:1800163": "Central China",
@@ -28,11 +34,14 @@ export const REGION_BY_LOCATION_KEY = {
   "geonames:1799397": "East China",
   "geonames:1797929": "East China",
   "geonames:1796236": "East China",
+  "geonames:1795855": "North China",
   "geonames:1795565": "South China",
   "geonames:1880252": "Other locations",
   "geonames:1886760": "East China",
   "geonames:1790923": "East China",
   "geonames:1790437": "South China",
+  "geonames:1806408": "South China",
+  "geonames:1790630": "West China",
 } as const satisfies Record<
   (typeof SCHOOL_CITY_LOCATIONS)[number]["locationKey"],
   SchoolNetworkRegion

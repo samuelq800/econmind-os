@@ -14,7 +14,7 @@ export type SchoolCityLocation = Readonly<{
 export const SCHOOL_LOCATION_SOURCE = {
   name: "GeoNames",
   dataset: "cities15000",
-  snapshotDate: "2026-08-25",
+  snapshotDate: "2026-08-30",
   downloadUrl: "https://download.geonames.org/export/dump/cities15000.zip",
   documentationUrl: "https://download.geonames.org/export/dump/",
   license: "CC BY 4.0",
@@ -30,6 +30,15 @@ export const SCHOOL_LOCATION_SOURCE = {
 // fuzzy-matched or inferred at runtime.
 export const SCHOOL_CITY_LOCATIONS = [
   {
+    locationKey: "geonames:2158177",
+    city: "Melbourne",
+    countryCode: "AU",
+    administrativeArea: "Victoria",
+    latitude: -37.814,
+    longitude: 144.96332,
+    geonameId: 2158177,
+  },
+  {
     locationKey: "geonames:1816670",
     city: "Beijing",
     countryCode: "CN",
@@ -37,6 +46,15 @@ export const SCHOOL_CITY_LOCATIONS = [
     latitude: 39.9075,
     longitude: 116.39723,
     geonameId: 1816670,
+  },
+  {
+    locationKey: "geonames:1815456",
+    city: "Changzhou",
+    countryCode: "CN",
+    administrativeArea: "Jiangsu",
+    latitude: 31.77359,
+    longitude: 119.95401,
+    geonameId: 1815456,
   },
   {
     locationKey: "geonames:1815286",
@@ -55,6 +73,42 @@ export const SCHOOL_CITY_LOCATIONS = [
     latitude: 29.56026,
     longitude: 106.55771,
     geonameId: 1814906,
+  },
+  {
+    locationKey: "geonames:1810845",
+    city: "Foshan",
+    countryCode: "CN",
+    administrativeArea: "Guangdong",
+    latitude: 23.02677,
+    longitude: 113.13148,
+    geonameId: 1810845,
+  },
+  {
+    locationKey: "geonames:1809858",
+    city: "Guangzhou",
+    countryCode: "CN",
+    administrativeArea: "Guangdong",
+    latitude: 23.11667,
+    longitude: 113.25,
+    geonameId: 1809858,
+  },
+  {
+    locationKey: "geonames:1808722",
+    city: "Hefei",
+    countryCode: "CN",
+    administrativeArea: "Anhui",
+    latitude: 31.86389,
+    longitude: 117.28083,
+    geonameId: 1808722,
+  },
+  {
+    locationKey: "geonames:1819729",
+    city: "Hong Kong",
+    countryCode: "HK",
+    administrativeArea: null,
+    latitude: 22.27832,
+    longitude: 114.17469,
+    geonameId: 1819729,
   },
   {
     locationKey: "geonames:1808926",
@@ -129,6 +183,15 @@ export const SCHOOL_CITY_LOCATIONS = [
     geonameId: 1796236,
   },
   {
+    locationKey: "geonames:1795855",
+    city: "Shijiazhuang",
+    countryCode: "CN",
+    administrativeArea: "Hebei",
+    latitude: 38.04139,
+    longitude: 114.47861,
+    geonameId: 1795855,
+  },
+  {
     locationKey: "geonames:1795565",
     city: "Shenzhen",
     countryCode: "CN",
@@ -173,6 +236,24 @@ export const SCHOOL_CITY_LOCATIONS = [
     longitude: 113.56778,
     geonameId: 1790437,
   },
+  {
+    locationKey: "geonames:1806408",
+    city: "Yangjiang",
+    countryCode: "CN",
+    administrativeArea: "Guangdong",
+    latitude: 21.85563,
+    longitude: 111.96272,
+    geonameId: 1806408,
+  },
+  {
+    locationKey: "geonames:1790630",
+    city: "Xi'an",
+    countryCode: "CN",
+    administrativeArea: "Shaanxi",
+    latitude: 34.25833,
+    longitude: 108.92861,
+    geonameId: 1790630,
+  },
 ] as const satisfies readonly SchoolCityLocation[];
 
 const NON_GEOGRAPHIC_CITY_LABELS = new Set(["league partner"]);
@@ -202,6 +283,8 @@ export function schoolLocationAreaLabel(location: SchoolCityLocation) {
   if (location.areaLabel?.trim()) return location.areaLabel.trim();
   if (location.countryCode === "CN") return "China — mainland areas";
   if (location.countryCode === "SG") return "Singapore";
+  if (location.countryCode === "HK") return "Hong Kong SAR";
+  if (location.countryCode === "AU") return "Australia";
   return "Other location";
 }
 

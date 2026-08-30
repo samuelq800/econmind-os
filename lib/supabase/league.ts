@@ -93,7 +93,12 @@ export async function resubmitLeagueApplicationLocation(applicationId: string, l
     p_submitted_city: location.city,
   });
   fail(error);
-  return data as { application_id: string; location_status: LeagueApplication["location_status"] };
+  return data as {
+    application_id: string;
+    location_status: LeagueApplication["location_status"];
+    location_key?: string | null;
+    city?: string;
+  };
 }
 
 export async function joinLeagueTeam(inviteCode: string) {

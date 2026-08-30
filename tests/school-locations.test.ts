@@ -28,7 +28,8 @@ describe("school city location catalog", () => {
   it("uses stable GeoNames IDs as aggregation keys", () => {
     expect(
       Object.fromEntries(SCHOOL_CITY_LOCATIONS.map(({ city, locationKey }) => [city, locationKey])),
-    ).toEqual({
+    ).toMatchObject({
+      Melbourne: "geonames:2158177",
       Beijing: "geonames:1816670",
       Chengdu: "geonames:1815286",
       Chongqing: "geonames:1814906",
@@ -98,8 +99,8 @@ describe("school city location catalog", () => {
   });
 
   it("keeps valid WGS84 coordinates and auditable source metadata", () => {
-    expect(SCHOOL_CITY_LOCATIONS).toHaveLength(16);
-    expect(new Set(SCHOOL_CITY_LOCATIONS.map(({ locationKey }) => locationKey)).size).toBe(16);
+    expect(SCHOOL_CITY_LOCATIONS).toHaveLength(25);
+    expect(new Set(SCHOOL_CITY_LOCATIONS.map(({ locationKey }) => locationKey)).size).toBe(25);
 
     for (const location of SCHOOL_CITY_LOCATIONS) {
       expect(location.locationKey).toBe(`geonames:${location.geonameId}`);

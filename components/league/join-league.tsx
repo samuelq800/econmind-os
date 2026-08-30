@@ -79,7 +79,9 @@ export function JoinLeague() {
         location: form.location,
       });
       setApplications((current) => [application, ...current]);
-      setMessage("Your League application has been submitted.");
+      setMessage(application.location_status === "verified"
+        ? "Your League application has been submitted and its city marker was verified automatically."
+        : "Your League application has been submitted. New city labels are reviewed before they are mapped.");
       setForm(initialForm);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not submit your application.");
@@ -105,18 +107,20 @@ export function JoinLeague() {
     setError("");
     setMessage("");
     try {
-      await resubmitLeagueApplicationLocation(applicationId, correctionLocation);
+      const result = await resubmitLeagueApplicationLocation(applicationId, correctionLocation);
       setApplications((current) => current.map((application) => application.id === applicationId ? {
         ...application,
         submitted_area_key: correctionLocation.areaKey,
         submitted_area_label: correctionLocation.areaLabel,
         submitted_administrative_area: correctionLocation.administrativeArea || null,
         submitted_city: correctionLocation.city,
-        location_status: "pending_review",
+        location_status: result.location_status,
         location_public_note: null,
       } : application));
       setCorrectionApplicationId(null);
-      setMessage("Your corrected location has been returned to the review queue.");
+      setMessage(result.location_status === "verified"
+        ? "Your corrected location now uses a verified city marker."
+        : "Your corrected location has been returned to the review queue.");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not update the location.");
     } finally {

@@ -13,6 +13,7 @@ import {
 } from "@/lib/league/geographic-areas";
 
 const migration = readFileSync("supabase/migrations/20260826000000_school_location_review_workflow.sql", "utf8");
+const automaticMappingMigration = readFileSync("supabase/migrations/20260830010000_auto_map_known_school_cities.sql", "utf8");
 const approvalMigration = readFileSync("supabase/migrations/20260827000000_unblock_school_approval_location_review.sql", "utf8");
 const onboarding = readFileSync("components/auth/account-onboarding.tsx", "utf8");
 const join = readFileSync("components/league/join-league.tsx", "utf8");
@@ -125,6 +126,18 @@ describe("school location review workflow", () => {
     expect(migration).toContain("revoke insert, update, delete on public.league_applications from authenticated, anon");
     expect(migration).toContain("revoke insert, update, delete on public.schools from authenticated, anon");
     expect(migration).toContain("drop function if exists public.complete_econmind_onboarding(text, uuid, text, text, text)");
+  });
+
+  it("automatically verifies one exact catalog city match within the chosen area", () => {
+    expect(automaticMappingMigration).toContain("catalog.area_key = clean_area_key");
+    expect(automaticMappingMigration).toContain("econmind_location_text_key(catalog.city)");
+    expect(automaticMappingMigration).toContain("resolved_location_status := 'verified'");
+    expect(automaticMappingMigration).toContain("'catalog_match'");
+    expect(automaticMappingMigration).toContain("automatic_catalog_match");
+    expect(automaticMappingMigration).toContain("'geonames:2158177'");
+    expect(automaticMappingMigration).toContain("'7dda18da-62b7-46cd-bd73-f1adc22ea25a'");
+    expect(locationFields).toContain("<datalist");
+    expect(locationFields).toContain("verify its map marker automatically");
   });
 
   it("keeps location review optional when an administrator approves a school", () => {
