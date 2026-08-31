@@ -1,23 +1,54 @@
 {
   "name": "EconMind OS",
   "short_name": "EconMind",
+  "id": "./",
+  "lang": "en",
+  "dir": "ltr",
   "description": "An interactive economics laboratory for models, policy simulation, evidence and cross-school experimentation.",
   "icons": [
     {
       "src": "brand/econmind-badge-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "brand/econmind-badge-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ],
   "theme_color": "#0b1814",
   "background_color": "#0b1814",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "display": "standalone",
-  "start_url": "./"
+  "orientation": "any",
+  "scope": "./",
+  "start_url": "./",
+  "categories": ["education", "productivity", "reference"],
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Explore EconMind",
+      "short_name": "Explore",
+      "description": "Open real-world economic questions and learning pathways.",
+      "url": "./explore/",
+      "icons": [{ "src": "brand/econmind-badge-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Economic models",
+      "short_name": "Models",
+      "description": "Open the EconMind model library.",
+      "url": "./models/",
+      "icons": [{ "src": "brand/econmind-badge-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "My workspace",
+      "short_name": "Workspace",
+      "description": "Open the EconMind workspace.",
+      "url": "./dashboard/",
+      "icons": [{ "src": "brand/econmind-badge-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
 }

@@ -130,6 +130,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data = created.data;
         }
         if (!active) return;
+        // Account moderation was added after the original profile schema.
+        // Keep normal role loading available while the additive migration is
+        // being rolled out, then enforce a suspension as soon as it exists.
+        const { data: accessState, error: accessStateError } = await supabase
+          .from("profiles")
+          .select("account_status")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (!active) return;
+        if (!accessStateError && accessState?.account_status === "suspended") {
+          await supabase.auth.signOut({ scope: "local" });
+          if (active) { setRole("guest"); setPlatformRole(null); setRoleLoading(false); }
+          return;
+        }
         setRole(
           data?.role === "teacher" || data?.role === "professor"
             ? data.role

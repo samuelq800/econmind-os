@@ -38,7 +38,7 @@ export type PlatformNavigationItem = {
  * working. Simulation and League retain their dedicated secondary navigation.
  */
 export type NavigationSection = {
-  id: "explore" | "learn" | "lab" | "simulation" | "league" | "teams" | "community-legal" | "workspace";
+  id: "home" | "about" | "explore" | "learn" | "lab" | "simulation" | "league" | "teams" | "community-legal" | "workspace";
   label: string;
   href: string;
   system: ProductSystem;
@@ -48,6 +48,16 @@ export type NavigationSection = {
 };
 
 export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
+  {
+    id: "home", label: "Home", href: "/", system: "shared",
+    description: "Return to the EconMind OS home page.",
+    children: [],
+  },
+  {
+    id: "about", label: "About", href: "/about", system: "shared",
+    description: "The student-led EconMind network and its purpose.",
+    children: [],
+  },
   {
     id: "explore", label: "Explore", href: "/explore", system: "learning-research", feature: "dailyBrief",
     description: "Real-world economic discovery.",
@@ -109,12 +119,12 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
     description: "Existing community spaces and governance information.",
     children: [
       { href: "/community", label: "Community", system: "shared", description: "Network participation, updates and shared spaces." },
-      { href: "/about", label: "About", system: "shared" },
       { href: "/community-guidelines", label: "Community Guidelines", system: "shared", description: "Participation and conduct expectations." },
       { href: "/integrity", label: "Integrity", system: "shared", description: "Academic integrity and platform standards." },
       { href: "/legal", label: "Legal", system: "shared", description: "Legal notices and rights information." },
       { href: "/privacy", label: "Privacy Notice", system: "shared", description: "How EconMind handles personal information." },
       { href: "/terms", label: "Terms of Use", system: "shared", description: "Terms governing the platform." },
+      { href: "/collaboration", label: "Collaboration Network", system: "shared", description: "Academic and organizational collaboration ecosystem." },
     ],
   },
   {

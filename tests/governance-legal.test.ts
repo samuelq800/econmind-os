@@ -36,7 +36,7 @@ describe("governance, privacy, and legal foundation", () => {
   });
 
   it("makes the full About statement a primary public destination", () => {
-    expect(featureFlags).toContain('{ href: "/about", label: "About", system: "shared" }');
+    expect(featureFlags).toContain('id: "about", label: "About", href: "/about", system: "shared"');
     expect(about).toContain("Economics beyond the classroom.");
     expect(about).toContain("Student-initiated. Independently operated. Non-profit in purpose.");
     expect(about).toContain("A modelled result is an outcome within a set of assumptions");
