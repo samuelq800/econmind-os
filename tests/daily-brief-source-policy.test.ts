@@ -11,7 +11,7 @@ describe("Daily Brief source policy", () => {
   it("removes and prevents gov.uk candidate feeds without erasing historical items", () => {
     expect(migration).toContain("delete from public.daily_brief_sources");
     expect(migration).toContain("daily_brief_sources_not_gov_uk_check");
-    expect(migration).toContain("gov\\\\.uk");
+    expect(migration).toContain("gov\\.uk");
     expect(migration).toContain("ON DELETE SET NULL");
   });
 });

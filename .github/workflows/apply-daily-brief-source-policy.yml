@@ -1,0 +1,42 @@
+name: Apply Daily Brief source policy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+    steps:
+      - name: Verify protected configuration
+        run: |
+          test -n "$SUPABASE_ACCESS_TOKEN"
+          test -n "$SUPABASE_PROJECT_REF"
+      - name: Remove blocked Daily Brief sources
+        run: |
+          payload="$(node <<'NODE'
+          const query = [
+            "delete from public.daily_brief_sources",
+            "where lower(feed_url) ~ '^https://([a-z0-9-]+\\.)*gov\\.uk(?:[:/]|$)';",
+            "",
+            "alter table public.daily_brief_sources",
+            "  drop constraint if exists daily_brief_sources_not_gov_uk_check;",
+            "",
+            "alter table public.daily_brief_sources",
+            "  add constraint daily_brief_sources_not_gov_uk_check",
+            "  check (lower(feed_url) !~ '^https://([a-z0-9-]+\\.)*gov\\.uk(?:[:/]|$)');",
+          ].join("\n");
+          process.stdout.write(JSON.stringify({ query }));
+          NODE
+          )"
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            --header "Content-Type: application/json" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query" \
+            --data "$payload"
