@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { withBasePath } from "@/lib/base-path";
 import {
   OFFICIAL_CONTACT_EMAIL,
@@ -58,6 +61,8 @@ const socialLinks = [
 ] as const;
 
 export function Footer() {
+  const pathname = usePathname() ?? "/";
+  if (pathname === "/live-world" || pathname.startsWith("/live-world/")) return null;
   return (
     <footer className="border-t border-[var(--line)] bg-[var(--surface)] px-5 py-10 text-sm sm:px-8 lg:px-12">
       <div className="mx-auto grid max-w-[1560px] gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[1.4fr_repeat(5,minmax(0,1fr))]">

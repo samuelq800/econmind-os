@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Building2, CheckCircle2, GraduationCap, LoaderCircle, MapPin, School2, UserRound } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { EMPTY_SCHOOL_LOCATION, SchoolLocationFields } from "@/components/league/school-location-fields";
@@ -30,6 +31,7 @@ const paths: Array<{ id: OnboardingPath; title: string; description: string; ico
 ];
 
 export function AccountOnboarding() {
+  const pathname = usePathname() ?? "/";
   const { user, roleLoading, viewerAccess, authOpen } = useAuth();
   const userId = user?.id ?? null;
   const [checkedUserId, setCheckedUserId] = useState<string | null>(null);
@@ -73,7 +75,7 @@ export function AccountOnboarding() {
     return () => { active = false; };
   }, [step]);
 
-  if (authOpen || viewerAccess || !user || roleLoading || checkedUserId !== userId || completedUserId === userId) return null;
+  if (authOpen || viewerAccess || !user || roleLoading || checkedUserId !== userId || completedUserId === userId || pathname === "/live-world" || pathname.startsWith("/live-world/")) return null;
 
   function choose(next: OnboardingPath) {
     setError("");

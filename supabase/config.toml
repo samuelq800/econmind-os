@@ -13,6 +13,10 @@ additional_redirect_urls = [
   "http://localhost:3000/**",
 ]
 enable_signup = true
+# Live World participants receive a separate, temporary anonymous session.
+# It is stored under a different browser key and never replaces their normal
+# EconMind account session.
+enable_anonymous_sign_ins = true
 [auth.email]
 enable_signup = true
 double_confirm_changes = true

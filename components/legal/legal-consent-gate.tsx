@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CheckCircle2, LoaderCircle } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -9,6 +10,7 @@ import { LEGAL_DOCUMENTS, needsLegalReconsent } from "@/lib/legal/legal-config";
 import { acceptCurrentLegalDocuments, listMyLegalConsents } from "@/lib/supabase/governance";
 
 export function LegalConsentGate() {
+  const pathname = usePathname() ?? "/";
   const { user, loading } = useAuth();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -31,7 +33,7 @@ export function LegalConsentGate() {
     return () => { active = false; };
   }, [loading, user]);
 
-  if (!user || !open) return null;
+  if (pathname === "/live-world" || pathname.startsWith("/live-world/") || !user || !open) return null;
 
   async function acknowledge() {
     setBusy(true);

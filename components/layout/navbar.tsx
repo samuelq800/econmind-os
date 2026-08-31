@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { ChevronDown, ClipboardCheck, Cloud, Eye, GraduationCap, KeyRound, LoaderCircle, LogIn, LogOut, Menu, Moon, ShieldCheck, Sun, UserRound, X } from "lucide-react";
+import { ChevronDown, ClipboardCheck, Cloud, Eye, Gamepad2, GraduationCap, KeyRound, LoaderCircle, LogIn, LogOut, Menu, Moon, ShieldCheck, Sun, UserRound, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { getDesignatedAccountAccessStatus, setDesignatedAccountAccess } from "@/lib/supabase/account-moderation";
@@ -63,6 +63,10 @@ export function Navbar() {
       setModerationBusy(false);
     }
   };
+
+  // Live World is an event-only surface. It deliberately has no bridge back
+  // into the normal application navigation or account controls.
+  if (path === "/live-world" || path.startsWith("/live-world/")) return null;
 
   return (
     <>
@@ -210,6 +214,7 @@ export function Navbar() {
                 )}
                 {worldSupervisor && <Link href="/admin/viewer-invitations" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"><KeyRound size={14} /> Viewing invitations</Link>}
                 {worldSupervisor && <Link href="/admin/governance" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"><ShieldCheck size={14} /> Governance requests</Link>}
+                {worldSupervisor && <Link href="/admin/live-world" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"><Gamepad2 size={14} /> Live World rooms</Link>}
                 {designatedAccountModerator && <button type="button" onClick={openAccountAccessControl} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-xs font-semibold text-[#2f6dff] hover:bg-[#e7efff]"><ShieldCheck size={14} /> Account access control</button>}
                 <button
                   type="button"

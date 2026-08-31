@@ -1,0 +1,84 @@
+import { readFileSync } from "node:fs";
+import { describe, expect, it } from "vitest";
+import { pageAccessForPath } from "@/lib/platform/access-control";
+import { LIVE_WORLD_COUNTRIES } from "@/lib/live-world/config";
+import {
+  agreementPreview,
+  forecastLiveWorldCountry,
+  initialLiveWorldRoomState,
+  rankLiveWorldCountries,
+} from "@/lib/live-world/engine";
+
+const migration = readFileSync(
+  "supabase/migrations/20260831020000_live_world_simulation.sql",
+  "utf8",
+);
+
+describe("Live World", () => {
+  it("keeps four structurally distinct fictional countries and twelve possible seats", () => {
+    expect(LIVE_WORLD_COUNTRIES).toHaveLength(4);
+    expect(new Set(LIVE_WORLD_COUNTRIES.map((country) => country.structure.technology)).size).toBe(4);
+    expect(new Set(LIVE_WORLD_COUNTRIES.map((country) => country.structure.resources)).size).toBe(4);
+    expect(migration).toContain("live_world_participants_unique_seat");
+    expect(migration).toContain("central_bank_governor");
+    expect(migration).toContain("finance_domestic_minister");
+    expect(migration).toContain("trade_industry_investment_minister");
+  });
+
+  it("combines independently published policy packages into the six-dimensional forecast", () => {
+    const state = initialLiveWorldRoomState();
+    const baseline = forecastLiveWorldCountry("aurora", state);
+    state.publishedPolicies.aurora = {
+      central_bank_governor: { policy_rate: 9, liquidity_support: 2, reserve_requirement: 16 },
+      finance_domestic_minister: { government_spending: 52, tax_rate: 25, welfare: 22, infrastructure: 34 },
+      trade_industry_investment_minister: { tariff: 12, export_support: 22, industrial_subsidy: 20, fdi_openness: 24 },
+    };
+    const combined = forecastLiveWorldCountry("aurora", state);
+    expect(combined.activity).not.toBe(baseline.activity);
+    expect(combined.financial).not.toBe(baseline.financial);
+    expect(combined.fiscal).not.toBe(baseline.fiscal);
+  });
+
+  it("applies active crises differently according to country structure", () => {
+    const state = initialLiveWorldRoomState();
+    state.crises = [{ id: "energy-price-spike", label: "Energy price spike", description: "", affectedCountries: ["aurora", "borealis", "demeria"], effects: { activity: -4, prices: -8, fiscal: -2, stability: -3 }, active: true }];
+    const demeria = forecastLiveWorldCountry("demeria", state);
+    const cyrenia = forecastLiveWorldCountry("cyrenia", state);
+    expect(demeria.prices).toBeLessThan(cyrenia.prices);
+  });
+
+  it("makes trade gains asymmetric rather than copying the same benefit to both countries", () => {
+    const preview = agreementPreview({ proposerCountry: "cyrenia", receiverCountry: "aurora", depth: "deep" });
+    expect(preview.proposer).not.toBe(preview.receiver);
+    const ranked = rankLiveWorldCountries(initialLiveWorldRoomState());
+    expect(ranked).toHaveLength(4);
+    expect(ranked[0].score).toBeGreaterThanOrEqual(ranked[3].score);
+  });
+
+  it("enforces server-side room access, atomic seats, role-owned drafts and admin-only control", () => {
+    for (const signature of [
+      "create_live_world_room",
+      "join_live_world_room",
+      "claim_live_world_seat",
+      "save_live_world_draft",
+      "publish_live_world_policy",
+      "decide_live_world_agreement",
+      "live_world_set_status",
+      "get_live_world_view",
+    ]) expect(migration).toContain(`function public.${signature}`);
+    expect(migration).toContain("where id = p_room_id for update");
+    expect(migration).toContain("Only the receiving Trade, Industry & Investment Minister may decide this agreement");
+    expect(migration).toContain("only save its own valid policy controls");
+    expect(migration).toContain("invitation hashes never have a SELECT policy");
+    expect(migration).toContain("alter table public.live_world_rooms enable row level security");
+  });
+
+  it("mounts a standalone public event route without ordinary application navigation", () => {
+    const navbar = readFileSync("components/layout/navbar.tsx", "utf8");
+    const route = readFileSync("app/live-world/page.tsx", "utf8");
+    expect(navbar).toContain('path === "/live-world"');
+    expect(route).toContain("LiveWorldRoute");
+    expect(pageAccessForPath("/live-world").audience).toBe("public");
+    expect(pageAccessForPath("/admin/live-world").platformRoles).toContain("platform_admin");
+  });
+});

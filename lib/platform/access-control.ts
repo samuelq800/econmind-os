@@ -24,6 +24,7 @@ const ACCOUNT_OR_VIEWER: PageAccessPolicy = { audience: "account-or-viewer" };
 export const PAGE_ACCESS_RULES: readonly PageAccessRule[] = [
   // Governance work contains account requests and internal notes.
   { path: "/admin/governance", match: "prefix", audience: "account", platformRoles: ["platform_admin"] },
+  { path: "/admin/live-world", match: "prefix", audience: "account", platformRoles: ["platform_admin"] },
 
   // Personal data is not part of the otherwise-public case library.
   { path: "/cases/history", match: "prefix", audience: "account" },
@@ -41,6 +42,9 @@ export const PAGE_ACCESS_RULES: readonly PageAccessRule[] = [
   { path: "/community-guidelines", audience: "public" },
   { path: "/integrity", audience: "public" },
   { path: "/contact", audience: "account" },
+  // A standalone invitation-only event: authentication happens through its
+  // short-lived room session, not an ordinary EconMind account.
+  { path: "/live-world", match: "prefix", audience: "public" },
   { path: "/explore", audience: "public" },
   { path: "/team", audience: "public" },
   { path: "/daily-brief", match: "prefix", audience: "public" },
