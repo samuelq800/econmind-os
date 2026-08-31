@@ -121,16 +121,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const refreshRole = () => {
       queueMicrotask(() => { if (active) setRoleLoading(true); });
-      void supabase.from("profiles").select("role,platform_role,account_status").eq("user_id", user.id).maybeSingle().then(async ({ data }) => {
+      void supabase.from("profiles").select("role,platform_role").eq("user_id", user.id).maybeSingle().then(async ({ data }) => {
         // Handles accounts created before a profile trigger was installed. The
         // insert is allowed only for the authenticated user's own UUID by RLS.
         if (!data) {
           const displayName = typeof user.user_metadata.display_name === "string" ? user.user_metadata.display_name.slice(0, 80) : null;
-          const created = await supabase.from("profiles").insert({ user_id: user.id, display_name: displayName }).select("role,platform_role,account_status").maybeSingle();
+          const created = await supabase.from("profiles").insert({ user_id: user.id, display_name: displayName }).select("role,platform_role").maybeSingle();
           data = created.data;
         }
         if (!active) return;
-        if (data?.account_status === "suspended") {
+        // Account moderation was added after the original profile schema.
+        // Keep normal role loading available while the additive migration is
+        // being rolled out, then enforce a suspension as soon as it exists.
+        const { data: accessState, error: accessStateError } = await supabase
+          .from("profiles")
+          .select("account_status")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (!active) return;
+        if (!accessStateError && accessState?.account_status === "suspended") {
           await supabase.auth.signOut({ scope: "local" });
           if (active) { setRole("guest"); setPlatformRole(null); setRoleLoading(false); }
           return;
