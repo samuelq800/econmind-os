@@ -51,3 +51,6 @@ verify_jwt = false
 # configuration, never in the public GitHub Pages build.
 [functions.process-continuous-world]
 verify_jwt = false
+
+[functions.moderate-account-access]
+verify_jwt = true

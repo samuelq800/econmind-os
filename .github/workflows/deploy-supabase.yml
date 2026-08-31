@@ -56,3 +56,4 @@ jobs:
           supabase functions deploy collect-daily-economic-brief --project-ref "$SUPABASE_PROJECT_REF"
           supabase functions deploy process-league-world-round --project-ref "$SUPABASE_PROJECT_REF"
           supabase functions deploy process-continuous-world --project-ref "$SUPABASE_PROJECT_REF"
+          supabase functions deploy moderate-account-access --project-ref "$SUPABASE_PROJECT_REF"
