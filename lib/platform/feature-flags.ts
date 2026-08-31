@@ -124,6 +124,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
       { href: "/legal", label: "Legal", system: "shared", description: "Legal notices and rights information." },
       { href: "/privacy", label: "Privacy Notice", system: "shared", description: "How EconMind handles personal information." },
       { href: "/terms", label: "Terms of Use", system: "shared", description: "Terms governing the platform." },
+      { href: "/collaboration", label: "Collaboration Network", system: "shared", description: "Academic and organizational collaboration ecosystem." },
     ],
   },
   {
