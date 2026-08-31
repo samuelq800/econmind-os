@@ -11,6 +11,17 @@ const cors = {
 
 const reply = (body: Record<string, unknown>, status = 200) => new Response(JSON.stringify(body), { status, headers: cors });
 
+type TargetAuthUser = { banned_until?: string | null };
+
+function accountIsBanned(user: TargetAuthUser) {
+  const until = user.banned_until ? Date.parse(user.banned_until) : Number.NaN;
+  return Number.isFinite(until) && until > Date.now();
+}
+
+function isPendingAccessStateSchema(error: { code?: string; message?: string } | null) {
+  return error?.code === "PGRST204" || /account_status|schema cache/i.test(error?.message ?? "");
+}
+
 async function requireDesignatedAdmin(request: Request, admin: ReturnType<typeof createClient>) {
   const token = (request.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
   if (!token) throw new Error("Authentication is required.");
@@ -38,16 +49,20 @@ Deno.serve(async (request) => {
     const action = payload.action;
     if (action !== "status" && action !== "suspend" && action !== "restore") return reply({ ok: false, message: "A valid account action is required." }, 400);
 
+    const { data: authTarget, error: authTargetError } = await admin.auth.admin.getUserById(DESIGNATED_TARGET_ID);
+    if (authTargetError) throw new Error(authTargetError.message);
+    if (!authTarget.user) return reply({ ok: false, message: "The designated account was not found." }, 404);
+
     const { data: target, error: targetError } = await admin
       .from("profiles")
       .select("account_status, account_status_changed_at")
       .eq("user_id", DESIGNATED_TARGET_ID)
       .maybeSingle();
-    if (targetError) throw new Error(targetError.message);
-    if (!target) return reply({ ok: false, message: "The designated account was not found." }, 404);
+    if (targetError && !isPendingAccessStateSchema(targetError)) throw new Error(targetError.message);
 
-    const suspended = target.account_status === "suspended";
-    if (action === "status") return reply({ ok: true, suspended, changedAt: target.account_status_changed_at ?? null });
+    const suspended = !targetError && target ? target.account_status === "suspended" : accountIsBanned(authTarget.user as TargetAuthUser);
+    const changedAt = !targetError && target?.account_status_changed_at ? target.account_status_changed_at : null;
+    if (action === "status") return reply({ ok: true, suspended, changedAt });
 
     const nextSuspended = action === "suspend";
     if (nextSuspended !== suspended) {
@@ -66,7 +81,7 @@ Deno.serve(async (request) => {
           account_status_changed_by: actorUserId,
         })
         .eq("user_id", DESIGNATED_TARGET_ID);
-      if (profileUpdateError) throw new Error(profileUpdateError.message);
+      if (profileUpdateError && !isPendingAccessStateSchema(profileUpdateError)) throw new Error(profileUpdateError.message);
 
       const { error: auditError } = await admin.from("moderation_actions").insert({
         actor_user_id: actorUserId,
@@ -79,7 +94,7 @@ Deno.serve(async (request) => {
       return reply({ ok: true, suspended: nextSuspended, changedAt });
     }
 
-    return reply({ ok: true, suspended, changedAt: target.account_status_changed_at ?? null });
+    return reply({ ok: true, suspended, changedAt });
   } catch (caught) {
     const message = caught instanceof Error ? caught.message : "Account access control failed.";
     return reply({ ok: false, message }, /permission|authentication|session/i.test(message) ? 403 : 500);

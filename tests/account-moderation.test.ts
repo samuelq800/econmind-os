@@ -14,6 +14,8 @@ describe("designated account moderation", () => {
     expect(functionSource).toContain('profile?.platform_role !== "platform_admin"');
     expect(functionSource).toContain('ban_duration: nextSuspended ? "876000h" : "none"');
     expect(functionSource).toContain('action: nextSuspended ? "access_restricted" : "access_restored"');
+    expect(functionSource).toContain("accountIsBanned");
+    expect(functionSource).toContain("isPendingAccessStateSchema");
   });
 
   it("shows the console only to the designated administrator and signs suspended users out of the app", () => {
@@ -31,5 +33,6 @@ describe("designated account moderation", () => {
     expect(migration).toContain("coalesce(auth.role(), '') <> 'service_role'");
     expect(migration).toContain("new.account_status := old.account_status");
     expect(workflow).toContain("moderate-account-access");
+    expect(workflow).toContain("inputs.apply_migrations == false && inputs.deploy_workers == false");
   });
 });

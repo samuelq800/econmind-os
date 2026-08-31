@@ -45,7 +45,7 @@ jobs:
         if: ${{ inputs.apply_auth_config }}
         run: supabase config push --project-ref "$SUPABASE_PROJECT_REF"
       - name: Preview pending migrations
-        if: ${{ inputs.apply_migrations == false }}
+        if: ${{ inputs.apply_migrations == false && inputs.deploy_workers == false }}
         run: supabase db push --linked --password "$SUPABASE_DB_PASSWORD" --dry-run
       - name: Apply migrations
         if: ${{ inputs.apply_migrations }}
