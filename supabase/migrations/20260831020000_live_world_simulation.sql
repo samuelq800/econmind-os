@@ -208,7 +208,7 @@ as $$
 $$;
 
 create or replace function public.live_world_policy_allowed(p_role text, p_policy jsonb)
-returns boolean language plpgsql immutable set search_path = public
+returns boolean language sql immutable set search_path = public
 as $$
   select jsonb_typeof(p_policy) = 'object'
     and not exists(select 1 from jsonb_object_keys(p_policy) key where
