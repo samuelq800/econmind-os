@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const layout = readFileSync("app/layout.tsx", "utf8");
+const applicationShell = readFileSync("components/layout/application-shell.tsx", "utf8");
 const home = readFileSync("components/home/editorial-home.tsx", "utf8");
 const navbar = readFileSync("components/layout/navbar.tsx", "utf8");
 const footer = readFileSync("components/layout/footer.tsx", "utf8");
@@ -18,7 +19,7 @@ describe("official EconMind badge", () => {
     expect(manifest).toContain("econmind-badge-512.png");
     expect(manifest).toContain('"display": "standalone"');
     expect(manifest).toContain('"shortcuts"');
-    expect(layout).toContain("PwaRegistration");
+    expect(applicationShell).toContain("PwaRegistration");
     expect(serviceWorker).toContain("self.addEventListener(\"fetch\"");
   });
 

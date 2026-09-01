@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 const gate = readFileSync("components/auth/registered-app-gate.tsx", "utf8");
 const layout = readFileSync("app/layout.tsx", "utf8");
+const applicationShell = readFileSync("components/layout/application-shell.tsx", "utf8");
 
 describe("registered individual account gate", () => {
   it("permits either an individual session or a verified view-only invitation", () => {
@@ -16,9 +17,11 @@ describe("registered individual account gate", () => {
 
   });
 
-  it("wraps every static route in the root application gate", () => {
-    expect(layout).toContain("<AccountDeletionProvider><RegisteredAppGate><Navbar />{children}<Footer /></RegisteredAppGate>");
-    expect(layout).toContain("<AuthDialog />");
-    expect(layout).toContain("<LegalConsentGate /></AccountDeletionProvider>");
+  it("wraps ordinary routes in the account gate while leaving room links standalone", () => {
+    expect(layout).toContain("<ApplicationShell>{children}</ApplicationShell>");
+    expect(applicationShell).toContain("<AccountDeletionProvider><RegisteredAppGate><Navbar />{children}<Footer /></RegisteredAppGate>");
+    expect(applicationShell).toContain("<AuthDialog />");
+    expect(applicationShell).toContain("<LegalConsentGate /></AccountDeletionProvider>");
+    expect(applicationShell).toContain("if (isStandaloneLiveWorld(pathname)) return <>{children}</>");
   });
 });

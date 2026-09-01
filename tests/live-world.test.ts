@@ -13,6 +13,7 @@ import {
   reportedLiveWorldDeadline,
   secondsUntilLiveWorldDeadline,
 } from "@/lib/live-world/timer";
+import { liveWorldRoomPath, liveWorldRoomUrl } from "@/lib/live-world/links";
 
 const migration = readFileSync(
   "supabase/migrations/20260831020000_live_world_simulation.sql",
@@ -108,6 +109,8 @@ describe("Live World", () => {
     const route = readFileSync("app/live-world/page.tsx", "utf8");
     const room = readFileSync("components/live-world/live-world-room.tsx", "utf8");
     const admin = readFileSync("components/live-world/live-world-admin.tsx", "utf8");
+    const applicationShell = readFileSync("components/layout/application-shell.tsx", "utf8");
+    const roomService = readFileSync("lib/supabase/live-world.ts", "utf8");
     expect(navbar).toContain('path === "/live-world"');
     expect(route).toContain("LiveWorldRoute");
     expect(pageAccessForPath("/live-world").audience).toBe("public");
@@ -116,5 +119,16 @@ describe("Live World", () => {
     expect(admin).toContain("grid items-start gap-6");
     expect(admin).toContain('state === "copied" ? "Copied"');
     expect(admin).toContain("active:scale-[.96]");
+    expect(applicationShell).toContain("not initialise, read, or link the visitor's EconMind account session");
+    expect(applicationShell.indexOf("if (isStandaloneLiveWorld(pathname))")).toBeLessThan(applicationShell.indexOf("<AuthProvider>"));
+    expect(roomService).toContain('storageKey: "econmind-live-world-session"');
+    expect(roomService).toContain("signInAnonymously");
+    expect(room).toContain("No EconMind account is used, required, or linked");
+  });
+
+  it("generates a random standalone room link from the server-created UUID", () => {
+    expect(migration).toContain("id uuid primary key default extensions.gen_random_uuid()");
+    expect(liveWorldRoomPath("f350897a-d6cb-46bd-b837-7a3d57a4a2d8")).toBe("/live-world/?room=f350897a-d6cb-46bd-b837-7a3d57a4a2d8");
+    expect(liveWorldRoomUrl("https://econmind.group", "f350897a-d6cb-46bd-b837-7a3d57a4a2d8")).toBe("https://econmind.group/live-world/?room=f350897a-d6cb-46bd-b837-7a3d57a4a2d8");
   });
 });

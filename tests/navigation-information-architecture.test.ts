@@ -5,6 +5,7 @@ import { MOBILE_NAVIGATION_GROUPS, NAVIGATION_SECTIONS, availableNavigationSecti
 const navbar = readFileSync("components/layout/navbar.tsx", "utf8");
 const footer = readFileSync("components/layout/footer.tsx", "utf8");
 const rootLayout = readFileSync("app/layout.tsx", "utf8");
+const applicationShell = readFileSync("components/layout/application-shell.tsx", "utf8");
 const teamPage = readFileSync("components/team/team-page.tsx", "utf8");
 const simulationNavigation = readFileSync("components/simulation/simulation-navigation.tsx", "utf8");
 
@@ -61,7 +62,8 @@ describe("Phase 2 information architecture", () => {
   });
 
   it("keeps the global shell singular and leaves existing Simulation navigation intact", () => {
-    expect(rootLayout).toContain("<RegisteredAppGate><Navbar />{children}<Footer /></RegisteredAppGate>");
+    expect(rootLayout).toContain("<ApplicationShell>{children}</ApplicationShell>");
+    expect(applicationShell).toContain("<RegisteredAppGate><Navbar />{children}<Footer /></RegisteredAppGate>");
     expect(teamPage).not.toContain("components/layout/navbar");
     expect(teamPage).not.toContain("<Navbar");
     for (const label of ["12-Country World", "1973 Oil Shock", "Scenario Studio", "Model Battle"]) {

@@ -15,6 +15,7 @@ const styles = readFileSync(
 );
 const client = readFileSync("lib/supabase/account-deletion.ts", "utf8");
 const layout = readFileSync("app/layout.tsx", "utf8");
+const applicationShell = readFileSync("components/layout/application-shell.tsx", "utf8");
 
 describe("safe personal-account deletion", () => {
   it("closes the old partial-profile deletion path", () => {
@@ -75,7 +76,8 @@ describe("safe personal-account deletion", () => {
     expect(provider).toContain(
       "Account deletion did not complete. No data was changed.",
     );
-    expect(layout).toContain("AccountDeletionProvider");
+    expect(layout).toContain("ApplicationShell");
+    expect(applicationShell).toContain("AccountDeletionProvider");
     expect(client).toContain('signOut({ scope: "local" })');
   });
 
