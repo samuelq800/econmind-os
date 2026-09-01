@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { ChevronDown, ClipboardCheck, Cloud, Eye, Gamepad2, GraduationCap, KeyRound, LoaderCircle, LogIn, LogOut, Menu, Moon, ShieldCheck, Sun, UserRound, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
+import { GlobalSearch } from "@/components/layout/global-search";
 import { getDesignatedAccountAccessStatus, setDesignatedAccountAccess } from "@/lib/supabase/account-moderation";
 import { availableNavigationSections, isNavigationSectionActive, MOBILE_NAVIGATION_GROUPS } from "@/lib/platform/feature-flags";
 import { withBasePath } from "@/lib/base-path";
@@ -153,6 +154,7 @@ export function Navbar() {
           </div>
         </nav>
         <div className="ml-auto flex shrink-0 items-center gap-2">
+          <GlobalSearch />
           <button
             aria-label="Toggle color theme"
             onClick={toggleTheme}

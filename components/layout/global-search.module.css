@@ -1,0 +1,71 @@
+.trigger {
+  width: 2.5rem;
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.triggerLabel,
+.triggerShortcut {
+  display: none;
+}
+
+.triggerIcon {
+  display: block;
+}
+
+.overlay {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.dialog {
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
+  margin-block: auto;
+}
+
+.results {
+  max-height: min(58vh, 30rem);
+  max-height: min(58dvh, 30rem);
+}
+
+@media (min-width: 768px) and (max-width: 1535px) {
+  .trigger {
+    width: 11rem;
+    justify-content: space-between;
+    padding-inline: 0.875rem;
+  }
+
+  .triggerLabel {
+    display: block;
+  }
+
+  .triggerShortcut {
+    display: inline-flex;
+  }
+
+  .triggerIcon {
+    display: none;
+  }
+}
+
+@media (min-width: 1700px) {
+  .trigger {
+    width: 13rem;
+    justify-content: space-between;
+    padding-inline: 0.875rem;
+  }
+
+  .triggerLabel {
+    display: block;
+  }
+
+  .triggerShortcut {
+    display: inline-flex;
+  }
+
+  .triggerIcon {
+    display: none;
+  }
+}

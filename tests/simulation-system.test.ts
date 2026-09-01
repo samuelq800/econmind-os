@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const simulationHome = readFileSync("components/simulation/simulation-home.tsx", "utf8");
-const simulationNavigation = readFileSync("components/simulation/simulation-navigation.tsx", "utf8");
+const simulationNavigation = readFileSync("lib/platform/simulation-navigation.ts", "utf8");
 const worldPage = readFileSync("app/simulation/world/page.tsx", "utf8");
 const oilShockPage = readFileSync("app/simulation/arena/[slug]/workspace/page.tsx", "utf8");
 const leagueWorld = readFileSync("app/league/world/page.tsx", "utf8");

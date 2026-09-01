@@ -7,7 +7,7 @@ const footer = readFileSync("components/layout/footer.tsx", "utf8");
 const rootLayout = readFileSync("app/layout.tsx", "utf8");
 const applicationShell = readFileSync("components/layout/application-shell.tsx", "utf8");
 const teamPage = readFileSync("components/team/team-page.tsx", "utf8");
-const simulationNavigation = readFileSync("components/simulation/simulation-navigation.tsx", "utf8");
+const simulationNavigation = readFileSync("lib/platform/simulation-navigation.ts", "utf8");
 
 const expectedTopLevelLabels = [
   "Home",
