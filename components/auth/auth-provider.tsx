@@ -118,15 +118,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const supabase = getSupabaseBrowserClient();
     if (!supabase || !user) { queueMicrotask(() => { setRole("guest"); setPlatformRole(null); setRoleLoading(false); }); return; }
     let active = true;
+    let refreshInFlight = false;
 
-    const refreshRole = () => {
-      queueMicrotask(() => { if (active) setRoleLoading(true); });
-      void supabase.from("profiles").select("role,platform_role").eq("user_id", user.id).maybeSingle().then(async ({ data }) => {
+    const refreshRole = (showLoading: boolean) => {
+      if (refreshInFlight) return;
+      refreshInFlight = true;
+      if (showLoading) queueMicrotask(() => { if (active) setRoleLoading(true); });
+      void Promise.resolve(supabase.from("profiles").select("role,platform_role").eq("user_id", user.id).maybeSingle()).then(async ({ data, error }) => {
+        if (error) throw error;
         // Handles accounts created before a profile trigger was installed. The
         // insert is allowed only for the authenticated user's own UUID by RLS.
         if (!data) {
           const displayName = typeof user.user_metadata.display_name === "string" ? user.user_metadata.display_name.slice(0, 80) : null;
           const created = await supabase.from("profiles").insert({ user_id: user.id, display_name: displayName }).select("role,platform_role").maybeSingle();
+          if (created.error) throw created.error;
           data = created.data;
         }
         if (!active) return;
@@ -158,14 +163,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             : "user",
         );
         setRoleLoading(false);
-      }, () => { if (active) { setRole("student"); setPlatformRole(null); setRoleLoading(false); } });
+      }).catch(() => {
+        // A transient background failure must preserve the last verified role;
+        // otherwise the access gate would still replace the live page.
+        if (active && showLoading) { setRole("student"); setPlatformRole(null); setRoleLoading(false); }
+      })
+        .finally(() => { refreshInFlight = false; });
     };
 
-    const refreshWhenVisible = () => { if (document.visibilityState === "visible") refreshRole(); };
-    refreshRole();
-    window.addEventListener("focus", refreshRole);
+    // A background access revalidation must not unmount the protected page:
+    // it may contain one-time codes, form drafts, or other local control state.
+    const refreshInBackground = () => refreshRole(false);
+    const refreshWhenVisible = () => { if (document.visibilityState === "visible") refreshInBackground(); };
+    refreshRole(true);
+    window.addEventListener("focus", refreshInBackground);
     document.addEventListener("visibilitychange", refreshWhenVisible);
-    return () => { active = false; window.removeEventListener("focus", refreshRole); document.removeEventListener("visibilitychange", refreshWhenVisible); };
+    return () => { active = false; window.removeEventListener("focus", refreshInBackground); document.removeEventListener("visibilitychange", refreshWhenVisible); };
   }, [user]);
 
   const value = useMemo<AuthContextValue>(

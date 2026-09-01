@@ -27,6 +27,14 @@ describe("designated account moderation", () => {
     expect(provider).toContain('supabase.auth.signOut({ scope: "local" })');
   });
 
+  it("revalidates access in the background without clearing page-local control state", () => {
+    expect(provider).toContain("refreshRole(true)");
+    expect(provider).toContain("const refreshInBackground = () => refreshRole(false)");
+    expect(provider).toContain("if (refreshInFlight) return");
+    expect(provider).toContain('window.addEventListener("focus", refreshInBackground)');
+    expect(provider).not.toContain('window.addEventListener("focus", refreshRole)');
+  });
+
   it("persists a reversible suspension state and deploys its protected function", () => {
     expect(migration).toContain("account_status");
     expect(migration).toContain("account_status_changed_by");
