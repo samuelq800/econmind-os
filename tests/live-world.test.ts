@@ -8,9 +8,18 @@ import {
   initialLiveWorldRoomState,
   rankLiveWorldCountries,
 } from "@/lib/live-world/engine";
+import {
+  reconcileLiveWorldDeadline,
+  reportedLiveWorldDeadline,
+  secondsUntilLiveWorldDeadline,
+} from "@/lib/live-world/timer";
 
 const migration = readFileSync(
   "supabase/migrations/20260831020000_live_world_simulation.sql",
+  "utf8",
+);
+const timerMigration = readFileSync(
+  "supabase/migrations/20260901000000_live_world_timer_deadline.sql",
   "utf8",
 );
 
@@ -55,6 +64,27 @@ describe("Live World", () => {
     expect(ranked[0].score).toBeGreaterThanOrEqual(ranked[3].score);
   });
 
+  it("uses one absolute deadline and never moves the same timer run backwards", () => {
+    const now = 1_000_000;
+    const room = {
+      id: "room-1",
+      name: "Clock test",
+      status: "live" as const,
+      durationSeconds: 300,
+      remainingSeconds: 280,
+      timerEndsAt: new Date(now + 280_000).toISOString(),
+      startedAt: new Date(now - 20_000).toISOString(),
+      endedAt: null,
+      createdAt: new Date(now - 30_000).toISOString(),
+    };
+    const deadline = reportedLiveWorldDeadline(room, now);
+    expect(deadline).toBe(now + 280_000);
+    expect(secondsUntilLiveWorldDeadline(deadline, 0, now + 1_001)).toBe(279);
+    expect(reconcileLiveWorldDeadline({ ...room, timerEndsAt: undefined, remainingSeconds: 280 }, deadline, room.startedAt, now + 1_500)).toBe(deadline);
+    expect(timerMigration).toContain("'timerEndsAt'");
+    expect(timerMigration).toContain("room_row.started_at + make_interval(secs => room_row.remaining_seconds)");
+  });
+
   it("enforces server-side room access, atomic seats, role-owned drafts and admin-only control", () => {
     for (const signature of [
       "create_live_world_room",
@@ -76,9 +106,15 @@ describe("Live World", () => {
   it("mounts a standalone public event route without ordinary application navigation", () => {
     const navbar = readFileSync("components/layout/navbar.tsx", "utf8");
     const route = readFileSync("app/live-world/page.tsx", "utf8");
+    const room = readFileSync("components/live-world/live-world-room.tsx", "utf8");
+    const admin = readFileSync("components/live-world/live-world-admin.tsx", "utf8");
     expect(navbar).toContain('path === "/live-world"');
     expect(route).toContain("LiveWorldRoute");
     expect(pageAccessForPath("/live-world").audience).toBe("public");
     expect(pageAccessForPath("/admin/live-world").platformRoles).toContain("platform_admin");
+    expect(room).toContain('document.visibilityState === "visible"');
+    expect(admin).toContain("grid items-start gap-6");
+    expect(admin).toContain('state === "copied" ? "Copied"');
+    expect(admin).toContain("active:scale-[.96]");
   });
 });

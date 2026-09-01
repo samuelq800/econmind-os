@@ -105,6 +105,7 @@ export type LiveWorldRoomView = {
     status: LiveWorldRoomStatus;
     durationSeconds: number;
     remainingSeconds: number;
+    timerEndsAt?: string | null;
     startedAt: string | null;
     endedAt: string | null;
     createdAt: string;

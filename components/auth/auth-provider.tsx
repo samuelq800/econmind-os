@@ -118,12 +118,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const supabase = getSupabaseBrowserClient();
     if (!supabase || !user) { queueMicrotask(() => { setRole("guest"); setPlatformRole(null); setRoleLoading(false); }); return; }
     let active = true;
-    let refreshInFlight = false;
 
-    const refreshRole = (showLoading: boolean) => {
-      if (refreshInFlight) return;
-      refreshInFlight = true;
-      if (showLoading) queueMicrotask(() => { if (active) setRoleLoading(true); });
+    const refreshRole = () => {
+      queueMicrotask(() => { if (active) setRoleLoading(true); });
       void Promise.resolve(supabase.from("profiles").select("role,platform_role").eq("user_id", user.id).maybeSingle()).then(async ({ data, error }) => {
         if (error) throw error;
         // Handles accounts created before a profile trigger was installed. The
@@ -164,21 +161,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
         setRoleLoading(false);
       }).catch(() => {
-        // A transient background failure must preserve the last verified role;
-        // otherwise the access gate would still replace the live page.
-        if (active && showLoading) { setRole("student"); setPlatformRole(null); setRoleLoading(false); }
-      })
-        .finally(() => { refreshInFlight = false; });
+        if (active) { setRole("student"); setPlatformRole(null); setRoleLoading(false); }
+      });
     };
 
-    // A background access revalidation must not unmount the protected page:
-    // it may contain one-time codes, form drafts, or other local control state.
-    const refreshInBackground = () => refreshRole(false);
-    const refreshWhenVisible = () => { if (document.visibilityState === "visible") refreshInBackground(); };
-    refreshRole(true);
-    window.addEventListener("focus", refreshInBackground);
-    document.addEventListener("visibilitychange", refreshWhenVisible);
-    return () => { active = false; window.removeEventListener("focus", refreshInBackground); document.removeEventListener("visibilitychange", refreshWhenVisible); };
+    // Access is checked when the account session changes. Window focus and
+    // visibility events must not refresh or replace an in-progress workspace.
+    refreshRole();
+    return () => { active = false; };
   }, [user]);
 
   const value = useMemo<AuthContextValue>(

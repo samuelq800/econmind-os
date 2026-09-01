@@ -20,7 +20,7 @@ import {
   RadarChart,
   ResponsiveContainer,
 } from "recharts";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -43,6 +43,7 @@ import type {
   LiveWorldRoomView,
   LiveWorldRoleId,
 } from "@/lib/live-world/types";
+import { reconcileLiveWorldDeadline, secondsUntilLiveWorldDeadline } from "@/lib/live-world/timer";
 import {
   claimLiveWorldSeat,
   decideLiveWorldAgreement,
@@ -114,10 +115,10 @@ export function LiveWorldRoom({ roomId }: { roomId: string }) {
     if (!hasView) return;
     let active = true;
     let channel: Awaited<ReturnType<typeof subscribeToLiveWorldRoom>> | null = null;
-    void subscribeToLiveWorldRoom(roomId, () => { if (active) void refresh(); })
+    void subscribeToLiveWorldRoom(roomId, () => { if (active && document.visibilityState === "visible") void refresh(); })
       .then((created) => { channel = created; })
       .catch(() => undefined);
-    const interval = window.setInterval(() => { if (active) void refresh(); }, 1500);
+    const interval = window.setInterval(() => { if (active && document.visibilityState === "visible") void refresh(); }, 1500);
     return () => {
       active = false;
       window.clearInterval(interval);
@@ -164,16 +165,21 @@ function Topbar({ view, admin = false }: { view: LiveWorldRoomView; admin?: bool
 }
 
 function Timer({ room }: { room: LiveWorldRoomView["room"] }) {
-  const [seconds, setSeconds] = useState(room.remainingSeconds ?? room.durationSeconds);
+  const initialSeconds = room.remainingSeconds ?? room.durationSeconds;
+  const deadline = useRef<number | null>(null);
+  const startedAt = useRef<string | null>(room.startedAt);
+  const [seconds, setSeconds] = useState(initialSeconds);
   useEffect(() => {
-    const frame = window.requestAnimationFrame(() => setSeconds(room.remainingSeconds ?? room.durationSeconds));
+    deadline.current = reconcileLiveWorldDeadline(room, deadline.current, startedAt.current);
+    startedAt.current = room.startedAt;
+    const frame = window.requestAnimationFrame(() => setSeconds(secondsUntilLiveWorldDeadline(deadline.current, room.remainingSeconds ?? room.durationSeconds)));
     return () => window.cancelAnimationFrame(frame);
-  }, [room.remainingSeconds, room.durationSeconds]);
+  }, [room]);
   useEffect(() => {
     if (room.status !== "live") return;
-    const interval = window.setInterval(() => setSeconds((value) => Math.max(0, value - 1)), 1000);
+    const interval = window.setInterval(() => setSeconds(secondsUntilLiveWorldDeadline(deadline.current, room.remainingSeconds ?? room.durationSeconds)), 200);
     return () => window.clearInterval(interval);
-  }, [room.status]);
+  }, [room.durationSeconds, room.remainingSeconds, room.status]);
   return <span className="flex items-center gap-2 rounded-lg border border-[#365c4d] bg-[#10231c] px-3 py-2 font-mono text-sm font-bold text-[#f4f8f6]"><Clock3 size={15} className="text-[#62cbb0]" />{formatTime(seconds)}</span>;
 }
 
