@@ -23,6 +23,10 @@ const timerMigration = readFileSync(
   "supabase/migrations/20260901000000_live_world_timer_deadline.sql",
   "utf8",
 );
+const anonymousExpiryMigration = readFileSync(
+  "supabase/migrations/20260901010000_expire_live_world_anonymous_users.sql",
+  "utf8",
+);
 
 describe("Live World", () => {
   it("keeps four structurally distinct fictional countries and twelve possible seats", () => {
@@ -123,7 +127,17 @@ describe("Live World", () => {
     expect(applicationShell.indexOf("if (isStandaloneLiveWorld(pathname))")).toBeLessThan(applicationShell.indexOf("<AuthProvider>"));
     expect(roomService).toContain('storageKey: "econmind-live-world-session"');
     expect(roomService).toContain("signInAnonymously");
+    expect(roomService).toContain('econmind_session_scope: "live_world"');
+    expect(roomService).toContain("LIVE_WORLD_SESSION_TTL_MS");
     expect(room).toContain("No EconMind account is used, required, or linked");
+  });
+
+  it("keeps temporary room identities out of profiles and expires them after seven days", () => {
+    expect(anonymousExpiryMigration).toContain("if new.is_anonymous is true");
+    expect(anonymousExpiryMigration).toContain("interval '7 days'");
+    expect(anonymousExpiryMigration).toContain("econmind-live-world-anonymous-cleanup");
+    expect(anonymousExpiryMigration).toContain("on delete set null");
+    expect(anonymousExpiryMigration).toContain("delete from public.profiles");
   });
 
   it("generates a random standalone room link from the server-created UUID", () => {

@@ -1,6 +1,11 @@
 "use client";
 
-import { createClient, type RealtimeChannel, type SupabaseClient } from "@supabase/supabase-js";
+import {
+  createClient,
+  type RealtimeChannel,
+  type Session,
+  type SupabaseClient,
+} from "@supabase/supabase-js";
 import {
   isSupabaseConfigured,
   requireSupabaseBrowserClient,
@@ -12,6 +17,15 @@ import type {
 } from "@/lib/live-world/types";
 
 let liveWorldClient: SupabaseClient | null = null;
+const LIVE_WORLD_SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1_000;
+
+function liveWorldSessionExpiresAt(session: Session) {
+  const metadataExpiry = Date.parse(
+    String(session.user.user_metadata?.econmind_expires_at ?? ""),
+  );
+  if (Number.isFinite(metadataExpiry)) return metadataExpiry;
+  return Date.parse(session.user.created_at) + LIVE_WORLD_SESSION_TTL_MS;
+}
 
 function roomClient() {
   if (!isSupabaseConfigured()) throw new Error("Live World is not configured yet.");
@@ -36,8 +50,21 @@ async function ensureLiveWorldSession() {
   const supabase = roomClient();
   const { data: current, error: currentError } = await supabase.auth.getSession();
   throwIfSupabaseError(currentError);
-  if (current.session) return supabase;
-  const { error } = await supabase.auth.signInAnonymously();
+  if (current.session && liveWorldSessionExpiresAt(current.session) > Date.now()) {
+    return supabase;
+  }
+  if (current.session) {
+    const { error: signOutError } = await supabase.auth.signOut({ scope: "local" });
+    throwIfSupabaseError(signOutError);
+  }
+  const { error } = await supabase.auth.signInAnonymously({
+    options: {
+      data: {
+        econmind_session_scope: "live_world",
+        econmind_expires_at: new Date(Date.now() + LIVE_WORLD_SESSION_TTL_MS).toISOString(),
+      },
+    },
+  });
   if (error) {
     throw new Error(
       "The temporary Live World session could not start. Please ask a platform administrator to enable anonymous sign-ins for this project.",
