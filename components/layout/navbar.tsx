@@ -137,7 +137,7 @@ export function Navbar() {
             );
           })}
           <div className="relative shrink-0" onMouseEnter={() => setOpenSection("desktop-more")} onMouseLeave={() => setOpenSection(null)}>
-            <button type="button" aria-label="Open more navigation" aria-expanded={openSection === "desktop-more"} onClick={() => setOpenSection((current) => current === "desktop-more" ? null : "desktop-more")} className={`flex items-center gap-1 rounded-lg px-2.5 py-2 text-xs font-semibold ${compactOverflowLinks.some((section) => isNavigationSectionActive(section, path)) ? "bg-[var(--surface-strong)]" : "text-[var(--ink-muted)] hover:text-[var(--ink)]"}`}>More <ChevronDown size={13} /></button>
+            <button type="button" aria-label="Open more navigation" aria-expanded={openSection === "desktop-more"} onClick={() => setOpenSection((current) => current === "desktop-more" ? null : "desktop-more")} className={`flex items-center gap-1 whitespace-nowrap rounded-lg px-2.5 py-2 text-xs font-semibold leading-5 tracking-normal ${compactOverflowLinks.some((section) => isNavigationSectionActive(section, path)) ? "bg-[var(--surface-strong)]" : "text-[var(--ink-muted)] hover:text-[var(--ink)]"}`}>More <ChevronDown size={13} /></button>
             {openSection === "desktop-more" && (
               <div className="absolute right-0 top-full z-50 w-[18rem] pt-2">
                 <div className="overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-xl">
