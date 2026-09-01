@@ -111,6 +111,7 @@ describe("Live World", () => {
   it("mounts a standalone public event route without ordinary application navigation", () => {
     const navbar = readFileSync("components/layout/navbar.tsx", "utf8");
     const route = readFileSync("app/live-world/page.tsx", "utf8");
+    const liveWorldRoute = readFileSync("components/live-world/live-world-route.tsx", "utf8");
     const room = readFileSync("components/live-world/live-world-room.tsx", "utf8");
     const admin = readFileSync("components/live-world/live-world-admin.tsx", "utf8");
     const applicationShell = readFileSync("components/layout/application-shell.tsx", "utf8");
@@ -125,6 +126,9 @@ describe("Live World", () => {
     expect(admin).toContain("active:scale-[.96]");
     expect(applicationShell).toContain("not initialise, read, or link the visitor's EconMind account session");
     expect(applicationShell.indexOf("if (isStandaloneLiveWorld(pathname))")).toBeLessThan(applicationShell.indexOf("<AuthProvider>"));
+    expect(room).toContain("style={LIVE_WORLD_THEME}");
+    expect(room).toContain('className="dark min-h-screen');
+    expect(liveWorldRoute).toContain("style={LIVE_WORLD_THEME}");
     expect(roomService).toContain('storageKey: "econmind-live-world-session"');
     expect(roomService).toContain("signInAnonymously");
     expect(roomService).toContain('econmind_session_scope: "live_world"');
