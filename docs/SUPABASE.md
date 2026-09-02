@@ -48,6 +48,28 @@ the `PASSWORD_RECOVERY` Auth event. The frontend treats a sign-up response that
 already contains a session as a configuration error, signs it out immediately,
 and never bypasses the verification-code screen.
 
+## Reversible account suspension
+
+Apply `supabase/migrations/20260831010000_add_reversible_account_suspension.sql`
+before deploying a frontend that reads `profiles.account_status`. The migration
+adds the account state and audit columns, their constraint and index, and extends
+the existing profile authorization trigger so browser clients cannot change
+those fields.
+
+Use the **Apply account suspension schema** workflow when the normal linked
+`supabase db push` is blocked by an unrelated migration-history mismatch. That
+workflow executes the existing migration file through the Supabase Management
+API and verifies all three columns; it does not create a duplicate migration or
+rewrite the remote migration ledger. After it succeeds, rerun the Pages
+deployment. The Pages workflow deliberately checks the `account_status` column
+before exporting the frontend so schema-dependent code cannot be published
+first.
+
+The isolated workflow does not reconcile the general migration-history drift.
+Recover the missing migration files or verify their provenance before repairing
+the remote ledger; never mark unknown versions reverted merely to unblock a
+deployment.
+
 ## Safe personal-account deletion
 
 Apply `supabase/migrations/20260824000000_safe_personal_account_deletion.sql`

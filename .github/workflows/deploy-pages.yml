@@ -57,6 +57,14 @@ jobs:
             --data '{}' \
             --output /dev/null \
             "${NEXT_PUBLIC_SUPABASE_URL%/}/rest/v1/rpc/get_public_league_directory_v2"
+          curl --fail --silent --show-error --retry 3 --retry-all-errors \
+            --get \
+            --header "apikey: $NEXT_PUBLIC_SUPABASE_ANON_KEY" \
+            --header "Authorization: Bearer $NEXT_PUBLIC_SUPABASE_ANON_KEY" \
+            --data-urlencode "select=account_status" \
+            --data-urlencode "limit=0" \
+            --output /dev/null \
+            "${NEXT_PUBLIC_SUPABASE_URL%/}/rest/v1/profiles"
 
       - name: Export static website
         env:

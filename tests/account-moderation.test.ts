@@ -6,6 +6,8 @@ const provider = readFileSync("components/auth/auth-provider.tsx", "utf8");
 const functionSource = readFileSync("supabase/functions/moderate-account-access/index.ts", "utf8");
 const migration = readFileSync("supabase/migrations/20260831010000_add_reversible_account_suspension.sql", "utf8");
 const workflow = readFileSync(".github/workflows/deploy-supabase.yml", "utf8");
+const suspensionWorkflow = readFileSync(".github/workflows/apply-account-suspension-migration.yml", "utf8");
+const pagesWorkflow = readFileSync(".github/workflows/deploy-pages.yml", "utf8");
 
 describe("designated account moderation", () => {
   it("keeps the control restricted, reversible, and audited", () => {
@@ -23,8 +25,14 @@ describe("designated account moderation", () => {
     expect(navbar).toContain("Account access control");
     expect(navbar).toContain("account-access-code-stream");
     expect(provider).toContain('account_status === "suspended"');
-    expect(provider).toContain('select("role,platform_role")');
+    expect(provider).toContain('select("role,platform_role,account_status")');
+    expect(provider).not.toContain('.select("account_status")');
     expect(provider).toContain('supabase.auth.signOut({ scope: "local" })');
+  });
+
+  it("initializes auth once from the subscribed initial session", () => {
+    expect(provider).toContain("onAuthStateChange");
+    expect(provider).not.toContain("auth.getSession()");
   });
 
   it("does not refresh or replace page-local control state on focus changes", () => {
@@ -40,5 +48,8 @@ describe("designated account moderation", () => {
     expect(migration).toContain("new.account_status := old.account_status");
     expect(workflow).toContain("moderate-account-access");
     expect(workflow).toContain("inputs.apply_migrations == false && inputs.deploy_workers == false");
+    expect(suspensionWorkflow).toContain("20260831010000_add_reversible_account_suspension.sql");
+    expect(suspensionWorkflow).toContain("information_schema.columns");
+    expect(pagesWorkflow).toContain('--data-urlencode "select=account_status"');
   });
 });

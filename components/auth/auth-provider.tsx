@@ -60,11 +60,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     let active = true;
-    void supabase.auth.getSession().then(({ data }) => {
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
       if (!active) return;
-      setUser(data.session?.user ?? null);
+      const nextUser = session?.user ?? null;
+      setUser(nextUser);
       const authMarker = new URLSearchParams(window.location.search).get("auth");
-      if (data.session?.user && authMarker === "recovery") {
+      if (event === "PASSWORD_RECOVERY" || (nextUser && authMarker === "recovery")) {
         setAuthMode("reset-password");
         setAuthOpen(true);
       }
@@ -73,21 +74,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         cleanUrl.searchParams.delete("auth");
         window.history.replaceState({}, "", cleanUrl.toString());
       }
+      if (!nextUser) { setRole("guest"); setPlatformRole(null); setRoleLoading(false); }
       setLoading(false);
-    });
-
-    const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-      if (!session?.user) { setRole("guest"); setPlatformRole(null); setRoleLoading(false); }
-      if (event === "PASSWORD_RECOVERY") {
-        setAuthMode("reset-password");
-        setAuthOpen(true);
-        const cleanUrl = new URL(window.location.href);
-        cleanUrl.searchParams.delete("auth");
-        window.history.replaceState({}, "", cleanUrl.toString());
-      }
-      setLoading(false);
-
     });
 
     return () => {
@@ -121,27 +109,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const refreshRole = () => {
       queueMicrotask(() => { if (active) setRoleLoading(true); });
-      void Promise.resolve(supabase.from("profiles").select("role,platform_role").eq("user_id", user.id).maybeSingle()).then(async ({ data, error }) => {
+      void Promise.resolve(supabase.from("profiles").select("role,platform_role,account_status").eq("user_id", user.id).maybeSingle()).then(async ({ data, error }) => {
         if (error) throw error;
         // Handles accounts created before a profile trigger was installed. The
         // insert is allowed only for the authenticated user's own UUID by RLS.
         if (!data) {
           const displayName = typeof user.user_metadata.display_name === "string" ? user.user_metadata.display_name.slice(0, 80) : null;
-          const created = await supabase.from("profiles").insert({ user_id: user.id, display_name: displayName }).select("role,platform_role").maybeSingle();
+          const created = await supabase.from("profiles").insert({ user_id: user.id, display_name: displayName }).select("role,platform_role,account_status").maybeSingle();
           if (created.error) throw created.error;
           data = created.data;
         }
         if (!active) return;
-        // Account moderation was added after the original profile schema.
-        // Keep normal role loading available while the additive migration is
-        // being rolled out, then enforce a suspension as soon as it exists.
-        const { data: accessState, error: accessStateError } = await supabase
-          .from("profiles")
-          .select("account_status")
-          .eq("user_id", user.id)
-          .maybeSingle();
-        if (!active) return;
-        if (!accessStateError && accessState?.account_status === "suspended") {
+        if (data?.account_status === "suspended") {
           await supabase.auth.signOut({ scope: "local" });
           if (active) { setRole("guest"); setPlatformRole(null); setRoleLoading(false); }
           return;
