@@ -1,4 +1,5 @@
-name: Deploy Supabase backend
+name: Deploy · Supabase backend
+run-name: Supabase backend · migrations=${{ inputs.apply_migrations }} · functions=${{ inputs.deploy_workers }} · auth=${{ inputs.apply_auth_config }} · @${{ github.actor }}
 
 on:
   workflow_dispatch:
@@ -22,9 +23,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: supabase-production
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
@@ -37,9 +43,12 @@ jobs:
       - name: Verify protected configuration
         run: |
           test -n "$SUPABASE_ACCESS_TOKEN"
-          test -n "$SUPABASE_DB_PASSWORD"
           test -n "$SUPABASE_PROJECT_REF"
+      - name: Verify database credential
+        if: ${{ inputs.apply_migrations || (!inputs.deploy_workers && !inputs.apply_auth_config) }}
+        run: test -n "$SUPABASE_DB_PASSWORD"
       - name: Link target project
+        if: ${{ inputs.apply_migrations || (!inputs.deploy_workers && !inputs.apply_auth_config) }}
         run: supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
       - name: Apply Auth configuration
         if: ${{ inputs.apply_auth_config }}

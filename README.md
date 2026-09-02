@@ -42,6 +42,9 @@ depends on them. The Pages workflow probes the required public directory RPC
 and fails closed before deployment when the linked Supabase schema is behind;
 the previously deployed site remains available.
 
+See `docs/GITHUB-ACTIONS.md` for the workflow catalog, required repository
+configuration, and safe production-operation boundaries.
+
 ## Testing
 
 Run the workspace checks with:

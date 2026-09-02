@@ -7,7 +7,7 @@
 3. Copy Project URL and the public anon/publishable key from Project Settings → API.
 4. Put them in `.env.local` as `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 5. In the GitHub repository, open Settings → Secrets and variables → Actions and create repository secrets with those same two names. The Pages workflow injects them only while building the public frontend.
-6. Run the **Deploy EconMind OS to GitHub Pages** workflow again, or push a new commit to `main`.
+6. Run the **Deploy · Website (GitHub Pages)** workflow again, or push a new commit to `main`.
 
 If the frontend later moves to Vercel, add the same two public variables under Project Settings → Environment Variables and redeploy. For email confirmation, set the production Supabase Site URL to `https://econmind.group/`. During the custom-domain transition, keep `https://econmind.group/`, `https://www.econmind.group/`, and `https://samuelq800.github.io/econmind-os/` in the allowed redirect list.
 
@@ -26,7 +26,7 @@ are stored in:
 `supabase/config.toml` is the source of truth for both local and hosted Auth
 settings. A hosted project does not receive Auth settings or templates from
 `supabase db push`; deploy them separately with the **Apply Auth configuration**
-checkbox in the **Deploy Supabase backend** workflow. That checkbox runs
+checkbox in the **Deploy · Supabase backend** workflow. That checkbox runs
 `supabase config push` and is intentionally disabled by default. Keep
 `{{ .ConfirmationURL }}` in each template as a secure-link fallback, and
 disable link tracking in the SMTP provider so security scanners do not rewrite
@@ -56,7 +56,7 @@ adds the account state and audit columns, their constraint and index, and extend
 the existing profile authorization trigger so browser clients cannot change
 those fields.
 
-Use the **Apply account suspension schema** workflow when the normal linked
+Use the **Maintenance · Account suspension schema** workflow when the normal linked
 `supabase db push` is blocked by an unrelated migration-history mismatch. That
 workflow executes the existing migration file through the Supabase Management
 API and verifies all three columns; it does not create a duplicate migration or

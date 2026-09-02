@@ -24,7 +24,10 @@ In the repository’s **Settings → Secrets and variables → Actions**, set:
 | Variable | `SUPABASE_PROJECT_REF` | The Supabase project reference, not a secret. |
 | Variable | `NEXT_PUBLIC_ENABLE_CONTINUOUS_WORLD` | Set to `true` only after the world has launched successfully. |
 
-Run **Deploy Supabase backend** manually with both options enabled. It applies migrations and deploys the three Edge Functions without putting protected credentials in the Pages build.
+Run **Deploy · Supabase backend** manually with **Apply migrations** and
+**Deploy Edge Functions** enabled. Leave **Apply Auth configuration** disabled
+unless the hosted Auth settings or templates also changed. This keeps protected
+credentials out of the Pages build.
 
 ## Calibration and world launch
 

@@ -1,4 +1,5 @@
-name: Apply Live World schema
+name: Maintenance · Live World schema
+run-name: Apply Live World schema · @${{ github.actor }}
 
 on:
   workflow_dispatch:
@@ -6,9 +7,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: supabase-production
+  cancel-in-progress: false
+
 jobs:
   apply:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
