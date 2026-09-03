@@ -63,6 +63,16 @@ export async function listPublicLeagueSchools() {
   let { data, error } = await supabase.rpc("get_public_league_directory_v2");
   let legacyResponse = false;
   if (error) {
+    // A transient failure must not turn reviewed locations into missing ones.
+    const retry = await supabase.rpc("get_public_league_directory_v2");
+    data = retry.data;
+    error = retry.error;
+  }
+  if (
+    error?.code === "PGRST202"
+    && /\bpublic\.get_public_league_directory_v2\b/.test(error.message)
+  ) {
+    // Keep compatibility only with databases that do not have the v2 RPC yet.
     const legacy = await supabase.rpc("get_public_league_directory");
     data = legacy.data;
     error = legacy.error;

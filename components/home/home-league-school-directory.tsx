@@ -17,20 +17,38 @@ export function HomeLeagueSchoolDirectory() {
 
   useEffect(() => {
     let active = true;
+    let inFlight = false;
 
-    void withDirectorySyncTimeout(listPublicLeagueSchools())
-      .then((rows) => {
+    const sync = async () => {
+      if (!active || inFlight) return;
+      inFlight = true;
+      try {
+        const rows = await withDirectorySyncTimeout(listPublicLeagueSchools());
         if (!active) return;
         setSchools(mergeLeagueDirectory(rows));
         setSyncStatus("live");
-      })
-      .catch(() => {
+      } catch {
         if (!active) return;
         setSyncStatus("fallback");
-      });
+      } finally {
+        inFlight = false;
+      }
+    };
+
+    const syncWhenVisible = () => {
+      if (document.visibilityState === "visible") void sync();
+    };
+
+    void sync();
+    window.addEventListener("focus", syncWhenVisible);
+    window.addEventListener("online", syncWhenVisible);
+    document.addEventListener("visibilitychange", syncWhenVisible);
 
     return () => {
       active = false;
+      window.removeEventListener("focus", syncWhenVisible);
+      window.removeEventListener("online", syncWhenVisible);
+      document.removeEventListener("visibilitychange", syncWhenVisible);
     };
   }, []);
 

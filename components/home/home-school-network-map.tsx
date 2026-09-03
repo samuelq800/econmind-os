@@ -31,7 +31,7 @@ export function HomeSchoolNetworkMap({
   const { hubs, unclassifiedEntries } = model;
   const [selectedLocationKey, setSelectedLocationKey] = useState<string | null>(null);
   const selectedHub = hubs.find(({ location }) => location.locationKey === selectedLocationKey) ?? hubs[0] ?? null;
-  const maxRegionCount = Math.max(1, ...model.regionGroups.map(({ entries }) => entries.length));
+  const maxRegionCount = Math.max(1, unclassifiedEntries.length, ...model.regionGroups.map(({ entries }) => entries.length));
   const mapAsset = withBasePath("/league/maps/world-land.svg");
 
   return (
