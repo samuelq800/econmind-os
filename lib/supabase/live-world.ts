@@ -149,39 +149,63 @@ export async function claimLiveWorldSeat(roomId: string, countryId: string, role
   throwIfSupabaseError(error);
 }
 
-export async function releaseLiveWorldSeat(roomId: string) {
+export async function releaseLiveWorldSeat(roomId: string, countryId?: string, role?: string) {
   const supabase = await ensureLiveWorldSession();
-  const { error } = await supabase.rpc("release_live_world_seat", { p_room_id: roomId });
+  const { error } = await supabase.rpc("release_live_world_seat", { p_room_id: roomId, p_country_key: countryId, p_role_key: role });
   throwIfSupabaseError(error);
 }
 
-export async function saveLiveWorldDraft(roomId: string, policy: Record<string, number>) {
+export async function saveLiveWorldDraft(roomId: string, countryId: string | Record<string, number>, role?: string, nextPolicy?: Record<string, number>) {
   const supabase = await ensureLiveWorldSession();
-  const { error } = await supabase.rpc("save_live_world_draft", { p_room_id: roomId, p_policy: policy });
+  const policy = typeof countryId === "string" ? nextPolicy : countryId;
+  const { error } = await supabase.rpc("save_live_world_draft", { p_room_id: roomId, p_country_key: typeof countryId === "string" ? countryId : null, p_role_key: role ?? null, p_policy: policy });
   throwIfSupabaseError(error);
 }
 
-export async function publishLiveWorldPolicy(roomId: string) {
+export async function publishLiveWorldPolicy(roomId: string, countryId?: string, role?: string) {
   const supabase = await ensureLiveWorldSession();
-  const { error } = await supabase.rpc("publish_live_world_policy", { p_room_id: roomId });
+  const { error } = await supabase.rpc("publish_live_world_policy", { p_room_id: roomId, p_country_key: countryId, p_role_key: role });
   throwIfSupabaseError(error);
 }
 
-export async function proposeLiveWorldAgreement(roomId: string, receiverCountryId: string, depth: string) {
+export async function proposeLiveWorldAgreement(roomId: string, countryId: string, receiverCountryId: string, depth?: string) {
   const supabase = await ensureLiveWorldSession();
   const { error } = await supabase.rpc("propose_live_world_agreement", {
     p_room_id: roomId,
-    p_receiver_country_key: receiverCountryId,
-    p_depth: depth,
+    p_country_key: depth ? countryId : null,
+    p_receiver_country_key: depth ? receiverCountryId : countryId,
+    p_depth: depth ?? receiverCountryId,
   });
   throwIfSupabaseError(error);
 }
 
-export async function decideLiveWorldAgreement(agreementId: string, accept: boolean) {
+export async function decideLiveWorldAgreement(agreementId: string, countryId: string | boolean, accept?: boolean) {
   const supabase = await ensureLiveWorldSession();
   const { error } = await supabase.rpc("decide_live_world_agreement", {
     p_agreement_id: agreementId,
-    p_accept: accept,
+    p_country_key: typeof countryId === "string" ? countryId : null,
+    p_accept: accept ?? Boolean(countryId),
+  });
+  throwIfSupabaseError(error);
+}
+
+export async function setLiveWorldSanction(roomId: string, countryId: string, targetCountryId: string, tariffRate: number) {
+  const supabase = await ensureLiveWorldSession();
+  const { error } = await supabase.rpc("set_live_world_sanction", {
+    p_room_id: roomId,
+    p_country_key: countryId,
+    p_target_country_key: targetCountryId,
+    p_tariff_rate: tariffRate,
+  });
+  throwIfSupabaseError(error);
+}
+
+export async function postLiveWorldMessage(roomId: string, body: string, countryId: string | null) {
+  const supabase = await ensureLiveWorldSession();
+  const { error } = await supabase.rpc("post_live_world_message", {
+    p_room_id: roomId,
+    p_body: body,
+    p_country_key: countryId,
   });
   throwIfSupabaseError(error);
 }

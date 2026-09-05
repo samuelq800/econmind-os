@@ -57,6 +57,7 @@ export type LiveWorldPolicyControl = {
   role: LiveWorldRoleId;
   label: string;
   description: string;
+  impact: string;
   min: number;
   max: number;
   step: number;
@@ -85,12 +86,32 @@ export type LiveWorldCrisis = {
   affectedCountries: LiveWorldCountryId[];
   effects: Partial<LiveWorldDimensions>;
   active: boolean;
+  impactSummary: string;
+  responseHint: string;
+};
+
+export type LiveWorldSanction = {
+  id: string;
+  initiatorCountry: LiveWorldCountryId;
+  targetCountry: LiveWorldCountryId;
+  tariffRate: number;
+  status: "active" | "revoked";
+  createdAt: string;
+};
+
+export type LiveWorldChatMessage = {
+  id: string;
+  countryId: LiveWorldCountryId | null;
+  displayName: string;
+  body: string;
+  createdAt: string;
 };
 
 export type LiveWorldRoomState = {
   publishedPolicies: Partial<Record<LiveWorldCountryId, LiveWorldCountryPolicyState>>;
   agreements: LiveWorldAgreement[];
   crises: LiveWorldCrisis[];
+  sanctions: LiveWorldSanction[];
 };
 
 export type LiveWorldSeat = {
@@ -121,6 +142,7 @@ export type LiveWorldRoomView = {
   };
   seats: LiveWorldSeat[];
   state: LiveWorldRoomState;
+  messages: LiveWorldChatMessage[];
   drafts: Partial<Record<LiveWorldCountryId, LiveWorldCountryPolicyState>>;
   events: Array<{
     id: string;
@@ -128,5 +150,11 @@ export type LiveWorldRoomView = {
     message: string;
     countryId: LiveWorldCountryId | null;
     createdAt: string;
+    details?: {
+      title?: string;
+      description?: string;
+      impacts?: string[];
+      responseHint?: string;
+    };
   }>;
 };

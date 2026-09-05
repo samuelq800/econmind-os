@@ -63,7 +63,7 @@ describe("Live World", () => {
 
   it("applies active crises differently according to country structure", () => {
     const state = initialLiveWorldRoomState();
-    state.crises = [{ id: "energy-price-spike", label: "Energy price spike", description: "", affectedCountries: ["aurora", "borealis", "demeria"], effects: { activity: -4, prices: -8, fiscal: -2, stability: -3 }, active: true }];
+    state.crises = [{ id: "energy-price-spike", label: "Energy price spike", description: "", affectedCountries: ["aurora", "borealis", "demeria"], effects: { activity: -4, prices: -8, fiscal: -2, stability: -3 }, active: true, impactSummary: "Test crisis", responseHint: "Test response" }];
     const demeria = forecastLiveWorldCountry("demeria", state);
     const cyrenia = forecastLiveWorldCountry("cyrenia", state);
     expect(demeria.prices).toBeLessThan(cyrenia.prices);

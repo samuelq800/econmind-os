@@ -110,6 +110,10 @@ export function forecastLiveWorldCountry(countryId: LiveWorldCountryId, state: L
     const resilience = (country.structure.resources + country.structure.financialDepth + (100 - country.structure.energyDependence)) / 300;
     add(effects, crisis.effects, 1 - resilience * 0.28);
   }
+  for (const sanction of state.sanctions.filter((item) => item.status === "active")) {
+    if (sanction.targetCountry === countryId) add(effects, { activity: -sanction.tariffRate * 0.16, livelihoods: -sanction.tariffRate * 0.06, prices: -sanction.tariffRate * 0.14, stability: -sanction.tariffRate * 0.05 });
+    if (sanction.initiatorCountry === countryId) add(effects, { activity: -sanction.tariffRate * 0.04, prices: -sanction.tariffRate * 0.03, fiscal: -sanction.tariffRate * 0.02 });
+  }
   addAgreementEffects(countryId, state, effects);
   return Object.fromEntries(Object.entries(effects).map(([key, amount]) => [key, round(clamp(amount))])) as LiveWorldDimensions;
 }
@@ -146,7 +150,7 @@ export function agreementPreview(agreement: Pick<LiveWorldAgreement, "proposerCo
 }
 
 export function initialLiveWorldRoomState(): LiveWorldRoomState {
-  return { publishedPolicies: {}, agreements: [], crises: [] };
+  return { publishedPolicies: {}, agreements: [], crises: [], sanctions: [] };
 }
 
 export const LIVE_WORLD_POLICY_KEYS = new Set(LIVE_WORLD_POLICY_CONTROLS.map((control) => control.key));
