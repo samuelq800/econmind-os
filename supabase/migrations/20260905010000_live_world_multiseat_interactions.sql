@@ -115,9 +115,10 @@ declare participant_name text;
 begin
   select * into room_row from public.live_world_rooms where id = p_room_id for update;
   if not found or not public.live_world_room_active(room_row) then raise exception 'Publishing is available only while the room is live'; end if;
-  select a.*, p.display_name into assignment_row, participant_name from public.live_world_seat_assignments a join public.live_world_participants p on p.id = a.participant_id
+  select a.* into assignment_row from public.live_world_seat_assignments a join public.live_world_participants p on p.id = a.participant_id
   where a.room_id = p_room_id and a.country_key = p_country_key and a.role_key = p_role_key and p.auth_user_id = auth.uid() for update;
   if not found then raise exception 'This cabinet appointment is required'; end if;
+  select display_name into participant_name from public.live_world_participants where id = assignment_row.participant_id;
   update public.live_world_rooms set state = jsonb_set(jsonb_set(state, array['publishedPolicies', p_country_key], coalesce(state #> array['publishedPolicies', p_country_key], '{}'::jsonb), true), array['publishedPolicies', p_country_key, p_role_key], assignment_row.draft_policy, true) where id = p_room_id;
   insert into public.live_world_events(room_id, country_key, event_type, message)
   values(p_room_id, p_country_key, 'policy_published', participant_name || ' published a policy package for ' || initcap(p_country_key) || '.');
