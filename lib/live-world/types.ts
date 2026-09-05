@@ -9,6 +9,8 @@ export const LIVE_WORLD_ROLE_IDS = [
   "central_bank_governor",
   "finance_domestic_minister",
   "trade_industry_investment_minister",
+  "labour_social_development_minister",
+  "energy_climate_minister",
 ] as const;
 
 export const LIVE_WORLD_DIMENSIONS = [
@@ -103,6 +105,7 @@ export type LiveWorldRoomView = {
     id: string;
     name: string;
     status: LiveWorldRoomStatus;
+    participantCapacity: number;
     durationSeconds: number;
     remainingSeconds: number;
     timerEndsAt?: string | null;

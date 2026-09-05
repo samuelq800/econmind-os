@@ -41,6 +41,8 @@ export const LIVE_WORLD_ROLE_LABELS: Record<LiveWorldRoleId, string> = {
   central_bank_governor: "Central Bank Governor",
   finance_domestic_minister: "Finance & Domestic Minister",
   trade_industry_investment_minister: "Trade, Industry & Investment Minister",
+  labour_social_development_minister: "Labour & Social Development Minister",
+  energy_climate_minister: "Energy & Climate Minister",
 };
 
 export const LIVE_WORLD_POLICY_CONTROLS: readonly LiveWorldPolicyControl[] = [
@@ -55,6 +57,12 @@ export const LIVE_WORLD_POLICY_CONTROLS: readonly LiveWorldPolicyControl[] = [
   { key: "export_support", role: "trade_industry_investment_minister", label: "Export support", description: "Helps firms reach external markets.", min: 0, max: 30, step: 1, defaultValue: 10 },
   { key: "industrial_subsidy", role: "trade_industry_investment_minister", label: "Industrial subsidy", description: "Raises strategic capacity at a fiscal cost.", min: 0, max: 35, step: 1, defaultValue: 10 },
   { key: "fdi_openness", role: "trade_industry_investment_minister", label: "FDI openness", description: "Attracts capital and expertise with exposure to external conditions.", min: 0, max: 30, step: 1, defaultValue: 12 },
+  { key: "labour_market_activation", role: "labour_social_development_minister", label: "Labour-market activation", description: "Employment matching and support for people seeking work.", min: 0, max: 40, step: 1, defaultValue: 12 },
+  { key: "skills_investment", role: "labour_social_development_minister", label: "Skills investment", description: "Training capacity that raises productivity over the session.", min: 0, max: 40, step: 1, defaultValue: 14 },
+  { key: "wage_support", role: "labour_social_development_minister", label: "Wage support", description: "Targeted income support during labour-market adjustment.", min: 0, max: 30, step: 1, defaultValue: 8 },
+  { key: "strategic_energy_reserve", role: "energy_climate_minister", label: "Strategic energy reserve", description: "Buffer reserves against energy supply shocks.", min: 0, max: 30, step: 1, defaultValue: 8 },
+  { key: "clean_energy_investment", role: "energy_climate_minister", label: "Clean-energy investment", description: "Invest in cleaner domestic power capacity.", min: 0, max: 45, step: 1, defaultValue: 16 },
+  { key: "efficiency_standard", role: "energy_climate_minister", label: "Efficiency standard", description: "Efficiency requirements that reduce energy exposure.", min: 0, max: 30, step: 1, defaultValue: 10 },
 ] as const;
 
 export const LIVE_WORLD_CRISIS_LIBRARY: readonly LiveWorldCrisis[] = [

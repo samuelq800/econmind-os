@@ -30,6 +30,8 @@ function policyEffects(countryId: LiveWorldCountryId, state: LiveWorldRoomState)
   const central = policies.central_bank_governor;
   const finance = policies.finance_domestic_minister;
   const trade = policies.trade_industry_investment_minister;
+  const labour = policies.labour_social_development_minister;
+  const energy = policies.energy_climate_minister;
   const effects: MutableDimensions = { ...country.baseline };
   const rate = value(central, "policy_rate", 5) - 5;
   const liquidity = value(central, "liquidity_support", 8) - 8;
@@ -42,6 +44,12 @@ function policyEffects(countryId: LiveWorldCountryId, state: LiveWorldRoomState)
   const exports = value(trade, "export_support", 10) - 10;
   const subsidy = value(trade, "industrial_subsidy", 10) - 10;
   const fdi = value(trade, "fdi_openness", 12) - 12;
+  const activation = value(labour, "labour_market_activation", 12) - 12;
+  const skills = value(labour, "skills_investment", 14) - 14;
+  const wageSupport = value(labour, "wage_support", 8) - 8;
+  const energyReserve = value(energy, "strategic_energy_reserve", 8) - 8;
+  const cleanEnergy = value(energy, "clean_energy_investment", 16) - 16;
+  const efficiency = value(energy, "efficiency_standard", 10) - 10;
   const structure = country.structure;
 
   add(effects, { activity: -rate * (0.28 + structure.financialDepth / 600), prices: rate * 0.48, financial: rate * 0.16, stability: rate * 0.1 });
@@ -55,6 +63,12 @@ function policyEffects(countryId: LiveWorldCountryId, state: LiveWorldRoomState)
   add(effects, { activity: exports * (0.1 + structure.exportDependence / 950), fiscal: -exports * 0.08, livelihoods: exports * 0.07 });
   add(effects, { activity: subsidy * (0.08 + structure.manufacturing / 1000), fiscal: -subsidy * 0.17, financial: subsidy * 0.03 });
   add(effects, { activity: fdi * (0.07 + structure.capitalDependence / 1000), financial: fdi * (0.08 + structure.financialDepth / 1400), stability: -fdi * (structure.capitalDependence / 1800) });
+  add(effects, { activity: activation * 0.12, livelihoods: activation * 0.2, fiscal: -activation * 0.08, stability: activation * 0.04 });
+  add(effects, { activity: skills * (0.08 + structure.technology / 1400), livelihoods: skills * 0.1, fiscal: -skills * 0.09, financial: skills * 0.03 });
+  add(effects, { livelihoods: wageSupport * 0.2, stability: wageSupport * 0.1, fiscal: -wageSupport * 0.16, activity: wageSupport * 0.04 });
+  add(effects, { prices: energyReserve * (0.08 + structure.energyDependence / 1500), stability: energyReserve * 0.11, fiscal: -energyReserve * 0.1 });
+  add(effects, { activity: cleanEnergy * (0.06 + structure.resources / 1500), prices: cleanEnergy * 0.08, stability: cleanEnergy * 0.1, fiscal: -cleanEnergy * 0.12 });
+  add(effects, { prices: efficiency * (0.1 + structure.energyDependence / 1300), activity: efficiency * 0.05, fiscal: -efficiency * 0.05, financial: efficiency * 0.03 });
   return effects;
 }
 

@@ -27,9 +27,13 @@ const anonymousExpiryMigration = readFileSync(
   "supabase/migrations/20260901010000_expire_live_world_anonymous_users.sql",
   "utf8",
 );
+const fiveOfficeMigration = readFileSync(
+  "supabase/migrations/20260905000000_live_world_five_office_expansion.sql",
+  "utf8",
+);
 
 describe("Live World", () => {
-  it("keeps four structurally distinct fictional countries and twelve possible seats", () => {
+  it("keeps four structurally distinct fictional countries and twenty possible seats", () => {
     expect(LIVE_WORLD_COUNTRIES).toHaveLength(4);
     expect(new Set(LIVE_WORLD_COUNTRIES.map((country) => country.structure.technology)).size).toBe(4);
     expect(new Set(LIVE_WORLD_COUNTRIES.map((country) => country.structure.resources)).size).toBe(4);
@@ -37,6 +41,10 @@ describe("Live World", () => {
     expect(migration).toContain("central_bank_governor");
     expect(migration).toContain("finance_domestic_minister");
     expect(migration).toContain("trade_industry_investment_minister");
+    expect(fiveOfficeMigration).toContain("labour_social_development_minister");
+    expect(fiveOfficeMigration).toContain("energy_climate_minister");
+    expect(fiveOfficeMigration).toContain("participant_capacity");
+    expect(fiveOfficeMigration).toContain("live_world_seed_default_policies");
   });
 
   it("combines independently published policy packages into the six-dimensional forecast", () => {
@@ -75,6 +83,7 @@ describe("Live World", () => {
       id: "room-1",
       name: "Clock test",
       status: "live" as const,
+      participantCapacity: 20,
       durationSeconds: 300,
       remainingSeconds: 280,
       timerEndsAt: new Date(now + 280_000).toISOString(),

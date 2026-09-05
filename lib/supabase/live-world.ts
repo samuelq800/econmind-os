@@ -81,15 +81,16 @@ function asRoomView(value: unknown) {
 }
 
 export type CreatedLiveWorldRoom = {
-  room: { id: string; name: string; status: string; durationSeconds: number; createdAt: string };
+  room: { id: string; name: string; status: string; durationSeconds: number; participantCapacity: number; createdAt: string };
   playerCode: string;
   adminCode: string;
 };
 
-export async function createLiveWorldRoom(name: string, durationSeconds: number) {
+export async function createLiveWorldRoom(name: string, durationSeconds: number, participantCapacity: number) {
   const { data, error } = await requireSupabaseBrowserClient().rpc("create_live_world_room", {
     p_name: name,
     p_duration_seconds: durationSeconds,
+    p_participant_capacity: participantCapacity,
   });
   throwIfSupabaseError(error);
   return data as CreatedLiveWorldRoom;
@@ -107,7 +108,17 @@ export async function listLiveWorldRoomsForAdmin() {
     ended_at: string | null;
     created_at: string;
     participant_count: number;
+    participant_capacity: number;
   }>;
+}
+
+export async function setLiveWorldParticipantCapacity(roomId: string, participantCapacity: number) {
+  const supabase = await ensureLiveWorldSession();
+  const { error } = await supabase.rpc("set_live_world_participant_capacity", {
+    p_room_id: roomId,
+    p_participant_capacity: participantCapacity,
+  });
+  throwIfSupabaseError(error);
 }
 
 export async function joinLiveWorldRoom(roomId: string, code: string, displayName: string) {
