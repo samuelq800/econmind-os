@@ -47,6 +47,11 @@ alter table public.live_world_seat_assignments enable row level security;
 alter table public.live_world_sanctions enable row level security;
 alter table public.live_world_messages enable row level security;
 
+-- PostgreSQL does not permit CREATE OR REPLACE to change a function's return
+-- type. The previous implementation returned a participant; appointments now
+-- return their own assignment row.
+drop function if exists public.claim_live_world_seat(uuid, text, text);
+
 create or replace function public.claim_live_world_seat(p_room_id uuid, p_country_key text, p_role_key text)
 returns public.live_world_seat_assignments language plpgsql security definer set search_path = public
 as $$
