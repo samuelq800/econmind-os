@@ -119,7 +119,7 @@ export const COMMUNICATIONS_TEAM: readonly TeamMember[] = [
   },
   {
     name: "Irene",
-    role: "Douyin",
+    role: "Bilibili, Douyin & Video Editing",
     image: "/images/team/comms-irene.jpg",
     imagePosition: "50% 38%",
     contact: { type: "phone", value: "13127596838" },
@@ -131,7 +131,7 @@ export const COMMUNICATIONS_TEAM: readonly TeamMember[] = [
   },
   {
     name: "Olivia",
-    role: "Bilibili",
+    role: "Bilibili, Douyin & Video Editing",
     image: "/images/team/comms-olivia.jpg",
     imagePosition: "50% 38%",
     contact: { type: "wechat", value: "YueSunny229" },
@@ -145,7 +145,7 @@ export const COMMUNICATIONS_TEAM: readonly TeamMember[] = [
   },
   {
     name: "Regina",
-    role: "Douyin",
+    role: "Bilibili, Douyin & Video Editing",
     image: "/images/team/comms-regina.jpg",
     imagePosition: "50% 36%",
     contact: { type: "wechat", value: "shellycone" },
