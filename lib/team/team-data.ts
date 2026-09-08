@@ -10,6 +10,7 @@ export type TeamMember = {
   image?: string;
   imagePosition?: string;
   contact: TeamContact;
+  secondaryContact?: TeamContact;
 };
 
 export const FOUNDING_TEAM: readonly TeamMember[] = [
@@ -73,6 +74,13 @@ export const REGIONAL_LEADERS: readonly TeamMember[] = [
     contact: { type: "wechat", value: "JessieZhang0501" },
   },
   {
+    name: "Leon Xue",
+    role: "Jiangsu Regional Lead",
+    image: "/images/team/leon-xue.jpg",
+    imagePosition: "82% 43%",
+    contact: { type: "wechat", value: "xjz918000" },
+  },
+  {
     name: "Rae",
     role: "Shandong Regional Lead",
     image: "/images/team/rae.jpg",
@@ -106,6 +114,14 @@ export const REGIONAL_LEADERS: readonly TeamMember[] = [
     image: "/images/team/trione.jpg",
     imagePosition: "50% 38%",
     contact: { type: "phone", value: "18996390101" },
+  },
+  {
+    name: "Vader",
+    role: "Jiangsu Regional Lead",
+    image: "/images/team/vader.jpg",
+    imagePosition: "74% 42%",
+    contact: { type: "wechat", value: "VADER55666" },
+    secondaryContact: { type: "phone", value: "+86 18913955666" },
   },
 ];
 
@@ -194,7 +210,7 @@ export const REGIONAL_NETWORK = [
   { region: "Beijing", leads: ["Emma", "Sophia Liu"] },
   { region: "Zhejiang", leads: ["Sophia Cai"] },
   { region: "Shandong", leads: ["Rae"] },
-  { region: "Jiangsu", leads: ["Clement"] },
+  { region: "Jiangsu", leads: ["Clement", "Leon Xue", "Vader"] },
   { region: "Jiangxi", leads: ["Jessie"] },
   { region: "East China & National A-Level", leads: ["Angela", "Richard"] },
   { region: "Southwest China", leads: ["Trione"] },

@@ -190,11 +190,18 @@ function Portrait({ member }: { member: TeamMember }) {
 }
 
 function Contact({ member, className = "" }: { member: TeamMember; className?: string }) {
-  const Icon = member.contact.type === "phone" ? Phone : MessageCircleMore;
-  const value = member.contact.value;
-  const content = <><Icon size={13} aria-hidden="true" /><span className="font-extrabold uppercase tracking-[.12em] text-[var(--ink-faint)]">{contactLabel(member.contact)}</span><span className="font-semibold text-[var(--ink-muted)]">{value}</span></>;
+  const contacts = [member.contact, member.secondaryContact].filter((contact): contact is NonNullable<typeof contact> => Boolean(contact));
 
-  return member.contact.type === "phone"
-    ? <a href={`tel:${value}`} className={`inline-flex items-center gap-2 text-xs transition-colors hover:text-[var(--accent)] ${className}`}>{content}</a>
-    : <p className={`inline-flex items-center gap-2 text-xs ${className}`}>{content}</p>;
+  return <div className={`flex flex-wrap items-center gap-x-3 gap-y-2 ${className}`}>
+    {contacts.map((contact) => <ContactDetail key={`${contact.type}-${contact.value}`} contact={contact} />)}
+  </div>;
+}
+
+function ContactDetail({ contact }: { contact: TeamMember["contact"] }) {
+  const Icon = contact.type === "phone" ? Phone : MessageCircleMore;
+  const content = <><Icon size={13} aria-hidden="true" /><span className="font-extrabold uppercase tracking-[.12em] text-[var(--ink-faint)]">{contactLabel(contact)}</span><span className="font-semibold text-[var(--ink-muted)]">{contact.value}</span></>;
+
+  return contact.type === "phone"
+    ? <a href={`tel:${contact.value}`} className="inline-flex items-center gap-2 text-xs transition-colors hover:text-[var(--accent)]">{content}</a>
+    : <p className="inline-flex items-center gap-2 text-xs">{content}</p>;
 }
