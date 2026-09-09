@@ -1,4 +1,14 @@
-import type { CrisisDecision, CrisisRun, LeagueApplication, LeagueContext, LeaguePlatformRole, LeagueProfile, School, Team, TeamMember } from "@/lib/league/types";
+import type {
+  CrisisDecision,
+  CrisisRun,
+  LeagueApplication,
+  LeagueContext,
+  LeaguePlatformRole,
+  LeagueProfile,
+  School,
+  Team,
+  TeamMember,
+} from "@/lib/league/types";
 import type { CurriculumSystem } from "@/lib/league/curriculum";
 import {
   getCountryOrArea,
@@ -11,7 +21,9 @@ import {
   throwIfSupabaseError as fail,
 } from "./client";
 
-function normaliseLeagueApplication(row: Partial<LeagueApplication>): LeagueApplication {
+function normaliseLeagueApplication(
+  row: Partial<LeagueApplication>,
+): LeagueApplication {
   return {
     ...row,
     submitted_area_key: row.submitted_area_key ?? null,
@@ -29,8 +41,17 @@ function normaliseLeagueApplication(row: Partial<LeagueApplication>): LeagueAppl
 
 export async function getLeagueContext(userId: string): Promise<LeagueContext> {
   const supabase = client();
-  const [{ data: profile, error: profileError }, { data: membership, error: membershipError }] = await Promise.all([
-    supabase.from("profiles").select("user_id,display_name,role,platform_role,school_id,graduation_year,economics_club_name,role_preference,created_at,updated_at").eq("user_id", userId).maybeSingle(),
+  const [
+    { data: profile, error: profileError },
+    { data: membership, error: membershipError },
+  ] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select(
+        "user_id,display_name,role,platform_role,school_id,graduation_year,economics_club_name,role_preference,created_at,updated_at",
+      )
+      .eq("user_id", userId)
+      .maybeSingle(),
     supabase
       .from("team_members")
       .select("*, team:teams(*, school:schools(*))")
@@ -38,33 +59,72 @@ export async function getLeagueContext(userId: string): Promise<LeagueContext> {
       .order("joined_at")
       .limit(1),
   ]);
-  fail(profileError); fail(membershipError);
+  fail(profileError);
+  fail(membershipError);
   const typedProfile = profile as LeagueProfile | null;
   const typedMembership = (membership?.[0] ?? null) as TeamMember | null;
   let school: School | null = typedMembership?.team?.school ?? null;
   if (!school && typedProfile?.school_id) {
-    const { data, error } = await supabase.from("schools").select("*").eq("id", typedProfile.school_id).maybeSingle();
-    fail(error); school = data as School | null;
+    const { data, error } = await supabase
+      .from("schools")
+      .select("*")
+      .eq("id", typedProfile.school_id)
+      .maybeSingle();
+    fail(error);
+    school = data as School | null;
   }
   return { profile: typedProfile, school, membership: typedMembership };
 }
 
-export async function updateLeagueProfile(input: Pick<LeagueProfile, "display_name" | "graduation_year" | "economics_club_name" | "role_preference">) {
-  const { data, error } = await client().from("profiles").update(input).eq("user_id", (await client().auth.getUser()).data.user?.id ?? "").select("user_id,display_name,role,platform_role,school_id,graduation_year,economics_club_name,role_preference,created_at,updated_at").single();
-  fail(error); return data as LeagueProfile;
+export async function updateLeagueProfile(
+  input: Pick<
+    LeagueProfile,
+    | "display_name"
+    | "graduation_year"
+    | "economics_club_name"
+    | "role_preference"
+  >,
+) {
+  const { data, error } = await client()
+    .from("profiles")
+    .update(input)
+    .eq("user_id", (await client().auth.getUser()).data.user?.id ?? "")
+    .select(
+      "user_id,display_name,role,platform_role,school_id,graduation_year,economics_club_name,role_preference,created_at,updated_at",
+    )
+    .single();
+  fail(error);
+  return data as LeagueProfile;
 }
 
 export async function listMyLeagueApplications() {
-  const { data, error } = await client().from("league_applications").select("*").order("created_at", { ascending: false });
-  fail(error); return (data ?? []).map((row) => normaliseLeagueApplication(row as Partial<LeagueApplication>));
+  const { data, error } = await client()
+    .from("league_applications")
+    .select("*")
+    .order("created_at", { ascending: false });
+  fail(error);
+  return (data ?? []).map((row) =>
+    normaliseLeagueApplication(row as Partial<LeagueApplication>),
+  );
 }
 
 export type SubmitLeagueApplicationInput = Pick<
   LeagueApplication,
-  "school_name" | "club_name" | "contact_person" | "curriculum_system" | "expected_teams" | "expected_members" | "preferred_language" | "preferred_format" | "organising_committee_interest" | "notes"
+  | "school_name"
+  | "club_name"
+  | "contact_person"
+  | "curriculum_system"
+  | "expected_teams"
+  | "expected_members"
+  | "preferred_language"
+  | "preferred_format"
+  | "organising_committee_interest"
+  | "notes"
 > & { location: SchoolLocationSubmission };
 
-export async function submitLeagueApplication(input: SubmitLeagueApplicationInput) {
+export async function submitLeagueApplication(
+  input: SubmitLeagueApplicationInput,
+) {
   const { data, error } = await client().rpc("submit_league_application", {
     p_school_name: input.school_name,
     p_club_name: input.club_name,
@@ -81,17 +141,24 @@ export async function submitLeagueApplication(input: SubmitLeagueApplicationInpu
     p_submitted_administrative_area: input.location.administrativeArea || null,
     p_submitted_city: input.location.city,
   });
-  fail(error); return data as LeagueApplication;
+  fail(error);
+  return data as LeagueApplication;
 }
 
-export async function resubmitLeagueApplicationLocation(applicationId: string, location: SchoolLocationSubmission) {
-  const { data, error } = await client().rpc("resubmit_league_application_location", {
-    p_application_id: applicationId,
-    p_submitted_area_key: location.areaKey,
-    p_submitted_area_label: location.areaLabel,
-    p_submitted_administrative_area: location.administrativeArea || null,
-    p_submitted_city: location.city,
-  });
+export async function resubmitLeagueApplicationLocation(
+  applicationId: string,
+  location: SchoolLocationSubmission,
+) {
+  const { data, error } = await client().rpc(
+    "resubmit_league_application_location",
+    {
+      p_application_id: applicationId,
+      p_submitted_area_key: location.areaKey,
+      p_submitted_area_label: location.areaLabel,
+      p_submitted_administrative_area: location.administrativeArea || null,
+      p_submitted_city: location.city,
+    },
+  );
   fail(error);
   return data as {
     application_id: string;
@@ -102,16 +169,23 @@ export async function resubmitLeagueApplicationLocation(applicationId: string, l
 }
 
 export async function joinLeagueTeam(inviteCode: string) {
-  const { data, error } = await client().rpc("join_team_by_invite", { p_invite_code: inviteCode });
-  fail(error); return data as { team_id: string; team_name: string; school_id: string };
+  const { data, error } = await client().rpc("join_team_by_invite", {
+    p_invite_code: inviteCode,
+  });
+  fail(error);
+  return data as { team_id: string; team_name: string; school_id: string };
 }
 
-export async function createLeagueTeam(input: { schoolId: string; name: string }) {
+export async function createLeagueTeam(input: {
+  schoolId: string;
+  name: string;
+}) {
   const { data, error } = await client().rpc("create_school_team", {
     p_school_id: input.schoolId,
     p_name: input.name,
   });
-  fail(error); return data as Team;
+  fail(error);
+  return data as Team;
 }
 
 export async function renameLeagueTeam(teamId: string, name: string) {
@@ -119,18 +193,27 @@ export async function renameLeagueTeam(teamId: string, name: string) {
     p_team_id: teamId,
     p_name: name,
   });
-  fail(error); return data as Team;
+  fail(error);
+  return data as Team;
 }
 
-export async function setLeagueTeamStatus(teamId: string, status: Team["status"]) {
+export async function setLeagueTeamStatus(
+  teamId: string,
+  status: Team["status"],
+) {
   const { data, error } = await client().rpc("set_school_team_status", {
     p_team_id: teamId,
     p_status: status,
   });
-  fail(error); return data as Team;
+  fail(error);
+  return data as Team;
 }
 
-export async function moveLeagueTeamMember(input: { userId: string; fromTeamId: string; toTeamId: string }) {
+export async function moveLeagueTeamMember(input: {
+  userId: string;
+  fromTeamId: string;
+  toTeamId: string;
+}) {
   const { error } = await client().rpc("move_school_team_member", {
     p_user_id: input.userId,
     p_from_team_id: input.fromTeamId,
@@ -140,11 +223,21 @@ export async function moveLeagueTeamMember(input: { userId: string; fromTeamId: 
 }
 
 export async function listSchoolTeams(schoolId: string) {
-  const { data, error } = await client().from("teams").select("*, members:team_members(*, profile:profiles(user_id,display_name))").eq("school_id", schoolId).order("created_at");
-  fail(error); return (data ?? []) as Array<Team & { members: TeamMember[] }>;
+  const { data, error } = await client()
+    .from("teams")
+    .select(
+      "*, members:team_members(*, profile:profiles(user_id,display_name))",
+    )
+    .eq("school_id", schoolId)
+    .order("created_at");
+  fail(error);
+  return (data ?? []) as Array<Team & { members: TeamMember[] }>;
 }
 
-export async function saveCrisisRun(teamId: string | null, decisions: CrisisDecision[]) {
+export async function saveCrisisRun(
+  teamId: string | null,
+  decisions: CrisisDecision[],
+) {
   const { data, error } = await client().rpc("submit_crisis_run", {
     p_team_id: teamId,
     p_decisions: decisions.map((decision) => ({
@@ -159,56 +252,111 @@ export async function saveCrisisRun(teamId: string | null, decisions: CrisisDeci
 }
 
 export async function listMyCrisisRuns(userId: string, limit = 10) {
-  const { data, error } = await client().from("crisis_runs").select("*, team:teams(id,name,school_id)").eq("user_id", userId).order("completed_at", { ascending: false }).limit(limit);
-  fail(error); return (data ?? []) as CrisisRun[];
+  const { data, error } = await client()
+    .from("crisis_runs")
+    .select("*, team:teams(id,name,school_id)")
+    .eq("user_id", userId)
+    .order("completed_at", { ascending: false })
+    .limit(limit);
+  fail(error);
+  return (data ?? []) as CrisisRun[];
 }
 
 export async function listSchoolCrisisRuns(schoolId: string) {
-  const { data, error } = await client().from("crisis_runs").select("*, team:teams!inner(id,name,school_id)").eq("teams.school_id", schoolId).order("completed_at", { ascending: false }).limit(50);
-  fail(error); return (data ?? []) as CrisisRun[];
+  const { data, error } = await client()
+    .from("crisis_runs")
+    .select("*, team:teams!inner(id,name,school_id)")
+    .eq("teams.school_id", schoolId)
+    .order("completed_at", { ascending: false })
+    .limit(50);
+  fail(error);
+  return (data ?? []) as CrisisRun[];
 }
 
 export async function listAdminLeagueApplications() {
-  const { data, error } = await client().from("league_applications").select("*").order("created_at", { ascending: false });
-  fail(error); return (data ?? []).map((row) => normaliseLeagueApplication(row as Partial<LeagueApplication>));
+  const { data, error } = await client()
+    .from("league_applications")
+    .select("*")
+    .order("created_at", { ascending: false });
+  fail(error);
+  return (data ?? []).map((row) =>
+    normaliseLeagueApplication(row as Partial<LeagueApplication>),
+  );
 }
 
-export async function reviewLeagueApplication(applicationId: string, status: "approved" | "rejected" | "under_review") {
-  const { data, error } = await client().rpc("review_league_application", { p_application_id: applicationId, p_status: status });
-  fail(error); return data as { application_id: string; status: LeagueApplication["status"]; school_id: string | null };
-}
-
-export async function matchLeagueApplicationLocation(applicationId: string, evidenceUrl: string, note: string) {
-  const { data, error } = await client().rpc("match_league_application_location", {
+export async function reviewLeagueApplication(
+  applicationId: string,
+  status: "approved" | "rejected" | "under_review",
+) {
+  const { data, error } = await client().rpc("review_league_application", {
     p_application_id: applicationId,
-    p_evidence_url: evidenceUrl,
-    p_note: note || null,
+    p_status: status,
   });
   fail(error);
-  return data as { application_id: string; location_status: "verified"; location_key: string; city: string };
+  return data as {
+    application_id: string;
+    status: LeagueApplication["status"];
+    school_id: string | null;
+  };
 }
 
-export async function verifyLeagueApplicationLocation(applicationId: string, location: CanonicalSchoolLocationInput) {
-  const { data, error } = await client().rpc("verify_league_application_location", {
-    p_application_id: applicationId,
-    p_geoname_id: location.geonameId,
-    p_city: location.city,
-    p_area_key: location.areaKey,
-    p_area_label: location.areaLabel,
-    p_administrative_area: location.administrativeArea || null,
-    p_latitude: location.latitude,
-    p_longitude: location.longitude,
-    p_evidence_url: location.evidenceUrl,
-    p_note: location.note || null,
-  });
+export async function matchLeagueApplicationLocation(
+  applicationId: string,
+  evidenceUrl: string,
+  note: string,
+) {
+  const { data, error } = await client().rpc(
+    "match_league_application_location",
+    {
+      p_application_id: applicationId,
+      p_evidence_url: evidenceUrl,
+      p_note: note || null,
+    },
+  );
   fail(error);
-  return data as { application_id: string; location_status: "verified"; location_key: string };
+  return data as {
+    application_id: string;
+    location_status: "verified";
+    location_key: string;
+    city: string;
+  };
 }
 
-export async function findSchoolLocationCatalogEntry(geonameId: number): Promise<SchoolLocationCatalogEntry | null> {
+export async function verifyLeagueApplicationLocation(
+  applicationId: string,
+  location: CanonicalSchoolLocationInput,
+) {
+  const { data, error } = await client().rpc(
+    "verify_league_application_location",
+    {
+      p_application_id: applicationId,
+      p_geoname_id: location.geonameId,
+      p_city: location.city,
+      p_area_key: location.areaKey,
+      p_area_label: location.areaLabel,
+      p_administrative_area: location.administrativeArea || null,
+      p_latitude: location.latitude,
+      p_longitude: location.longitude,
+      p_evidence_url: location.evidenceUrl,
+      p_note: location.note || null,
+    },
+  );
+  fail(error);
+  return data as {
+    application_id: string;
+    location_status: "verified";
+    location_key: string;
+  };
+}
+
+export async function findSchoolLocationCatalogEntry(
+  geonameId: number,
+): Promise<SchoolLocationCatalogEntry | null> {
   const { data, error } = await client()
     .from("school_location_catalog")
-    .select("location_key,geoname_id,city,area_key,area_label,administrative_area,latitude,longitude")
+    .select(
+      "location_key,geoname_id,city,area_key,area_label,administrative_area,latitude,longitude",
+    )
     .eq("geoname_id", geonameId)
     .maybeSingle();
   fail(error);
@@ -217,23 +365,26 @@ export async function findSchoolLocationCatalogEntry(geonameId: number): Promise
   const parsedGeonameId = Number(data.geoname_id);
   const latitude = Number(data.latitude);
   const longitude = Number(data.longitude);
-  const area = typeof data.area_key === "string" ? getCountryOrArea(data.area_key) : null;
+  const area =
+    typeof data.area_key === "string" ? getCountryOrArea(data.area_key) : null;
   if (
-    typeof data.location_key !== "string"
-    || !Number.isSafeInteger(parsedGeonameId)
-    || parsedGeonameId <= 0
-    || typeof data.city !== "string"
-    || data.city.trim().length < 2
-    || !area
-    || data.area_label !== area.label
-    || !Number.isFinite(latitude)
-    || latitude < -90
-    || latitude > 90
-    || !Number.isFinite(longitude)
-    || longitude < -180
-    || longitude > 180
+    typeof data.location_key !== "string" ||
+    !Number.isSafeInteger(parsedGeonameId) ||
+    parsedGeonameId <= 0 ||
+    typeof data.city !== "string" ||
+    data.city.trim().length < 2 ||
+    !area ||
+    data.area_label !== area.label ||
+    !Number.isFinite(latitude) ||
+    latitude < -90 ||
+    latitude > 90 ||
+    !Number.isFinite(longitude) ||
+    longitude < -180 ||
+    longitude > 180
   ) {
-    throw new Error("The existing location catalog record is malformed and must be reviewed in Supabase.");
+    throw new Error(
+      "The existing location catalog record is malformed and must be reviewed in Supabase.",
+    );
   }
 
   return {
@@ -242,22 +393,37 @@ export async function findSchoolLocationCatalogEntry(geonameId: number): Promise
     city: data.city,
     areaKey: area.key,
     areaLabel: area.label,
-    administrativeArea: typeof data.administrative_area === "string" ? data.administrative_area : "",
+    administrativeArea:
+      typeof data.administrative_area === "string"
+        ? data.administrative_area
+        : "",
     latitude,
     longitude,
   };
 }
 
-export async function requestLeagueApplicationLocationCorrection(applicationId: string, publicNote: string) {
-  const { data, error } = await client().rpc("request_league_application_location_correction", {
-    p_application_id: applicationId,
-    p_public_note: publicNote,
-  });
+export async function requestLeagueApplicationLocationCorrection(
+  applicationId: string,
+  publicNote: string,
+) {
+  const { data, error } = await client().rpc(
+    "request_league_application_location_correction",
+    {
+      p_application_id: applicationId,
+      p_public_note: publicNote,
+    },
+  );
   fail(error);
-  return data as { application_id: string; location_status: "needs_correction" };
+  return data as {
+    application_id: string;
+    location_status: "needs_correction";
+  };
 }
 
-export async function verifyLeagueSchoolLocation(schoolId: string, location: CanonicalSchoolLocationInput) {
+export async function verifyLeagueSchoolLocation(
+  schoolId: string,
+  location: CanonicalSchoolLocationInput,
+) {
   const { data, error } = await client().rpc("verify_league_school_location", {
     p_school_id: schoolId,
     p_geoname_id: location.geonameId,
@@ -271,44 +437,92 @@ export async function verifyLeagueSchoolLocation(schoolId: string, location: Can
     p_note: location.note || null,
   });
   fail(error);
-  return data as { school_id: string; location_status: "verified"; location_key: string };
+  return data as {
+    school_id: string;
+    location_status: "verified";
+    location_key: string;
+  };
 }
 
-export async function requestLeagueSchoolLocationCorrection(schoolId: string, publicNote: string) {
-  const { data, error } = await client().rpc("request_league_school_location_correction", {
-    p_school_id: schoolId,
-    p_public_note: publicNote,
-  });
+export async function requestLeagueSchoolLocationCorrection(
+  schoolId: string,
+  publicNote: string,
+) {
+  const { data, error } = await client().rpc(
+    "request_league_school_location_correction",
+    {
+      p_school_id: schoolId,
+      p_public_note: publicNote,
+    },
+  );
   fail(error);
   return data as { school_id: string; location_status: "needs_correction" };
 }
 
-export async function updateLeagueSchoolCurriculum(input: { schoolId: string; curriculumSystem: CurriculumSystem }) {
-  const { data, error } = await client().rpc("update_league_school_curriculum", {
-    p_school_id: input.schoolId,
-    p_curriculum_system: input.curriculumSystem,
-  });
+export async function updateLeagueSchoolCurriculum(input: {
+  schoolId: string;
+  curriculumSystem: CurriculumSystem;
+}) {
+  const { data, error } = await client().rpc(
+    "update_league_school_curriculum",
+    {
+      p_school_id: input.schoolId,
+      p_curriculum_system: input.curriculumSystem,
+    },
+  );
   fail(error);
   return data as School;
 }
 
 export async function listLeagueProfiles() {
-  const { data, error } = await client().from("profiles").select("user_id,display_name,role,platform_role,school_id,graduation_year,economics_club_name,role_preference,created_at,updated_at").order("created_at", { ascending: false }).limit(100);
-  fail(error); return (data ?? []) as LeagueProfile[];
+  const pageSize = 1_000;
+  const profiles: LeagueProfile[] = [];
+
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await client()
+      .from("profiles")
+      .select(
+        "user_id,display_name,role,platform_role,school_id,graduation_year,economics_club_name,role_preference,created_at,updated_at",
+      )
+      .order("created_at", { ascending: false })
+      .order("user_id", { ascending: true })
+      .range(offset, offset + pageSize - 1);
+
+    fail(error);
+    const page = (data ?? []) as LeagueProfile[];
+    profiles.push(...page);
+
+    if (page.length < pageSize) return profiles;
+  }
 }
 
-export async function setLeaguePlatformRole(userId: string, role: LeaguePlatformRole) {
-  const { error } = await client().rpc("set_league_platform_role", { p_user_id: userId, p_platform_role: role });
+export async function setLeaguePlatformRole(
+  userId: string,
+  role: LeaguePlatformRole,
+) {
+  const { error } = await client().rpc("set_league_platform_role", {
+    p_user_id: userId,
+    p_platform_role: role,
+  });
   fail(error);
 }
 
-export async function setAcademicRole(userId: string, role: "student" | "teacher" | "professor") {
-  const { error } = await client().rpc("set_econmind_academic_role", { p_user_id: userId, p_role: role });
+export async function setAcademicRole(
+  userId: string,
+  role: "student" | "teacher" | "professor",
+) {
+  const { error } = await client().rpc("set_econmind_academic_role", {
+    p_user_id: userId,
+    p_role: role,
+  });
   fail(error);
 }
 
 export async function listLeagueSchools() {
-  const { data, error } = await client().from("schools").select("*").order("created_at", { ascending: false });
+  const { data, error } = await client()
+    .from("schools")
+    .select("*")
+    .order("created_at", { ascending: false });
   fail(error);
   return (data ?? []).map((school) => ({
     ...school,
@@ -322,6 +536,16 @@ export async function listLeagueSchools() {
 }
 
 export async function listAdminCrisisRuns() {
-  const { data, error } = await client().from("crisis_runs").select("id,user_id,team_id,total_score,completed_at").order("completed_at", { ascending: false }).limit(500);
-  fail(error); return (data ?? []) as Array<Pick<CrisisRun, "id" | "user_id" | "team_id" | "total_score" | "completed_at">>;
+  const { data, error } = await client()
+    .from("crisis_runs")
+    .select("id,user_id,team_id,total_score,completed_at")
+    .order("completed_at", { ascending: false })
+    .limit(500);
+  fail(error);
+  return (data ?? []) as Array<
+    Pick<
+      CrisisRun,
+      "id" | "user_id" | "team_id" | "total_score" | "completed_at"
+    >
+  >;
 }
