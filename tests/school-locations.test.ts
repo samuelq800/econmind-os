@@ -29,6 +29,9 @@ describe("school city location catalog", () => {
     expect(
       Object.fromEntries(SCHOOL_CITY_LOCATIONS.map(({ city, locationKey }) => [city, locationKey])),
     ).toMatchObject({
+      Cambridge: "geonames:2653941",
+      Durham: "geonames:4464368",
+      "Los Angeles": "geonames:5368361",
       Melbourne: "geonames:2158177",
       Beijing: "geonames:1816670",
       Chengdu: "geonames:1815286",
@@ -71,8 +74,8 @@ describe("school city location catalog", () => {
       );
     }
 
-    expect(mappedSchoolCount).toBe(27);
-    expect(countsByCity.size).toBe(16);
+    expect(mappedSchoolCount).toBe(32);
+    expect(countsByCity.size).toBe(20);
     expect(Object.fromEntries(countsByCity)).toMatchObject({
       Beijing: 5,
       Shenzhen: 3,
@@ -99,8 +102,8 @@ describe("school city location catalog", () => {
   });
 
   it("keeps valid WGS84 coordinates and auditable source metadata", () => {
-    expect(SCHOOL_CITY_LOCATIONS).toHaveLength(25);
-    expect(new Set(SCHOOL_CITY_LOCATIONS.map(({ locationKey }) => locationKey)).size).toBe(25);
+    expect(SCHOOL_CITY_LOCATIONS).toHaveLength(28);
+    expect(new Set(SCHOOL_CITY_LOCATIONS.map(({ locationKey }) => locationKey)).size).toBe(28);
 
     for (const location of SCHOOL_CITY_LOCATIONS) {
       expect(location.locationKey).toBe(`geonames:${location.geonameId}`);

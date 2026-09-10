@@ -30,6 +30,33 @@ export const SCHOOL_LOCATION_SOURCE = {
 // fuzzy-matched or inferred at runtime.
 export const SCHOOL_CITY_LOCATIONS = [
   {
+    locationKey: "geonames:2653941",
+    city: "Cambridge",
+    countryCode: "GB",
+    administrativeArea: "England",
+    latitude: 52.2,
+    longitude: 0.1166667,
+    geonameId: 2653941,
+  },
+  {
+    locationKey: "geonames:4464368",
+    city: "Durham",
+    countryCode: "US",
+    administrativeArea: "North Carolina",
+    latitude: 35.9940329,
+    longitude: -78.898619,
+    geonameId: 4464368,
+  },
+  {
+    locationKey: "geonames:5368361",
+    city: "Los Angeles",
+    countryCode: "US",
+    administrativeArea: "California",
+    latitude: 34.0522342,
+    longitude: -118.2436849,
+    geonameId: 5368361,
+  },
+  {
     locationKey: "geonames:2158177",
     city: "Melbourne",
     countryCode: "AU",
@@ -285,6 +312,8 @@ export function schoolLocationAreaLabel(location: SchoolCityLocation) {
   if (location.countryCode === "SG") return "Singapore";
   if (location.countryCode === "HK") return "Hong Kong SAR";
   if (location.countryCode === "AU") return "Australia";
+  if (location.countryCode === "GB") return "United Kingdom";
+  if (location.countryCode === "US") return "United States";
   return "Other location";
 }
 

@@ -17,7 +17,10 @@ export const SCHOOL_NETWORK_REGIONS = [
 export type SchoolNetworkRegion = (typeof SCHOOL_NETWORK_REGIONS)[number];
 
 export const REGION_BY_LOCATION_KEY = {
+  "geonames:2653941": "Other locations",
   "geonames:2158177": "Other locations",
+  "geonames:4464368": "Other locations",
+  "geonames:5368361": "Other locations",
   "geonames:1816670": "North China",
   "geonames:1815456": "East China",
   "geonames:1815286": "West China",

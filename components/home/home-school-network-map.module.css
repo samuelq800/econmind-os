@@ -398,7 +398,7 @@
   max-width: 900px;
   margin: 1.45rem 0 0;
   border-block: 1px solid rgb(255 255 255 / 14%);
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .partnerStats > div {
@@ -427,6 +427,74 @@
   margin: 0;
   font-size: 1.18rem;
   font-weight: 800;
+}
+
+.universityRegister {
+  margin-top: 1.45rem;
+  border: 1px solid rgb(143 211 192 / 30%);
+  background: rgb(143 211 192 / 6%);
+  padding: 1rem;
+}
+
+.universityRegisterHeading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.universityRegisterHeading p {
+  margin: 0 0 .35rem;
+  color: #8fd3c0;
+  font-size: .56rem;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.universityRegisterHeading h4 {
+  margin: 0;
+  font-size: .9rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.universityRegisterHeading > span {
+  color: rgb(237 238 233 / 60%);
+  font-size: .6rem;
+  white-space: nowrap;
+}
+
+.universityRegister ul {
+  display: grid;
+  gap: 1px;
+  margin: .9rem 0 0;
+  padding: 0;
+  background: rgb(255 255 255 / 12%);
+  list-style: none;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.universityRegister li {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: .25rem;
+  background: #202220;
+  padding: .7rem .75rem;
+}
+
+.universityRegister strong {
+  overflow: hidden;
+  font-size: .68rem;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.universityRegister li > span {
+  color: rgb(237 238 233 / 60%);
+  font-size: .6rem;
 }
 
 .regionRows {
@@ -688,6 +756,12 @@
 
   .partnerStats > div:nth-child(4) {
     border-top: 1px solid rgb(255 255 255 / 12%);
+  }
+
+  .partnerStats > div:nth-child(5) {
+    border-top: 1px solid rgb(255 255 255 / 12%);
+    border-left: 0;
+    padding-left: 0;
   }
 
   .regionRow {
