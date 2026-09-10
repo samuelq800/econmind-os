@@ -45,6 +45,21 @@ established through the canonical release record:
 No manual schema creation, dashboard SQL, ad-hoc repair, or second publisher is
 an acceptable substitute.
 
+## Publisher preflight result
+
+After reconciling this branch with publisher main
+`6cb2e275df294004745f507e252c03d36201e928`, canonical workflow run
+`https://github.com/samuelq800/econmind-os/actions/runs/34471884453` verified the
+protected configuration, database credential and linked project. Its dry-run
+then stopped before any write because remote migration versions
+`20260827010000` through `20260827070000` are not present in the publisher's
+local migration directory. `Apply migrations`, Auth configuration and all Edge
+Function deployments were skipped.
+
+This is a publisher migration-history reconciliation blocker. The workflow's
+suggested ad-hoc repair command was not run because this handoff does not
+authorize migration-history mutation or improvisational recovery.
+
 ## Canonical publisher action
 
 After the predecessor gate is satisfied, verify each file's SHA-256 above,
