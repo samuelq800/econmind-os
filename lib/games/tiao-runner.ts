@@ -14,7 +14,7 @@ export const TIAO_SPRITE_CELL = {
 } as const;
 
 export type TiaoRunnerStatus = "ready" | "running" | "game-over";
-export type TiaoObstacleKind = "cactus" | "pterodactyl";
+export type TiaoObstacleKind = "cactus" | "bat";
 
 export type TiaoRunnerObstacle = {
   id: number;
@@ -23,6 +23,8 @@ export type TiaoRunnerObstacle = {
   y: number;
   width: number;
   height: number;
+  /** A single obstacle can render a small, readable flock of bats. */
+  batCount?: 1 | 2 | 3;
 };
 
 export type TiaoRunnerPlayer = {
@@ -52,7 +54,9 @@ export type TiaoRunnerRect = {
   height: number;
 };
 
-const BASE_SPEED = 312;
+/** Starts briskly, while retaining room for the score-based speed ramp. */
+export const TIAO_RUNNER_INITIAL_SPEED = 360;
+const BASE_SPEED = TIAO_RUNNER_INITIAL_SPEED;
 const MAX_SPEED = 660;
 const SCORE_PER_SECOND = 10;
 const GRAVITY = 2_360;
@@ -151,18 +155,26 @@ export function rectanglesOverlap(first: TiaoRunnerRect, second: TiaoRunnerRect)
 }
 
 function spawnObstacle(state: TiaoRunnerState, random: () => number) {
-  const pterodactylEligible = state.score >= 450;
-  const isPterodactyl = pterodactylEligible && random() > 0.72;
+  // Bats arrive sooner and more often than the previous single flying obstacle.
+  // Later rounds lean toward small flocks, but each one still has a predictable
+  // duck-or-jump response rather than becoming an unavoidable wall.
+  const batEligible = state.score >= 140;
+  const batChance = state.score >= 680 ? 0.58 : 0.46;
+  const isBat = batEligible && random() < batChance;
 
-  if (isPterodactyl) {
+  if (isBat) {
     const lowFlight = random() > 0.45;
+    const flockRoll = random();
+    const batCount: 1 | 2 | 3 = flockRoll < 0.24 ? 3 : flockRoll < 0.7 ? 2 : 1;
     state.obstacles.push({
       id: state.nextObstacleId++,
-      kind: "pterodactyl",
+      kind: "bat",
       x: TIAO_RUNNER_WORLD.width + 34,
-      y: TIAO_RUNNER_WORLD.groundY - (lowFlight ? 118 : 172),
-      width: 72,
-      height: 38,
+      // Low flights clear a ducking tiger; upper flights reward a clean jump.
+      y: TIAO_RUNNER_WORLD.groundY - (lowFlight ? 128 : 180),
+      width: 58 + (batCount - 1) * 24,
+      height: 40,
+      batCount,
     });
   } else {
     const variants = [
@@ -180,8 +192,8 @@ function spawnObstacle(state: TiaoRunnerState, random: () => number) {
     });
   }
 
-  const congestionReduction = Math.min(state.score * 0.09, 115);
-  state.nextObstacleDistance = clamp(360 + random() * 310 - congestionReduction, 235, 660);
+  const congestionReduction = Math.min(state.score * 0.1, 130);
+  state.nextObstacleDistance = clamp(330 + random() * 260 - congestionReduction, 205, 590);
 }
 
 export function stepTiaoRunner(

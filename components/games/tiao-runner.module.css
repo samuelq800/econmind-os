@@ -58,9 +58,9 @@
 
 .scoreboard {
   display: grid;
-  grid-template-columns: repeat(2, minmax(6rem, 1fr));
+  grid-template-columns: repeat(3, minmax(6rem, 1fr));
   gap: 1px;
-  min-width: 14rem;
+  min-width: 21rem;
   overflow: hidden;
   border: 1px solid rgba(184, 237, 193, .22);
   border-radius: 14px;
@@ -120,6 +120,8 @@
 .controls p b { color: #d6ebdb; }
 
 .performanceNote { margin: 1rem 0 0; color: #82a78b; font-size: .72rem; }
+.globalSignIn { margin-top: .65rem; border: 0; padding: 0; background: transparent; color: #bde1c5; font-size: .74rem; font-weight: 800; cursor: pointer; text-decoration: underline; text-underline-offset: .2em; }
+.globalSignIn:hover { color: #fff0b9; }
 
 .screenReaderStatus {
   position: absolute;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   TIAO_RUNNER_FIXED_STEP_SECONDS,
+  TIAO_RUNNER_INITIAL_SPEED,
   TIAO_RUNNER_TARGET_FPS,
   TIAO_RUNNER_WORLD,
   createTiaoRunnerState,
@@ -34,7 +35,20 @@ describe("Tiao Run engine", () => {
     expect(state.player.y).toBe(0);
     expect(state.player.velocity).toBe(0);
     expect(state.score).toBeGreaterThan(0);
-    expect(state.speed).toBeGreaterThan(312);
+    expect(state.speed).toBeGreaterThan(TIAO_RUNNER_INITIAL_SPEED);
+  });
+
+  it("starts faster and introduces bat flocks before late-game scores", () => {
+    const state = createTiaoRunnerState();
+    expect(state.speed).toBe(TIAO_RUNNER_INITIAL_SPEED);
+
+    startOrJumpTiaoRunner(state);
+    state.score = 160;
+    state.nextObstacleDistance = 0;
+    stepTiaoRunner(state, TIAO_RUNNER_FIXED_STEP_SECONDS, () => 0.1);
+
+    expect(state.obstacles).toHaveLength(1);
+    expect(state.obstacles[0]).toMatchObject({ kind: "bat", batCount: 3 });
   });
 
   it("keeps ducking on the ground and records a collision as a high score", () => {

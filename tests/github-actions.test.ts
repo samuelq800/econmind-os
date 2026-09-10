@@ -11,6 +11,7 @@ const maintenance = [
   readWorkflow("apply-account-suspension-migration.yml"),
   readWorkflow("apply-daily-brief-source-policy.yml"),
   readWorkflow("apply-live-world-migration.yml"),
+  readWorkflow("apply-yale-run-scoreboard-migration.yml"),
 ];
 const dailyBriefMaintenance = maintenance[1];
 

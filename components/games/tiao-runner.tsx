@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, RotateCcw, Trophy } from "lucide-react";
+import { ArrowLeft, Globe2, RotateCcw, Trophy } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useAuth } from "@/components/auth/auth-provider";
 import {
   TIAO_RUNNER_FIXED_STEP_SECONDS,
   TIAO_RUNNER_TARGET_FPS,
@@ -20,6 +21,10 @@ import {
   type TiaoRunnerStatus,
 } from "@/lib/games/tiao-runner";
 import { withBasePath } from "@/lib/base-path";
+import {
+  getYaleRunGlobalHighScore,
+  submitYaleRunGlobalHighScore,
+} from "@/lib/supabase/yale-run";
 import styles from "./tiao-runner.module.css";
 
 const HIGH_SCORE_STORAGE_KEY = "econmind:tiao-run:high-score";
@@ -99,36 +104,47 @@ function drawCactus(context: CanvasRenderingContext2D, obstacle: TiaoRunnerObsta
   }
 }
 
-function drawPterodactyl(context: CanvasRenderingContext2D, obstacle: TiaoRunnerObstacle, animationSeconds: number) {
-  const flap = Math.sin(animationSeconds * 18) * 7;
-  context.save();
-  context.translate(obstacle.x, obstacle.y);
-  context.fillStyle = "#dbe9e1";
-  context.strokeStyle = "#446253";
+function drawBat(context: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, flap: number) {
+  context.fillStyle = "#1a2930";
+  context.strokeStyle = "#abc4ca";
   context.lineWidth = 2;
   context.beginPath();
-  context.moveTo(0, obstacle.height * 0.62);
-  context.quadraticCurveTo(15, 4 + flap, 31, obstacle.height * 0.45);
-  context.quadraticCurveTo(47, 3 - flap, 58, obstacle.height * 0.62);
-  context.lineTo(72, obstacle.height * 0.72);
-  context.lineTo(55, obstacle.height * 0.94);
-  context.lineTo(36, obstacle.height * 0.68);
-  context.lineTo(19, obstacle.height);
-  context.lineTo(22, obstacle.height * 0.64);
-  context.lineTo(3, obstacle.height * 0.78);
+  context.moveTo(x, y + height * 0.64);
+  context.quadraticCurveTo(x + width * 0.16, y + height * 0.08 + flap, x + width * 0.36, y + height * 0.5);
+  context.quadraticCurveTo(x + width * 0.43, y + height * 0.62, x + width * 0.5, y + height * 0.47);
+  context.quadraticCurveTo(x + width * 0.57, y + height * 0.62, x + width * 0.64, y + height * 0.5);
+  context.quadraticCurveTo(x + width * 0.84, y + height * 0.08 - flap, x + width, y + height * 0.64);
+  context.lineTo(x + width * 0.8, y + height * 0.58);
+  context.lineTo(x + width * 0.66, y + height * 0.92);
+  context.lineTo(x + width * 0.58, y + height * 0.68);
+  context.lineTo(x + width * 0.5, y + height);
+  context.lineTo(x + width * 0.42, y + height * 0.68);
+  context.lineTo(x + width * 0.34, y + height * 0.92);
+  context.lineTo(x + width * 0.2, y + height * 0.58);
   context.closePath();
   context.fill();
   context.stroke();
-  context.fillStyle = "#07150e";
+  context.fillStyle = "#f7dc95";
   context.beginPath();
-  context.arc(49, obstacle.height * 0.58, 2.4, 0, Math.PI * 2);
+  context.arc(x + width * 0.55, y + height * 0.57, 1.8, 0, Math.PI * 2);
   context.fill();
-  context.restore();
+}
+
+function drawBatFlock(context: CanvasRenderingContext2D, obstacle: TiaoRunnerObstacle, animationSeconds: number) {
+  const count = obstacle.batCount ?? 1;
+  const batWidth = 58;
+  const spacing = count > 1 ? (obstacle.width - batWidth) / (count - 1) : 0;
+
+  for (let index = 0; index < count; index += 1) {
+    const flap = Math.sin(animationSeconds * 18 + index * 1.7) * 5;
+    const rise = index % 2 === 0 ? 0 : 5;
+    drawBat(context, obstacle.x + spacing * index, obstacle.y + rise, batWidth, obstacle.height - rise, flap);
+  }
 }
 
 function drawObstacle(context: CanvasRenderingContext2D, obstacle: TiaoRunnerObstacle, animationSeconds: number) {
   if (obstacle.kind === "cactus") drawCactus(context, obstacle);
-  else drawPterodactyl(context, obstacle, animationSeconds);
+  else drawBatFlock(context, obstacle, animationSeconds);
 }
 
 function drawSpritePlaceholder(context: CanvasRenderingContext2D, state: TiaoRunnerState) {
@@ -260,13 +276,62 @@ function renderRunner(context: CanvasRenderingContext2D, state: TiaoRunnerState,
 }
 
 export function TiaoRunner() {
+  const { configured, openAuth, user } = useAuth();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const controllerRef = useRef<RunnerController | null>(null);
+  const globalHighScoreRef = useRef(0);
+  const globalSubmissionInFlightRef = useRef(false);
+  const submitGlobalScoreRef = useRef<(score: number) => void>(() => {});
   const [hud, setHud] = useState<RunnerHud>({ status: "ready", score: 0, highScore: 0 });
+  const [globalHighScore, setGlobalHighScore] = useState<number | null>(null);
+  const [globalScoreStatus, setGlobalScoreStatus] = useState<"loading" | "ready" | "unavailable">("loading");
 
   const jump = useCallback(() => controllerRef.current?.jump(), []);
   const restart = useCallback(() => controllerRef.current?.restart(), []);
   const setDuck = useCallback((ducking: boolean) => controllerRef.current?.duck(ducking), []);
+
+  useEffect(() => {
+    let active = true;
+    if (!configured) {
+      globalHighScoreRef.current = 0;
+      queueMicrotask(() => {
+        if (!active) return;
+        setGlobalHighScore(null);
+        setGlobalScoreStatus("unavailable");
+      });
+      return () => { active = false; };
+    }
+
+    queueMicrotask(() => { if (active) setGlobalScoreStatus("loading"); });
+    void getYaleRunGlobalHighScore()
+      .then((score) => {
+        if (!active || score === null) return;
+        globalHighScoreRef.current = score;
+        setGlobalHighScore(score);
+        setGlobalScoreStatus("ready");
+      })
+      .catch(() => {
+        if (active) setGlobalScoreStatus("unavailable");
+      });
+
+    return () => { active = false; };
+  }, [configured]);
+
+  useEffect(() => {
+    submitGlobalScoreRef.current = (score) => {
+      if (!configured || !user || score <= globalHighScoreRef.current || globalSubmissionInFlightRef.current) return;
+
+      globalSubmissionInFlightRef.current = true;
+      void submitYaleRunGlobalHighScore(score)
+        .then((nextGlobalHighScore) => {
+          globalHighScoreRef.current = nextGlobalHighScore;
+          setGlobalHighScore(nextGlobalHighScore);
+          setGlobalScoreStatus("ready");
+        })
+        .catch(() => setGlobalScoreStatus("unavailable"))
+        .finally(() => { globalSubmissionInFlightRef.current = false; });
+    };
+  }, [configured, user]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -352,6 +417,7 @@ export function TiaoRunner() {
         drewFrame = true;
         if (previousStatus !== "game-over" && state.status === "game-over") {
           persistHighScore(state.highScore);
+          submitGlobalScoreRef.current(Math.floor(state.score));
           publishHud();
           hudSteps = 0;
         }
@@ -392,6 +458,9 @@ export function TiaoRunner() {
 
   const actionLabel = hud.status === "game-over" ? "Restart run" : hud.status === "ready" ? "Start run" : "Jump";
   const statusLabel = hud.status === "game-over" ? "Round over" : hud.status === "ready" ? "Ready" : "Running";
+  const globalHighScoreLabel = globalScoreStatus === "ready" && globalHighScore !== null
+    ? formatTiaoRunnerScore(globalHighScore)
+    : globalScoreStatus === "loading" ? "·····" : "—";
 
   return (
     <main className={styles.page}>
@@ -406,6 +475,7 @@ export function TiaoRunner() {
           <dl className={styles.scoreboard}>
             <div><dt>Score</dt><dd>{formatTiaoRunnerScore(hud.score)}</dd></div>
             <div><dt><Trophy size={13} /> Best</dt><dd>{formatTiaoRunnerScore(hud.highScore)}</dd></div>
+            <div><dt><Globe2 size={13} /> Global high</dt><dd>{globalHighScoreLabel}</dd></div>
           </dl>
         </header>
 
@@ -418,7 +488,7 @@ export function TiaoRunner() {
             tabIndex={0}
             aria-label="Yale Run. Click or press Space to jump. Hold Arrow Down to duck."
           />
-          <p className={styles.screenReaderStatus} aria-live="polite">{statusLabel}. Score {hud.score}. Best score {hud.highScore}.</p>
+          <p className={styles.screenReaderStatus} aria-live="polite">{statusLabel}. Score {hud.score}. Best score {hud.highScore}. Global high {globalHighScore ?? "unavailable"}.</p>
         </section>
 
         <div className={styles.controls}>
@@ -435,7 +505,8 @@ export function TiaoRunner() {
           >Hold to duck</button>
           <p><b>Controls:</b> Space / ↑ / click to jump · hold ↓ to duck · R to restart</p>
         </div>
-        <p className={styles.performanceNote}>Physics and sprite animation run in fixed {TIAO_RUNNER_TARGET_FPS} FPS steps.</p>
+        <p className={styles.performanceNote}>Physics and sprite animation run in fixed {TIAO_RUNNER_TARGET_FPS} FPS steps. {user ? "New records update Global High automatically." : "Sign in to set a Global High."}</p>
+        {configured && !user ? <button type="button" className={styles.globalSignIn} onClick={() => openAuth("sign-in")}>Sign in to set Global High</button> : null}
       </div>
     </main>
   );
