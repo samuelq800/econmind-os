@@ -123,7 +123,7 @@ begin
         ('Joanna Zou', 'UCLA')
     ) as university(display_name, school_name)
   loop
-    select count(*), min(user_id)
+    select count(*), (array_agg(user_id order by user_id))[1]
     into matching_profile_count, resolved_user_id
     from public.profiles
     where lower(trim(display_name)) = lower(university.display_name);
