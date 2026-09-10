@@ -21,6 +21,7 @@ describe("official EconMind badge", () => {
     expect(manifest).toContain('"shortcuts"');
     expect(applicationShell).toContain("PwaRegistration");
     expect(serviceWorker).toContain("self.addEventListener(\"fetch\"");
+    expect(serviceWorker).toContain("econmind-os-shell-v2");
   });
 
   it("uses the official badge in the page-level brand placements", () => {

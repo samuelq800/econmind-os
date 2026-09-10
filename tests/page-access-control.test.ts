@@ -21,6 +21,7 @@ describe("central frontend page access policy", () => {
       "/league/about",
       "/league/standings",
       "/league/schools/profile",
+      "/tiao-run",
     ]) {
       expect(pageAccessForPath(path).audience, path).toBe("public");
     }

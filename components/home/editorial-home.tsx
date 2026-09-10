@@ -135,22 +135,24 @@ function HeroVisual() {
     <aside className="home-hero-summary" aria-label="EconMind official badge">
       <span className="home-hero-badge-orbit home-hero-badge-orbit-one" aria-hidden="true" />
       <span className="home-hero-badge-orbit home-hero-badge-orbit-two" aria-hidden="true" />
-      <div className="home-hero-badge-wrap">
-        <div className="home-hero-badge-image-shell">
-          <Image
-            src={withBasePath("/brand/econmind-badge-1050.png")}
-            alt="EconMind official badge"
-            fill
-            priority
-            sizes="(min-width: 1024px) 38vw, 72vw"
-            className="home-hero-badge"
-            draggable={false}
-          />
+      <Link href="/tiao-run" className="home-hero-badge-link" aria-label="Play Yale Run with the EconMind badge">
+        <div className="home-hero-badge-wrap">
+          <div className="home-hero-badge-image-shell">
+            <Image
+              src={withBasePath("/brand/econmind-badge-1050.png")}
+              alt="EconMind official badge"
+              fill
+              priority
+              sizes="(min-width: 1024px) 38vw, 72vw"
+              className="home-hero-badge"
+              draggable={false}
+            />
+          </div>
         </div>
-      </div>
+      </Link>
       <div className="home-hero-badge-caption">
         <span>Official EconMind badge</span>
-        <p>Economics beyond the classroom.</p>
+        <p>Economics beyond the classroom. Click the badge to play Yale Run.</p>
       </div>
     </aside>
   );

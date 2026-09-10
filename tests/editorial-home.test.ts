@@ -79,6 +79,11 @@ describe("editorial public architecture", () => {
     expect(home).not.toContain("league-cities-map.png");
   });
 
+  it("turns the homepage's official badge into the Tiao Run entry point", () => {
+    expect(home).toContain('href="/tiao-run"');
+    expect(home).toContain("Play Yale Run");
+  });
+
   it("keeps Explore intentionally short and sends League organisation to its own home", () => {
     for (const label of ["Start from the world", "Make a mechanism visible", "Run a controlled counterfactual", "Test the claim"]) {
       expect(explore).toContain(`title: "${label}"`);

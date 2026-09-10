@@ -2971,6 +2971,28 @@ input[type=range]::-webkit-slider-thumb {
    user-select: none
 }
 
+.home-hero-badge-link {
+   position: relative;
+   z-index: 1;
+   display: block;
+   width: min(78%, 410px);
+   border-radius: 50%;
+   cursor: pointer
+}
+
+.home-hero-badge-link .home-hero-badge-wrap {
+   width: 100%
+}
+
+.home-hero-badge-link:focus-visible {
+   outline: 3px solid var(--accent);
+   outline-offset: 7px
+}
+
+.home-hero-badge-link:hover .home-hero-badge-wrap {
+   box-shadow: 0 0 0 1px rgba(255, 241, 181, .72), 0 0 0 4px rgba(5, 37, 68, .88), 0 0 0 5px rgba(218, 174, 72, .72), 0 32px 74px color-mix(in srgb, var(--accent) 35%, transparent), 0 8px 20px rgba(5, 35, 63, .18)
+}
+
 .home-hero-badge-wrap::before,
 .home-hero-badge-wrap::after {
    position: absolute;
@@ -3128,6 +3150,10 @@ input[type=range]::-webkit-slider-thumb {
    }
 
    .home-hero-badge-wrap {
+      width: min(78%, 290px)
+   }
+
+   .home-hero-badge-link {
       width: min(78%, 290px)
    }
 }

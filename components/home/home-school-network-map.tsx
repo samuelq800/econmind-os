@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, MapPinOff } from "lucide-react";
 import { withBasePath } from "@/lib/base-path";
+import { isParticipatingUniversity } from "@/lib/league/participating-schools";
 import type { LeagueDirectorySchool } from "@/lib/league/school-directory";
 import { SCHOOL_LOCATION_SOURCE, schoolLocationAreaLabel, type SchoolCityLocation } from "@/lib/league/school-locations";
 import { buildSchoolNetworkModel } from "@/lib/league/school-network";
@@ -29,6 +30,7 @@ export function HomeSchoolNetworkMap({
 }) {
   const model = useMemo(() => buildSchoolNetworkModel(schools), [schools]);
   const { hubs, unclassifiedEntries } = model;
+  const universities = model.schools.filter((school) => isParticipatingUniversity(school.school_name));
   const [selectedLocationKey, setSelectedLocationKey] = useState<string | null>(null);
   const selectedHub = hubs.find(({ location }) => location.locationKey === selectedLocationKey) ?? hubs[0] ?? null;
   const maxRegionCount = Math.max(1, unclassifiedEntries.length, ...model.regionGroups.map(({ entries }) => entries.length));
@@ -169,10 +171,29 @@ export function HomeSchoolNetworkMap({
 
         <dl className={styles.partnerStats}>
           <div><dt>Schools</dt><dd>{model.schoolCount}</dd></div>
+          <div><dt>Universities</dt><dd>{universities.length}</dd></div>
           <div><dt>Mapped cities</dt><dd>{model.mappedCityCount}</dd></div>
           <div><dt>Regions</dt><dd>{model.geographicRegionCount}</dd></div>
           <div><dt>Unclassified</dt><dd>{unclassifiedEntries.length}</dd></div>
         </dl>
+
+        <section className={styles.universityRegister} aria-labelledby="university-register-title">
+          <div className={styles.universityRegisterHeading}>
+            <div>
+              <p>Partner category</p>
+              <h4 id="university-register-title">Universities</h4>
+            </div>
+            <span>{universities.length} partner{universities.length === 1 ? "" : "s"}</span>
+          </div>
+          <ul>
+            {universities.map((university) => (
+              <li key={university.school_id}>
+                <strong>{university.school_name}</strong>
+                <span>{university.mapLocation?.city ?? university.city ?? "Location pending"}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
 
         <div className={styles.regionRows}>
           {model.regionGroups.map((group) => (

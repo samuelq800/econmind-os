@@ -37,9 +37,22 @@ export const PARTICIPATING_SCHOOLS: readonly ParticipatingSchool[] = [
   { name: "MalvernCollegeQingdao", city: "Qingdao", region: "East China" },
   { name: "Shenzhen College of International Education", city: "Shenzhen", region: "South China" },
   { name: "杭州西子实验学校国际部", city: "Hangzhou", region: "East China" },
+  { name: "Shanghai International Studies University", city: "Shanghai", region: "East China" },
+  { name: "The University of Melbourne", city: "Melbourne", region: "International" },
+  { name: "Duke University", city: "Durham", region: "International" },
+  { name: "University of Cambridge", city: "Cambridge", region: "International" },
+  { name: "UCLA", city: "Los Angeles", region: "International" },
 ];
 
 export const PARTICIPATING_SCHOOL_COUNT = PARTICIPATING_SCHOOLS.length;
+
+export const PARTICIPATING_UNIVERSITY_NAMES = [
+  "Shanghai International Studies University",
+  "The University of Melbourne",
+  "Duke University",
+  "University of Cambridge",
+  "UCLA",
+] as const;
 
 function normaliseSchoolName(name: string) {
   return name.toLocaleLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]/g, "");
@@ -58,4 +71,11 @@ const SCHOOL_NAME_ALIASES: Readonly<Record<string, string>> = {
 export function participatingSchoolKey(name: string) {
   const normalised = normaliseSchoolName(name);
   return SCHOOL_NAME_ALIASES[normalised] ?? normalised;
+}
+
+export function isParticipatingUniversity(name: string) {
+  const schoolKey = participatingSchoolKey(name);
+  return PARTICIPATING_UNIVERSITY_NAMES.some(
+    (universityName) => participatingSchoolKey(universityName) === schoolKey,
+  );
 }

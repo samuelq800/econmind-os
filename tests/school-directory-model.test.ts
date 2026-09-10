@@ -44,18 +44,18 @@ describe("shared League school directory model", () => {
       model.regionGroups.map((group) => [group.label, group.entries.length]),
     );
 
-    expect(model.schoolCount).toBe(28);
-    expect(model.mappedSchoolCount).toBe(27);
-    expect(model.mappedCityCount).toBe(16);
+    expect(model.schoolCount).toBe(33);
+    expect(model.mappedSchoolCount).toBe(32);
+    expect(model.mappedCityCount).toBe(20);
     expect(model.geographicRegionCount).toBe(6);
     expect(model.unclassifiedEntries).toHaveLength(1);
     expect(regionCounts).toEqual({
-      "East China": 13,
+      "East China": 14,
       "North China": 5,
       "South China": 5,
       "West China": 2,
       "Central China": 1,
-      "Other locations": 1,
+      "Other locations": 5,
     });
     expect(networkRegionForSchool(
       model.schools.find(({ school_name }) => school_name === "Victoria World Academy")!,
@@ -91,8 +91,8 @@ describe("shared League school directory model", () => {
     const added = directory.find(({ school_id }) => school_id === "school-new");
 
     expect(added).toMatchObject({ city: "Suzhou", mapLocationKey: null, locationSource: "unverified" });
-    expect(model.schoolCount).toBe(29);
-    expect(model.mappedSchoolCount).toBe(27);
+    expect(model.schoolCount).toBe(34);
+    expect(model.mappedSchoolCount).toBe(32);
     expect(model.unclassifiedEntries.map(({ school }) => school.school_id)).toContain("school-new");
   });
 
@@ -120,8 +120,8 @@ describe("shared League school directory model", () => {
       mapLocationKey: "geonames:2747891",
       locationSource: "verified-directory",
     });
-    expect(model.mappedSchoolCount).toBe(28);
-    expect(model.regionGroups.find(({ label }) => label === "Other locations")?.entries).toHaveLength(2);
+    expect(model.mappedSchoolCount).toBe(33);
+    expect(model.regionGroups.find(({ label }) => label === "Other locations")?.entries).toHaveLength(6);
     expect(networkRegionForSchool(added!)).toBe("Other locations");
   });
 
@@ -146,8 +146,8 @@ describe("shared League school directory model", () => {
     const model = buildSchoolNetworkModel(directory);
     const school = directory.find(({ school_id }) => school_id === "school-pending-roster");
 
-    expect(model.schoolCount).toBe(28);
-    expect(model.mappedSchoolCount).toBe(28);
+    expect(model.schoolCount).toBe(33);
+    expect(model.mappedSchoolCount).toBe(33);
     expect(model.unclassifiedEntries).toHaveLength(0);
     expect(school).toMatchObject({
       city: "Guangzhou",
@@ -176,8 +176,8 @@ describe("shared League school directory model", () => {
     ]);
     const model = buildSchoolNetworkModel(directory);
 
-    expect(model.schoolCount).toBe(28);
-    expect(model.mappedSchoolCount).toBe(27);
+    expect(model.schoolCount).toBe(33);
+    expect(model.mappedSchoolCount).toBe(32);
     expect(model.unclassifiedEntries.map(({ school }) => school.school_id))
       .toEqual(["school-pending-roster-malformed"]);
   });
@@ -289,8 +289,8 @@ describe("shared League school directory model", () => {
     const directory = mergeLeagueDirectory([repeated, repeated, alias]);
     const model = buildSchoolNetworkModel(directory);
 
-    expect(directory).toHaveLength(29);
-    expect(model.schoolCount).toBe(29);
+    expect(directory).toHaveLength(34);
+    expect(model.schoolCount).toBe(34);
     expect(directory.filter(({ school_id }) => school_id === "school-baid")).toHaveLength(1);
     expect(directory.find(({ school_id }) => school_id === "school-baid")?.school_name)
       .toBe("Beijing Academy International Department");
@@ -319,7 +319,7 @@ describe("shared League school directory model", () => {
     const malformed = schoolRow({ school_id: "school-bad", school_name: null as unknown as string });
     const directory = mergeLeagueDirectory([duplicateNameA, duplicateNameA, duplicateNameB, malformed]);
 
-    expect(directory).toHaveLength(30);
+    expect(directory).toHaveLength(35);
     expect(directory.filter(({ school_name }) => school_name === "Duplicate School")).toHaveLength(2);
   });
 
