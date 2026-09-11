@@ -1,4 +1,4 @@
-const CACHE_NAME = "econmind-os-shell-v2";
+const CACHE_NAME = "econmind-os-shell-v3";
 const APP_SHELL = [
   "./",
   "./manifest.webmanifest",

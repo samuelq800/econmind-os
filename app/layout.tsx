@@ -46,10 +46,9 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   colorScheme: "light dark",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f5f7f4" },
-    { media: "(prefers-color-scheme: dark)", color: "#0b1814" },
-  ],
+  // This also colours a desktop PWA's native title area when the platform
+  // cannot honour fullscreen or window-controls-overlay.
+  themeColor: "#0b1814",
   viewportFit: "cover",
 };
 

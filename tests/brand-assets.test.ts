@@ -16,12 +16,14 @@ describe("official EconMind badge", () => {
     expect(layout).toContain("econmind-badge-48.png");
     expect(layout).toContain("econmind-badge-192.png");
     expect(layout).toContain("econmind-badge-social.png");
+    expect(layout).toContain('themeColor: "#0b1814"');
     expect(manifest).toContain("econmind-badge-512.png");
-    expect(manifest).toContain('"display": "standalone"');
+    expect(manifest).toContain('"display": "fullscreen"');
+    expect(manifest).toContain('"display_override": ["fullscreen", "window-controls-overlay"');
     expect(manifest).toContain('"shortcuts"');
     expect(applicationShell).toContain("PwaRegistration");
     expect(serviceWorker).toContain("self.addEventListener(\"fetch\"");
-    expect(serviceWorker).toContain("econmind-os-shell-v2");
+    expect(serviceWorker).toContain("econmind-os-shell-v3");
   });
 
   it("uses the official badge in the page-level brand placements", () => {
