@@ -22,6 +22,7 @@ function submissionPayload(input: ResearchPaperSubmission) {
     p_keywords: text(input.keywords),
     p_description: text(input.description),
     p_coauthors_text: text(input.coauthors_text),
+    p_ai_linking_consent: input.ai_linking_consent,
     // Research Library uploads are always publicly readable. Keep the form
     // field in the RPC shape for backward compatibility with the deployed DB.
     p_visibility: "public",
@@ -160,6 +161,7 @@ export async function updateResearchPaperAsAdmin(paperId: string, input: Researc
     keywords: text(input.keywords),
     description: text(input.description),
     coauthors_text: text(input.coauthors_text),
+    ai_linking_consent: input.ai_linking_consent,
     visibility: "public",
   }).eq("id", paperId).select("*").single();
   throwIfSupabaseError(error);

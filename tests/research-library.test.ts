@@ -19,6 +19,7 @@ import { ensurePdfRuntimeCompatibility, paragraphsFromPdfItems } from "@/lib/res
 
 const migration = readFileSync("supabase/migrations/20260913000000_research_library.sql", "utf8");
 const publicUploadsMigration = readFileSync("supabase/migrations/20260913010000_research_library_public_uploads.sql", "utf8");
+const professorAiMigration = readFileSync("supabase/migrations/20260913020000_research_library_professor_ai_controls.sql", "utf8");
 const library = readFileSync("components/research/research-library.tsx", "utf8");
 
 describe("Research Library", () => {
@@ -87,5 +88,15 @@ describe("Research Library", () => {
     expect(publicUploadsMigration).toContain("Platform administrator role required");
     expect(library).toContain("Completed uploads are immediately public and readable by everyone.");
     expect(library).toContain("Take down paper");
+  });
+
+  it("marks Professor-account uploads and permits authors to prohibit AI linking", () => {
+    expect(professorAiMigration).toContain("is_professor_upload boolean not null default false");
+    expect(professorAiMigration).toContain("ai_linking_consent boolean not null default true");
+    expect(professorAiMigration).toContain("profile.role = 'professor'");
+    expect(professorAiMigration).toContain("p_ai_linking_consent boolean default true");
+    expect(library).toContain("Professor account — this upload will carry a Professor badge.");
+    expect(library).toContain("Prohibit AI linking");
+    expect(library).toContain("Prohibited by the author");
   });
 });

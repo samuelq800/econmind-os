@@ -19,6 +19,8 @@ export type ResearchPaper = {
   file_path: string | null;
   file_name: string | null;
   file_size: number | null;
+  is_professor_upload: boolean;
+  ai_linking_consent: boolean;
   visibility: ResearchVisibility;
   status: ResearchPaperStatus;
   featured: boolean;
@@ -43,5 +45,6 @@ export type ResearchPaperSubmission = Pick<
   | "keywords"
   | "description"
   | "coauthors_text"
+  | "ai_linking_consent"
   | "visibility"
 >;

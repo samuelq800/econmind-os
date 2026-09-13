@@ -1,0 +1,65 @@
+name: Apply Research Library professor and AI controls
+run-name: Apply Research Library professor and AI controls · @${{ github.actor }}
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-production
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify protected configuration
+        run: |
+          test -n "$SUPABASE_ACCESS_TOKEN"
+          test -n "$SUPABASE_PROJECT_REF"
+      - name: Apply and verify professor and AI controls
+        run: |
+          payload="$(node <<'NODE'
+          const fs = require('fs');
+          const migration = fs.readFileSync(
+            'supabase/migrations/20260913020000_research_library_professor_ai_controls.sql',
+            'utf8',
+          );
+          const verification = String.raw`
+          do $verify$
+          begin
+            if not exists (
+              select 1 from information_schema.columns
+              where table_schema = 'public' and table_name = 'research_papers'
+                and column_name = 'is_professor_upload' and data_type = 'boolean'
+            ) or not exists (
+              select 1 from information_schema.columns
+              where table_schema = 'public' and table_name = 'research_papers'
+                and column_name = 'ai_linking_consent' and column_default like '%true%'
+            ) then
+              raise exception 'Research Library professor or AI-linking fields are unavailable';
+            end if;
+            if to_regprocedure('public.create_research_paper(text,text,text,text,text,smallint,text,text,text,text,text,text,boolean,boolean)') is null
+              or to_regprocedure('public.update_research_paper_submission(uuid,text,text,text,text,text,smallint,text,text,text,text,text,text,boolean)') is null
+            then
+              raise exception 'Research Library authoring controls are unavailable';
+            end if;
+          end
+          $verify$;
+          `;
+          process.stdout.write(JSON.stringify({ query: `${migration}\n${verification}` }));
+          NODE
+          )"
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            --header "Content-Type: application/json" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query" \
+            --data "$payload"
