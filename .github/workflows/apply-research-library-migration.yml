@@ -1,0 +1,72 @@
+name: Apply Research Library schema
+run-name: Apply Research Library schema · @${{ github.actor }}
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-production
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify protected configuration
+        run: |
+          test -n "$SUPABASE_ACCESS_TOKEN"
+          test -n "$SUPABASE_PROJECT_REF"
+      - name: Apply and verify the Research Library migration
+        run: |
+          payload="$(node <<'NODE'
+          const fs = require('fs');
+          const migration = fs.readFileSync(
+            'supabase/migrations/20260913000000_research_library.sql',
+            'utf8',
+          );
+          const verification = String.raw`
+          do $verify$
+          begin
+            if not exists (
+              select 1 from pg_class relation
+              join pg_namespace namespace on namespace.oid = relation.relnamespace
+              where namespace.nspname = 'public'
+                and relation.relname = 'research_papers'
+                and relation.relrowsecurity
+            ) then
+              raise exception 'Research Library table is missing or RLS is disabled';
+            end if;
+            if not exists (
+              select 1 from storage.buckets
+              where id = 'research-papers'
+                and public = false
+                and file_size_limit = 26214400
+            ) then
+              raise exception 'Private Research Library PDF bucket is unavailable';
+            end if;
+            if to_regprocedure('public.create_research_paper(text,text,text,text,text,smallint,text,text,text,text,text,text,boolean)') is null
+              or to_regprocedure('public.attach_research_paper_file(uuid,text,text,integer)') is null
+              or to_regprocedure('public.review_research_paper(uuid,text,text,boolean,boolean)') is null
+            then
+              raise exception 'Research Library submission or review RPC is missing';
+            end if;
+          end
+          $verify$;
+          `;
+          process.stdout.write(JSON.stringify({ query: `${migration}\n${verification}` }));
+          NODE
+          )"
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            --header "Content-Type: application/json" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query" \
+            --data "$payload"
