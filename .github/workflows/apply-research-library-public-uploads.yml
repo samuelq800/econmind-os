@@ -37,25 +37,25 @@ jobs:
           begin
             if not exists (
               select 1
-              from pg_constraint constraint
-              join pg_class relation on relation.oid = constraint.conrelid
+              from pg_constraint constraint_row
+              join pg_class relation on relation.oid = constraint_row.conrelid
               join pg_namespace namespace on namespace.oid = relation.relnamespace
               where namespace.nspname = 'public'
                 and relation.relname = 'research_papers'
-                and constraint.conname = 'research_papers_visibility_check'
-                and pg_get_constraintdef(constraint.oid) like '%''public''%'
+                and constraint_row.conname = 'research_papers_visibility_check'
+                and pg_get_constraintdef(constraint_row.oid) like '%''public''%'
             ) then
               raise exception 'Research Library is not constrained to public visibility';
             end if;
             if not exists (
               select 1
-              from pg_constraint constraint
-              join pg_class relation on relation.oid = constraint.conrelid
+              from pg_constraint constraint_row
+              join pg_class relation on relation.oid = constraint_row.conrelid
               join pg_namespace namespace on namespace.oid = relation.relnamespace
               where namespace.nspname = 'public'
                 and relation.relname = 'research_papers'
-                and constraint.conname = 'research_papers_status_check'
-                and pg_get_constraintdef(constraint.oid) like '%unpublished%'
+                and constraint_row.conname = 'research_papers_status_check'
+                and pg_get_constraintdef(constraint_row.oid) like '%unpublished%'
             ) then
               raise exception 'Research Library takedown status is unavailable';
             end if;
