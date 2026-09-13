@@ -1,0 +1,78 @@
+name: Apply Research Library public uploads
+run-name: Apply Research Library public uploads · @${{ github.actor }}
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-production
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify protected configuration
+        run: |
+          test -n "$SUPABASE_ACCESS_TOKEN"
+          test -n "$SUPABASE_PROJECT_REF"
+      - name: Apply and verify immediate public uploads
+        run: |
+          payload="$(node <<'NODE'
+          const fs = require('fs');
+          const migration = fs.readFileSync(
+            'supabase/migrations/20260913010000_research_library_public_uploads.sql',
+            'utf8',
+          );
+          const verification = String.raw`
+          do $verify$
+          begin
+            if not exists (
+              select 1
+              from pg_constraint constraint
+              join pg_class relation on relation.oid = constraint.conrelid
+              join pg_namespace namespace on namespace.oid = relation.relnamespace
+              where namespace.nspname = 'public'
+                and relation.relname = 'research_papers'
+                and constraint.conname = 'research_papers_visibility_check'
+                and pg_get_constraintdef(constraint.oid) like '%''public''%'
+            ) then
+              raise exception 'Research Library is not constrained to public visibility';
+            end if;
+            if not exists (
+              select 1
+              from pg_constraint constraint
+              join pg_class relation on relation.oid = constraint.conrelid
+              join pg_namespace namespace on namespace.oid = relation.relnamespace
+              where namespace.nspname = 'public'
+                and relation.relname = 'research_papers'
+                and constraint.conname = 'research_papers_status_check'
+                and pg_get_constraintdef(constraint.oid) like '%unpublished%'
+            ) then
+              raise exception 'Research Library takedown status is unavailable';
+            end if;
+            if to_regprocedure('public.review_research_paper(uuid,text,text,boolean,boolean)') is null
+              or to_regprocedure('public.attach_research_paper_file(uuid,text,text,integer)') is null
+            then
+              raise exception 'Research Library publication controls are unavailable';
+            end if;
+          end
+          $verify$;
+          `;
+          process.stdout.write(JSON.stringify({ query: `${migration}\n${verification}` }));
+          NODE
+          )"
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            --header "Content-Type: application/json" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query" \
+            --data "$payload"

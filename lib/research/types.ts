@@ -1,5 +1,5 @@
-export type ResearchPaperStatus = "draft" | "pending_review" | "published" | "revision_requested" | "rejected";
-export type ResearchVisibility = "public" | "members";
+export type ResearchPaperStatus = "draft" | "pending_review" | "published" | "unpublished" | "revision_requested" | "rejected";
+export type ResearchVisibility = "public";
 
 export type ResearchPaper = {
   id: string;

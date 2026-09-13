@@ -22,7 +22,9 @@ function submissionPayload(input: ResearchPaperSubmission) {
     p_keywords: text(input.keywords),
     p_description: text(input.description),
     p_coauthors_text: text(input.coauthors_text),
-    p_visibility: input.visibility,
+    // Research Library uploads are always publicly readable. Keep the form
+    // field in the RPC shape for backward compatibility with the deployed DB.
+    p_visibility: "public",
   };
 }
 
@@ -129,7 +131,7 @@ export async function getResearchPdfUrl(filePath: string) {
 
 export async function reviewResearchPaper(input: {
   paperId: string;
-  status: Exclude<ResearchPaperStatus, "draft">;
+  status: Extract<ResearchPaperStatus, "published" | "unpublished">;
   internalNote: string;
   awardVerified: boolean;
   featured: boolean;
@@ -158,7 +160,7 @@ export async function updateResearchPaperAsAdmin(paperId: string, input: Researc
     keywords: text(input.keywords),
     description: text(input.description),
     coauthors_text: text(input.coauthors_text),
-    visibility: input.visibility,
+    visibility: "public",
   }).eq("id", paperId).select("*").single();
   throwIfSupabaseError(error);
   return data as ResearchPaper;

@@ -18,6 +18,7 @@ import { validateResearchPdf } from "@/lib/supabase/research-library";
 import { paragraphsFromPdfItems } from "@/lib/research/pdf-text";
 
 const migration = readFileSync("supabase/migrations/20260913000000_research_library.sql", "utf8");
+const publicUploadsMigration = readFileSync("supabase/migrations/20260913010000_research_library_public_uploads.sql", "utf8");
 const library = readFileSync("components/research/research-library.tsx", "utf8");
 
 describe("Research Library", () => {
@@ -51,7 +52,7 @@ describe("Research Library", () => {
     expect(() => validateResearchPdf({ type: "text/plain", name: "notes.txt", size: 12 } as File)).toThrow("PDF");
     expect(() => validateResearchPdf({ type: "application/pdf", name: "large.pdf", size: 25 * 1024 * 1024 + 1 } as File)).toThrow("25 MB");
     expect(library).toContain("Search papers, authors, schools, subjects or competitions");
-    expect(library).toContain("Research Submissions");
+    expect(library).toContain("Research Library Management");
     expect(library).toContain("Read Paper");
     expect(library).toContain("Publication permission");
   });
@@ -69,5 +70,14 @@ describe("Research Library", () => {
     ])).toEqual(["A short first sentence.", "A second sentence."]);
     expect(library).toContain("Read as web text");
     expect(library).toContain("Text extracted locally from the submitted PDF.");
+  });
+
+  it("publishes completed uploads to everyone and leaves takedowns to platform administrators", () => {
+    expect(publicUploadsMigration).toContain("visibility = 'public'");
+    expect(publicUploadsMigration).toContain("status = 'unpublished'");
+    expect(publicUploadsMigration).toContain("status = 'published'");
+    expect(publicUploadsMigration).toContain("Platform administrator role required");
+    expect(library).toContain("Completed uploads are immediately public and readable by everyone.");
+    expect(library).toContain("Take down paper");
   });
 });
