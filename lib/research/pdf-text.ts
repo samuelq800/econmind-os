@@ -4,6 +4,29 @@ export type WebReaderPage = {
 };
 
 type TextItem = { str: string; hasEOL?: boolean };
+type PromiseWithResolvers = <T>() => {
+  promise: Promise<T>;
+  resolve: (value: T | PromiseLike<T>) => void;
+  reject: (reason?: unknown) => void;
+};
+
+// pdfjs-dist uses Promise.withResolvers(), which is not present in every
+// embedded browser yet. Install the small standards-compatible equivalent
+// before importing PDF.js so the Web Reader works in those containers too.
+export function ensurePdfRuntimeCompatibility() {
+  const promiseConstructor = Promise as unknown as { withResolvers?: PromiseWithResolvers };
+  if (promiseConstructor.withResolvers) return;
+  Object.defineProperty(promiseConstructor, "withResolvers", {
+    configurable: true,
+    writable: true,
+    value: <T>() => {
+      let resolve!: (value: T | PromiseLike<T>) => void;
+      let reject!: (reason?: unknown) => void;
+      const promise = new Promise<T>((nextResolve, nextReject) => { resolve = nextResolve; reject = nextReject; });
+      return { promise, resolve, reject };
+    },
+  });
+}
 
 function isTextItem(item: unknown): item is TextItem {
   if (!item || typeof item !== "object" || !("str" in item)) return false;
@@ -43,6 +66,7 @@ export async function extractPdfIntoWebPages(
   const response = await fetch(pdfUrl);
   if (!response.ok) throw new Error("The PDF could not be downloaded for web reading.");
   const bytes = new Uint8Array(await response.arrayBuffer());
+  ensurePdfRuntimeCompatibility();
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
   pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     "pdfjs-dist/legacy/build/pdf.worker.min.mjs",

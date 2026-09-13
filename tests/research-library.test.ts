@@ -15,7 +15,7 @@ vi.mock("@/lib/supabase/client", () => ({
 }));
 
 import { validateResearchPdf } from "@/lib/supabase/research-library";
-import { paragraphsFromPdfItems } from "@/lib/research/pdf-text";
+import { ensurePdfRuntimeCompatibility, paragraphsFromPdfItems } from "@/lib/research/pdf-text";
 
 const migration = readFileSync("supabase/migrations/20260913000000_research_library.sql", "utf8");
 const publicUploadsMigration = readFileSync("supabase/migrations/20260913010000_research_library_public_uploads.sql", "utf8");
@@ -70,6 +70,14 @@ describe("Research Library", () => {
     ])).toEqual(["A short first sentence.", "A second sentence."]);
     expect(library).toContain("Read as web text");
     expect(library).toContain("Text extracted locally from the submitted PDF.");
+  });
+
+  it("installs the PDF.js Promise capability expected by embedded browsers", async () => {
+    ensurePdfRuntimeCompatibility();
+    const capability = (Promise as PromiseConstructor & { withResolvers?: <T>() => { promise: Promise<T>; resolve: (value: T) => void } }).withResolvers?.<string>();
+    expect(capability).toBeDefined();
+    capability?.resolve("ready");
+    await expect(capability?.promise).resolves.toBe("ready");
   });
 
   it("publishes completed uploads to everyone and leaves takedowns to platform administrators", () => {
