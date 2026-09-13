@@ -74,6 +74,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
       { href: "/models", label: "Models", system: "learning-research", feature: "modelWorkspace", description: "Economic mechanisms and visual models." },
       { href: "/models/practice", label: "Model Practice", system: "learning-research", feature: "modelPractice", description: "Check understanding with versioned questions." },
       { href: "/models/composer", label: "Model Composer", system: "learning-research", feature: "modelComposer", description: "Connect existing models with explicit assumptions." },
+      { href: "/learn/research", label: "Research Library", system: "learning-research", description: "Research and writing from the EconMind Network." },
     ],
   },
   {

@@ -15,6 +15,7 @@ export const INDEXABLE_STATIC_ROUTES = [
   "/daily-brief/archive",
   "/explore",
   "/integrity",
+  "/learn/research",
   "/league",
   "/league/about",
   "/league/schools",

@@ -22,6 +22,13 @@ const ACCOUNT_OR_VIEWER: PageAccessPolicy = { audience: "account-or-viewer" };
  * This is a UI boundary; backend authorization remains a separate concern.
  */
 export const PAGE_ACCESS_RULES: readonly PageAccessRule[] = [
+  // The reading archive is public, while authoring and review stay tied to an
+  // individual account and the established platform administrator role.
+  { path: "/learn/research/admin", match: "prefix", audience: "account", platformRoles: ["platform_admin"] },
+  { path: "/learn/research/submit", match: "prefix", audience: "account" },
+  { path: "/learn/research/my", match: "prefix", audience: "account" },
+  { path: "/learn/research", match: "prefix", audience: "public" },
+
   // Governance work contains account requests and internal notes.
   { path: "/admin/governance", match: "prefix", audience: "account", platformRoles: ["platform_admin"] },
   { path: "/admin/live-world", match: "prefix", audience: "account", platformRoles: ["platform_admin"] },
