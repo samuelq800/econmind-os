@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowRight, Award, BadgeCheck, BookOpen, CheckCircle2, FileText, LoaderCircle, LockKeyhole, Search, Send, Upload } from "lucide-react";
+import { AlignLeft, ArrowRight, Award, BadgeCheck, BookOpen, CheckCircle2, FileText, LoaderCircle, LockKeyhole, Search, Send, Upload } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { ResearchPaper, ResearchPaperStatus, ResearchPaperSubmission, ResearchVisibility } from "@/lib/research/types";
+import { extractPdfIntoWebPages, type WebReaderPage } from "@/lib/research/pdf-text";
 import { attachResearchPdf, createResearchPaper, getResearchPaper, getResearchPdfUrl, listFeaturedResearch, listMyResearch, listPublishedResearch, listResearchForAdmin, reviewResearchPaper, updateResearchPaper, updateResearchPaperAsAdmin, uploadResearchPdf } from "@/lib/supabase/research-library";
 import { getLeagueContext } from "@/lib/supabase/league";
 
@@ -66,6 +67,29 @@ export function PaperCard({ paper, featured = false }: { paper: ResearchPaper; f
     {paper.abstract && <p className="mt-4 line-clamp-3 text-sm leading-6 text-[var(--ink-muted)]">{paper.abstract}</p>}
     <Link href={`/learn/research/paper?paper=${encodeURIComponent(paper.id)}`} className="mt-6 inline-flex items-center gap-2 text-xs font-bold text-[var(--accent)]">View Paper <ArrowRight size={14} /></Link>
   </article>;
+}
+
+function PdfWebReader({ pdfUrl, title }: { pdfUrl: string; title: string }) {
+  const [pages, setPages] = useState<WebReaderPage[] | null>(null);
+  const [progress, setProgress] = useState<{ completed: number; total: number } | null>(null);
+  const [error, setError] = useState("");
+
+  const openWebReader = async () => {
+    setError("");
+    setProgress({ completed: 0, total: 0 });
+    try {
+      const extracted = await extractPdfIntoWebPages(pdfUrl, (completed, total) => setProgress({ completed, total }));
+      setPages(extracted);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "This PDF could not be converted into web text.");
+    } finally {
+      setProgress(null);
+    }
+  };
+
+  if (pages) return <div className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--surface)]"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] px-5 py-4"><div><p className="text-sm font-bold">Web Reader</p><p className="mt-1 text-xs text-[var(--ink-muted)]">Text extracted locally from the submitted PDF.</p></div><Button size="sm" variant="secondary" onClick={() => setPages(null)}>PDF view</Button></div><article className="mx-auto max-w-3xl space-y-10 px-5 py-8 sm:px-10"><h3 className="text-2xl font-bold tracking-[-.035em]">{title}</h3>{pages.map((page) => <section key={page.number} aria-label={`Page ${page.number}`}><p className="text-[10px] font-extrabold uppercase tracking-[.16em] text-[var(--accent)]">Page {page.number}</p>{page.paragraphs.length ? <div className="mt-4 space-y-4 text-[15px] leading-8 text-[var(--ink-muted)]">{page.paragraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div> : <p className="mt-3 text-sm italic text-[var(--ink-faint)]">No selectable text was found on this page.</p>}</section>)}</article></div>;
+
+  return <div className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6 text-center"><AlignLeft className="mx-auto text-[var(--accent)]" size={22} /><h3 className="mt-4 text-lg font-bold">Read as web text</h3><p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-[var(--ink-muted)]">Convert this PDF into a clean, scrollable reading view. The original PDF remains unchanged.</p><Button className="mt-5" onClick={() => void openWebReader()} disabled={Boolean(progress)}>{progress ? <LoaderCircle className="animate-spin" size={15} /> : <AlignLeft size={15} />}{progress?.total ? `Converting page ${progress.completed} of ${progress.total}…` : progress ? "Preparing web reader…" : "Read as web text"}</Button>{error && <p role="alert" className="mx-auto mt-4 max-w-lg rounded-lg bg-[var(--red-soft)] p-3 text-xs leading-5 text-[var(--red)]">{error}</p>}</div>;
 }
 
 export function ResearchLibrary() {
@@ -126,7 +150,18 @@ export function ResearchPaperDetail() {
   if (loading) return <main className="grid min-h-[65vh] place-items-center"><LoaderCircle className="animate-spin text-[var(--accent)]" /></main>;
   if (!paper || error) return <main className="mx-auto grid min-h-[65vh] max-w-xl place-items-center px-5 text-center"><div><FileText className="mx-auto text-[var(--ink-faint)]" size={26} /><h1 className="mt-5 text-3xl font-bold">Paper unavailable</h1><p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">{error || "This paper could not be read."}</p><Link href="/learn/research"><Button variant="secondary" className="mt-6">Back to Research Library</Button></Link></div></main>;
   const metadata = [["Subject", paper.subject], ["Competition", paper.competition_text], ["Year", paper.competition_year ? String(paper.competition_year) : null], ["Award", paper.award_text], ["Co-authors", paper.coauthors_text], ["Keywords", paper.keywords]].filter((entry): entry is [string, string] => Boolean(entry[1]));
-  return <main className="mx-auto min-h-screen max-w-6xl px-5 py-10 sm:px-8 lg:py-14"><Link href="/learn/research" className="text-xs font-bold text-[var(--accent)]">← Research Library</Link><header className="mt-7 border-b border-[var(--line)] pb-9"><div className="flex flex-wrap items-start justify-between gap-5"><div><Badge>{paper.subject}</Badge><h1 className="mt-5 max-w-4xl text-3xl font-bold tracking-[-.055em] sm:text-5xl">{paper.title}</h1><p className="mt-5 text-base font-semibold">{paper.author_display_name}</p><p className="mt-1 text-sm text-[var(--ink-muted)]">{paper.school_display_name}</p></div>{paper.award_verified && <span className="inline-flex items-center gap-2 rounded-lg bg-[var(--accent-soft)] px-3 py-2 text-xs font-bold text-[var(--accent)]"><BadgeCheck size={15} />Award verified</span>}</div><dl className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{metadata.map(([label, value]) => <div key={label} className="rounded-lg bg-[var(--surface-subtle)] p-4"><dt className="text-[10px] font-extrabold uppercase tracking-[.14em] text-[var(--ink-faint)]">{label}</dt><dd className="mt-2 text-sm font-semibold">{value}</dd></div>)}</dl></header>{paper.abstract && <section className="mt-10 max-w-3xl"><p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-[var(--accent)]">Abstract</p><h2 className="mt-2 text-2xl font-bold">Abstract</h2><p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-[var(--ink-muted)]">{paper.abstract}</p></section>}<section className="mt-12"><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-[var(--accent)]">Read Paper</p><h2 className="mt-2 text-2xl font-bold">Read Paper</h2></div>{pdfUrl && <a href={pdfUrl} target="_blank" rel="noreferrer"><Button variant="secondary">Open PDF <ArrowRight size={14} /></Button></a>}</div>{pdfUrl ? <div className="mt-5 overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--surface)]"><iframe title={`PDF preview: ${paper.title}`} src={pdfUrl} className="h-[72vh] min-h-[34rem] w-full bg-white" /><a href={pdfUrl} target="_blank" rel="noreferrer" className="block px-5 py-3 text-center text-xs font-bold text-[var(--accent)]">Open PDF in a new tab</a></div> : <Card className="mt-5 p-7 text-sm text-[var(--ink-muted)]">The PDF file is currently unavailable. The author or a reviewer can re-upload it.</Card>}</section></main>;
+  return <main className="mx-auto min-h-screen max-w-6xl px-5 py-10 sm:px-8 lg:py-14">
+    <Link href="/learn/research" className="text-xs font-bold text-[var(--accent)]">← Research Library</Link>
+    <header className="mt-7 border-b border-[var(--line)] pb-9">
+      <div className="flex flex-wrap items-start justify-between gap-5"><div><Badge>{paper.subject}</Badge><h1 className="mt-5 max-w-4xl text-3xl font-bold tracking-[-.055em] sm:text-5xl">{paper.title}</h1><p className="mt-5 text-base font-semibold">{paper.author_display_name}</p><p className="mt-1 text-sm text-[var(--ink-muted)]">{paper.school_display_name}</p></div>{paper.award_verified && <span className="inline-flex items-center gap-2 rounded-lg bg-[var(--accent-soft)] px-3 py-2 text-xs font-bold text-[var(--accent)]"><BadgeCheck size={15} />Award verified</span>}</div>
+      <dl className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{metadata.map(([label, value]) => <div key={label} className="rounded-lg bg-[var(--surface-subtle)] p-4"><dt className="text-[10px] font-extrabold uppercase tracking-[.14em] text-[var(--ink-faint)]">{label}</dt><dd className="mt-2 text-sm font-semibold">{value}</dd></div>)}</dl>
+    </header>
+    {paper.abstract && <section className="mt-10 max-w-3xl"><p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-[var(--accent)]">Abstract</p><h2 className="mt-2 text-2xl font-bold">Abstract</h2><p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-[var(--ink-muted)]">{paper.abstract}</p></section>}
+    <section className="mt-12">
+      <div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-[var(--accent)]">Read Paper</p><h2 className="mt-2 text-2xl font-bold">Read Paper</h2></div>{pdfUrl && <a href={pdfUrl} target="_blank" rel="noreferrer"><Button variant="secondary">Open PDF <ArrowRight size={14} /></Button></a>}</div>
+      {pdfUrl ? <><PdfWebReader pdfUrl={pdfUrl} title={paper.title} /><div className="mt-5 overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--surface)]"><iframe title={`PDF preview: ${paper.title}`} src={pdfUrl} className="h-[72vh] min-h-[34rem] w-full bg-white" /><a href={pdfUrl} target="_blank" rel="noreferrer" className="block px-5 py-3 text-center text-xs font-bold text-[var(--accent)]">Open PDF in a new tab</a></div></> : <Card className="mt-5 p-7 text-sm text-[var(--ink-muted)]">The PDF file is currently unavailable. The author or a reviewer can re-upload it.</Card>}
+    </section>
+  </main>;
 }
 
 export function ResearchSubmissionForm() {

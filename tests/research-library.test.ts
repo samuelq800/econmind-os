@@ -15,6 +15,7 @@ vi.mock("@/lib/supabase/client", () => ({
 }));
 
 import { validateResearchPdf } from "@/lib/supabase/research-library";
+import { paragraphsFromPdfItems } from "@/lib/research/pdf-text";
 
 const migration = readFileSync("supabase/migrations/20260913000000_research_library.sql", "utf8");
 const library = readFileSync("components/research/research-library.tsx", "utf8");
@@ -59,5 +60,14 @@ describe("Research Library", () => {
     const service = readFileSync("lib/supabase/research-library.ts", "utf8");
     expect(service).toContain('supabase.auth.getUser()');
     expect(service).toContain('.eq("owner_user_id", authData.user.id)');
+  });
+
+  it("offers a local web reader and preserves readable paragraph boundaries from PDF text items", () => {
+    expect(paragraphsFromPdfItems([
+      { str: "A short first sentence.", hasEOL: true },
+      { str: "A second sentence.", hasEOL: true },
+    ])).toEqual(["A short first sentence.", "A second sentence."]);
+    expect(library).toContain("Read as web text");
+    expect(library).toContain("Text extracted locally from the submitted PDF.");
   });
 });
