@@ -63,7 +63,11 @@ export async function getResearchPaper(paperId: string) {
 }
 
 export async function listMyResearch() {
-  const { data, error } = await requireSupabaseBrowserClient().from("research_papers").select("*").order("updated_at", { ascending: false });
+  const supabase = requireSupabaseBrowserClient();
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  throwIfSupabaseError(authError);
+  if (!authData.user) throw new Error("An authenticated account is required.");
+  const { data, error } = await supabase.from("research_papers").select("*").eq("owner_user_id", authData.user.id).order("updated_at", { ascending: false });
   throwIfSupabaseError(error);
   return (data ?? []) as ResearchPaper[];
 }

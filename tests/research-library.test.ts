@@ -54,4 +54,10 @@ describe("Research Library", () => {
     expect(library).toContain("Read Paper");
     expect(library).toContain("Publication permission");
   });
+
+  it("keeps My Research explicitly scoped to the authenticated author", () => {
+    const service = readFileSync("lib/supabase/research-library.ts", "utf8");
+    expect(service).toContain('supabase.auth.getUser()');
+    expect(service).toContain('.eq("owner_user_id", authData.user.id)');
+  });
 });
