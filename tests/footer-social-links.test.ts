@@ -41,4 +41,12 @@ describe("footer social links", () => {
     expect(footer).toContain('label: "UHHC · English"');
     expect(footer).toContain("function ExternalFooterLinks(");
   });
+
+  it("places the WeChat discussion-group QR code alongside the official support email", () => {
+    expect(footer).toContain('src={withBasePath("/brand/wechat-group-qr.jpg")}');
+    expect(footer).toContain("WeChat group");
+    expect(footer).toContain("For community discussion only.");
+    expect(footer).toContain("For official support, email");
+    expect(footer).toContain("OFFICIAL_CONTACT_MAILTO");
+  });
 });

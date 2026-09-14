@@ -77,15 +77,30 @@ export function Footer() {
             An interactive economics laboratory for disciplined reasoning from
             real-world questions to models, simulations and evidence.
           </p>
-          <p className="mt-4 text-xs leading-5 text-[var(--ink-muted)]">
-            Official contact:{" "}
-            <a
-              href={OFFICIAL_CONTACT_MAILTO}
-              className="font-bold text-[var(--accent)] hover:underline"
-            >
-              {OFFICIAL_CONTACT_EMAIL}
-            </a>
-          </p>
+          <div className="mt-4 flex items-start gap-3">
+            <Image
+              src={withBasePath("/brand/wechat-group-qr.jpg")}
+              alt="WeChat group QR code for community discussion"
+              width={112}
+              height={112}
+              sizes="112px"
+              className="shrink-0 rounded-lg border border-[var(--line)] bg-white p-1"
+            />
+            <div className="min-w-0 pt-0.5 text-xs leading-5 text-[var(--ink-muted)]">
+              <p className="font-extrabold uppercase tracking-[.12em] text-[var(--ink-faint)]">WeChat group</p>
+              <p className="mt-1">For community discussion only.</p>
+              <p className="mt-2">
+                For official support, email{" "}
+                <a
+                  href={OFFICIAL_CONTACT_MAILTO}
+                  className="font-bold text-[var(--accent)] hover:underline"
+                >
+                  {OFFICIAL_CONTACT_EMAIL}
+                </a>
+                .
+              </p>
+            </div>
+          </div>
           <nav
             aria-label="EconMind social media"
             className="mt-5 flex items-center gap-2"
