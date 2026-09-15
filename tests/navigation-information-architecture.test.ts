@@ -46,6 +46,8 @@ describe("Phase 2 information architecture", () => {
     expect(navbar).toContain("MOBILE_NAVIGATION_GROUPS");
     expect(navbar).toContain("isNavigationSectionActive");
     expect(navbar).toContain("compactDesktopSectionIds");
+    expect(navbar).toContain("lg:flex 2xl:hidden");
+    expect(navbar).toContain("lg:hidden");
     expect(navbar).toContain("2xl:flex");
     expect(footer).toContain("availableNavigationSections");
     expect(footer).toContain("primaryLinks");

@@ -138,7 +138,7 @@ describe("global feature search", () => {
     const search = readFileSync("components/layout/global-search.tsx", "utf8");
     const catalog = readFileSync("lib/platform/search-catalog.ts", "utf8");
 
-    expect(navbar).toContain("<GlobalSearch />");
+    expect(navbar).toContain('<GlobalSearch className="lg:max-xl:hidden" />');
     expect(catalog).toContain("availableNavigationSections");
     expect(catalog).toContain("AVAILABLE_MODELS");
     expect(catalog).toContain("SIMULATION_NAVIGATION_ITEMS");

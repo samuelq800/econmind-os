@@ -29,7 +29,7 @@ function loadSearchIndex() {
   return searchIndexPromise;
 }
 
-export function GlobalSearch() {
+export function GlobalSearch({ className = "" }: { className?: string }) {
   const router = useRouter();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -202,7 +202,7 @@ export function GlobalSearch() {
         onClick={openSearch}
         onFocus={preload}
         onPointerEnter={preload}
-        className={`${styles.trigger} group flex h-10 shrink-0 items-center rounded-xl border border-[var(--line-strong)] bg-[var(--surface)] text-[var(--ink-muted)] shadow-sm transition-colors hover:border-[var(--ink-faint)] hover:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--canvas)]`}
+        className={`${styles.trigger} ${className} group flex h-10 shrink-0 items-center rounded-xl border border-[var(--line-strong)] bg-[var(--surface)] text-[var(--ink-muted)] shadow-sm transition-colors hover:border-[var(--ink-faint)] hover:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--canvas)]`}
       >
         <Search
           size={16}

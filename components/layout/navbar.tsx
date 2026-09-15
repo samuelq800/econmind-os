@@ -116,7 +116,7 @@ export function Navbar() {
             );
           })}
         </nav>
-        <nav className="relative hidden min-w-0 flex-1 flex-nowrap items-center justify-center gap-0.5 xl:flex 2xl:hidden" aria-label="Primary navigation">
+        <nav className="relative hidden min-w-0 flex-1 flex-nowrap items-center justify-center gap-0.5 lg:flex 2xl:hidden" aria-label="Primary navigation">
           {compactDesktopLinks.map((section) => {
             const active = isNavigationSectionActive(section, path);
             const hasChildren = section.children.length > 0;
@@ -154,7 +154,7 @@ export function Navbar() {
           </div>
         </nav>
         <div className="ml-auto flex shrink-0 items-center gap-2">
-          <GlobalSearch />
+          <GlobalSearch className="lg:max-xl:hidden" />
           <button
             aria-label="Toggle color theme"
             onClick={toggleTheme}
@@ -236,14 +236,14 @@ export function Navbar() {
           <button
             aria-label="Toggle navigation"
             onClick={() => setOpen((current) => !current)}
-            className="grid size-9 place-items-center rounded-lg border border-[var(--line)] bg-[var(--surface)] xl:hidden"
+            className="grid size-9 place-items-center rounded-lg border border-[var(--line)] bg-[var(--surface)] lg:hidden"
           >
             {open ? <X size={17} /> : <Menu size={17} />}
           </button>
         </div>
       </div>
       {open && (
-        <nav className="fixed inset-x-0 bottom-0 top-16 overflow-y-auto border-t border-[var(--line)] bg-[var(--canvas)] p-5 shadow-2xl xl:hidden" aria-label="Full navigation">
+        <nav className="fixed inset-x-0 bottom-0 top-16 overflow-y-auto border-t border-[var(--line)] bg-[var(--canvas)] p-5 shadow-2xl lg:hidden" aria-label="Full navigation">
           <div className="mx-auto max-w-xl">
             <p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-[var(--ink-faint)]">Navigate EconMind</p>
             <div className="mt-3 grid grid-cols-2 gap-2">
