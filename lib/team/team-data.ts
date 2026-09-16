@@ -88,6 +88,13 @@ export const REGIONAL_LEADERS: readonly TeamMember[] = [
     contact: { type: "wechat", value: "zrm091511" },
   },
   {
+    name: "Scarlett",
+    role: "Northeast China Regional Lead",
+    image: "/images/team/scarlett.jpg",
+    imagePosition: "50% 33%",
+    contact: { type: "wechat", value: "merrywyh2009" },
+  },
+  {
     name: "Richard",
     role: "East China & National A-Level Lead",
     image: "/images/team/richard.jpg",
@@ -210,6 +217,7 @@ export const REGIONAL_NETWORK = [
   { region: "Beijing", leads: ["Emma", "Sophia Liu"] },
   { region: "Zhejiang", leads: ["Sophia Cai"] },
   { region: "Shandong", leads: ["Rae"] },
+  { region: "Northeast China (Liaoning, Jilin & Heilongjiang)", leads: ["Scarlett"] },
   { region: "Jiangsu", leads: ["Clement", "Leon Xue", "Vader"] },
   { region: "Jiangxi", leads: ["Jessie"] },
   { region: "East China & National A-Level", leads: ["Angela", "Richard"] },
