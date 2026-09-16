@@ -14,6 +14,7 @@ import {
 
 const migration = readFileSync("supabase/migrations/20260826000000_school_location_review_workflow.sql", "utf8");
 const automaticMappingMigration = readFileSync("supabase/migrations/20260830010000_auto_map_known_school_cities.sql", "utf8");
+const remainingLocationMigration = readFileSync("supabase/migrations/20260916030000_verify_remaining_school_locations.sql", "utf8");
 const approvalMigration = readFileSync("supabase/migrations/20260827000000_unblock_school_approval_location_review.sql", "utf8");
 const onboarding = readFileSync("components/auth/account-onboarding.tsx", "utf8");
 const join = readFileSync("components/league/join-league.tsx", "utf8");
@@ -138,6 +139,23 @@ describe("school location review workflow", () => {
     expect(automaticMappingMigration).toContain("'7dda18da-62b7-46cd-bd73-f1adc22ea25a'");
     expect(locationFields).toContain("<datalist");
     expect(locationFields).toContain("verify its map marker automatically");
+  });
+
+  it("covers the five live school records that were missing city markers", () => {
+    for (const [schoolId, locationKey, city] of [
+      ["16cd96b6-ac67-4ff0-9ec3-c7e2643aaed2", "geonames:2038180", "Changchun"],
+      ["0d57b93d-2595-48b2-8c4c-0d7c0eacad6b", "geonames:1814087", "Dalian"],
+      ["2006ebed-8766-4ca1-ad04-e8e1b992ba09", "geonames:5408395", "Westlake Village"],
+      ["7001828f-44cf-42e2-a15b-f146b6594bc7", "geonames:4955635", "Wilbraham"],
+      ["1a1030f2-fecd-47d5-8c3d-81b504ac4047", "geonames:1796236", "Shanghai"],
+    ] as const) {
+      expect(remainingLocationMigration).toContain(schoolId);
+      expect(remainingLocationMigration).toContain(locationKey);
+      expect(remainingLocationMigration).toContain(`'${city}'`);
+    }
+    expect(remainingLocationMigration).toContain("location_status = 'verified'");
+    expect(remainingLocationMigration).toContain("admin_catalog_backfill");
+    expect(remainingLocationMigration).toContain("WLSA Shanghai Academy was not normalised");
   });
 
   it("keeps location review optional when an administrator approves a school", () => {

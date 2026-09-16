@@ -28,6 +28,8 @@ export const SCHOOL_LOCATION_SOURCE = {
 // was selected. GeoNames IDs are retained so every coordinate is auditable.
 // This catalog is deliberately explicit: unknown labels must not be geocoded,
 // fuzzy-matched or inferred at runtime.
+// The four supplemental cities below were checked against the current
+// GeoNames country dumps on 2026-09-16 to close the live school register gaps.
 export const SCHOOL_CITY_LOCATIONS = [
   {
     locationKey: "geonames:2653941",
@@ -57,6 +59,24 @@ export const SCHOOL_CITY_LOCATIONS = [
     geonameId: 5368361,
   },
   {
+    locationKey: "geonames:5408395",
+    city: "Westlake Village",
+    countryCode: "US",
+    administrativeArea: "California",
+    latitude: 34.14584,
+    longitude: -118.80565,
+    geonameId: 5408395,
+  },
+  {
+    locationKey: "geonames:4955635",
+    city: "Wilbraham",
+    countryCode: "US",
+    administrativeArea: "Massachusetts",
+    latitude: 42.12371,
+    longitude: -72.43147,
+    geonameId: 4955635,
+  },
+  {
     locationKey: "geonames:2158177",
     city: "Melbourne",
     countryCode: "AU",
@@ -64,6 +84,24 @@ export const SCHOOL_CITY_LOCATIONS = [
     latitude: -37.814,
     longitude: 144.96332,
     geonameId: 2158177,
+  },
+  {
+    locationKey: "geonames:2038180",
+    city: "Changchun",
+    countryCode: "CN",
+    administrativeArea: "Jilin",
+    latitude: 43.88,
+    longitude: 125.32278,
+    geonameId: 2038180,
+  },
+  {
+    locationKey: "geonames:1814087",
+    city: "Dalian",
+    countryCode: "CN",
+    administrativeArea: "Liaoning",
+    latitude: 38.91222,
+    longitude: 121.60222,
+    geonameId: 1814087,
   },
   {
     locationKey: "geonames:1816670",

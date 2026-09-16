@@ -33,6 +33,10 @@ describe("school city location catalog", () => {
       Durham: "geonames:4464368",
       "Los Angeles": "geonames:5368361",
       Melbourne: "geonames:2158177",
+      Changchun: "geonames:2038180",
+      Dalian: "geonames:1814087",
+      "Westlake Village": "geonames:5408395",
+      Wilbraham: "geonames:4955635",
       Beijing: "geonames:1816670",
       Chengdu: "geonames:1815286",
       Chongqing: "geonames:1814906",
@@ -102,8 +106,8 @@ describe("school city location catalog", () => {
   });
 
   it("keeps valid WGS84 coordinates and auditable source metadata", () => {
-    expect(SCHOOL_CITY_LOCATIONS).toHaveLength(28);
-    expect(new Set(SCHOOL_CITY_LOCATIONS.map(({ locationKey }) => locationKey)).size).toBe(28);
+    expect(SCHOOL_CITY_LOCATIONS).toHaveLength(32);
+    expect(new Set(SCHOOL_CITY_LOCATIONS.map(({ locationKey }) => locationKey)).size).toBe(32);
 
     for (const location of SCHOOL_CITY_LOCATIONS) {
       expect(location.locationKey).toBe(`geonames:${location.geonameId}`);

@@ -1,0 +1,64 @@
+name: Maintenance · Verify school locations
+run-name: Verify remaining school locations · @${{ github.actor }}
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-production
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify protected configuration
+        run: |
+          test -n "$SUPABASE_ACCESS_TOKEN"
+          test -n "$SUPABASE_PROJECT_REF"
+      - name: Verify the five remaining school locations
+        run: |
+          payload="$(node <<'NODE'
+          const fs = require('fs');
+          const migration = fs.readFileSync(
+            'supabase/migrations/20260916030000_verify_remaining_school_locations.sql',
+            'utf8',
+          );
+          const verification = String.raw`
+          do $verify$
+          begin
+            if (
+              select count(*)
+              from public.schools
+              where id = any(array[
+                '16cd96b6-ac67-4ff0-9ec3-c7e2643aaed2'::uuid,
+                '0d57b93d-2595-48b2-8c4c-0d7c0eacad6b'::uuid,
+                '2006ebed-8766-4ca1-ad04-e8e1b992ba09'::uuid,
+                '7001828f-44cf-42e2-a15b-f146b6594bc7'::uuid,
+                '1a1030f2-fecd-47d5-8c3d-81b504ac4047'::uuid
+              ])
+              and location_status = 'verified'
+              and location_key is not null
+            ) <> 5 then
+              raise exception 'The five remaining school locations are not verified';
+            end if;
+          end
+          $verify$;
+          `;
+          process.stdout.write(JSON.stringify({ query: `${migration}\n${verification}` }));
+          NODE
+          )"
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            --header "Content-Type: application/json" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query" \
+            --data "$payload"
