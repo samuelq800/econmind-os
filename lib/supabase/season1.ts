@@ -2,10 +2,11 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient, requireSupabaseBrowserClient, throwIfSupabaseError } from "./client";
 
 export type Season1RolePreference = string;
-export type Season1Team = { id: string; name: string; description: string; focus: string; capacity: number; recruiting: boolean; recruitmentMode: "open" | "application_required" | "invite_only"; teamStyle: "competitive" | "balanced" | "learning"; preferredLanguage: string; status: string; memberCount: number; readyCount: number; applicationCount: number; teamType: "SCHOOL TEAM" | "CROSS-SCHOOL TEAM" | "OPEN TEAM"; schools: string[] };
+export type Season1Team = { id: string; name: string; description: string; focus: string; capacity: number; recruiting: boolean; recruitmentMode: "open" | "application_required" | "invite_only"; teamStyle: "competitive" | "balanced" | "learning"; preferredLanguage: string; status: string; schoolId: string | null; schoolName: string | null; sameSchool: boolean; memberCount: number; readyCount: number; applicationCount: number; teamType: "SCHOOL TEAM" | "CROSS-SCHOOL TEAM" | "OPEN TEAM"; schools: string[] };
 export type Season1Message = { id: string; content: string; messageType: "TEXT" | "TEAM_CARD" | "SYSTEM"; metadata: Record<string, unknown>; createdAt: string; deletedAt: string | null; authorName: string; authorId: string };
 export type Season1LobbyData = {
   season: { id: string; code: string; displayName: string; registrationOpen: boolean; simulationLocked: boolean; config: { minimumTeamSize: number; maximumTeamSize: number; roles: string[]; languages: string[] } };
+  viewer?: { schoolId: string | null; schoolName: string | null };
   stats: { players: number; teams: number; freeAgents: number; recruitingTeams: number };
   teams: Season1Team[];
   freeAgents: Array<{ userId: string; displayName: string; schoolName: string | null; rolePreferences: string[]; interests: string; preferredLanguage: string; teamStylePreference: string }>;
@@ -63,6 +64,9 @@ export const createSeason1Invite = (teamId: string, userId?: string) => rpc<{ id
 export const respondToSeason1Invite = (code: string, accept: boolean) => rpc<string>("world_preseason_respond_to_invite", { p_code: code, p_accept: accept });
 export const setSeason1Preferences = (preferences: string[]) => rpc<void>("world_preseason_set_my_preferences", { p_role_preferences: preferences });
 export const setSeason1Readiness = (ready: boolean) => rpc<void>("world_preseason_set_my_readiness", { p_ready: ready });
+export const leaveSeason1Team = () => rpc<void>("world_preseason_leave_team");
+export const removeSeason1Member = (memberUserId: string) => rpc<void>("world_preseason_remove_member", { p_member_user_id: memberUserId });
+export const dissolveSeason1Team = () => rpc<void>("world_preseason_dissolve_team");
 export const postSeason1Message = (teamId: string | null, content: string, messageType: "TEXT" | "TEAM_CARD" = "TEXT", metadata: Record<string, unknown> = {}) => rpc<string>("world_preseason_post_message", { p_team_id: teamId, p_content: content, p_message_type: messageType, p_metadata: metadata });
 export const deleteSeason1Message = (messageId: string) => rpc<void>("world_preseason_delete_own_message", { p_message_id: messageId });
 export const reportSeason1Message = (messageId: string, reason: string) => rpc<void>("world_preseason_report_message", { p_message_id: messageId, p_reason: reason });
