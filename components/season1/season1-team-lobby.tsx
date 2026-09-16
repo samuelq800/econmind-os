@@ -19,13 +19,14 @@ import { Card } from "@/components/ui/card";
 import {
   acceptSeason1Application,
   applyToSeason1Team,
+  createSeason1Invite,
   createSeason1Team,
   getSeason1AdminLobby,
   postSeason1LobbyMessage,
   postSeason1TeamMessage,
-  SEASON_1_ROLE_PREFERENCES,
   setSeason1Preferences,
   setSeason1Readiness,
+  setSeason1FreeAgent,
   type Season1LobbyData,
   type Season1RolePreference,
 } from "@/lib/supabase/season1";
@@ -298,7 +299,7 @@ export function Season1TeamLobby() {
             grant an office or create a country assignment.
           </p>
           <div className="mt-6 flex flex-wrap gap-2">
-            {SEASON_1_ROLE_PREFERENCES.map((role) => (
+            {lobby.season.config.roles.map((role) => (
               <button
                 key={role}
                 type="button"
@@ -334,9 +335,10 @@ export function Season1TeamLobby() {
           <p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">
             Schools are visible as context only, never as a membership boundary.
           </p>
+          {!currentTeam && <Button size="sm" variant="secondary" className="mt-4" disabled={busy} onClick={() => void mutate(() => setSeason1FreeAgent({ enabled: true, teamStylePreference: "open" }))}>Become a Free Agent</Button>}
           <div className="mt-5 divide-y divide-[var(--line)] border-y border-[var(--line)]">
             {lobby.freeAgents.map((agent) => (
-              <article className="flex gap-3 py-4" key={agent.userId}>
+              <article className="flex items-center justify-between gap-3 py-4" key={agent.userId}>
                 <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[var(--accent-soft)] text-sm font-black text-[var(--accent)]">
                   {agent.displayName[0]}
                 </span>
@@ -345,7 +347,9 @@ export function Season1TeamLobby() {
                   <p className="mt-1 text-xs text-[var(--ink-muted)]">
                     {agent.schoolName ?? "Independent / no school affiliation"}
                   </p>
+                  {agent.interests && <p className="mt-1 text-xs text-[var(--ink-muted)]">{agent.interests}</p>}
                 </div>
+                {currentTeam && lobby.currentMembership?.memberRole === "captain" && <Button size="sm" variant="secondary" disabled={busy} onClick={() => void mutate(() => createSeason1Invite(currentTeam.id, agent.userId))}>Invite</Button>}
               </article>
             ))}
             {!lobby.freeAgents.length && (
@@ -641,6 +645,10 @@ function TeamCard({
       <p className="mt-2 text-sm leading-6 text-[var(--ink-muted)]">
         {team.focus || "Recruitment focus has not been added."}
       </p>
+      <div className="mt-4 flex flex-wrap gap-2 text-[11px] font-bold uppercase tracking-[.08em] text-[var(--ink-muted)]">
+        <span>{team.teamType}</span><span>·</span><span>{team.teamStyle}</span><span>·</span><span>{team.preferredLanguage}</span>
+      </div>
+      {team.schools.length > 0 && <p className="mt-2 text-xs text-[var(--ink-muted)]">{team.schools.join(" · ")}</p>}
       <div className="mt-5 flex justify-between gap-3 border-t border-[var(--line)] pt-4 text-xs font-semibold text-[var(--ink-faint)]">
         <span>
           {team.memberCount} / {team.capacity} members
