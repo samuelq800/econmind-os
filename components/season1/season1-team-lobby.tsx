@@ -16,6 +16,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { withBasePath } from "@/lib/base-path";
 import {
   acceptSeason1Application,
   applyToSeason1Team,
@@ -90,14 +91,19 @@ export function Season1TeamLobby() {
     [lobby?.teams, query],
   );
 
-  async function mutate(action: () => Promise<unknown>) {
+  async function mutate(
+    action: () => Promise<unknown>,
+    options: { refresh?: boolean } = {},
+  ) {
     setBusy(true);
     setError("");
     try {
       await action();
-      await refresh();
+      if (options.refresh !== false) await refresh();
+      return true;
     } catch (caught) {
       setError(messageFor(caught, "The Season 1 lobby could not be updated."));
+      return false;
     } finally {
       setBusy(false);
     }
@@ -144,7 +150,25 @@ export function Season1TeamLobby() {
     const next = current.includes(role)
       ? current.filter((item) => item !== role)
       : [...current, role];
-    await mutate(() => setSeason1Preferences(next));
+    const succeeded = await mutate(() => setSeason1Preferences(next), {
+      refresh: false,
+    });
+    if (!succeeded) return;
+    setLobby((previous) => {
+      if (!previous?.membership || !previous.currentMembership) return previous;
+      const membership = {
+        ...previous.membership,
+        rolePreferences: next,
+      };
+      return {
+        ...previous,
+        membership,
+        currentMembership: {
+          ...previous.currentMembership,
+          rolePreferences: next,
+        },
+      };
+    });
   }
 
   if (authLoading || roleLoading || loading)
@@ -173,12 +197,30 @@ export function Season1TeamLobby() {
 
   return (
     <main className="mx-auto min-h-screen max-w-[1440px] px-5 py-10 sm:px-8 lg:px-12">
-      <section className="relative overflow-hidden rounded-2xl border border-[#255e50] bg-[radial-gradient(circle_at_80%_12%,#1a5c4a_0%,#102b24_42%,#0b1915_100%)] px-6 py-10 text-white shadow-2xl sm:px-10 sm:py-14">
+      <section className="season1-hero relative isolate overflow-hidden rounded-2xl border border-[#255e50] bg-[radial-gradient(circle_at_80%_12%,#1a5c4a_0%,#102b24_42%,#0b1915_100%)] px-6 py-10 text-white shadow-2xl sm:px-10 sm:py-14">
+        <div className="season1-hero-globe" aria-hidden="true">
+          <div
+            className="season1-hero-globe-land"
+            style={{
+              maskImage: `url(${withBasePath("/league/maps/world-land.svg")})`,
+              WebkitMaskImage: `url(${withBasePath("/league/maps/world-land.svg")})`,
+            }}
+          />
+          <span className="season1-hero-globe-ring season1-hero-globe-ring-one" />
+          <span className="season1-hero-globe-ring season1-hero-globe-ring-two" />
+          <span className="season1-hero-globe-ring season1-hero-globe-ring-three" />
+          <span className="season1-hero-globe-node season1-hero-globe-node-one" />
+          <span className="season1-hero-globe-node season1-hero-globe-node-two" />
+          <span className="season1-hero-globe-node season1-hero-globe-node-three" />
+          <span className="season1-hero-globe-node season1-hero-globe-node-four" />
+        </div>
+        <span className="season1-hero-orbit season1-hero-orbit-one" aria-hidden="true" />
+        <span className="season1-hero-orbit season1-hero-orbit-two" aria-hidden="true" />
         <div
           aria-hidden="true"
           className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(190,244,218,.16)_1px,transparent_1px),linear-gradient(90deg,rgba(190,244,218,.16)_1px,transparent_1px)] [background-size:52px_52px]"
         />
-        <div className="relative grid gap-9 lg:grid-cols-[1.2fr_.8fr] lg:items-end">
+        <div className="relative z-10 grid gap-9 lg:grid-cols-[1.2fr_.8fr] lg:items-end">
           <div>
             <p className="text-[10px] font-extrabold uppercase tracking-[.19em] text-[#9de8c8]">
               {lobby.season.displayName} · Platform administration

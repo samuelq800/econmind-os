@@ -19,9 +19,44 @@ export type Season1LobbyData = {
 };
 
 async function rpc<T>(name: string, args: Record<string, unknown> = {}) { const { data, error } = await requireSupabaseBrowserClient().rpc(name, args); throwIfSupabaseError(error); return data as T; }
-export const getSeason1Lobby = async () => { const data = await rpc<Omit<Season1LobbyData, "currentMembership" | "applicationTeamIds" | "pendingApplications">>("get_world_preseason_lobby"); return { ...data, currentMembership: data.membership, applicationTeamIds: [], pendingApplications: data.applications.map(({ id, teamId, teamName, applicantName }) => ({ id, teamId, teamName, applicantName })) }; };
+
+type Season1LobbyRpcData = Omit<Season1LobbyData, "currentMembership" | "applicationTeamIds" | "pendingApplications"> & {
+  applicationTeamIds?: string[];
+};
+
+/**
+ * Keep the richer participant read model as the source for the page. The
+ * original admin read model already exposes the current user's pending
+ * application IDs, so use it as a best-effort compatibility field while the
+ * participant RPC evolves. This prevents a second click from submitting an
+ * application that is already pending.
+ */
+export const getSeason1Lobby = async () => {
+  const [data, legacy] = await Promise.all([
+    rpc<Season1LobbyRpcData>("get_world_preseason_lobby"),
+    rpc<{ applicationTeamIds?: string[] }>("get_world_preseason_admin_lobby").catch(() => null),
+  ]);
+  const applicationTeamIds = legacy?.applicationTeamIds ?? data.applicationTeamIds ?? [];
+  return {
+    ...data,
+    currentMembership: data.membership,
+    applicationTeamIds,
+    pendingApplications: data.applications.map(({ id, teamId, teamName, applicantName }) => ({ id, teamId, teamName, applicantName })),
+  };
+};
 export const createSeason1Team = (input: { name: string; description?: string; focus?: string; capacity?: number; recruitmentMode?: "open" | "application_required" | "invite_only"; teamStyle?: "competitive" | "balanced" | "learning"; preferredLanguage?: string; preferences: string[] }) => rpc<string>("world_preseason_create_team", { p_name: input.name, p_description: input.description ?? input.focus ?? "", p_recruitment_mode: input.recruitmentMode ?? "open", p_team_style: input.teamStyle ?? "balanced", p_preferred_language: input.preferredLanguage ?? "English", p_role_preferences: input.preferences });
-export const applyToSeason1Team = (teamId: string, note = "") => rpc<string>("world_preseason_apply_to_team", { p_team_id: teamId, p_note: note });
+export const applyToSeason1Team = async (teamId: string, note = "") => {
+  try {
+    return await rpc<string>("world_preseason_apply_to_team", { p_team_id: teamId, p_note: note });
+  } catch (caught) {
+    // Older production schemas may still raise the partial-index violation
+    // until the idempotency migration is applied. Treat that exact response
+    // as an already-pending application; the following read disables the
+    // button and keeps the participant out of an error loop.
+    if (caught instanceof Error && caught.message.includes("world_preseason_one_pending_application_idx")) return null;
+    throw caught;
+  }
+};
 export const reviewSeason1Application = (applicationId: string, accept: boolean) => rpc<void>("world_preseason_review_application", { p_application_id: applicationId, p_accept: accept });
 export const setSeason1FreeAgent = (input: { enabled: boolean; interests?: string; preferredLanguage?: string; teamStylePreference?: string }) => rpc<void>("world_preseason_set_free_agent", { p_enabled: input.enabled, p_interests: input.interests ?? "", p_preferred_language: input.preferredLanguage ?? "English", p_team_style_preference: input.teamStylePreference ?? "open" });
 export const createSeason1Invite = (teamId: string, userId?: string) => rpc<{ id: string; code: string; teamId: string }>("world_preseason_create_invite", { p_team_id: teamId, p_invited_user_id: userId ?? null, p_expires_at: null });
@@ -39,7 +74,7 @@ export function unsubscribeSeason1Lobby(channel: RealtimeChannel | null) { const
 // the richer participant Team Lobby is progressively rendered from the same
 // season-scoped read model.
 export const SEASON_1_ROLE_PREFERENCES: readonly string[] = [];
-export async function getSeason1AdminLobby() { const data = await getSeason1Lobby(); return { ...data, currentMembership: data.membership, applicationTeamIds: [], pendingApplications: data.applications.map(({ id, teamId, teamName, applicantName }) => ({ id, teamId, teamName, applicantName })) }; }
+export async function getSeason1AdminLobby() { const data = await getSeason1Lobby(); return { ...data, currentMembership: data.membership, applicationTeamIds: data.applicationTeamIds, pendingApplications: data.applications.map(({ id, teamId, teamName, applicantName }) => ({ id, teamId, teamName, applicantName })) }; }
 export const acceptSeason1Application = (id: string) => reviewSeason1Application(id, true);
 export const postSeason1LobbyMessage = (content: string) => postSeason1Message(null, content);
 export const postSeason1TeamMessage = (teamId: string, content: string) => postSeason1Message(teamId, content);

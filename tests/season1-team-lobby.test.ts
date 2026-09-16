@@ -4,12 +4,13 @@ import { describe, expect, it } from "vitest";
 const migration = readFileSync(
   "supabase/migrations/20260916000000_world_preseason_team_lobby.sql",
   "utf8",
-) + readFileSync("supabase/migrations/20260916010000_expand_world_preseason_team_lobby.sql", "utf8");
+) + readFileSync("supabase/migrations/20260916010000_expand_world_preseason_team_lobby.sql", "utf8") + readFileSync("supabase/migrations/20260916020000_fix_world_preseason_application_idempotency.sql", "utf8");
 const browserData = readFileSync("lib/supabase/season1.ts", "utf8");
 const page = readFileSync(
   "components/season1/season1-team-lobby.tsx",
   "utf8",
 );
+const globalStyles = readFileSync("app/globals.css", "utf8");
 
 describe("Season 1 pre-season team lobby", () => {
   it("persists only pre-season collaboration records with RLS", () => {
@@ -60,5 +61,22 @@ describe("Season 1 pre-season team lobby", () => {
     expect(page).toContain("Platform Admin accounts");
     expect(page).toContain("This is the real, persistent Pre-Season layer");
     expect(page).not.toContain("Sample team");
+  });
+
+  it("makes team applications retry-safe and avoids a full read after preference clicks", () => {
+    expect(migration).toContain(
+      "on conflict (season_id, team_id, applicant_user_id) where status = 'pending'",
+    );
+    expect(browserData).toContain("get_world_preseason_admin_lobby");
+    expect(browserData).toContain("world_preseason_one_pending_application_idx");
+    expect(page).toContain("refresh: false");
+    expect(page).toContain("rolePreferences: next");
+  });
+
+  it("embeds the connected-world globe treatment in the Season 1 hero", () => {
+    expect(page).toContain("season1-hero-globe");
+    expect(page).toContain("/league/maps/world-land.svg");
+    expect(globalStyles).toContain(".season1-hero-globe");
+    expect(globalStyles).toContain(".season1-hero-globe-node");
   });
 });
