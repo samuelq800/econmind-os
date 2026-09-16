@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 const migration = readFileSync(
   "supabase/migrations/20260916000000_world_preseason_team_lobby.sql",
   "utf8",
-);
+) + readFileSync("supabase/migrations/20260916010000_expand_world_preseason_team_lobby.sql", "utf8");
 const browserData = readFileSync("lib/supabase/season1.ts", "utf8");
 const page = readFileSync(
   "components/season1/season1-team-lobby.tsx",
@@ -37,13 +37,17 @@ describe("Season 1 pre-season team lobby", () => {
     expect(migration).toContain("revoke all on table public.world_preseason_seasons");
 
     for (const rpc of [
-      "get_world_preseason_admin_lobby",
+      "get_world_preseason_lobby",
       "world_preseason_create_team",
       "world_preseason_apply_to_team",
-      "world_preseason_accept_application",
+      "world_preseason_review_application",
       "world_preseason_set_my_preferences",
       "world_preseason_set_my_readiness",
       "world_preseason_post_message",
+      "world_preseason_create_invite",
+      "world_preseason_respond_to_invite",
+      "world_preseason_set_free_agent",
+      "world_preseason_report_message",
     ]) {
       expect(migration).toContain(`function public.${rpc}`);
       expect(browserData).toContain(`"${rpc}"`);
