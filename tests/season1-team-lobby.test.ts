@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const migration = readFileSync(
@@ -73,10 +73,14 @@ describe("Season 1 pre-season team lobby", () => {
     expect(page).toContain("rolePreferences: next");
   });
 
-  it("embeds the connected-world globe treatment in the Season 1 hero", () => {
-    expect(page).toContain("season1-hero-globe");
-    expect(page).toContain("/league/maps/world-land.svg");
-    expect(globalStyles).toContain(".season1-hero-globe");
-    expect(globalStyles).toContain(".season1-hero-globe-node");
+  it("centers the supplied connected-world visual with a live Season 1 countdown", () => {
+    expect(page).toContain("70-COUNTRY WORLD");
+    expect(page).toContain("2026-09-24T16:00:00.000Z");
+    expect(page).toContain("season1-connected-world-globe.png");
+    expect(globalStyles).toContain(".season1-world-visual");
+    expect(globalStyles).toContain(".season1-world-countdown");
+    expect(
+      existsSync("public/images/season1/season1-connected-world-globe.png"),
+    ).toBe(true);
   });
 });

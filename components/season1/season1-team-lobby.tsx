@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import {
   Check,
   LoaderCircle,
@@ -34,6 +35,48 @@ import {
 
 function messageFor(caught: unknown, fallback: string) {
   return caught instanceof Error ? caught.message : fallback;
+}
+
+const season1WorldOpening = Date.parse("2026-09-24T16:00:00.000Z");
+
+function WorldCountdown() {
+  const [now, setNow] = useState<number | null>(null);
+
+  useEffect(() => {
+    const updateClock = () => setNow(Date.now());
+    updateClock();
+    const timer = window.setInterval(updateClock, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const remaining = Math.max(0, season1WorldOpening - (now ?? season1WorldOpening));
+  const totalSeconds = Math.floor(remaining / 1000);
+  const units = [
+    { label: "Days", value: Math.floor(totalSeconds / 86_400) },
+    { label: "Hours", value: Math.floor((totalSeconds % 86_400) / 3_600) },
+    { label: "Minutes", value: Math.floor((totalSeconds % 3_600) / 60) },
+    { label: "Seconds", value: totalSeconds % 60 },
+  ];
+
+  return (
+    <section
+      aria-label="Countdown to Season 1 world opening"
+      className="season1-world-countdown"
+    >
+      <div className="season1-world-countdown-intro">
+        <p>World access opens in</p>
+        <span>25 September · 00:00 CST</span>
+      </div>
+      <div className="grid grid-cols-4 gap-2 sm:gap-3">
+        {units.map((unit) => (
+          <div className="season1-world-countdown-unit" key={unit.label}>
+            <strong>{String(unit.value).padStart(2, "0")}</strong>
+            <span>{unit.label}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 }
 
 export function Season1TeamLobby() {
@@ -197,31 +240,30 @@ export function Season1TeamLobby() {
 
   return (
     <main className="mx-auto min-h-screen max-w-[1440px] px-5 py-10 sm:px-8 lg:px-12">
-      <section className="season1-hero relative isolate overflow-hidden rounded-2xl border border-[#255e50] bg-[radial-gradient(circle_at_80%_12%,#1a5c4a_0%,#102b24_42%,#0b1915_100%)] px-6 py-10 text-white shadow-2xl sm:px-10 sm:py-14">
-        <div className="season1-hero-globe" aria-hidden="true">
-          <div
-            className="season1-hero-globe-land"
-            style={{
-              maskImage: `url(${withBasePath("/league/maps/world-land.svg")})`,
-              WebkitMaskImage: `url(${withBasePath("/league/maps/world-land.svg")})`,
-            }}
+      <section className="season1-world-hero relative isolate overflow-hidden rounded-2xl border border-[#2b6f68] px-6 py-10 text-white shadow-2xl sm:px-10 sm:py-14">
+        <div className="season1-world-grid" aria-hidden="true" />
+        <div className="season1-world-vignette" aria-hidden="true" />
+        <div className="season1-world-visual" aria-hidden="true">
+          <span className="season1-world-aura" />
+          <span className="season1-world-orbit season1-world-orbit-one" />
+          <span className="season1-world-orbit season1-world-orbit-two" />
+          <span className="season1-world-orbit season1-world-orbit-three" />
+          <Image
+            alt=""
+            className="season1-world-image"
+            fill
+            priority
+            sizes="(min-width: 1024px) 760px, 92vw"
+            src={withBasePath("/images/season1/season1-connected-world-globe.png")}
           />
-          <span className="season1-hero-globe-ring season1-hero-globe-ring-one" />
-          <span className="season1-hero-globe-ring season1-hero-globe-ring-two" />
-          <span className="season1-hero-globe-ring season1-hero-globe-ring-three" />
-          <span className="season1-hero-globe-node season1-hero-globe-node-one" />
-          <span className="season1-hero-globe-node season1-hero-globe-node-two" />
-          <span className="season1-hero-globe-node season1-hero-globe-node-three" />
-          <span className="season1-hero-globe-node season1-hero-globe-node-four" />
         </div>
-        <span className="season1-hero-orbit season1-hero-orbit-one" aria-hidden="true" />
-        <span className="season1-hero-orbit season1-hero-orbit-two" aria-hidden="true" />
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(190,244,218,.16)_1px,transparent_1px),linear-gradient(90deg,rgba(190,244,218,.16)_1px,transparent_1px)] [background-size:52px_52px]"
-        />
-        <div className="relative z-10 grid gap-9 lg:grid-cols-[1.2fr_.8fr] lg:items-end">
-          <div>
+        <div className="season1-world-title" aria-label="70-country world">
+          <p>World Simulation V2</p>
+          <h2>70-COUNTRY WORLD</h2>
+        </div>
+        <div className="relative z-10 flex min-h-[34rem] flex-col justify-between gap-10 lg:min-h-[37rem]">
+          <div className="grid gap-9 lg:grid-cols-[1.12fr_.88fr] lg:items-center">
+          <div className="season1-world-copy">
             <p className="text-[10px] font-extrabold uppercase tracking-[.19em] text-[#9de8c8]">
               {lobby.season.displayName} · Platform administration
             </p>
@@ -245,7 +287,7 @@ export function Season1TeamLobby() {
               </a>
             </div>
           </div>
-          <Card className="border-white/15 bg-[#0b211a]/75 p-5 text-white shadow-none backdrop-blur">
+          <Card className="season1-world-status border-white/15 p-5 text-white shadow-none backdrop-blur">
             <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#9de8c8]">
               Season status
             </p>
@@ -266,6 +308,8 @@ export function Season1TeamLobby() {
               writes are restricted to server-side functions.
             </p>
           </Card>
+          </div>
+          <WorldCountdown />
         </div>
       </section>
 
