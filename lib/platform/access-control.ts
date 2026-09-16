@@ -29,6 +29,10 @@ export const PAGE_ACCESS_RULES: readonly PageAccessRule[] = [
   { path: "/learn/research/my", match: "prefix", audience: "account" },
   { path: "/learn/research", match: "prefix", audience: "public" },
 
+  // Phase-0 team formation is being prepared by platform administrators only.
+  // This route intentionally has no viewer or general-account access.
+  { path: "/season1", match: "prefix", audience: "account", platformRoles: ["platform_admin"] },
+
   // Governance work contains account requests and internal notes.
   { path: "/admin/governance", match: "prefix", audience: "account", platformRoles: ["platform_admin"] },
   { path: "/admin/live-world", match: "prefix", audience: "account", platformRoles: ["platform_admin"] },
