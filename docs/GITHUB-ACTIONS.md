@@ -12,6 +12,7 @@ a deployment, or narrowly scoped maintenance.
 | `Maintenance · Account suspension schema` | Manual only                        | Reapplies and verifies the checked-in account-suspension migration.                                      |
 | `Maintenance · Daily Brief source policy` | Manual only                        | Reapplies the checked-in Daily Brief source-policy migration.                                            |
 | `Maintenance · Live World schema`         | Manual only                        | Reapplies the checked-in Live World migration.                                                           |
+| `Maintenance · Verify school locations`   | Manual only                        | Applies and verifies the five reviewed school city markers.                                               |
 
 ## Safety rules
 
