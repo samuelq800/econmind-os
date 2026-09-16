@@ -36,6 +36,10 @@ describe("central frontend page access policy", () => {
     expect(pageAccessForPath("/contact").audience).toBe("account");
     expect(pageAccessForPath("/admin/governance").audience).toBe("account");
     expect(pageAccessForPath("/admin/governance").platformRoles).toEqual(["platform_admin"]);
+    expect(pageAccessForPath("/season1").audience).toBe("account");
+    expect(pageAccessForPath("/season1").platformRoles).toEqual(["platform_admin"]);
+    expect(hasRequiredPageRole(pageAccessForPath("/season1"), "student", "platform_admin")).toBe(true);
+    expect(hasRequiredPageRole(pageAccessForPath("/season1"), "student", "school_leader")).toBe(false);
   });
 
   it("keeps unlisted tools account-or-viewer gated", () => {
