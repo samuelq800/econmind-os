@@ -48,6 +48,7 @@ import {
   listLeagueProfiles,
   listLeagueSchools,
   listMyCrisisRuns,
+  listSchoolMembers,
   listSchoolCrisisRuns,
   listSchoolTeams,
   matchLeagueApplicationLocation,
@@ -104,6 +105,7 @@ export function LeagueDashboard({
   const [runs, setRuns] = useState<CrisisRun[]>([]);
   const [schoolRuns, setSchoolRuns] = useState<CrisisRun[]>([]);
   const [teams, setTeams] = useState<TeamWithMembers[]>([]);
+  const [schoolMembers, setSchoolMembers] = useState<LeagueProfile[]>([]);
   const [applications, setApplications] = useState<LeagueApplication[]>([]);
   const [schools, setSchools] = useState<School[]>([]);
   const [profiles, setProfiles] = useState<LeagueProfile[]>([]);
@@ -125,6 +127,7 @@ export function LeagueDashboard({
   const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
   const [renamedTeam, setRenamedTeam] = useState("");
   const [profileSearch, setProfileSearch] = useState("");
+  const [schoolMemberSearch, setSchoolMemberSearch] = useState("");
   const [busy, setBusy] = useState(false);
   const load = useCallback(async () => {
     if (!userId) return;
@@ -144,12 +147,14 @@ export function LeagueDashboard({
         nextContext.profile?.platform_role === "school_leader" &&
         nextContext.school
       ) {
-        const [nextTeams, nextSchoolRuns] = await Promise.all([
+        const [nextTeams, nextSchoolRuns, nextSchoolMembers] = await Promise.all([
           listSchoolTeams(nextContext.school.id),
           listSchoolCrisisRuns(nextContext.school.id),
+          listSchoolMembers(nextContext.school.id),
         ]);
         setTeams(nextTeams);
         setSchoolRuns(nextSchoolRuns);
+        setSchoolMembers(nextSchoolMembers);
       }
       if (nextContext.profile?.platform_role === "platform_admin") {
         const [nextApplications, nextSchools, nextProfiles, nextRuns, nextChallenges] =
@@ -211,6 +216,20 @@ export function LeagueDashboard({
       );
     });
   }, [profileSearch, profiles, schoolsById]);
+  const filteredSchoolMembers = useMemo(() => {
+    const query = schoolMemberSearch.trim().toLocaleLowerCase();
+    if (!query) return schoolMembers;
+
+    return schoolMembers.filter((profile) =>
+      [
+        profile.display_name,
+        profile.user_id,
+        academicRoleLabels[profile.role ?? "student"],
+        profile.graduation_year?.toString(),
+        profile.economics_club_name,
+      ].some((value) => value?.toLocaleLowerCase().includes(query)),
+    );
+  }, [schoolMemberSearch, schoolMembers]);
   if (!userId)
     return (
       <main className="mx-auto grid min-h-[65vh] max-w-xl place-items-center px-5 text-center">
@@ -686,6 +705,78 @@ export function LeagueDashboard({
                   </div>
                 </Card>
               </div>
+              <Card className="mt-5 p-6">
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <div>
+                    <h3 className="font-bold">School members</h3>
+                    <p className="mt-1 text-xs leading-5 text-[var(--ink-muted)]">
+                      People whose League profile is associated with {context.school.name}.
+                    </p>
+                    <p className="mt-1 text-[10px] text-[var(--ink-faint)]">
+                      {schoolMemberSearch.trim()
+                        ? `${filteredSchoolMembers.length} of ${schoolMembers.length} members`
+                        : `${schoolMembers.length} members`}
+                    </p>
+                  </div>
+                  <label className="relative min-w-0 flex-1 sm:max-w-72">
+                    <span className="sr-only">Search school members</span>
+                    <Search
+                      aria-hidden="true"
+                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ink-faint)]"
+                      size={15}
+                    />
+                    <input
+                      type="search"
+                      value={schoolMemberSearch}
+                      onChange={(event) => setSchoolMemberSearch(event.target.value)}
+                      placeholder="Search name, ID, club or year"
+                      className="h-10 w-full appearance-none rounded-lg border border-[var(--line)] bg-[var(--canvas)] pl-9 pr-9 text-xs outline-none transition [&::-webkit-search-cancel-button]:hidden focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)]"
+                    />
+                    {schoolMemberSearch && (
+                      <button
+                        type="button"
+                        aria-label="Clear school member search"
+                        onClick={() => setSchoolMemberSearch("")}
+                        className="absolute right-1.5 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-md text-[var(--ink-faint)] transition hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </label>
+                </div>
+                <div className="mt-4 divide-y divide-[var(--line)]">
+                  {filteredSchoolMembers.map((profile) => (
+                    <div
+                      key={profile.user_id}
+                      className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold">
+                          {profile.display_name || profile.user_id.slice(0, 8)}
+                        </p>
+                        <p className="mt-1 text-[10px] text-[var(--ink-faint)]">
+                          {profile.economics_club_name || "No economics club listed"}
+                          {profile.graduation_year ? ` · Class of ${profile.graduation_year}` : ""}
+                        </p>
+                      </div>
+                      <Badge>{academicRoleLabels[profile.role ?? "student"]}</Badge>
+                    </div>
+                  ))}
+                  {filteredSchoolMembers.length === 0 && (
+                    <div className="rounded-lg border border-dashed border-[var(--line)] px-4 py-8 text-center">
+                      <Search aria-hidden="true" className="mx-auto text-[var(--ink-faint)]" size={20} />
+                      <p className="mt-3 text-sm font-bold">
+                        {schoolMembers.length === 0 ? "No school members yet" : "No members found"}
+                      </p>
+                      <p className="mt-1 text-xs text-[var(--ink-muted)]">
+                        {schoolMembers.length === 0
+                          ? "Members appear here once they choose this school in their League profile."
+                          : "Try a name, ID, club or year."}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </Card>
               <Card className="mt-5 p-6">
                 <h3 className="font-bold">School Crisis Sprint records</h3>
                 <div className="mt-4 space-y-2">

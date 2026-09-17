@@ -496,6 +496,29 @@ export async function listLeagueProfiles() {
   }
 }
 
+export async function listSchoolMembers(schoolId: string) {
+  const pageSize = 1_000;
+  const profiles: LeagueProfile[] = [];
+
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await client()
+      .from("profiles")
+      .select(
+        "user_id,display_name,role,platform_role,school_id,graduation_year,economics_club_name,role_preference,created_at,updated_at",
+      )
+      .eq("school_id", schoolId)
+      .order("display_name", { ascending: true })
+      .order("user_id", { ascending: true })
+      .range(offset, offset + pageSize - 1);
+
+    fail(error);
+    const page = (data ?? []) as LeagueProfile[];
+    profiles.push(...page);
+
+    if (page.length < pageSize) return profiles;
+  }
+}
+
 export async function isSupermePlatformAdmin() {
   const { data, error } = await client().rpc("is_superme_platform_admin");
   fail(error);

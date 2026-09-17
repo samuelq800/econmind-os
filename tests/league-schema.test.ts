@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const migration = readFileSync("supabase/migrations/20260729000000_inter_school_economic_league.sql", "utf8");
+const dashboard = readFileSync("components/league/league-dashboard.tsx", "utf8");
+const leagueClient = readFileSync("lib/supabase/league.ts", "utf8");
 
 describe("Inter-School League schema and permissions", () => {
   it("creates the League data model with RLS for every user-facing table", () => {
@@ -24,5 +26,14 @@ describe("Inter-School League schema and permissions", () => {
     expect(migration).toContain("create policy teams_insert_school_leaders");
     expect(migration).toContain("create policy crisis_runs_select_visible");
     expect(migration).toContain("create policy crisis_decisions_insert_owner");
+  });
+
+  it("provides School Leaders a separate, server-scoped roster of their school members", () => {
+    expect(migration).toContain("create policy profiles_school_leader_select");
+    expect(migration).toContain("public.is_school_leader_for(school_id)");
+    expect(leagueClient).toContain("export async function listSchoolMembers(schoolId: string)");
+    expect(leagueClient).toContain('.eq("school_id", schoolId)');
+    expect(dashboard).toContain("School members");
+    expect(dashboard).toContain("listSchoolMembers(nextContext.school.id)");
   });
 });
