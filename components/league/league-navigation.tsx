@@ -16,7 +16,7 @@ const items = [
 
 /** Core League navigation intentionally presents the organisation, not the simulations. */
 export function LeagueNavigation() {
-  const { worldSupervisor, roleLoading } = useAuth();
+  const { platformRole, worldSupervisor, roleLoading } = useAuth();
   const pathname = usePathname() ?? "";
 
   return (
@@ -34,7 +34,11 @@ export function LeagueNavigation() {
             </Link>
           );
         })}
-        {!roleLoading && worldSupervisor && <Link href="/league/dashboard" className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-[var(--ink-muted)] hover:bg-[var(--surface-subtle)]"><LayoutDashboard size={14} /> Admin</Link>}
+        {!roleLoading && (worldSupervisor || platformRole === "school_leader") && (
+          <Link href="/league/dashboard" className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-[var(--ink-muted)] hover:bg-[var(--surface-subtle)]">
+            <LayoutDashboard size={14} /> Dashboard
+          </Link>
+        )}
       </nav>
     </div>
   );

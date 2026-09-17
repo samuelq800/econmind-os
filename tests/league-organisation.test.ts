@@ -18,6 +18,12 @@ describe("League organisation layer", () => {
     expect(navigation).not.toContain('label: "Replay"');
   });
 
+  it("shows the League Dashboard entry to School Leaders as well as Platform Admins", () => {
+    expect(navigation).toContain('platformRole === "school_leader"');
+    expect(navigation).toContain('href="/league/dashboard"');
+    expect(navigation).toContain("Dashboard");
+  });
+
   it("keeps Season 1 and all four Official Challenges in a coming-soon state", () => {
     expect(LEAGUE_SEASON.status).toBe("coming_soon");
     expect(LEAGUE_CHALLENGES_COMING_SOON).toHaveLength(4);
