@@ -36,10 +36,12 @@ import type {
 } from "@/lib/league/types";
 import type { CanonicalSchoolLocationInput, SchoolLocationCatalogEntry } from "@/lib/league/geographic-areas";
 import type { LeagueChallenge } from "@/lib/league/async-challenge-types";
+import { isProtectedSupermePlatformAdmin } from "@/lib/platform/superme-platform-admin";
 import {
   createLeagueTeam,
   findSchoolLocationCatalogEntry,
   getLeagueContext,
+  isSupermePlatformAdmin,
   joinLeagueTeam,
   listAdminCrisisRuns,
   listAdminLeagueApplications,
@@ -105,6 +107,7 @@ export function LeagueDashboard({
   const [applications, setApplications] = useState<LeagueApplication[]>([]);
   const [schools, setSchools] = useState<School[]>([]);
   const [profiles, setProfiles] = useState<LeagueProfile[]>([]);
+  const [supermePlatformAdmin, setSupermePlatformAdmin] = useState(false);
   const [allRuns, setAllRuns] = useState<
     Array<
       Pick<
@@ -130,6 +133,11 @@ export function LeagueDashboard({
     try {
       const nextContext = await getLeagueContext(userId);
       setContext(nextContext);
+      const nextSupermePlatformAdmin =
+        nextContext.profile?.platform_role === "platform_admin"
+          ? await isSupermePlatformAdmin()
+          : false;
+      setSupermePlatformAdmin(nextSupermePlatformAdmin);
       const ownRuns = await listMyCrisisRuns(userId);
       setRuns(ownRuns);
       if (
@@ -712,6 +720,21 @@ export function LeagueDashboard({
                   <h2 className="mt-1 text-2xl font-bold">League oversight</h2>
                 </div>
               </div>
+              <Card className="mt-5 border-[var(--accent)] bg-[var(--accent-soft)] p-5">
+                {supermePlatformAdmin ? (
+                  <>
+                    <p className="text-[10px] font-extrabold uppercase tracking-[.16em] text-[var(--accent)]">Superme Platform Admin</p>
+                    <p className="mt-2 text-sm font-bold">You can review and change the roles of other Platform Admins.</p>
+                    <p className="mt-1 text-xs leading-5 text-[var(--ink-muted)]">The two designated Superme accounts are protected from tier changes. Every platform-role change is recorded in the moderation audit.</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-[10px] font-extrabold uppercase tracking-[.16em] text-[var(--accent)]">Platform Admin boundary</p>
+                    <p className="mt-2 text-sm font-bold">Other administrators are intentionally hidden from this dashboard.</p>
+                    <p className="mt-1 text-xs leading-5 text-[var(--ink-muted)]">You can continue managing League operations and non-admin accounts. Only a Superme Platform Admin can view or change an administrator role.</p>
+                  </>
+                )}
+              </Card>
               <section className="mt-6 grid gap-4 sm:grid-cols-3">
                 <Metric label="Schools" value={schools.length} />
                 <Metric label="Crisis runs" value={allRuns.length} />
@@ -884,10 +907,15 @@ export function LeagueDashboard({
                         className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] pb-3 last:border-0"
                       >
                         <div>
-                          <p className="text-sm font-bold">
-                            {profile.display_name ||
-                              profile.user_id.slice(0, 8)}
-                          </p>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-sm font-bold">
+                              {profile.display_name ||
+                                profile.user_id.slice(0, 8)}
+                            </p>
+                            {isProtectedSupermePlatformAdmin(profile.user_id) && (
+                              <span className="rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[.11em] text-[var(--accent)]">Superme admin</span>
+                            )}
+                          </div>
                           <p className="text-[10px] text-[var(--ink-faint)]">
                             {profile.school_id
                               ? schoolsById.get(profile.school_id) ??
@@ -900,7 +928,7 @@ export function LeagueDashboard({
                           <label className="text-[9px] font-bold uppercase tracking-wide text-[var(--ink-faint)]">League role
                             <select
                               value={profile.platform_role}
-                              disabled={busy}
+                              disabled={busy || (profile.platform_role === "platform_admin" && (!supermePlatformAdmin || isProtectedSupermePlatformAdmin(profile.user_id)))}
                               onChange={(event) =>
                                 void changeRole(
                                   profile.user_id,
@@ -913,13 +941,13 @@ export function LeagueDashboard({
                               <option value="user">User</option>
                               <option value="team_member">Team member</option>
                               <option value="school_leader">School leader</option>
-                              <option value="platform_admin">Platform admin</option>
+                              {(supermePlatformAdmin || profile.platform_role === "platform_admin") && <option value="platform_admin">Platform admin</option>}
                             </select>
                           </label>
                           <label className="text-[9px] font-bold uppercase tracking-wide text-[var(--ink-faint)]">Academic role
                             <select
                               value={profile.role ?? "student"}
-                              disabled={busy}
+                              disabled={busy || (profile.platform_role === "platform_admin" && !supermePlatformAdmin)}
                               onChange={(event) =>
                                 void changeAcademicRole(
                                   profile.user_id,

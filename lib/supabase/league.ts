@@ -496,6 +496,12 @@ export async function listLeagueProfiles() {
   }
 }
 
+export async function isSupermePlatformAdmin() {
+  const { data, error } = await client().rpc("is_superme_platform_admin");
+  fail(error);
+  return data === true;
+}
+
 export async function setLeaguePlatformRole(
   userId: string,
   role: LeaguePlatformRole,
