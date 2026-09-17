@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Building2, CalendarDays, GraduationCap, House, Info, LayoutDashboard, Trophy, UsersRound } from "lucide-react";
+import { Building2, GraduationCap, House, Info, LayoutDashboard, UsersRound } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/auth/auth-provider";
 
@@ -9,8 +9,6 @@ const items = [
   { href: "/league", label: "Home", icon: House, match: (path: string) => path === "/league" || path === "/league/" },
   { href: "/league/schools", label: "Schools", icon: Building2, match: (path: string) => path.startsWith("/league/schools") },
   { href: "/league/teams", label: "Teams", icon: UsersRound, match: (path: string) => path.startsWith("/league/teams") },
-  { href: "/league/season", label: "Season", icon: CalendarDays, match: (path: string) => path.startsWith("/league/season") || path.startsWith("/league/arena") },
-  { href: "/league/standings", label: "Standings", icon: Trophy, match: (path: string) => path.startsWith("/league/standings") },
   { href: "/league/about", label: "About", icon: Info, match: (path: string) => path.startsWith("/league/about") },
 ];
 

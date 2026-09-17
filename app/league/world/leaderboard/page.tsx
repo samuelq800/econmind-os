@@ -1,5 +1,5 @@
-import { WorldLeaderboardPage } from "@/components/world-governance/world-simulation";
+import { redirect } from "next/navigation";
 
 export default function LeaderboardPage() {
-  return <WorldLeaderboardPage />;
+  redirect("/simulation/world/leaderboard");
 }

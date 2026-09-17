@@ -1,5 +1,5 @@
-import { LeagueSeason } from "@/components/league/league-season";
+import { redirect } from "next/navigation";
 
 export default function LeagueSeasonPage() {
-  return <LeagueSeason />;
+  redirect("/league");
 }

@@ -1,5 +1,5 @@
-import { LeagueSimulationArena } from "@/components/league/league-simulation-arena";
+import { redirect } from "next/navigation";
 
 export default function LeagueArenaPage() {
-  return <LeagueSimulationArena />;
+  redirect("/simulation/arena");
 }

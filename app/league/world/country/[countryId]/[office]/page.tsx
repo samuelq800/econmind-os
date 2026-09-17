@@ -1,10 +1,8 @@
-import { notFound } from "next/navigation";
-import { WorldOfficeWorkspace } from "@/components/world-governance/world-simulation";
+import { notFound, redirect } from "next/navigation";
 import {
   WORLD_COUNTRY_IDS,
   WORLD_OFFICE_PATHS,
 } from "@/lib/world-governance/config";
-import type { WorldGovernanceOffice } from "@/lib/world-governance/types";
 
 export const dynamicParams = false;
 
@@ -25,10 +23,5 @@ export default async function CountryOfficeWorldPage({
     !WORLD_OFFICE_PATHS.includes(office as (typeof WORLD_OFFICE_PATHS)[number])
   )
     notFound();
-  return (
-    <WorldOfficeWorkspace
-      countryId={countryId}
-      office={office as WorldGovernanceOffice}
-    />
-  );
+  redirect(`/simulation/world/country/${countryId}/${office}`);
 }

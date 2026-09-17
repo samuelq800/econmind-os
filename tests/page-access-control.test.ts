@@ -19,7 +19,8 @@ describe("central frontend page access policy", () => {
       "/cases/food-waste",
       "/league",
       "/league/about",
-      "/league/standings",
+      "/simulation",
+      "/simulation/arena/time-machine-1973-oil-shock",
       "/league/schools/profile",
       "/tiao-run",
     ]) {
@@ -42,9 +43,11 @@ describe("central frontend page access policy", () => {
     expect(hasRequiredPageRole(pageAccessForPath("/season1"), "student", "school_leader")).toBe(false);
   });
 
-  it("keeps unlisted tools account-or-viewer gated", () => {
+  it("keeps unlisted tools account-or-viewer gated while Simulation is open", () => {
     expect(pageAccessForPath("/sandbox").audience).toBe("account-or-viewer");
-    expect(pageAccessForPath("/simulation").audience).toBe("account-or-viewer");
+    expect(pageAccessForPath("/simulation").audience).toBe("public");
+    expect(pageAccessForPath("/simulation/dashboard").audience).toBe("account");
+    expect(pageAccessForPath("/simulation/legacy-world/admin").platformRoles).toEqual(["platform_admin"]);
   });
 
   it("supports academic and platform roles in the shared policy model", () => {

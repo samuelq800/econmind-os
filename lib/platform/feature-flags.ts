@@ -92,8 +92,8 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
   },
   {
     id: "simulation", label: "Simulation", href: "/simulation", system: "world-economy", feature: "league",
-    description: "Protected economic simulation experiences.",
-    // SimulationNavigation remains the canonical, protected secondary navigation.
+    description: "Open economic simulation experiences.",
+    // SimulationNavigation remains the canonical secondary navigation.
     children: [],
   },
   {
@@ -102,8 +102,6 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
     children: [
       { href: "/league", label: "League home", system: "world-economy", feature: "league", description: "League overview and entry point." },
       { href: "/league/schools", label: "Schools", system: "world-economy", feature: "league", description: "Participating school directory." },
-      { href: "/league/season", label: "Season", system: "world-economy", feature: "league", description: "Current League season and challenges." },
-      { href: "/league/standings", label: "Standings", system: "world-economy", feature: "league", description: "Published League standings." },
       { href: "/league/about", label: "League about", system: "world-economy", feature: "league", description: "League rules and organisation." },
     ],
   },

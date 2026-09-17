@@ -29,6 +29,13 @@ export const PAGE_ACCESS_RULES: readonly PageAccessRule[] = [
   { path: "/learn/research/my", match: "prefix", audience: "account" },
   { path: "/learn/research", match: "prefix", audience: "public" },
 
+  // Simulation is an open learning surface. Its individual management and
+  // authoring actions still enforce their own account and backend permissions.
+  { path: "/simulation/dashboard", match: "prefix", audience: "account" },
+  { path: "/simulation/join", match: "prefix", audience: "account" },
+  { path: "/simulation/legacy-world/admin", match: "prefix", audience: "account", platformRoles: ["platform_admin"] },
+  { path: "/simulation", match: "prefix", audience: "public" },
+
   // Phase-0 team formation is being prepared by platform administrators only.
   // This route intentionally has no viewer or general-account access.
   { path: "/season1", match: "prefix", audience: "account", platformRoles: ["platform_admin"] },
@@ -69,8 +76,13 @@ export const PAGE_ACCESS_RULES: readonly PageAccessRule[] = [
   { path: "/league/schools", audience: "public" },
   { path: "/league/schools/profile", match: "prefix", audience: "public" },
   { path: "/league/teams", audience: "public" },
+  // Legacy Season and simulation addresses only redirect to their new public
+  // destinations; they no longer render League content.
   { path: "/league/season", audience: "public" },
   { path: "/league/standings", audience: "public" },
+  { path: "/league/arena", match: "prefix", audience: "public" },
+  { path: "/league/replay", match: "prefix", audience: "public" },
+  { path: "/league/world", match: "prefix", audience: "public" },
 ] as const;
 
 export function normalisePagePath(pathname: string | null | undefined) {

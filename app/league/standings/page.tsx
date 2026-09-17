@@ -1,3 +1,3 @@
-import { LeagueStandings } from "@/components/league/league-standings";
+import { redirect } from "next/navigation";
 
-export default function LeagueStandingsPage() { return <LeagueStandings />; }
+export default function LeagueStandingsPage() { redirect("/league"); }

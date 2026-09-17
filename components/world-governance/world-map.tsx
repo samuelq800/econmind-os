@@ -29,7 +29,7 @@ export function WorldMap({
   mode = "political",
   onModeChange,
   compact = false,
-  basePath = "/league/world",
+  basePath = "/simulation/world",
 }: {
   selectedCountryId?: string;
   mode?: MapMode;

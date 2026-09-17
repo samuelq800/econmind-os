@@ -1,5 +1,3 @@
-import { LeagueReplayHub } from "@/components/league/league-replay-hub";
+import { redirect } from "next/navigation";
 
-export default function SimulationReplayPage() {
-  return <LeagueReplayHub arenaPath="/simulation/arena" />;
-}
+export default function SimulationReplayPage() { redirect("/simulation/arena"); }

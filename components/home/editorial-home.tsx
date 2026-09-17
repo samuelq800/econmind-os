@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { HomeDailyBriefPreview } from "@/components/home/home-daily-brief-preview";
 import { HomeLeagueSchoolDirectory } from "@/components/home/home-league-school-directory";
-import { LEAGUE_CHALLENGES_COMING_SOON, LEAGUE_SEASON } from "@/lib/league/league-season";
+import { LEAGUE_CHALLENGE_CATALOG } from "@/lib/economics/league-arena";
 import { withBasePath } from "@/lib/base-path";
 
 const zones = [
@@ -57,7 +57,7 @@ export function EditorialHome() {
             <p className="mt-7 max-w-2xl text-lg leading-8 text-[var(--ink-muted)]">An interactive economics laboratory for models, policy simulation, evidence and cross-school economic experimentation.</p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Link href="/explore" className="home-primary-action">Explore EconMind <ArrowRight size={17} /></Link>
-              <Link href="/league" className="home-secondary-action">League · Season 1 coming soon <Globe2 size={16} /></Link>
+              <Link href="/league" className="home-secondary-action">Explore League <Globe2 size={16} /></Link>
             </div>
           </div>
           <HeroVisual />
@@ -73,9 +73,9 @@ export function EditorialHome() {
       </section>
 
       <section className="home-section border-y border-[var(--line)] py-14">
-        <div className="home-section-heading"><div><Eyebrow>Inter-school League</Eyebrow><h2>Season 1 is preparing to open.</h2><p className="mt-3 max-w-2xl text-[var(--ink-muted)]">{LEAGUE_SEASON.theme} will organise the first monthly Official Season. Schools and Teams can already inspect the shared Challenge briefings and practise their decisions.</p></div><Link href="/league/season" className="home-primary-action">View Season 1 <ArrowRight size={17} /></Link></div>
-        <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">{LEAGUE_CHALLENGES_COMING_SOON.map((challenge) => <Link key={challenge.slug} href={`/league/arena/${challenge.slug}/`} className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-5 transition hover:-translate-y-0.5 hover:border-[var(--accent)]"><p className="text-[10px] font-bold uppercase tracking-[.13em] text-[var(--accent)]">Coming soon · {challenge.eyebrow}</p><h3 className="mt-3 text-lg font-bold tracking-[-.035em]">{challenge.title}</h3><p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">{challenge.stageCount} stages · practice preview available</p><span className="mt-5 inline-flex items-center gap-1 text-sm font-bold text-[var(--accent)]">View briefing <ArrowRight size={14} /></span></Link>)}</div>
-        <div className="mt-6 grid gap-4 md:grid-cols-3"><div className="rounded-xl bg-[var(--surface-subtle)] p-5"><p className="text-[10px] font-bold uppercase tracking-[.13em] text-[var(--accent)]">Current season</p><p className="mt-2 text-lg font-bold">{LEAGUE_SEASON.title} · Coming soon</p></div><div className="rounded-xl bg-[var(--surface-subtle)] p-5"><p className="text-[10px] font-bold uppercase tracking-[.13em] text-[var(--accent)]">League activity</p><p className="mt-2 text-lg font-bold">Partner schools are preparing Teams.</p></div><div className="rounded-xl bg-[var(--surface-subtle)] p-5"><p className="text-[10px] font-bold uppercase tracking-[.13em] text-[var(--accent)]">Persistent World</p><Link href="/league/world" className="mt-2 inline-flex text-lg font-bold text-[var(--ink)] hover:text-[var(--accent)]">World Economy remains live <ArrowRight size={15} /></Link></div></div>
+        <div className="home-section-heading"><div><Eyebrow>Open Simulation</Eyebrow><h2>Explore economic systems directly.</h2><p className="mt-3 max-w-2xl text-[var(--ink-muted)]">Open a scenario, test decisions and compare outcomes at your own pace. Simulation no longer depends on League membership or a season.</p></div><Link href="/simulation" className="home-primary-action">Open Simulation <ArrowRight size={17} /></Link></div>
+        <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">{LEAGUE_CHALLENGE_CATALOG.map((challenge) => <Link key={challenge.slug} href={`/simulation/arena/${challenge.slug}/`} className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-5 transition hover:-translate-y-0.5 hover:border-[var(--accent)]"><p className="text-[10px] font-bold uppercase tracking-[.13em] text-[var(--accent)]">{challenge.eyebrow}</p><h3 className="mt-3 text-lg font-bold tracking-[-.035em]">{challenge.title}</h3><p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">{challenge.stageCount} stages · open exploration</p><span className="mt-5 inline-flex items-center gap-1 text-sm font-bold text-[var(--accent)]">Open scenario <ArrowRight size={14} /></span></Link>)}</div>
+        <div className="mt-6 grid gap-4 md:grid-cols-3"><div className="rounded-xl bg-[var(--surface-subtle)] p-5"><p className="text-[10px] font-bold uppercase tracking-[.13em] text-[var(--accent)]">Access</p><p className="mt-2 text-lg font-bold">Simulation is open now.</p></div><div className="rounded-xl bg-[var(--surface-subtle)] p-5"><p className="text-[10px] font-bold uppercase tracking-[.13em] text-[var(--accent)]">League</p><p className="mt-2 text-lg font-bold">Schools and Teams organise locally.</p></div><div className="rounded-xl bg-[var(--surface-subtle)] p-5"><p className="text-[10px] font-bold uppercase tracking-[.13em] text-[var(--accent)]">Persistent World</p><Link href="/simulation/world" className="mt-2 inline-flex text-lg font-bold text-[var(--ink)] hover:text-[var(--accent)]">World Economy remains live <ArrowRight size={15} /></Link></div></div>
       </section>
 
       <section className="home-section home-thesis-section">

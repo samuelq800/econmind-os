@@ -1,5 +1,5 @@
-import { CountrySimulationWorkspace } from "@/components/world-governance/world-simulation";
 import { WORLD_COUNTRY_IDS } from "@/lib/world-governance/config";
+import { redirect } from "next/navigation";
 
 export const dynamicParams = false;
 
@@ -13,5 +13,5 @@ export default async function CountryWorldPage({
   params: Promise<{ countryId: string }>;
 }) {
   const { countryId } = await params;
-  return <CountrySimulationWorkspace countryId={countryId} />;
+  redirect(`/simulation/world/country/${countryId}`);
 }

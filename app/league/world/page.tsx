@@ -1,5 +1,5 @@
-import { WorldExperience } from "@/components/world/world-experience";
+import { redirect } from "next/navigation";
 
 export default function LeagueWorldPage() {
-  return <WorldExperience />;
+  redirect("/simulation/world");
 }

@@ -1,5 +1,5 @@
-import { WorldDiplomacyPage } from "@/components/world-governance/world-simulation";
+import { redirect } from "next/navigation";
 
 export default function DiplomacyPage() {
-  return <WorldDiplomacyPage />;
+  redirect("/simulation/world/diplomacy");
 }

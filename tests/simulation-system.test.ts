@@ -13,8 +13,8 @@ const commandCentre = readFileSync("app/simulation/command-centre/page.tsx", "ut
 const scenarioStudio = readFileSync("app/simulation/scenario-studio/page.tsx", "utf8");
 
 describe("standalone Simulation system", () => {
-  it("keeps League intact while exposing a separate 12-country, six-office entrypoint", () => {
-    expect(leagueWorld).toContain("WorldExperience");
+  it("moves the 12-country entrypoint out of League and into Simulation", () => {
+    expect(leagueWorld).toContain('redirect("/simulation/world")');
     expect(worldPage).toContain("WorldSimulationOverview");
     expect(worldPage).toContain('basePath="/simulation/world"');
     expect(simulationHome).toContain('value="12"');

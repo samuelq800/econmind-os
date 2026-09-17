@@ -127,7 +127,7 @@ function PageFrame({
   children,
   countryId,
   office,
-  basePath = "/league/world",
+  basePath = "/simulation/world",
   systemLabel = "EconMind OS League",
 }: {
   children: ReactNode;
@@ -397,7 +397,7 @@ function AccessNotice({ countryId }: { countryId: string }) {
 }
 
 export function WorldSimulationOverview({
-  basePath = "/league/world",
+  basePath = "/simulation/world",
   systemLabel = "EconMind OS League",
 }: {
   basePath?: string;
@@ -614,7 +614,7 @@ export function WorldSimulationOverview({
 
 export function CountrySimulationWorkspace({
   countryId,
-  basePath = "/league/world",
+  basePath = "/simulation/world",
 }: {
   countryId: string;
   basePath?: string;
@@ -925,7 +925,7 @@ function PolicyRegister({ country }: { country: Country }) {
 export function WorldOfficeWorkspace({
   countryId,
   office,
-  basePath = "/league/world",
+  basePath = "/simulation/world",
 }: {
   countryId: string;
   office: WorldGovernanceOffice;
@@ -1013,7 +1013,7 @@ function SecondaryHeader({
 }
 
 export function WorldContractsPage({
-  basePath = "/league/world",
+  basePath = "/simulation/world",
   systemLabel = "EconMind OS League",
 }: {
   basePath?: string;
@@ -1111,7 +1111,7 @@ export function WorldContractsPage({
 }
 
 export function WorldDiplomacyPage({
-  basePath = "/league/world",
+  basePath = "/simulation/world",
   systemLabel = "EconMind OS League",
 }: {
   basePath?: string;
@@ -1164,7 +1164,7 @@ export function WorldDiplomacyPage({
 }
 
 export function WorldLeaderboardPage({
-  basePath = "/league/world",
+  basePath = "/simulation/world",
   systemLabel = "EconMind OS League",
 }: {
   basePath?: string;

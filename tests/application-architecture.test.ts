@@ -33,7 +33,7 @@ describe("application architecture boundaries", () => {
     }
   });
 
-  it("keeps the protected Simulation implementation and its legacy routes available", () => {
+  it("keeps the open Simulation implementation and its legacy routes available", () => {
     for (const path of [
       "components/simulation/simulation-navigation.tsx",
       "components/simulation/legacy-competition-pages.tsx",
@@ -46,12 +46,12 @@ describe("application architecture boundaries", () => {
     }
   });
 
-  it("uses one filtered query to calculate Team challenge totals", () => {
+  it("keeps challenge scoring out of the League Team directory", () => {
     const service = readFileSync("lib/supabase/league-challenges.ts", "utf8");
     const teamPage = readFileSync("components/league/league-teams.tsx", "utf8");
     expect(service).toContain("listSubmittedChallengeAttemptCounts");
     expect(service).toContain('.in("team_id", [...teamIds])');
-    expect(teamPage).toContain("listSubmittedChallengeAttemptCounts");
+    expect(teamPage).not.toContain("listSubmittedChallengeAttemptCounts");
     expect(teamPage).not.toContain("listMyChallengeAttempts");
   });
 

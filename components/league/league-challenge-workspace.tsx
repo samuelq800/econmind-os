@@ -13,7 +13,6 @@ import {
   LockKeyhole,
   Play,
   Save,
-  ShieldCheck,
   Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -41,7 +40,6 @@ import {
   type LeagueChallengeRoleAssignment,
   type LeagueChallengeStageDecision,
 } from "@/lib/league/async-challenge-types";
-import { LEAGUE_SEASON } from "@/lib/league/league-season";
 import { getLeagueContext } from "@/lib/supabase/league";
 import {
   listChallengeAttemptDecisions,
@@ -64,9 +62,9 @@ type WorkspaceProps = {
 export function LeagueChallengeWorkspace({
   slug,
   preferredMode = "practice",
-  arenaPath = "/league/arena",
-  standingsPath = "/league/standings",
-  replayPath = "/league/replay",
+  arenaPath = "/simulation/arena",
+  standingsPath = "/simulation/world/leaderboard",
+  replayPath = "/simulation/replay",
 }: WorkspaceProps) {
   const definition = challengeDefinition(slug);
   const { user } = useAuth();
@@ -156,7 +154,7 @@ export function LeagueChallengeWorkspace({
     setState(createChallengeInitialState(currentDefinition.slug) as Record<string, unknown>);
     setDecisions([]);
     setRoleAssignments([]);
-    setMessage("New practice simulation ready. It does not affect League standings.");
+    setMessage("New simulation ready. You can reset and compare as many paths as you like.");
     setError("");
   }
 
@@ -231,10 +229,9 @@ export function LeagueChallengeWorkspace({
             <Card className="p-5">
               <p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--ink-faint)]">Run mode</p>
               <div className="mt-4 grid gap-2">
-                <Button className="h-12" variant={mode === "practice" ? "primary" : "secondary"} onClick={resetPractice} disabled={busy}><Play size={15} /> START PRACTICE</Button>
-                <Button variant="secondary" disabled><ShieldCheck size={14} /> Official opens with Season 1</Button>
+                <Button className="h-12" variant="primary" onClick={resetPractice} disabled={busy}><Play size={15} /> START SIMULATION</Button>
               </div>
-              <p className="mt-4 text-xs leading-5 text-[var(--ink-muted)]">Practice is unlimited. {LEAGUE_SEASON.title} Official mode is coming soon; it will keep each Team’s highest score across five attempts.</p>
+              <p className="mt-4 text-xs leading-5 text-[var(--ink-muted)]">Explore freely, reset when you want and compare different decision paths.</p>
             </Card>
             <Card className="p-5">
               <p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--ink-faint)]">My responsibilities</p>
@@ -242,7 +239,7 @@ export function LeagueChallengeWorkspace({
                 {CHALLENGE_COUNTRY_ROLES.map((role) => <button type="button" key={role} onClick={() => setSelectedRole(role)} className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-bold transition ${selectedRole === role ? "bg-[var(--accent-soft)] text-[var(--accent)]" : "bg-[var(--surface-subtle)]"}`}><span>{roleLabels[role]}</span><span>{activeRoles.includes(role) ? "Control" : "View"}</span></button>)}
               </div>
               {definition.simulationType === "time_machine" && <div className="mt-4 flex gap-2"><button type="button" onClick={() => setTimeMachineDesk("all")} className={`rounded-md px-3 py-2 text-xs font-bold ${timeMachineDesk === "all" ? "bg-[var(--accent)] text-white" : "bg-[var(--surface-subtle)] text-[var(--ink-muted)]"}`}>All my controls</button><button type="button" onClick={() => setTimeMachineDesk("portfolio")} className={`rounded-md px-3 py-2 text-xs font-bold ${timeMachineDesk === "portfolio" ? "bg-[var(--accent)] text-white" : "bg-[var(--surface-subtle)] text-[var(--ink-muted)]"}`}>One portfolio</button></div>}
-              <p className="mt-4 text-xs leading-5 text-[var(--ink-muted)]">One person may hold all four Challenge portfolios. Only assigned portfolio holders can save or lock an official Decision Stage.</p>
+              <p className="mt-4 text-xs leading-5 text-[var(--ink-muted)]">Use one portfolio at a time or inspect all controls together to compare economic trade-offs.</p>
             </Card>
             <Card className="p-5">
               <p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--ink-faint)]">Decision timeline</p>
@@ -261,9 +258,9 @@ export function LeagueChallengeWorkspace({
                 {stage <= definition.stageCount ? <>
                   <p className="text-sm leading-6 text-[var(--ink-muted)]">{definition.simulationType === "time_machine" ? TIME_MACHINE_STAGES[stage - 1]?.briefing : "Your chosen values remain active until changed. Effects marked delayed build through later Decision Stages."}</p>
                   <div className="mt-6 grid gap-4">{visibleControls.map((control) => <label key={control.key} className="rounded-xl bg-[var(--surface-subtle)] p-4"><div className="flex justify-between gap-4"><span><small className="mb-1 block text-[10px] font-bold uppercase tracking-[.12em] text-[var(--accent)]">{showAllTimeMachineControls ? roleLabels[control.role] : "Current portfolio"}</small><b className="text-sm">{control.label}</b></span><output className="font-mono text-sm font-bold text-[var(--accent)]">{policies[control.key]} {control.unit}</output></div><input className="mt-4 w-full accent-[var(--accent)]" type="range" min={control.min} max={control.max} step={control.step} value={policies[control.key] ?? control.defaultValue} onChange={(event) => setPolicies((current) => ({ ...current, [control.key]: Number(event.target.value) }))} disabled={mode === "official" && !activeRoles.includes(control.role)} /><p className="mt-3 text-xs leading-5 text-[var(--ink-muted)]"><b className="mr-1 text-[var(--ink)]">{control.timing === "immediate" ? "Immediate:" : "Delayed:"}</b>{control.description}</p></label>)}</div>
-                  <div className="mt-6 flex flex-wrap gap-3"><Button className="h-14 w-full text-base sm:w-auto sm:min-w-64" onClick={() => void lockCurrentStage()} disabled={busy || !canProceed}><LockKeyhole size={17} /> LOCK DECISION</Button>{mode === "official" && attempt && <Button variant="secondary" onClick={() => void saveProgress()} disabled={busy}><Save size={15} /> Save & leave</Button>}</div>
+                  <div className="mt-6 flex flex-wrap gap-3"><Button className="h-14 w-full text-base sm:w-auto sm:min-w-64" onClick={() => void lockCurrentStage()} disabled={busy || !canProceed}><LockKeyhole size={17} /> ADVANCE SIMULATION</Button>{mode === "official" && attempt && <Button variant="secondary" onClick={() => void saveProgress()} disabled={busy}><Save size={15} /> Save & leave</Button>}</div>
                 </> : <>
-                  <p className="text-sm leading-6 text-[var(--ink-muted)]">All Decision Stages are locked. Review the visible score components, then submit this official result. Submission creates a reusable anonymous Ghost Strategy.</p>
+                  <p className="text-sm leading-6 text-[var(--ink-muted)]">All Decision Stages are complete. Review the visible score components, then start another run to compare a different approach.</p>
                   <div className="mt-6 flex flex-wrap gap-3">{mode === "official" && attempt?.status === "active" ? <Button onClick={() => void submitOfficial()} disabled={busy}><CheckCircle2 size={15} /> Submit official result</Button> : <Button onClick={resetPractice}><Play size={15} /> New practice run</Button>}{attempt?.status === "submitted" && <Link href={replayPath} className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[var(--line)] px-4 text-sm font-semibold"><History size={15} /> View replay</Link>}</div>
                 </>}
               </div>
@@ -273,7 +270,7 @@ export function LeagueChallengeWorkspace({
 
           <aside className="space-y-5">
             <Card className="p-5"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--ink-faint)]">{showExactScore ? "Performance score" : "Directional pressure"}</p>{showExactScore ? <><p className="mt-3 text-5xl font-bold tracking-[-.07em] text-[var(--accent)]">{score?.score.toFixed(1) ?? "—"}<span className="ml-1 text-lg text-[var(--ink-muted)]">/ 100</span></p><div className="mt-5 space-y-3">{score?.components.map((component) => <div key={component.label} className="border-t border-[var(--line)] pt-3"><div className="flex justify-between gap-2 text-sm"><span className="font-semibold">{component.label}</span><b className={component.points < 0 ? "text-[var(--red)]" : "text-[var(--accent)]"}>{component.points > 0 ? "+" : ""}{component.points.toFixed(1)}</b></div><p className="mt-1 text-[11px] leading-5 text-[var(--ink-muted)]">{component.detail}</p></div>)}</div></> : <DirectionalPressure simulationType={definition.simulationType} state={state} />}</Card>
-            <Card className="p-5"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--ink-faint)]">Challenge fairness</p><p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">Official attempts hide exact predicted performance until a Decision Stage is locked. Team standings, other teams’ policies and Ghost rules remain outside the active workspace.</p><Link href={standingsPath} className="mt-4 inline-flex text-sm font-bold text-[var(--accent)]">View released standings <ArrowRight size={14} /></Link></Card>
+            <Card className="p-5"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--ink-faint)]">Open exploration</p><p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">Each stage makes the model’s mechanisms visible. Use the same starting conditions to compare the results of different policy choices.</p><Link href={standingsPath} className="mt-4 inline-flex text-sm font-bold text-[var(--accent)]">View World overview <ArrowRight size={14} /></Link></Card>
             {attempt?.status === "submitted" && <Card className="p-5"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--ink-faint)]">Completed attempt</p><p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">Your final result is immutable. Its decision history is now available in the dedicated Replay hub.</p><Link href={replayPath} className="mt-4 inline-flex text-sm font-bold text-[var(--accent)]"><History size={14} /> View replay</Link></Card>}
           </aside>
         </section>
@@ -313,7 +310,7 @@ function DirectionalPressure({ simulationType, state }: { simulationType: League
     : simulationType === "industry"
       ? [["Demand", stateNumber(state, "unitsSold"), "sales pressure"], ["Margin", stateNumber(state, "profit"), "profit pressure"], ["Inventory", stateNumber(state, "inventory"), "lower is usually safer"]]
       : [["Inflation", stateNumber(state, "inflation"), "price pressure"], ["Output", stateNumber(state, simulationType === "world" ? "growth" : "realOutput"), "activity pressure"], ["Debt", stateNumber(state, "debtToGdp"), "fiscal pressure"]];
-  return <div className="mt-4 space-y-3">{pressures.map(([label, value, detail]) => <div key={label} className="rounded-lg bg-[var(--surface-subtle)] p-3"><div className="flex justify-between gap-2 text-sm"><span className="font-semibold">{label}</span><span className="font-mono text-[var(--accent)]">{value ?? "—"}</span></div><p className="mt-1 text-[11px] leading-5 text-[var(--ink-muted)]">{detail}</p></div>)}<p className="text-xs leading-5 text-[var(--ink-muted)]">Exact Performance Score unlocks after you lock a Decision Stage. This prevents pre-submission parameter searching in official mode.</p></div>;
+  return <div className="mt-4 space-y-3">{pressures.map(([label, value, detail]) => <div key={label} className="rounded-lg bg-[var(--surface-subtle)] p-3"><div className="flex justify-between gap-2 text-sm"><span className="font-semibold">{label}</span><span className="font-mono text-[var(--accent)]">{value ?? "—"}</span></div><p className="mt-1 text-[11px] leading-5 text-[var(--ink-muted)]">{detail}</p></div>)}<p className="text-xs leading-5 text-[var(--ink-muted)]">The score becomes visible after each completed stage so you can interpret how the model responds.</p></div>;
 }
 
 function AnalysisDock({ tab, simulationType, score, state }: { tab: "mechanism" | "score" | "data" | "assumptions"; simulationType: LeagueChallenge["simulation_type"]; score: ReturnType<typeof scoreChallengeState> | null; state: Record<string, unknown> }) {

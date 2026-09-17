@@ -100,7 +100,7 @@ function scenarioConfig(
 export function ScenarioStudio({
   focus = "index",
   basePath = "/league/scenario-studio",
-  worldPath = "/league/world",
+  worldPath = "/simulation/world",
 }: {
   focus?: "index" | "new" | "editor" | "published" | "archive";
   basePath?: string;

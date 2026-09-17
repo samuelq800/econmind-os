@@ -1,5 +1,5 @@
-import { LeagueChallengeBrief } from "@/components/league/league-challenge-brief";
 import { LEAGUE_CHALLENGE_CATALOG } from "@/lib/economics/league-arena";
+import { redirect } from "next/navigation";
 
 export const dynamicParams = false;
 
@@ -13,5 +13,5 @@ export default async function LeagueChallengePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  return <LeagueChallengeBrief slug={slug} />;
+  redirect(`/simulation/arena/${slug}`);
 }

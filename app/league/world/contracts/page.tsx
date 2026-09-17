@@ -1,5 +1,5 @@
-import { WorldContractsPage } from "@/components/world-governance/world-simulation";
+import { redirect } from "next/navigation";
 
 export default function ContractsPage() {
-  return <WorldContractsPage />;
+  redirect("/simulation/world/contracts");
 }

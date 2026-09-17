@@ -194,14 +194,15 @@ describe("World Governance continuous model", () => {
     expect(repairMigration).not.toContain("public.is_platform_admin(p_user_id)");
   });
 
-  it("mounts the live World experience at the League entry route", () => {
-    const worldRoute = readFileSync("app/league/world/page.tsx", "utf8");
+  it("mounts the live World experience at the Simulation entry route and forwards League compatibility links", () => {
+    const simulationWorldRoute = readFileSync("app/simulation/world/page.tsx", "utf8");
+    const leagueWorldRoute = readFileSync("app/league/world/page.tsx", "utf8");
 
-    expect(worldRoute).toContain(
-      'import { WorldExperience } from "@/components/world/world-experience"',
+    expect(simulationWorldRoute).toContain(
+      'import { WorldSimulationOverview } from "@/components/world-governance/world-simulation"',
     );
-    expect(worldRoute).toContain("return <WorldExperience />");
-    expect(worldRoute).not.toContain("WorldSimulationOverview");
+    expect(simulationWorldRoute).toContain('basePath="/simulation/world"');
+    expect(leagueWorldRoute).toContain('redirect("/simulation/world")');
   });
 
   it("automatically enrols a claimed Team and exposes its vacant portfolios", () => {

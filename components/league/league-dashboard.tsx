@@ -35,7 +35,6 @@ import type {
   TeamMember,
 } from "@/lib/league/types";
 import type { CanonicalSchoolLocationInput, SchoolLocationCatalogEntry } from "@/lib/league/geographic-areas";
-import type { LeagueChallenge } from "@/lib/league/async-challenge-types";
 import { isProtectedSupermePlatformAdmin } from "@/lib/platform/superme-platform-admin";
 import {
   createLeagueTeam,
@@ -63,7 +62,6 @@ import {
   verifyLeagueApplicationLocation,
   verifyLeagueSchoolLocation,
 } from "@/lib/supabase/league";
-import { listLeagueChallenges, setLeagueChallengeStatus } from "@/lib/supabase/league-challenges";
 
 type TeamWithMembers = Team & { members: TeamMember[] };
 const roleLabels = {
@@ -92,9 +90,9 @@ function Metric({ label, value }: { label: string; value: string | number }) {
 
 export function LeagueDashboard({
   paths = {
-    quickChallenge: "/league/quick-challenge",
+    quickChallenge: "/simulation/quick-challenge",
     join: "/league/join",
-    arena: "/league/arena",
+    arena: "/simulation/arena",
   },
 }: {
   paths?: { quickChallenge: string; join: string; arena: string };
@@ -118,7 +116,6 @@ export function LeagueDashboard({
       >
     >
   >([]);
-  const [challenges, setChallenges] = useState<LeagueChallenge[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -157,19 +154,17 @@ export function LeagueDashboard({
         setSchoolMembers(nextSchoolMembers);
       }
       if (nextContext.profile?.platform_role === "platform_admin") {
-        const [nextApplications, nextSchools, nextProfiles, nextRuns, nextChallenges] =
+        const [nextApplications, nextSchools, nextProfiles, nextRuns] =
           await Promise.all([
             listAdminLeagueApplications(),
             listLeagueSchools(),
             listLeagueProfiles(),
             listAdminCrisisRuns(),
-            listLeagueChallenges(),
           ]);
         setApplications(nextApplications);
         setSchools(nextSchools);
         setProfiles(nextProfiles);
         setAllRuns(nextRuns);
-        setChallenges(nextChallenges);
       }
     } catch (caught) {
       setError(
@@ -327,19 +322,6 @@ export function LeagueDashboard({
       await load();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not move this team member.");
-    } finally {
-      setBusy(false);
-    }
-  }
-  async function changeChallengeStatus(challengeId: string, status: LeagueChallenge["status"]) {
-    setBusy(true);
-    setError("");
-    try {
-      const challenge = await setLeagueChallengeStatus(challengeId, status);
-      setMessage(`${challenge.title} is now ${challenge.status}.`);
-      await load();
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not update Challenge status.");
     } finally {
       setBusy(false);
     }
@@ -1078,44 +1060,6 @@ export function LeagueDashboard({
                   intentional: the meeting build does not present fictional
                   school results as real competition data.
                 </p>
-              </Card>
-              <Card className="mt-5 p-6">
-                <div className="flex flex-wrap items-end justify-between gap-4">
-                  <div>
-                    <h3 className="font-bold">Asynchronous Challenge status</h3>
-                    <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--ink-muted)]">
-                      Challenge definitions, fixed starting conditions and scoring
-                      live in the reviewed code and database seed. This panel
-                      only controls public availability; official attempts stay
-                      saved, locked and auditable.
-                    </p>
-                  </div>
-                  <Link href={paths.arena} className="text-xs font-bold text-[var(--accent)]">
-                    Open Simulation Arena <ArrowRight className="inline" size={13} />
-                  </Link>
-                </div>
-                <div className="mt-5 grid gap-3 lg:grid-cols-3">
-                  {challenges.map((challenge) => (
-                    <div key={challenge.id} className="rounded-lg bg-[var(--surface-subtle)] p-4">
-                      <p className="text-sm font-bold">{challenge.title}</p>
-                      <p className="mt-1 text-xs text-[var(--ink-muted)]">
-                        {challenge.official_attempt_limit} official attempts · {challenge.stage_count} stages
-                      </p>
-                      <select
-                        className="mt-3 h-9 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-2 text-xs"
-                        value={challenge.status}
-                        disabled={busy}
-                        onChange={(event) => void changeChallengeStatus(challenge.id, event.target.value as LeagueChallenge["status"])}
-                      >
-                        <option value="draft">Draft</option>
-                        <option value="open">Open</option>
-                        <option value="closed">Closed</option>
-                        <option value="archived">Archived</option>
-                      </select>
-                    </div>
-                  ))}
-                  {challenges.length === 0 && <p className="text-sm text-[var(--ink-muted)]">No seeded asynchronous Challenge is available yet.</p>}
-                </div>
               </Card>
             </section>
           )}
