@@ -7,6 +7,7 @@ export type PageAccessPolicy = {
   audience: PageAudience;
   appRoles?: readonly Exclude<AppRole, "guest">[];
   platformRoles?: readonly LeaguePlatformRole[];
+  roleMatch?: "all" | "any";
 };
 
 type PageAccessRule = PageAccessPolicy & {
@@ -42,8 +43,8 @@ export const PAGE_ACCESS_RULES: readonly PageAccessRule[] = [
 
   // Governance work contains account requests and internal notes.
   { path: "/admin/governance", match: "prefix", audience: "account", platformRoles: ["platform_admin"] },
-  { path: "/admin/live-world", match: "prefix", audience: "account", platformRoles: ["platform_admin"] },
-  { path: "/admin/live-auction", match: "prefix", audience: "account", platformRoles: ["platform_admin"] },
+  { path: "/admin/live-world", match: "prefix", audience: "account", appRoles: ["teacher"], platformRoles: ["school_leader", "platform_admin"], roleMatch: "any" },
+  { path: "/admin/live-auction", match: "prefix", audience: "account", appRoles: ["teacher"], platformRoles: ["school_leader", "platform_admin"], roleMatch: "any" },
 
   // Personal data is not part of the otherwise-public case library.
   { path: "/cases/history", match: "prefix", audience: "account" },
@@ -108,8 +109,12 @@ export function hasRequiredPageRole(
   role: AppRole,
   platformRole: LeaguePlatformRole | null,
 ) {
-  const appRoleAllowed = !policy.appRoles || policy.appRoles.includes(role as Exclude<AppRole, "guest">);
-  const platformRoleAllowed = !policy.platformRoles || Boolean(platformRole && policy.platformRoles.includes(platformRole));
+  const appRoleAllowed = Boolean(policy.appRoles?.includes(role as Exclude<AppRole, "guest">));
+  const platformRoleAllowed = Boolean(platformRole && policy.platformRoles?.includes(platformRole));
+  if (policy.roleMatch === "any") return appRoleAllowed || platformRoleAllowed;
+  if (!policy.appRoles && !policy.platformRoles) return true;
+  if (!policy.appRoles) return platformRoleAllowed;
+  if (!policy.platformRoles) return appRoleAllowed;
   return appRoleAllowed && platformRoleAllowed;
 }
 

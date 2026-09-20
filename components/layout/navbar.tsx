@@ -9,6 +9,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { GlobalSearch } from "@/components/layout/global-search";
 import { getDesignatedAccountAccessStatus, setDesignatedAccountAccess } from "@/lib/supabase/account-moderation";
 import { availableNavigationSections, isNavigationSectionActive, MOBILE_NAVIGATION_GROUPS } from "@/lib/platform/feature-flags";
+import { canHostLiveSession } from "@/lib/platform/live-session-access";
 import { withBasePath } from "@/lib/base-path";
 import { useTheme } from "./theme-provider";
 
@@ -19,7 +20,7 @@ const DESIGNATED_ACCOUNT_MODERATOR_ID = "ffc87a95-f535-4781-9c2d-c2fac962ea9e";
 export function Navbar() {
   const path = usePathname() ?? "/";
   const { theme, toggleTheme, ready } = useTheme();
-  const { user, role, worldSupervisor, viewerAccess, viewerLoading, loading, openAuth, signOut, endViewerSession } = useAuth();
+  const { user, role, platformRole, worldSupervisor, viewerAccess, viewerLoading, loading, openAuth, signOut, endViewerSession } = useAuth();
   const [open, setOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [openSection, setOpenSection] = useState<string | null>(null);
@@ -32,6 +33,7 @@ export function Navbar() {
   const compactDesktopLinks = links.filter((section) => compactDesktopSectionIds.has(section.id));
   const compactOverflowLinks = links.filter((section) => !compactDesktopSectionIds.has(section.id));
   const designatedAccountModerator = user?.id === DESIGNATED_ACCOUNT_MODERATOR_ID && worldSupervisor;
+  const liveSessionHost = canHostLiveSession(role, platformRole);
 
   useEffect(() => {
     if (!moderationOpen) return;
@@ -219,8 +221,8 @@ export function Navbar() {
                 )}
                 {worldSupervisor && <Link href="/admin/viewer-invitations" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"><KeyRound size={14} /> Viewing invitations</Link>}
                 {worldSupervisor && <Link href="/admin/governance" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"><ShieldCheck size={14} /> Governance requests</Link>}
-                {worldSupervisor && <Link href="/admin/live-world" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"><Gamepad2 size={14} /> Live World rooms</Link>}
-                {worldSupervisor && <Link href="/admin/live-auction" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"><Gavel size={14} /> Live Auction rooms</Link>}
+                {liveSessionHost && <Link href="/admin/live-world" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"><Gamepad2 size={14} /> Live World rooms</Link>}
+                {liveSessionHost && <Link href="/admin/live-auction" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"><Gavel size={14} /> Live Auction rooms</Link>}
                 {worldSupervisor && <Link href="/learn/research/admin" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"><ShieldCheck size={14} /> Research Submissions</Link>}
                 {worldSupervisor && <Link href="/season1" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"><UsersRound size={14} /> Season 1 Team Lobby</Link>}
                 {designatedAccountModerator && <button type="button" onClick={openAccountAccessControl} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-xs font-semibold text-[#2f6dff] hover:bg-[#e7efff]"><ShieldCheck size={14} /> Account access control</button>}

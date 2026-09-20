@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" role="img" aria-labelledby="title desc">
+  <title id="title">Historical artifact image unavailable</title><desc id="desc">A neutral EconMind artifact placeholder</desc>
+  <rect width="640" height="480" fill="#10231c"/><rect x="28" y="28" width="584" height="424" rx="20" fill="#173b31" stroke="#62cbb0" stroke-width="3"/>
+  <path d="M276 125h88l-14 82 55 75v85H235v-85l55-75z" fill="none" stroke="#f5c965" stroke-width="12" stroke-linejoin="round"/>
+  <circle cx="320" cy="198" r="22" fill="#f5c965"/><text x="320" y="415" text-anchor="middle" fill="#dff9ef" font-family="system-ui,sans-serif" font-size="22" font-weight="700">ARTIFACT IMAGE UNAVAILABLE</text>
+</svg>

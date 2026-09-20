@@ -1,10 +1,12 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync, statSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { pageAccessForPath } from "@/lib/platform/access-control";
 import { liveAuctionRoomPath, liveAuctionRoomUrl } from "@/lib/live-auction/links";
+import { canHostLiveSession } from "@/lib/platform/live-session-access";
 
 const migration = readFileSync("supabase/migrations/20260920000000_live_auction.sql", "utf8");
 const auditFixes = readFileSync("supabase/migrations/20260920000100_live_auction_audit_fixes.sql", "utf8");
+const presetFixes = readFileSync("supabase/migrations/20260920000200_live_auction_preset_items.sql", "utf8");
 
 describe("Live Auction", () => {
   it("uses a standalone invitation route and temporary room identity", () => {
@@ -14,11 +16,25 @@ describe("Live Auction", () => {
     expect(liveAuctionRoomPath("room-1")).toBe("/live-auction/?room=room-1");
     expect(liveAuctionRoomUrl("https://econmind.group", "room-1")).toBe("https://econmind.group/live-auction/?room=room-1");
     expect(pageAccessForPath("/live-auction").audience).toBe("public");
-    expect(pageAccessForPath("/admin/live-auction").platformRoles).toContain("platform_admin");
+    const policy = pageAccessForPath("/admin/live-auction");
+    expect(policy.platformRoles).toContain("platform_admin");
+    expect(policy.appRoles).toContain("teacher");
+    expect(policy.roleMatch).toBe("any");
     expect(shell).toContain('pathname === "/live-auction"');
     expect(navbar).toContain('href="/admin/live-auction"');
     expect(service).toContain('storageKey: "econmind-live-auction-session"');
     expect(service).toContain('econmind_session_scope: "live_auction"');
+  });
+
+  it("opens host access to teachers and school leaders without granting other room visibility", () => {
+    const hostMigration = readFileSync("supabase/migrations/20260920000300_live_session_host_access.sql", "utf8");
+    expect(canHostLiveSession("teacher", "user")).toBe(true);
+    expect(canHostLiveSession("student", "school_leader")).toBe(true);
+    expect(canHostLiveSession("student", "platform_admin")).toBe(true);
+    expect(canHostLiveSession("student", "user")).toBe(false);
+    expect(hostMigration).toContain("p.role = 'teacher'");
+    expect(hostMigration).toContain("p.platform_role = 'school_leader'");
+    expect(hostMigration).toContain("r.created_by = auth.uid()");
   });
 
   it("keeps bids, values, settlement, and room control server authoritative", () => {
@@ -38,6 +54,7 @@ describe("Live Auction", () => {
     const room = readFileSync("components/live-auction/live-auction-room.tsx", "utf8");
     const service = readFileSync("lib/supabase/live-auction.ts", "utf8");
     expect(auditFixes).toContain("from public.live_auction_rooms where id=item_row.room_id for update");
+    expect(auditFixes).toContain("to_regprocedure('public.get_live_auction_view_legacy(uuid)') is null");
     expect(auditFixes).toContain("alter publication supabase_realtime add table public.live_auction_events");
     expect(auditFixes).toContain("p.access_type='player'");
     expect(auditFixes).toContain("revoke all on function public.live_auction_code");
@@ -54,5 +71,24 @@ describe("Live Auction", () => {
     expect(room).toContain("Your sealed bid");
     expect(room).toContain("Reveal values");
     expect(room).toContain("Private information");
+  });
+
+  it("ships the authoritative twenty-item preset catalogue and preserves assets with item records", () => {
+    const presets = readFileSync("lib/live-auction/auction-presets-source.ts", "utf8");
+    const imageFiles = readdirSync("public/images/live-auction").filter((name) => name.endsWith(".jpg"));
+    const room = readFileSync("components/live-auction/live-auction-room.tsx", "utf8");
+    expect((presets.match(/"id":/g) ?? []).length).toBe(20);
+    for (const category of ["porcelain", "painting", "bronze", "jade"]) expect((presets.match(new RegExp(`"category": "${category}"`, "g")) ?? []).length).toBe(5);
+    expect(imageFiles).toHaveLength(20);
+    for (const imageFile of imageFiles) expect(statSync(`public/images/live-auction/${imageFile}`).size).toBeGreaterThan(0);
+    expect(presetFixes).toContain("add column if not exists image_url");
+    expect(presetFixes).toContain("p_preset_id");
+    expect(room).toContain("Choose preset");
+    expect(room).toContain("YOU&apos;VE BEEN OUTBID");
+    expect(room).toContain("MY COLLECTION");
+    expect(room).toContain("● WATCHING");
+    expect(room).toContain("BID LOCKED IN");
+    expect(room).toContain("SOLD");
+    expect(room).toContain("artifact-fallback.svg");
   });
 });

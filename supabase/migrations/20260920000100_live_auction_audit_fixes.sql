@@ -34,8 +34,14 @@ begin
 end $$;
 
 -- Preserve the previously deployed function under an internal name, then correct its
--- host payload without exposing administrators in the buyer list.
-alter function public.get_live_auction_view(uuid) rename to get_live_auction_view_legacy;
+-- host payload without exposing administrators in the buyer list. This remains safe if
+-- an earlier SQL Editor attempt completed the rename before a later statement failed.
+do $$ begin
+  if to_regprocedure('public.get_live_auction_view_legacy(uuid)') is null
+     and to_regprocedure('public.get_live_auction_view(uuid)') is not null then
+    alter function public.get_live_auction_view(uuid) rename to get_live_auction_view_legacy;
+  end if;
+end $$;
 create or replace function public.get_live_auction_view(p_room_id uuid) returns jsonb language plpgsql security definer set search_path = public as $$
 declare view_value jsonb; player_values jsonb; item_values jsonb; is_admin boolean;
 begin

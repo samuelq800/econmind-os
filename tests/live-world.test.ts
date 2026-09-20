@@ -125,10 +125,15 @@ describe("Live World", () => {
     const admin = readFileSync("components/live-world/live-world-admin.tsx", "utf8");
     const applicationShell = readFileSync("components/layout/application-shell.tsx", "utf8");
     const roomService = readFileSync("lib/supabase/live-world.ts", "utf8");
+    const hostAccessMigration = readFileSync("supabase/migrations/20260920000300_live_session_host_access.sql", "utf8");
     expect(navbar).toContain('path === "/live-world"');
     expect(route).toContain("LiveWorldRoute");
     expect(pageAccessForPath("/live-world").audience).toBe("public");
-    expect(pageAccessForPath("/admin/live-world").platformRoles).toContain("platform_admin");
+    const hostPolicy = pageAccessForPath("/admin/live-world");
+    expect(hostPolicy.platformRoles).toContain("platform_admin");
+    expect(hostPolicy.appRoles).toContain("teacher");
+    expect(hostPolicy.roleMatch).toBe("any");
+    expect(hostAccessMigration).toContain("participant_count bigint, participant_capacity integer");
     expect(room).toContain('document.visibilityState === "visible"');
     expect(admin).toContain("grid items-start gap-6");
     expect(admin).toContain('state === "copied" ? "Copied"');

@@ -41,6 +41,8 @@ export type LiveAuctionItem = {
   id: string;
   name: string;
   description: string | null;
+  imageUrl: string | null;
+  presetId: string | null;
   startingPrice: number;
   currentPrice: number;
   bidIncrement: number;
