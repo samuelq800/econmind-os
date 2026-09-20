@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { BookOpen, ChevronDown, ClipboardCheck, Cloud, Eye, Gamepad2, GraduationCap, KeyRound, LoaderCircle, LogIn, LogOut, Mail, Menu, Moon, ShieldCheck, Sun, UserRound, UsersRound, X } from "lucide-react";
+import { BookOpen, ChevronDown, ClipboardCheck, Cloud, Eye, Gamepad2, Gavel, GraduationCap, KeyRound, LoaderCircle, LogIn, LogOut, Mail, Menu, Moon, ShieldCheck, Sun, UserRound, UsersRound, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { GlobalSearch } from "@/components/layout/global-search";
@@ -65,9 +65,9 @@ export function Navbar() {
     }
   };
 
-  // Live World is an event-only surface. It deliberately has no bridge back
+  // Live World and Live Auction are event-only surfaces. They deliberately have no bridge back
   // into the normal application navigation or account controls.
-  if (path === "/live-world" || path.startsWith("/live-world/")) return null;
+  if (path === "/live-world" || path.startsWith("/live-world/") || path === "/live-auction" || path.startsWith("/live-auction/")) return null;
 
   return (
     <>
@@ -221,6 +221,7 @@ export function Navbar() {
                 {worldSupervisor && <Link href="/admin/governance" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"><ShieldCheck size={14} /> Governance requests</Link>}
                 {worldSupervisor && <Link href="/admin/mail" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"><Mail size={14} /> Mail Terminal</Link>}
                 {worldSupervisor && <Link href="/admin/live-world" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"><Gamepad2 size={14} /> Live World rooms</Link>}
+                {worldSupervisor && <Link href="/admin/live-auction" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"><Gavel size={14} /> Live Auction rooms</Link>}
                 {worldSupervisor && <Link href="/learn/research/admin" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"><ShieldCheck size={14} /> Research Submissions</Link>}
                 {worldSupervisor && <Link href="/season1" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"><UsersRound size={14} /> Season 1 Team Lobby</Link>}
                 {designatedAccountModerator && <button type="button" onClick={openAccountAccessControl} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-xs font-semibold text-[#2f6dff] hover:bg-[#e7efff]"><ShieldCheck size={14} /> Account access control</button>}

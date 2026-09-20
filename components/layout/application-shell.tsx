@@ -13,13 +13,13 @@ import { PwaRegistration } from "@/components/pwa/pwa-registration";
 import { ThemeProvider } from "@/components/layout/theme-provider";
 
 function isStandaloneLiveWorld(pathname: string) {
-  return pathname === "/live-world" || pathname.startsWith("/live-world/");
+  return pathname === "/live-world" || pathname.startsWith("/live-world/") || pathname === "/live-auction" || pathname.startsWith("/live-auction/");
 }
 
 export function ApplicationShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "/";
 
-  // A Live World invitation opens a room-only application boundary. It does
+  // A Live World or Live Auction invitation opens a room-only application boundary. It does
   // not initialise, read, or link the visitor's EconMind account session.
   if (isStandaloneLiveWorld(pathname)) return <>{children}</>;
 
