@@ -1,5 +1,9 @@
 # EconMind Admin Mail Terminal V1
 
+Current rollout status following the user's deployment authorization is recorded
+in [ADMIN-MAIL-DEPLOYMENT.md](ADMIN-MAIL-DEPLOYMENT.md). The source-only statements
+below describe the original implementation phase.
+
 This is a source-only implementation. No migration, deployment, production
 configuration, real email, secret change, or Git push is part of this task.
 

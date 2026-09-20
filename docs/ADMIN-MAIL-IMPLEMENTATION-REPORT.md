@@ -1,5 +1,8 @@
 # EconMind Admin Mail Terminal V1 — implementation report
 
+> 本文记录最初的 source-only 阶段。用户随后明确授权部署；当前部署状态见
+> [ADMIN-MAIL-DEPLOYMENT.md](ADMIN-MAIL-DEPLOYMENT.md)，下文的 No/NOT RUN 是原阶段记录。
+
 日期：2026-09-20。完成源码实现与本地验证；没有 push、提交、PR、生产配置或真实发信。
 开始时 `git status --short` 为空，没有覆盖既有用户修改。
 
