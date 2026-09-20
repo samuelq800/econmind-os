@@ -1,14 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { ArrowDownLeft, ArrowUpRight, CheckCircle2, ChevronLeft, ChevronRight, Inbox, LoaderCircle, Mail, Paperclip, PenLine, RefreshCw, Reply, Send, ShieldCheck } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, CheckCircle2, ChevronLeft, ChevronRight, Forward, Inbox, LoaderCircle, Mail, Paperclip, PenLine, RefreshCw, Reply, Send, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { formatAttachmentSize, MAIL_PAGE_SIZE, mailSenderName, mailStatusLabel, OFFICIAL_MAIL_ADDRESS, replySubject, validatedMailDraft, type MailDeliveryStatus, type MailDraft, type MailMessage, type MailThread } from "@/lib/mail/admin-mail";
+import { forwardDraft, recipientEmails, formatAttachmentSize, MAIL_PAGE_SIZE, mailSenderName, mailStatusLabel, OFFICIAL_MAIL_ADDRESS, replySubject, validatedMailDraft, type MailDeliveryStatus, type MailDraft, type MailMessage, type MailThread } from "@/lib/mail/admin-mail";
 import { getProfile } from "@/lib/supabase/data";
 import { getLatestInboundMessage, getMailThread, listMailInbox, listSentMail, listThreadMessages, MailSendError, sendAdminMail, type SendMailResult } from "@/lib/supabase/admin-mail";
+
+import { MailRecipientPicker } from "@/components/admin/mail-recipient-picker";
 
 type MailView = "inbox" | "sent" | "compose";
 const EMPTY_DRAFT: MailDraft = { to: "", subject: "", message: "" };
@@ -93,7 +95,7 @@ function MailWorkspace({ userId }: { userId: string }) {
     <div hidden={view !== "compose"} className="mt-6"><Composer key={draftVersion} initialDraft={draft} senderName={senderName} onBusy={setBusy} onCheckSent={checkSent} /></div>
     {view !== "compose" && <div className="mt-6 grid items-start gap-6 xl:grid-cols-[minmax(300px,.8fr)_minmax(0,1.3fr)]">
       <MailList key={`${view}:${pageIndex}:${revision}`} view={view} pageIndex={pageIndex} selectedThread={selectedThread} onSelect={setSelectedThread} onPage={setPageIndex} />
-      {selectedThread ? <ThreadReader key={`${selectedThread}:${revision}`} threadId={selectedThread} onReply={(latest) => startDraft({ to: latest.sender_email, subject: replySubject(latest.subject), message: "", threadId: latest.thread_id })} /> : <Card className="flex min-h-80 flex-col items-center justify-center px-8 py-12 text-center"><span className="grid size-12 place-items-center rounded-xl bg-[var(--accent-soft)] text-[var(--accent)]"><Mail size={23} /></span><h2 className="mt-5 text-xl font-bold tracking-tight">Every exchange, in context</h2><p className="mt-3 max-w-xs text-sm leading-6 text-[var(--ink-muted)]">Select a conversation to read its history or compose a new official email.</p><Button variant="secondary" className="mt-6" onClick={() => startDraft()}><PenLine size={14} />Compose a message</Button></Card>}
+      {selectedThread ? <ThreadReader key={`${selectedThread}:${revision}`} threadId={selectedThread} onForward={(message) => startDraft(forwardDraft(message))} onReply={(latest) => startDraft({ to: latest.sender_email, subject: replySubject(latest.subject), message: "", threadId: latest.thread_id })} /> : <Card className="flex min-h-80 flex-col items-center justify-center px-8 py-12 text-center"><span className="grid size-12 place-items-center rounded-xl bg-[var(--accent-soft)] text-[var(--accent)]"><Mail size={23} /></span><h2 className="mt-5 text-xl font-bold tracking-tight">Every exchange, in context</h2><p className="mt-3 max-w-xs text-sm leading-6 text-[var(--ink-muted)]">Select a conversation to read its history or compose a new official email.</p><Button variant="secondary" className="mt-6" onClick={() => startDraft()}><PenLine size={14} />Compose a message</Button></Card>}
     </div>}
     <p className="mt-6 flex items-start gap-2 text-xs leading-5 text-[var(--ink-muted)]"><ShieldCheck size={14} className="mt-0.5 shrink-0" />Original inbound emails and attachments continue to arrive in the forwarded management copy.</p>
   </main>;
@@ -137,7 +139,7 @@ function MailList({ view, pageIndex, selectedThread, onSelect, onPage }: { view:
   </Card>;
 }
 
-function ThreadReader({ threadId, onReply }: { threadId: string; onReply: (message: MailMessage) => void }) {
+function ThreadReader({ threadId, onReply, onForward }: { threadId: string; onForward: (message: MailMessage) => void; onReply: (message: MailMessage) => void }) {
   const [thread, setThread] = useState<MailThread | null>(null);
   const [messages, setMessages] = useState<MailMessage[]>([]);
   const [latestInbound, setLatestInbound] = useState<MailMessage | null>(null);
@@ -178,17 +180,17 @@ function ThreadReader({ threadId, onReply }: { threadId: string; onReply: (messa
     <Card className="p-5 sm:p-6"><div className="flex flex-wrap items-start justify-between gap-4"><div className="min-w-0 flex-1"><p className="text-[10px] font-bold uppercase tracking-[.16em] text-[var(--accent)]">Conversation</p><h2 className="mt-2 break-words text-2xl font-bold tracking-tight">{thread?.subject || "Mail thread"}</h2>{thread && <p className="mt-2 text-xs text-[var(--ink-muted)]">{thread.message_count} messages · Last activity {timestamp(thread.last_message_at)}</p>}</div><Button variant="secondary" disabled={!latestInbound} onClick={() => latestInbound && onReply(latestInbound)}><Reply size={15} />Reply</Button></div>{!latestInbound && thread && <p className="mt-4 text-xs text-[var(--ink-muted)]">Reply becomes available when this conversation has an inbound message.</p>}</Card>
     {error && <p role="alert" className="mt-4 rounded-lg bg-[var(--red-soft)] p-4 text-sm text-[var(--red)]">{error}</p>}
     {hasMore && <Button variant="secondary" className="mt-5 w-full" disabled={loadingOlder} onClick={() => void loadOlder()}>{loadingOlder && <LoaderCircle size={14} className="animate-spin" />}Load older messages</Button>}
-    <ol className="mt-5 space-y-4">{messages.map((message) => <li key={message.id}><MessageCard message={message} /></li>)}</ol>
+    <ol className="mt-5 space-y-4">{messages.map((message) => <li key={message.id}><MessageCard message={message} onForward={onForward} /></li>)}</ol>
   </section>;
 }
 
-function MessageCard({ message }: { message: MailMessage }) {
+function MessageCard({ message, onForward }: { message: MailMessage; onForward: (message: MailMessage) => void }) {
   const inbound = message.direction === "inbound";
   const date = message.received_at || message.sent_at || message.created_at;
   return <Card className="overflow-hidden">
     <div className={`border-b border-[var(--line)] p-5 ${inbound ? "bg-[var(--surface-subtle)]" : "bg-[var(--accent-soft)]"}`}>
       <div className="flex flex-wrap items-center justify-between gap-3"><span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[.13em]">{inbound ? <ArrowDownLeft size={14} /> : <ArrowUpRight size={14} />}{inbound ? "Inbound" : "Outbound"}</span><time dateTime={date} className="text-xs text-[var(--ink-muted)]">{timestamp(date)}</time></div>
-      <p className="mt-3 break-words text-sm font-bold">{message.sender_name || message.sender_email}</p><p className="mt-1 break-all text-xs leading-5 text-[var(--ink-muted)]">From: {message.sender_email}<br />To: {message.recipient_name ? `${message.recipient_name} · ` : ""}{message.recipient_email}</p>
+      <Button type="button" size="sm" variant="secondary" className="mt-3" onClick={() => onForward(message)}><Forward size={14} />Forward</Button><p className="mt-3 break-words text-sm font-bold">{message.sender_name || message.sender_email}</p><p className="mt-1 break-all text-xs leading-5 text-[var(--ink-muted)]">From: {message.sender_email}<br />To: {message.recipient_name ? `${message.recipient_name} · ` : ""}{message.recipient_email}</p>
       <p className="mt-3 break-words text-sm font-semibold">{message.subject || "(No subject)"}</p>
       {!inbound && <div className="mt-3 flex flex-wrap items-center gap-2"><Status status={message.delivery_status} /><span className="text-xs text-[var(--ink-muted)]">Sent by {message.actor_display_name || "EconMind Admin"}</span></div>}
     </div>
@@ -209,7 +211,8 @@ function Composer({ initialDraft, senderName, onBusy, onCheckSent }: { initialDr
   const [error, setError] = useState("");
   const [uncertain, setUncertain] = useState(false);
   const [result, setResult] = useState<SendMailResult | null>(null);
-  const locked = busy || uncertain || Boolean(result);
+  const [batchLog, setBatchLog] = useState<string[]>([]);
+  const locked = busy || uncertain || Boolean(result) || batchLog.length > 0;
 
   function edit(field: "to" | "subject" | "message", value: string) {
     if (locked) return;
@@ -223,7 +226,7 @@ function Composer({ initialDraft, senderName, onBusy, onCheckSent }: { initialDr
   function review(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (locked || !senderName) return;
-    try { setConfirmation(validatedMailDraft(draft)); setError(""); }
+    try { const emails = recipientEmails(draft.to); const checked = validatedMailDraft({ ...draft, to: emails[0] }); setConfirmation({ ...checked, to: emails.join(", ") }); setError(""); }
     catch (caught) { setError(errorText(caught, "Review the message fields.")); }
   }
 
@@ -237,8 +240,27 @@ function Composer({ initialDraft, senderName, onBusy, onCheckSent }: { initialDr
     try {
       requestId.current ??= crypto.randomUUID();
       setAttemptId(requestId.current);
-      const sent = await sendAdminMail(confirmation, requestId.current);
-      setResult(sent);
+      const recipients = recipientEmails(confirmation.to);
+      for (let index = 0; index < recipients.length; index++) {
+        const recipient = recipients[index];
+        const id = index === 0 ? requestId.current : crypto.randomUUID();
+        setAttemptId(id);
+        setBatchLog((rows) => [...rows, recipient + " — sending · " + id]);
+        try {
+          const sent = await sendAdminMail({ ...confirmation, to: recipient }, id);
+          setResult(sent);
+          setBatchLog((rows) => [...rows.slice(0, -1), recipient + " — " + mailStatusLabel(sent.status) + " · " + id]);
+          if (!["accepted", "delivered"].includes(sent.status)) {
+            setError("Sending stopped. " + (recipients.length - index - 1) + " recipients were not attempted. Verify the recorded status in Sent.");
+            break;
+          }
+        } catch (caught) {
+          setBatchLog((rows) => [...rows.slice(0, -1), recipient + " — " + errorText(caught, "Unknown outcome") + " · " + id]);
+          setError("Sending stopped. " + (recipients.length - index - 1) + " recipients were not attempted. " + errorText(caught, "Check Sent before sending again."));
+          setUncertain(caught instanceof MailSendError ? caught.ambiguous : true);
+          break;
+        }
+      }
     } catch (caught) {
       const ambiguous = caught instanceof MailSendError ? caught.ambiguous : true;
       setUncertain(ambiguous);
@@ -255,13 +277,14 @@ function Composer({ initialDraft, senderName, onBusy, onCheckSent }: { initialDr
     <Card className="p-5 sm:p-7"><div className="flex items-center justify-between gap-3"><h2 className="text-xl font-bold tracking-tight">{draft.threadId ? "Reply to conversation" : "Compose a message"}</h2>{draft.threadId && <Badge>Thread reply</Badge>}</div>
       <form onSubmit={review} className="mt-6 space-y-5">
         <div><p className="text-xs font-bold">From</p><div className="mt-2 rounded-lg border border-[var(--line)] bg-[var(--surface-subtle)] px-3 py-3"><p className="text-sm font-semibold">{senderName || "Loading sender identity…"}</p><p className="mt-1 text-xs text-[var(--ink-muted)]">&lt;{OFFICIAL_MAIL_ADDRESS}&gt;</p></div></div>
-        <label className="block text-xs font-bold" htmlFor="mail-to">To<input id="mail-to" name="to" type="email" required autoComplete="off" maxLength={254} placeholder="recipient@example.com" value={draft.to} disabled={locked} onChange={(event) => edit("to", event.target.value)} className={fieldClass} /><span className="mt-1.5 block text-[11px] font-normal text-[var(--ink-muted)]">One recipient</span></label>
+        <MailRecipientPicker value={draft.to} disabled={locked} onChange={(value) => edit("to", value)} />
         <label className="block text-xs font-bold" htmlFor="mail-subject">Subject<input id="mail-subject" name="subject" required maxLength={200} value={draft.subject} disabled={locked} onChange={(event) => edit("subject", event.target.value)} className={fieldClass} /></label>
         <label className="block text-xs font-bold" htmlFor="mail-message">Message<textarea id="mail-message" name="message" required maxLength={20_000} rows={13} value={draft.message} disabled={locked} onChange={(event) => edit("message", event.target.value)} className={`${fieldClass} min-h-64 resize-y leading-7`} /><span className="mt-1.5 flex justify-between gap-3 text-[11px] font-normal text-[var(--ink-muted)]"><span>Plain text</span><span>{draft.message.length.toLocaleString()} / 20,000</span></span></label>
+        {batchLog.length > 0 && <div role="status" className="max-h-64 overflow-auto rounded-lg border border-[var(--line)] p-3 text-xs"><p className="font-bold">Recipient results — keep this page open while sending</p><ul className="mt-2 space-y-2">{batchLog.map((line, index) => <li key={index} className="break-all">{line}</li>)}</ul></div>}
         {error && <div role="alert" className="rounded-lg bg-[var(--red-soft)] p-4 text-sm leading-6 text-[var(--red)]"><p>{error}</p>{uncertain && <p className="mt-2">No retry was made. Check Sent and verify this request before creating a new message.</p>}</div>}
         {result && <div role="status" className="rounded-lg bg-[var(--accent-soft)] p-4 text-sm leading-6"><p className="flex items-center gap-2 font-semibold"><CheckCircle2 size={16} />{mailStatusLabel(result.status)}</p><p className="mt-2">{result.status === "accepted" ? "Brevo accepted the request. Delivery is confirmed separately in Sent." : result.status === "delivered" ? "The delivery event confirms this message was delivered." : "Check the recorded delivery status before taking further action."}</p>{result.warning && <p className="mt-2">{result.warning}</p>}</div>}
         {(uncertain || result) && attemptId && <p className="break-all text-xs leading-5 text-[var(--ink-muted)]">Request ID: {attemptId}</p>}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--line)] pt-5">{uncertain || result ? <Button type="button" variant="secondary" onClick={() => onCheckSent(result?.threadId)}><Send size={14} />Check Sent</Button> : <Button type="submit" disabled={busy || !senderName}>{busy ? <LoaderCircle size={15} className="animate-spin" /> : <Send size={15} />}Send</Button>}<span className="text-xs text-[var(--ink-muted)]">{uncertain || result ? "Use New message for another email." : "Review recipient and subject before sending."}</span></div>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--line)] pt-5">{uncertain || result || batchLog.length > 0 ? <Button type="button" variant="secondary" onClick={() => onCheckSent(result?.threadId)}><Send size={14} />Check Sent</Button> : <Button type="submit" disabled={busy || !senderName}>{busy ? <LoaderCircle size={15} className="animate-spin" /> : <Send size={15} />}Send</Button>}<span className="text-xs text-[var(--ink-muted)]">{uncertain || result || batchLog.length > 0 ? "Use New message for another email." : "Review recipient and subject before sending."}</span></div>
       </form>
     </Card>
     <aside className="space-y-4"><Card className="p-5"><ShieldCheck size={22} className="text-[var(--accent)]" /><h3 className="mt-4 text-sm font-bold">One official identity</h3><p className="mt-2 text-xs leading-6 text-[var(--ink-muted)]">Your name accompanies the shared official address. Replies return to {OFFICIAL_MAIL_ADDRESS} and appear in the shared Inbox.</p></Card><div className="px-1 text-xs leading-6 text-[var(--ink-muted)]"><p className="font-semibold text-[var(--ink)]">A shared record</p><p className="mt-1">Outgoing messages retain the sender identity and administrator name recorded at send time.</p></div></aside>
@@ -280,6 +303,6 @@ function SendConfirmation({ draft, senderName, busy, onCancel, onSend }: { draft
     return () => { element?.close(); previousFocus?.focus(); };
   }, []);
   return <dialog ref={dialog} aria-labelledby="mail-confirm-title" aria-describedby="mail-confirm-description" aria-busy={busy} onCancel={(event) => { event.preventDefault(); if (!busy) onCancel(); }} className="fixed inset-0 m-auto max-h-[90vh] w-[calc(100%-2rem)] max-w-lg overflow-y-auto rounded-xl border border-[var(--line)] bg-[var(--surface)] p-0 text-[var(--ink)] shadow-2xl backdrop:bg-black/50">
-    <div className="p-6 sm:p-8"><span className="grid size-11 place-items-center rounded-lg bg-[var(--accent-soft)] text-[var(--accent)]"><Send size={20} /></span><h2 id="mail-confirm-title" className="mt-5 text-2xl font-bold tracking-tight">Send this email?</h2><p id="mail-confirm-description" className="mt-2 text-sm leading-6 text-[var(--ink-muted)]">Confirm the recipient and subject. This email will be sent from EconMind’s official address.</p><dl className="mt-6 space-y-4 rounded-lg border border-[var(--line)] bg-[var(--canvas)] p-4 text-sm"><div><dt className="text-xs font-bold text-[var(--ink-muted)]">From</dt><dd className="mt-1 break-words">{senderName}<br />&lt;{OFFICIAL_MAIL_ADDRESS}&gt;</dd></div><div><dt className="text-xs font-bold text-[var(--ink-muted)]">To</dt><dd className="mt-1 break-all">{draft.to}</dd></div><div><dt className="text-xs font-bold text-[var(--ink-muted)]">Subject</dt><dd className="mt-1 break-words">{draft.subject}</dd></div></dl><div className="mt-6 flex justify-end gap-3"><button ref={cancelButton} type="button" disabled={busy} onClick={onCancel} className="h-10 rounded-lg border border-[var(--line)] px-4 text-sm font-semibold hover:bg-[var(--surface-subtle)] disabled:opacity-45">Cancel</button><Button type="button" disabled={busy} onClick={onSend}>{busy ? <LoaderCircle size={15} className="animate-spin" /> : <Send size={15} />}{busy ? "Sending…" : "Send"}</Button></div></div>
+    <div className="p-6 sm:p-8"><span className="grid size-11 place-items-center rounded-lg bg-[var(--accent-soft)] text-[var(--accent)]"><Send size={20} /></span><h2 id="mail-confirm-title" className="mt-5 text-2xl font-bold tracking-tight">Send this email?</h2><p id="mail-confirm-description" className="mt-2 text-sm leading-6 text-[var(--ink-muted)]">Confirm the recipient and subject. This email will be sent from EconMind’s official address.</p><dl className="mt-6 space-y-4 rounded-lg border border-[var(--line)] bg-[var(--canvas)] p-4 text-sm"><div><dt className="text-xs font-bold text-[var(--ink-muted)]">From</dt><dd className="mt-1 break-words">{senderName}<br />&lt;{OFFICIAL_MAIL_ADDRESS}&gt;</dd></div><div><dt className="text-xs font-bold text-[var(--ink-muted)]">To</dt><dd className="mt-1 break-all">{recipientEmails(draft.to).length} recipient(s)<br />{draft.to}</dd></div><div><dt className="text-xs font-bold text-[var(--ink-muted)]">Subject</dt><dd className="mt-1 break-words">{draft.subject}</dd></div></dl><div className="mt-6 flex justify-end gap-3"><button ref={cancelButton} type="button" disabled={busy} onClick={onCancel} className="h-10 rounded-lg border border-[var(--line)] px-4 text-sm font-semibold hover:bg-[var(--surface-subtle)] disabled:opacity-45">Cancel</button><Button type="button" disabled={busy} onClick={onSend}>{busy ? <LoaderCircle size={15} className="animate-spin" /> : <Send size={15} />}{busy ? "Sending…" : "Send"}</Button></div></div>
   </dialog>;
 }

@@ -1,5 +1,20 @@
 import { requireSupabaseBrowserClient as client, throwIfSupabaseError as fail } from "@/lib/supabase/client";
-import { MAIL_PAGE_SIZE, validatedMailDraft, type MailDeliveryStatus, type MailDraft, type MailMessage, type MailPage, type MailThread } from "@/lib/mail/admin-mail";
+import { MAIL_PAGE_SIZE, validatedMailDraft, type MailDeliveryStatus, type MailDraft, type MailMessage, type MailPage, type MailThread, type MailRecipient } from "@/lib/mail/admin-mail";
+
+export async function listMailRecipients(): Promise<MailRecipient[]> {
+  const rows: MailRecipient[] = [];
+  let after: string | null = null;
+  for (;;) {
+    const { data, error } = await client().rpc("admin_mail_recipients", { p_after: after });
+    fail(error);
+    const next = (data ?? []) as MailRecipient[];
+    rows.push(...next);
+    if (next.length < 200) return rows;
+    const cursor = next[next.length - 1].user_id;
+    if (cursor === after) throw new Error("Recipient directory pagination failed. Reload the directory.");
+    after = cursor;
+  }
+}
 
 // Do not fetch HTML or attachment binaries into the reader. React renders only plaintext.
 const MESSAGE_COLUMNS = "id,thread_id,direction,sender_email,sender_name,recipient_email,recipient_name,subject,body_text,delivery_status,actor_user_id,actor_display_name,has_attachments,attachments,created_at,received_at,sent_at,delivered_at,failed_at,failure_code,request_id,provider_message_id";

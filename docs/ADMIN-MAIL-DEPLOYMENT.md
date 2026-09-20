@@ -1,4 +1,33 @@
-# Mail Terminal deployment — 2026-09-20
+# Mail Terminal deployment
+
+## 2026-09-21 — Forward and recipient selection
+
+- Each inbound/outbound message has a Forward action. It creates a fresh draft
+  with the original plaintext, sender, date, subject and recipient. It does not
+  reuse the original thread. Attachment binaries are unavailable in the terminal;
+  the forwarded text explicitly says attachments are not included.
+- To supports manual addresses, user name/email/school search, checkboxes and
+  adding every user associated with a selected school. Matching uses the profile's
+  school ID. Duplicate addresses are removed; sends are limited to 500 recipients.
+  Schools above that limit must be split into smaller sends; they are never silently truncated.
+- Each recipient receives a separate message through the existing authenticated
+  send endpoint, with its own request UUID and Sent record. Keep the page open
+  while sending. A failure or uncertain result stops subsequent recipients and
+  shows their unattempted count. No automatic retries or bulk To disclosure.
+- Applied only `20260921000000_admin_mail_recipients.sql` and its migration ledger
+  entry to `vimksjrhaxdpnkvgsavz`. The directory RPC checks the canonical platform
+  admin role, denies anon execution and pages results by user ID. Deleted auth
+  users and users without email addresses are excluded.
+- Validation: 525 tests, typecheck, lint (seven existing auction warnings),
+  production export of 463 pages, isolated PostgreSQL permission/pagination tests,
+  and browser checks for forwarding, school selection, deduplication, confirmation,
+  double-click prevention, unknown-result stop and 390px layout. Browser email
+  requests were intercepted; no real email was sent.
+- Cloudflare is managed by the user for this release. No Worker deployment or
+  Email Routing changes were made. Local uncommitted Worker debugging edits were
+  discarded at the user's request; the tracked Worker source is retained.
+
+## Initial deployment — 2026-09-20
 
 The user explicitly authorized deployment after the source-only implementation.
 The account dropdown entry is immediately below **Governance requests** and is

@@ -45,6 +45,26 @@ export type MailMessage = {
 export type MailDraft = { to: string; subject: string; message: string; threadId?: string };
 export type MailPage<T> = { rows: T[]; hasMore: boolean };
 
+export type MailRecipient = { user_id: string; display_name: string | null; email: string; school_id: string | null; school_name: string | null };
+
+export function recipientEmails(value: string): string[] {
+  const addresses = value.split(/[,;\n]+/).map((item) => item.trim()).filter(Boolean);
+  if (!addresses.length) throw new Error("Select at least one recipient.");
+  const unique = [...new Map(addresses.map((email) => [email.toLowerCase(), email])).values()];
+  if (unique.length > 500) throw new Error("Select at most 500 recipients per send.");
+  for (const to of unique) validatedMailDraft({ to, subject: "Validation", message: "Validation" });
+  return unique;
+}
+
+export function forwardDraft(mail: MailMessage): MailDraft {
+  const attachmentNote = mail.has_attachments ? "\n[Attachments are not included. Obtain originals from the management mailbox.]\n" : "";
+  return {
+    to: "",
+    subject: `Fwd: ${mail.subject.replace(/^(?:\s*fwd?\s*:\s*)+/i, "").trim()}`.slice(0, 200),
+    message: `\n\n---------- Forwarded message ----------\nFrom: ${mail.sender_name || mail.sender_email} <${mail.sender_email}>\nDate: ${mail.received_at || mail.sent_at || mail.created_at}\nSubject: ${mail.subject}\nTo: ${mail.recipient_email}\n${attachmentNote}\n${mail.body_text}`,
+  };
+}
+
 const statusLabels: Record<MailDeliveryStatus, string> = {
   received: "Received", pending: "Pending · verify before resending", accepted: "Accepted by Brevo",
   delivered: "Delivered", deferred: "Deferred", soft_bounced: "Soft bounced", hard_bounced: "Hard bounced",
