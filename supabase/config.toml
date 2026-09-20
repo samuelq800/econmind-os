@@ -58,3 +58,16 @@ verify_jwt = false
 
 [functions.moderate-account-access]
 verify_jwt = true
+
+# Each mail endpoint authenticates in its handler. send-admin-email also retains
+# the existing user-function JWT gateway check, then uses auth.getUser(token) and
+# checks profiles.platform_role. The machine endpoints require HMAC or a dedicated
+# Brevo Bearer token, never a user JWT.
+[functions.send-admin-email]
+verify_jwt = true
+
+[functions.ingest-admin-email]
+verify_jwt = false
+
+[functions.brevo-mail-events]
+verify_jwt = false

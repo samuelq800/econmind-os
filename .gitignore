@@ -12,3 +12,8 @@ supabase/.temp/
 .continue/
 /local-secrets.txt
 backup/
+# Local Worker secrets and generated runtime state are never source artifacts.
+.dev.vars
+.dev.vars.*
+.env.*.local
+.wrangler/
