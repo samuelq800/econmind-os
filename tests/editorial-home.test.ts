@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 
 const home = readFileSync("components/home/editorial-home.tsx", "utf8");
 const schoolDirectory = readFileSync("components/home/home-league-school-directory.tsx", "utf8");
+const liveSchoolDirectory = readFileSync("components/league/use-live-league-schools.ts", "utf8");
+const leagueAbout = readFileSync("components/league/league-about.tsx", "utf8");
 const schoolNetworkMap = readFileSync("components/home/home-school-network-map.tsx", "utf8");
 const schoolLedger = readFileSync("components/league/school-directory-ledger.tsx", "utf8");
 const leagueSchools = readFileSync("components/league/league-schools.tsx", "utf8");
@@ -37,21 +39,27 @@ describe("editorial public architecture", () => {
   it("combines the live League directory with its complete public roster", () => {
     expect(home).toContain("HomeLeagueSchoolDirectory");
     expect(home).not.toContain("PARTICIPATING_SCHOOLS");
-    expect(schoolDirectory).toContain("listPublicLeagueSchools");
+    expect(schoolDirectory).toContain("useLiveLeagueSchools");
     expect(schoolDirectoryModel).toContain("PARTICIPATING_SCHOOLS");
-    expect(schoolDirectory).toContain("mergeLeagueDirectory([])");
+    expect(liveSchoolDirectory).toContain("mergeLeagueDirectory([])");
     expect(schoolDirectory).toContain("verified city key");
     expect(schoolNetworkMap).toContain("school.school_name");
     expect(schoolRoster).toContain("HD Ningbo School");
     expect(schoolRoster).toContain("MalvernCollegeQingdao");
     expect(schoolRoster).toContain("SUZHOU SCIENCE&TECHNOLOGY TOWN FOREIGN LANGUAGE SCHOOL");
     expect(schoolRoster).toContain("suzhouscientificforeignlanguagehighschool");
-    expect(schoolDirectory).toContain("withDirectorySyncTimeout");
+    expect(liveSchoolDirectory).toContain("withDirectorySyncTimeout");
     expect(home.indexOf("HomeLeagueSchoolDirectory")).toBeLessThan(home.indexOf("Platform thesis"));
   });
 
   it("uses a land-only world distribution plate instead of a school-card wall", () => {
     expect(schoolDirectory).toContain("HomeSchoolNetworkMap");
+    expect(schoolDirectory).toContain("useLiveLeagueSchools");
+    expect(leagueAbout).toContain("useLiveLeagueSchools");
+    expect(leagueAbout).not.toContain("PARTICIPATING_SCHOOL_COUNT");
+    expect(liveSchoolDirectory).toContain("listPublicLeagueSchools");
+    expect(liveSchoolDirectory).toContain("mergeLeagueDirectory(rows)");
+    expect(liveSchoolDirectory).toContain("window.addEventListener(\"focus\"");
     expect(schoolNetworkMap).toContain("Mapped schools");
     expect(schoolNetworkMap).toContain("Every plotted school is named here");
     expect(schoolDirectory).not.toContain("home-schools-grid");
