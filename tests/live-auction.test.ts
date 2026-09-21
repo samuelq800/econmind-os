@@ -89,6 +89,9 @@ describe("Live Auction", () => {
     expect(room).toContain("● WATCHING");
     expect(room).toContain("BID LOCKED IN");
     expect(room).toContain("SOLD");
+    expect(room).toContain("object-contain");
+    expect(room).toContain("PURCHASE COMPLETE");
+    expect(room).toContain("The item has been added to your collection.");
     expect(room).toContain("artifact-fallback.svg");
   });
 });
