@@ -43,6 +43,14 @@ export function requiredConsentVersions() {
   };
 }
 
+/** Initial account setup requires both current documents; material re-consent is separate. */
+export function hasInitialLegalConsent(
+  consents: ReadonlyArray<{ document_type: string; document_version: string }>,
+) {
+  return consents.some((entry) => entry.document_type === "terms" && entry.document_version === LEGAL_DOCUMENTS.terms.version)
+    && consents.some((entry) => entry.document_type === "privacy" && entry.document_version === LEGAL_DOCUMENTS.privacy.version);
+}
+
 export function needsLegalReconsent(
   accepted: Partial<Record<LegalDocumentKey, string>>,
 ) {

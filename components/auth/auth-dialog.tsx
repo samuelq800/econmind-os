@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   CheckCircle2,
   Eye,
@@ -22,6 +22,7 @@ import {
   OFFICIAL_CONTACT_MAILTO,
 } from "@/lib/platform/contact";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { googleSignInRedirectUrl } from "@/lib/supabase/google-sign-in";
 import {
   authEmailRequestErrorMessage,
   EMAIL_OTP_LENGTH,
@@ -82,6 +83,7 @@ export function AuthDialog() {
   const {
     authOpen,
     authMode,
+    authNotice,
     closeAuth,
     openAuth,
     configured,
@@ -96,6 +98,7 @@ export function AuthDialog() {
   const [invitationCode, setInvitationCode] = useState("");
   const [otp, setOtp] = useState("");
   const [busy, setBusy] = useState(false);
+  const oauthStarting = useRef(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -204,6 +207,31 @@ export function AuthDialog() {
         ),
       );
     } finally {
+      setBusy(false);
+    }
+  }
+
+  async function continueWithGoogle() {
+    if (busy || oauthStarting.current) return;
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) {
+      setError("Supabase is not configured for this deployment.");
+      return;
+    }
+    oauthStarting.current = true;
+    setBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: googleSignInRedirectUrl(window.location.origin) },
+      });
+      if (oauthError) throw oauthError;
+    } catch {
+      setError("Google sign-in could not start. Please try again.");
+    } finally {
+      oauthStarting.current = false;
       setBusy(false);
     }
   }
@@ -402,7 +430,17 @@ export function AuthDialog() {
             This deployment is missing its public Supabase configuration.
           </p>
         ) : (
-          <form className="mt-6 space-y-4" onSubmit={submit}>
+          <>
+          {(authMode === "sign-in" || authMode === "sign-up") && (
+            <div className="mt-6">
+              <Button type="button" variant="secondary" className="w-full" disabled={busy} onClick={() => void continueWithGoogle()}>
+                {busy ? <LoaderCircle className="animate-spin" size={15} /> : <span aria-hidden="true" className="text-base font-black text-[#4285f4]">G</span>}
+                Continue with Google
+              </Button>
+              <div className="mt-5 flex items-center gap-3 text-[11px] font-bold text-[var(--ink-faint)]" aria-hidden="true"><span className="h-px flex-1 bg-[var(--line)]" />or<span className="h-px flex-1 bg-[var(--line)]" /></div>
+            </div>
+          )}
+          <form className="mt-5 space-y-4" onSubmit={submit}>
             {authMode === "invitation" && (
               <label className="block text-xs font-bold">
                 Invitation code
@@ -560,12 +598,12 @@ export function AuthDialog() {
               </fieldset>
             )}
 
-            {error && (
+            {(error || authNotice) && (
               <p
                 role="alert"
                 className="rounded-lg bg-[var(--red-soft)] p-3 text-xs leading-5 text-[var(--red)]"
               >
-                {error}
+                {error || authNotice}
               </p>
             )}
             {message && (
@@ -619,6 +657,7 @@ export function AuthDialog() {
               </button>
             )}
           </form>
+          </>
         )}
 
         {authMode === "verify-sign-up" && (
