@@ -69,7 +69,14 @@ export function AccountOnboarding() {
       setCheckedUserId(userId);
     }).catch(() => {
       if (!active) return;
-      setCheckError("Could not verify account setup and legal acknowledgement. Please retry.");
+      // Setup is a post-authentication experience, not an authorization gate.
+      // A transient profile/consent read failure must never lock an established
+      // account out of EconMind. The former implementation preserved access
+      // in this case, so keep that fail-open behaviour while the user can
+      // retry account setup on a later signed-in session.
+      setNeedsInitialConsent(false);
+      setCompletedUserId(userId);
+      setCheckError("");
       setCheckedUserId(userId);
     });
     return () => { active = false; };
