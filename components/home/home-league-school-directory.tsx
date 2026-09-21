@@ -1,56 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { HomeSchoolNetworkMap } from "@/components/home/home-school-network-map";
-import {
-  mergeLeagueDirectory,
-  withDirectorySyncTimeout,
-  type LeagueDirectorySchool,
-} from "@/lib/league/school-directory";
-import { listPublicLeagueSchools } from "@/lib/supabase/league-directory";
+import { useLiveLeagueSchools } from "@/components/league/use-live-league-schools";
 
 export function HomeLeagueSchoolDirectory() {
-  const [schools, setSchools] = useState<LeagueDirectorySchool[]>(() => mergeLeagueDirectory([]));
-  const [syncStatus, setSyncStatus] = useState<"syncing" | "live" | "fallback">("syncing");
-
-  useEffect(() => {
-    let active = true;
-    let inFlight = false;
-
-    const sync = async () => {
-      if (!active || inFlight) return;
-      inFlight = true;
-      try {
-        const rows = await withDirectorySyncTimeout(listPublicLeagueSchools());
-        if (!active) return;
-        setSchools(mergeLeagueDirectory(rows));
-        setSyncStatus("live");
-      } catch {
-        if (!active) return;
-        setSyncStatus("fallback");
-      } finally {
-        inFlight = false;
-      }
-    };
-
-    const syncWhenVisible = () => {
-      if (document.visibilityState === "visible") void sync();
-    };
-
-    void sync();
-    window.addEventListener("focus", syncWhenVisible);
-    window.addEventListener("online", syncWhenVisible);
-    document.addEventListener("visibilitychange", syncWhenVisible);
-
-    return () => {
-      active = false;
-      window.removeEventListener("focus", syncWhenVisible);
-      window.removeEventListener("online", syncWhenVisible);
-      document.removeEventListener("visibilitychange", syncWhenVisible);
-    };
-  }, []);
+  const { schools, syncStatus } = useLiveLeagueSchools();
 
   const schoolCount = schools.length;
 

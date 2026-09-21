@@ -1,9 +1,13 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight, Building2, CircleCheck, CirclePlay, UsersRound } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { PARTICIPATING_SCHOOL_COUNT } from "@/lib/league/participating-schools";
+import { useLiveLeagueSchools } from "@/components/league/use-live-league-schools";
 
 export function LeagueAbout() {
+  const { schools, syncStatus } = useLiveLeagueSchools();
+
   return (
     <main className="mx-auto min-h-screen max-w-[1240px] px-5 py-10 sm:px-8 lg:px-12">
       <header className="border-b border-[var(--line)] pb-10">
@@ -47,7 +51,7 @@ export function LeagueAbout() {
 
       <section className="mt-10 border-y border-[var(--line)] py-9">
         <div className="grid gap-5 sm:grid-cols-3">
-          <Stat value={String(PARTICIPATING_SCHOOL_COUNT)} label="Partner schools" />
+          <Stat value={String(schools.length)} label="Partner schools" detail={schoolCountStatus(syncStatus)} />
           <Stat value="School-led" label="Local coordination" />
           <Stat value="Open" label="Simulation access" />
         </div>
@@ -86,6 +90,12 @@ function Step({ number, title, detail }: { number: string; title: string; detail
   return <li className="grid grid-cols-[2.5rem_1fr] gap-3"><b className="text-[var(--accent)]">{number}</b><div><p className="font-bold">{title}</p><p className="mt-1 text-sm leading-6 text-[var(--ink-muted)]">{detail}</p></div></li>;
 }
 
-function Stat({ value, label }: { value: string; label: string }) {
-  return <div><p className="text-3xl font-bold tracking-[-.06em]">{value}</p><p className="mt-2 text-[10px] font-bold uppercase tracking-[.14em] text-[var(--ink-muted)]">{label}</p></div>;
+function schoolCountStatus(status: "syncing" | "live" | "fallback") {
+  if (status === "live") return "Live directory checked";
+  if (status === "fallback") return "Verified roster shown while live sync reconnects";
+  return "Checking live directory…";
+}
+
+function Stat({ value, label, detail }: { value: string; label: string; detail?: string }) {
+  return <div><p className="text-3xl font-bold tracking-[-.06em]">{value}</p><p className="mt-2 text-[10px] font-bold uppercase tracking-[.14em] text-[var(--ink-muted)]">{label}</p>{detail && <p className="mt-2 text-xs text-[var(--ink-faint)]" role="status" aria-live="polite">{detail}</p>}</div>;
 }
