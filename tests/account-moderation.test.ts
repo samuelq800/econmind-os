@@ -25,7 +25,7 @@ describe("designated account moderation", () => {
     expect(navbar).toContain("Account access control");
     expect(navbar).toContain("account-access-code-stream");
     expect(provider).toContain('account_status === "suspended"');
-    expect(provider).toContain('select("role,platform_role,account_status")');
+    expect(provider).toContain('select("role,platform_role,account_status,display_name,avatar_url")');
     expect(provider).not.toContain('.select("account_status")');
     expect(provider).toContain('supabase.auth.signOut({ scope: "local" })');
   });

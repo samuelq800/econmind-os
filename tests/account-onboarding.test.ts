@@ -25,10 +25,15 @@ describe("first-session school path", () => {
     expect(component).toContain('location: path === "create_school" ? schoolLocation : undefined');
   });
 
-  it("remembers a completed choice per account so refresh does not reopen setup", () => {
+  it("uses the database choice as authority and checks initial consent before setup", () => {
     expect(component).toContain("econmind.account-onboarding.completed.");
     expect(component).toContain("localStorage");
     expect(component).toContain("saveOnboardingChoice(userId)");
+    expect(component).toContain("if (profile.onboarding_path)");
+    expect(component).not.toContain("hasSavedOnboardingChoice(userId)");
+    expect(component).toContain("listMyLegalConsents()");
+    expect(component).toContain("hasInitialLegalConsent(consents)");
+    expect(component).toContain("acceptCurrentLegalDocuments(LEGAL_DOCUMENTS.terms.version, LEGAL_DOCUMENTS.privacy.version)");
     expect(component).toContain("if (authOpen || viewerAccess || !user");
   });
 });

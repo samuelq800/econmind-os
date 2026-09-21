@@ -22,14 +22,16 @@ export function RegisteredAppGate({ children }: { children: React.ReactNode }) {
     viewerAccess,
     viewerLoading,
     roleLoading,
+    profileError,
+    retryProfile,
+    signOut,
   } = useAuth();
   const pathname = usePathname();
   const policy = pageAccessForPath(pathname);
 
   if (policy.audience === "public") return <>{children}</>;
 
-  const checksRole = Boolean(policy.appRoles || policy.platformRoles);
-  if (loading || viewerLoading || (user && checksRole && roleLoading)) {
+  if (loading || viewerLoading || (user && roleLoading)) {
     return (
 
       <main className="grid min-h-screen place-items-center bg-[var(--canvas)] px-5" aria-live="polite">
@@ -39,6 +41,16 @@ export function RegisteredAppGate({ children }: { children: React.ReactNode }) {
         </div>
       </main>
     );
+  }
+
+  if (user && profileError) {
+    return <main className="grid min-h-screen place-items-center bg-[var(--canvas)] px-5 py-10">
+      <section className="w-full max-w-lg rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-7 text-center shadow-sm">
+        <h1 className="text-2xl font-bold">Account check unavailable</h1>
+        <p role="alert" className="mt-3 text-sm text-[var(--ink-muted)]">{profileError}</p>
+        <div className="mt-6 flex justify-center gap-3"><Button onClick={retryProfile}>Retry</Button><Button variant="secondary" onClick={() => void signOut()}>Sign out</Button></div>
+      </section>
+    </main>;
   }
 
   const accountRequired = policy.audience === "account";
@@ -93,4 +105,3 @@ export function RegisteredAppGate({ children }: { children: React.ReactNode }) {
 
   return <>{children}</>;
 }
-

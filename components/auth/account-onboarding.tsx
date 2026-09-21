@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Building2, CheckCircle2, GraduationCap, LoaderCircle, MapPin, School2, UserRound } from "lucide-react";
@@ -8,16 +9,13 @@ import { EMPTY_SCHOOL_LOCATION, SchoolLocationFields } from "@/components/league
 import { Button } from "@/components/ui/button";
 import { CURRICULUM_SYSTEM_LABELS, CURRICULUM_SYSTEMS, type CurriculumSystem } from "@/lib/league/curriculum";
 import { isCompleteSchoolLocation } from "@/lib/league/geographic-areas";
+import { hasInitialLegalConsent, LEGAL_DOCUMENTS, registrationConsentValid } from "@/lib/legal/legal-config";
 import { completeAccountOnboarding, getAccountOnboarding, listApprovedSchoolChoices, type ApprovedSchoolChoice, type OnboardingPath } from "@/lib/supabase/account-onboarding";
+import { acceptCurrentLegalDocuments, listMyLegalConsents } from "@/lib/supabase/governance";
 
 type SetupStep = "choose" | OnboardingPath;
 
 const onboardingStoragePrefix = "econmind.account-onboarding.completed.";
-
-function hasSavedOnboardingChoice(userId: string) {
-  if (typeof window === "undefined") return false;
-  return window.localStorage.getItem(`${onboardingStoragePrefix}${userId}`) === "true";
-}
 
 function saveOnboardingChoice(userId: string) {
   if (typeof window === "undefined") return;
@@ -32,10 +30,14 @@ const paths: Array<{ id: OnboardingPath; title: string; description: string; ico
 
 export function AccountOnboarding() {
   const pathname = usePathname() ?? "/";
-  const { user, roleLoading, viewerAccess, authOpen } = useAuth();
+  const { user, roleLoading, profileError, viewerAccess, authOpen } = useAuth();
   const userId = user?.id ?? null;
   const [checkedUserId, setCheckedUserId] = useState<string | null>(null);
   const [completedUserId, setCompletedUserId] = useState<string | null>(null);
+  const [needsInitialConsent, setNeedsInitialConsent] = useState(false);
+  const [legalAcceptance, setLegalAcceptance] = useState({ terms: false, privacy: false });
+  const [checkError, setCheckError] = useState("");
+  const [checkAttempt, setCheckAttempt] = useState(0);
   const [step, setStep] = useState<SetupStep>("choose");
   const [schools, setSchools] = useState<ApprovedSchoolChoice[]>([]);
   const [selectedSchoolId, setSelectedSchoolId] = useState("");
@@ -48,21 +50,30 @@ export function AccountOnboarding() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    if (!userId || roleLoading) return;
+    if (!userId || roleLoading || profileError) return;
     let active = true;
-    void getAccountOnboarding().then((profile) => {
+    void getAccountOnboarding().then(async (profile) => {
       if (!active) return;
-      const isComplete = Boolean(profile?.onboarding_path) || hasSavedOnboardingChoice(userId);
-      if (profile?.onboarding_path) saveOnboardingChoice(userId);
-      setCompletedUserId(isComplete ? userId : null);
+      if (!profile) throw new Error("Account setup could not be verified.");
+      if (profile.onboarding_path) {
+        saveOnboardingChoice(userId);
+        setNeedsInitialConsent(false);
+        setCompletedUserId(userId);
+      } else {
+        const consents = await listMyLegalConsents();
+        if (!active) return;
+        setNeedsInitialConsent(!hasInitialLegalConsent(consents));
+        setCompletedUserId(null);
+      }
+      setCheckError("");
       setCheckedUserId(userId);
     }).catch(() => {
       if (!active) return;
-      setCompletedUserId(hasSavedOnboardingChoice(userId) ? userId : null);
+      setCheckError("Could not verify account setup and legal acknowledgement. Please retry.");
       setCheckedUserId(userId);
     });
     return () => { active = false; };
-  }, [userId, roleLoading]);
+  }, [userId, roleLoading, profileError, checkAttempt]);
 
   useEffect(() => {
     if (step !== "school") return;
@@ -75,7 +86,22 @@ export function AccountOnboarding() {
     return () => { active = false; };
   }, [step]);
 
-  if (authOpen || viewerAccess || !user || roleLoading || checkedUserId !== userId || completedUserId === userId || pathname === "/live-world" || pathname.startsWith("/live-world/")) return null;
+  if (authOpen || viewerAccess || !user || roleLoading || profileError || completedUserId === userId || pathname === "/live-world" || pathname.startsWith("/live-world/")) return null;
+
+  async function acknowledgeInitialDocuments() {
+    if (!registrationConsentValid(legalAcceptance)) return;
+    setBusy(true);
+    setError("");
+    try {
+      await acceptCurrentLegalDocuments(LEGAL_DOCUMENTS.terms.version, LEGAL_DOCUMENTS.privacy.version);
+      setNeedsInitialConsent(false);
+      window.dispatchEvent(new Event("econmind:legal-consent-updated"));
+    } catch {
+      setError("Could not save your acknowledgement. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   function choose(next: OnboardingPath) {
     setError("");
@@ -106,8 +132,19 @@ export function AccountOnboarding() {
     }
   }
 
-  return <div className="scroll-slim fixed inset-0 z-[110] overflow-y-auto bg-black/50 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="account-setup-title">
+  return <div className="scroll-slim fixed inset-0 z-[111] overflow-y-auto bg-black/50 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="account-setup-title">
     <div className="mx-auto my-6 w-full max-w-2xl rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 shadow-2xl sm:my-12 sm:p-7">
+      {checkedUserId !== userId ? <div className="flex items-center gap-3 text-sm text-[var(--ink-muted)]" aria-live="polite"><h2 id="account-setup-title" className="sr-only">Checking account setup</h2><LoaderCircle className="animate-spin" size={18} />Checking account setup…</div> : checkError ? <><h2 id="account-setup-title" className="text-2xl font-bold">Account setup unavailable</h2><p role="alert" className="mt-3 text-sm text-[var(--red)]">{checkError}</p><Button className="mt-5" onClick={() => { setCheckedUserId(null); setCheckAttempt((attempt) => attempt + 1); }}>Retry</Button></> : needsInitialConsent ? <>
+        <p className="text-[10px] font-extrabold uppercase tracking-[.16em] text-[var(--accent)]">First-time account setup</p>
+        <h2 id="account-setup-title" className="mt-2 text-2xl font-bold tracking-[-.04em]">Review the Terms and Privacy Notice</h2>
+        <p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">Please acknowledge both current documents before choosing your school path.</p>
+        <div className="mt-6 grid gap-4 rounded-xl border border-[var(--line)] bg-[var(--canvas)] p-5 text-sm">
+          <label className="flex items-start gap-3"><input type="checkbox" checked={legalAcceptance.terms} onChange={(event) => setLegalAcceptance((current) => ({ ...current, terms: event.target.checked }))} className="mt-1 size-4 accent-[var(--accent)]" /><span>I have read and agree to the <Link href="/terms" target="_blank" className="font-bold text-[var(--accent)]">Terms of Use v{LEGAL_DOCUMENTS.terms.version}</Link>.</span></label>
+          <label className="flex items-start gap-3"><input type="checkbox" checked={legalAcceptance.privacy} onChange={(event) => setLegalAcceptance((current) => ({ ...current, privacy: event.target.checked }))} className="mt-1 size-4 accent-[var(--accent)]" /><span>I have read the <Link href="/privacy" target="_blank" className="font-bold text-[var(--accent)]">Privacy Notice v{LEGAL_DOCUMENTS.privacy.version}</Link>.</span></label>
+        </div>
+        {error && <p role="alert" className="mt-4 rounded-lg bg-[var(--red-soft)] p-3 text-xs text-[var(--red)]">{error}</p>}
+        <Button className="mt-5 w-full" disabled={busy || !registrationConsentValid(legalAcceptance)} onClick={() => void acknowledgeInitialDocuments()}>{busy && <LoaderCircle className="animate-spin" size={15} />}Acknowledge and continue</Button>
+      </> : <>
       <p className="text-[10px] font-extrabold uppercase tracking-[.16em] text-[var(--accent)]">Account setup · one-time choice</p>
       <h2 id="account-setup-title" className="mt-2 text-2xl font-bold tracking-[-.04em] sm:text-3xl">How would you like to enter EconMind OS?</h2>
       <p className="mt-3 max-w-xl text-sm leading-6 text-[var(--ink-muted)]">Choose your school path before entering the platform. This does not grant a League role, team membership or country control by itself.</p>
@@ -158,6 +195,7 @@ export function AccountOnboarding() {
 
       {error && <p role="alert" className="mt-5 rounded-lg bg-[var(--red-soft)] p-3 text-xs leading-5 text-[var(--red)]">{error}</p>}
       {message && <p className="mt-5 flex items-center gap-2 rounded-lg bg-[var(--accent-soft)] p-3 text-xs font-bold text-[var(--accent)]"><CheckCircle2 size={15} />{message}</p>}
+      </>}
     </div>
   </div>;
 }

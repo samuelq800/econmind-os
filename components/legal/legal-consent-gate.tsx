@@ -19,7 +19,7 @@ export function LegalConsentGate() {
   useEffect(() => {
     if (loading || !user) return;
     let active = true;
-    void listMyLegalConsents()
+    const refresh = () => { void listMyLegalConsents()
       .then((consents) => {
         if (!active) return;
         const accepted = Object.fromEntries(consents.map((consent) => [consent.document_type, consent.document_version]));
@@ -29,8 +29,10 @@ export function LegalConsentGate() {
         // A temporary request failure must not lock an existing account out of
         // the current release. A material-reconsent release can retry on focus.
         if (active) setOpen(false);
-      })
-    return () => { active = false; };
+      }); };
+    refresh();
+    window.addEventListener("econmind:legal-consent-updated", refresh);
+    return () => { active = false; window.removeEventListener("econmind:legal-consent-updated", refresh); };
   }, [loading, user]);
 
   if (pathname === "/live-world" || pathname.startsWith("/live-world/") || !user || !open) return null;
