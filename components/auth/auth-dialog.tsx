@@ -79,6 +79,34 @@ function descriptionForMode(mode: AuthMode, verificationEmail: string) {
 
 const otpModes: AuthMode[] = ["verify-sign-up", "verify-recovery"];
 
+function GoogleMark() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="size-5 shrink-0"
+      focusable="false"
+      viewBox="0 0 24 24"
+    >
+      <path
+        fill="#4285F4"
+        d="M21.35 12.27c0-.79-.07-1.55-.2-2.27H12v4.3h5.23a4.47 4.47 0 0 1-1.94 2.93v2.79h3.59c2.1-1.93 3.32-4.78 3.32-7.75Z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 21.75c2.7 0 4.97-.9 6.62-2.44l-3.59-2.79c-1 .67-2.27 1.07-3.7 1.07-2.85 0-5.27-1.93-6.13-4.52H1.49v2.88A10 10 0 0 0 12 21.75Z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.87 13.07A6 6 0 0 1 5.53 11c0-.72.12-1.42.34-2.07V6.05H2.16A10 10 0 0 0 1.1 11c0 1.61.39 3.14 1.06 4.95l3.71-2.88Z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 4.41c1.55 0 2.94.53 4.03 1.57l3.02-3.02C16.96 1 14.7.25 12 .25A10 10 0 0 0 2.16 6.05l3.71 2.88C6.73 6.34 9.15 4.41 12 4.41Z"
+      />
+    </svg>
+  );
+}
+
 export function AuthDialog() {
   const {
     authOpen,
@@ -434,7 +462,7 @@ export function AuthDialog() {
           {(authMode === "sign-in" || authMode === "sign-up") && (
             <div className="mt-6">
               <Button type="button" variant="secondary" className="w-full" disabled={busy} onClick={() => void continueWithGoogle()}>
-                {busy ? <LoaderCircle className="animate-spin" size={15} /> : <span aria-hidden="true" className="text-base font-black text-[#4285f4]">G</span>}
+                {busy ? <LoaderCircle className="animate-spin" size={15} /> : <GoogleMark />}
                 Continue with Google
               </Button>
               <div className="mt-5 flex items-center gap-3 text-[11px] font-bold text-[var(--ink-faint)]" aria-hidden="true"><span className="h-px flex-1 bg-[var(--line)]" />or<span className="h-px flex-1 bg-[var(--line)]" /></div>

@@ -17,6 +17,9 @@ describe("Google sign-in with the existing Supabase account", () => {
     expect(dialog).toContain("googleSignInRedirectUrl(window.location.origin)");
     expect(dialog).toContain("signInWithOAuth");
     expect(dialog).toContain("Continue with Google");
+    expect(dialog).toContain("function GoogleMark()");
+    expect(dialog).toContain('aria-hidden="true"');
+    expect(dialog).toContain('fill="#4285F4"');
     expect(provider).toContain('currentUrl.searchParams.delete("auth")');
     expect(provider).toContain('for (const key of ["code", "error", "error_code", "error_description"])');
     expect(provider).toContain('fragment.has("access_token")');
