@@ -6,7 +6,7 @@ import { canHostLiveSession } from "@/lib/platform/live-session-access";
 
 const migration = readFileSync("supabase/migrations/20260920000000_live_auction.sql", "utf8");
 const auditFixes = readFileSync("supabase/migrations/20260920000100_live_auction_audit_fixes.sql", "utf8");
-const presetFixes = readFileSync("supabase/migrations/20260920000200_live_auction_preset_items.sql", "utf8");
+const presetFixes = readFileSync("supabase/migrations/20260920000400_live_auction_preset_items.sql", "utf8");
 
 describe("Live Auction", () => {
   it("uses a standalone invitation route and temporary room identity", () => {
