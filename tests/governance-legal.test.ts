@@ -3,8 +3,10 @@ import { describe, expect, it } from "vitest";
 import { LEGAL_DOCUMENTS, needsLegalReconsent, registrationConsentValid } from "@/lib/legal/legal-config";
 import { PRIVACY_SECTIONS, TERMS_SECTIONS } from "@/lib/legal/legal-content";
 import { pageAccessForPath } from "@/lib/platform/access-control";
+import { legalAcknowledgementErrorMessage } from "@/lib/supabase/governance";
 
 const migration = readFileSync("supabase/migrations/20260823000000_governance_privacy_legal.sql", "utf8");
+const currentLegalMigration = readFileSync("supabase/migrations/20260921010000_activate_current_legal_documents.sql", "utf8");
 const authDialog = readFileSync("components/auth/auth-dialog.tsx", "utf8");
 const about = readFileSync("app/about/page.tsx", "utf8");
 const featureFlags = readFileSync("lib/platform/feature-flags.ts", "utf8");
@@ -26,6 +28,14 @@ describe("governance, privacy, and legal foundation", () => {
       privacy: LEGAL_DOCUMENTS.privacy.version,
     })).toBe(false);
     expect(needsLegalReconsent({})).toBe(false);
+  });
+
+  it("registers the exact current legal versions required by first-time setup", () => {
+    expect(currentLegalMigration).toContain("'terms',\n    '1.2'");
+    expect(currentLegalMigration).toContain("'privacy',\n    '1.1'");
+    expect(currentLegalMigration).toContain("status = 'retired'");
+    expect(legalAcknowledgementErrorMessage(new Error("The requested legal document version is not active"))).toContain("being activated");
+    expect(legalAcknowledgementErrorMessage(new Error("network unavailable"))).toBe("Could not save your acknowledgement. Please try again.");
   });
 
   it("explains the optional Google Sign-In data boundary in public legal copy", () => {

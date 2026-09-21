@@ -11,7 +11,7 @@ import { CURRICULUM_SYSTEM_LABELS, CURRICULUM_SYSTEMS, type CurriculumSystem } f
 import { isCompleteSchoolLocation } from "@/lib/league/geographic-areas";
 import { hasInitialLegalConsent, LEGAL_DOCUMENTS, registrationConsentValid } from "@/lib/legal/legal-config";
 import { completeAccountOnboarding, getAccountOnboarding, listApprovedSchoolChoices, type ApprovedSchoolChoice, type OnboardingPath } from "@/lib/supabase/account-onboarding";
-import { acceptCurrentLegalDocuments, listMyLegalConsents } from "@/lib/supabase/governance";
+import { acceptCurrentLegalDocuments, legalAcknowledgementErrorMessage, listMyLegalConsents } from "@/lib/supabase/governance";
 
 type SetupStep = "choose" | OnboardingPath;
 
@@ -103,8 +103,8 @@ export function AccountOnboarding() {
       await acceptCurrentLegalDocuments(LEGAL_DOCUMENTS.terms.version, LEGAL_DOCUMENTS.privacy.version);
       setNeedsInitialConsent(false);
       window.dispatchEvent(new Event("econmind:legal-consent-updated"));
-    } catch {
-      setError("Could not save your acknowledgement. Please try again.");
+    } catch (caught) {
+      setError(legalAcknowledgementErrorMessage(caught));
     } finally {
       setBusy(false);
     }
