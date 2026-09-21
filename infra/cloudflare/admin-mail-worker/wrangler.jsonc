@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "econmind-admin-mail",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-20",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "secrets": {
+    "required": [
+      "MANAGEMENT_FORWARD_TO_JSON",
+      "INBOUND_MAIL_WEBHOOK_SECRET",
+      "INBOUND_MAIL_INGEST_URL"
+    ]
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "logs": { "invocation_logs": false }
+  }
+}

@@ -45,6 +45,7 @@ export const PAGE_ACCESS_RULES: readonly PageAccessRule[] = [
   { path: "/admin/governance", match: "prefix", audience: "account", platformRoles: ["platform_admin"] },
   { path: "/admin/live-world", match: "prefix", audience: "account", appRoles: ["teacher"], platformRoles: ["school_leader", "platform_admin"], roleMatch: "any" },
   { path: "/admin/live-auction", match: "prefix", audience: "account", appRoles: ["teacher"], platformRoles: ["school_leader", "platform_admin"], roleMatch: "any" },
+  { path: "/admin/mail", match: "prefix", audience: "account", platformRoles: ["platform_admin"] },
 
   // Personal data is not part of the otherwise-public case library.
   { path: "/cases/history", match: "prefix", audience: "account" },

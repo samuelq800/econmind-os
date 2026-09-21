@@ -66,3 +66,6 @@ jobs:
           supabase functions deploy process-league-world-round --project-ref "$SUPABASE_PROJECT_REF"
           supabase functions deploy process-continuous-world --project-ref "$SUPABASE_PROJECT_REF"
           supabase functions deploy moderate-account-access --project-ref "$SUPABASE_PROJECT_REF"
+          supabase functions deploy send-admin-email --project-ref "$SUPABASE_PROJECT_REF"
+          supabase functions deploy ingest-admin-email --project-ref "$SUPABASE_PROJECT_REF"
+          supabase functions deploy brevo-mail-events --project-ref "$SUPABASE_PROJECT_REF"
