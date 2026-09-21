@@ -115,3 +115,11 @@ export async function acceptCurrentLegalDocuments(termsVersion: string, privacyV
   });
   fail(error);
 }
+
+export function legalAcknowledgementErrorMessage(caught: unknown) {
+  const message = caught instanceof Error ? caught.message : "";
+  if (message.includes("requested legal document version is not active")) {
+    return "The current legal documents are being activated. Please refresh and try again in a moment.";
+  }
+  return "Could not save your acknowledgement. Please try again.";
+}
