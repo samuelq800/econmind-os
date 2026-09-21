@@ -35,5 +35,7 @@ describe("first-session school path", () => {
     expect(component).toContain("hasInitialLegalConsent(consents)");
     expect(component).toContain("acceptCurrentLegalDocuments(LEGAL_DOCUMENTS.terms.version, LEGAL_DOCUMENTS.privacy.version)");
     expect(component).toContain("if (authOpen || viewerAccess || !user");
+    expect(component).toContain("A transient profile/consent read failure must never lock an established");
+    expect(component).toContain("setCompletedUserId(userId);");
   });
 });
