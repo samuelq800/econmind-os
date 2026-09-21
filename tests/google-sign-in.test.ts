@@ -18,6 +18,8 @@ describe("Google sign-in with the existing Supabase account", () => {
     expect(dialog).toContain("signInWithOAuth");
     expect(dialog).toContain("Continue with Google");
     expect(provider).toContain('currentUrl.searchParams.delete("auth")');
+    expect(provider).toContain('for (const key of ["code", "error", "error_code", "error_description"])');
+    expect(provider).toContain('fragment.has("access_token")');
   });
 
   it("initializes only missing user-controlled profile fields", () => {

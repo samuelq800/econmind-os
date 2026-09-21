@@ -96,8 +96,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (authMarker === "recovery" || authMarker === "confirmed" || (authMarker === "google" && (googleCallbackFailed || nextUser || !googleCallbackPending))) {
         currentUrl.searchParams.delete("auth");
         if (authMarker === "google") {
-          for (const key of ["error", "error_code", "error_description"]) currentUrl.searchParams.delete(key);
-          if (fragment.has("error") || fragment.has("error_code")) currentUrl.hash = "";
+          for (const key of ["code", "error", "error_code", "error_description"]) currentUrl.searchParams.delete(key);
+          if (fragment.has("access_token") || fragment.has("error") || fragment.has("error_code")) currentUrl.hash = "";
         }
         window.history.replaceState({}, "", currentUrl.toString());
       }
