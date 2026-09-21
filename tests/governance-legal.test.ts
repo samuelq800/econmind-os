@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { LEGAL_DOCUMENTS, needsLegalReconsent, registrationConsentValid } from "@/lib/legal/legal-config";
+import { PRIVACY_SECTIONS, TERMS_SECTIONS } from "@/lib/legal/legal-content";
 import { pageAccessForPath } from "@/lib/platform/access-control";
 
 const migration = readFileSync("supabase/migrations/20260823000000_governance_privacy_legal.sql", "utf8");
@@ -25,6 +26,15 @@ describe("governance, privacy, and legal foundation", () => {
       privacy: LEGAL_DOCUMENTS.privacy.version,
     })).toBe(false);
     expect(needsLegalReconsent({})).toBe(false);
+  });
+
+  it("explains the optional Google Sign-In data boundary in public legal copy", () => {
+    const googleSection = PRIVACY_SECTIONS.find((section) => section.id === "google-sign-in");
+    expect(googleSection?.heading).toBe("3. Google Sign-In");
+    expect(googleSection?.bullets?.join(" ")).toContain("Google Drive, Gmail, Calendar, contacts");
+    expect(googleSection?.bullets?.join(" ")).toContain("does not receive or store your Google password");
+    expect(googleSection?.bullets?.join(" ")).toContain("not public");
+    expect(TERMS_SECTIONS.find((section) => section.id === "accounts")?.paragraphs?.join(" ")).toContain("Google Sign-In is optional");
   });
 
   it("exposes legal pages publicly but requires an individual account for contact", () => {

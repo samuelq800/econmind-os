@@ -30,8 +30,21 @@ export const PRIVACY_SECTIONS: readonly LegalSection[] = [
     ],
   },
   {
+    id: "google-sign-in",
+    heading: "3. Google Sign-In",
+    paragraphs: [
+      "Google Sign-In is an optional authentication method provided through Supabase Auth. You may use the platform's email-based account options where they are available instead.",
+    ],
+    bullets: [
+      "Data received: when you choose Google Sign-In, we may receive the email address, provider authentication identifier, and—only if Google provides them—your display name and profile image URL. We do not request access to your Google Drive, Gmail, Calendar, contacts, or other Google account content.",
+      "Use: this data is used only to authenticate you, connect you to your EconMind account, maintain account security, and provide signed-in features. It is not used for advertising, sold, or used to build advertising profiles.",
+      "Storage: the EconMind account record and permitted profile fields are stored through Supabase. Your browser stores an authentication session needed to keep you signed in. EconMind OS does not receive or store your Google password.",
+      "Sharing: your email address and provider authentication identifier are not public. A display name, school/team association, or role is shown only where the relevant EconMind OS feature or directory says it will be shown.",
+    ],
+  },
+  {
     id: "uses",
-    heading: "3. Why we use information",
+    heading: "4. Why we use information",
     bullets: [
       "to create and secure your account, maintain your session, and provide saved-work features;",
       "to run the learning, challenge, school, and team functions you choose to use;",
@@ -43,7 +56,7 @@ export const PRIVACY_SECTIONS: readonly LegalSection[] = [
   },
   {
     id: "sharing",
-    heading: "4. Visibility and sharing",
+    heading: "5. Visibility and sharing",
     paragraphs: [
       "Your email address, authentication identifier, private saved work, private drafts, and administrator notes are not shown in the public directory. A normal profile is limited to the display name you choose; school, team, and role information appears only where a League workflow needs it.",
       "Some Team-page contact cards are an editorial directory exception. They are published only for people who have expressly agreed to public display of those contact details. Those contact cards are not copied into ordinary member profiles or search results.",
@@ -52,7 +65,7 @@ export const PRIVACY_SECTIONS: readonly LegalSection[] = [
   },
   {
     id: "providers",
-    heading: "5. Storage and service providers",
+    heading: "6. Storage and service providers",
     paragraphs: [
       "EconMind OS uses Supabase for authentication and database storage. Access to application records is protected by Row Level Security so that ordinary signed-in users can access their own records only, while platform administrators have narrowly scoped administrative access for the services they operate.",
       "The public site is delivered through its configured web hosting and source-control deployment. We do not currently use a paid external AI API to generate learning answers or profile users. Economics calculations in the interactive models run in the browser unless a feature clearly saves a result you ask to keep.",
@@ -60,7 +73,7 @@ export const PRIVACY_SECTIONS: readonly LegalSection[] = [
   },
   {
     id: "retention",
-    heading: "6. Retention and account deletion",
+    heading: "7. Retention and account deletion",
     paragraphs: [
       "We keep account and learning information only for as long as it is useful for the educational service, support, security, and legitimate record-keeping needs. The appropriate period depends on the type of record and whether it forms part of a shared League activity.",
       "A standard personal account with no school, team, League, World, privileged-role, or shared-content responsibility can be permanently deleted from the Profile page after a server-side eligibility check and explicit confirmation. The Auth identity, personal profile, private workspace records, and private support correspondence are deleted together. Accounts connected to an organisation or shared records use administrator review so that another participant's records are not accidentally removed; shared historical records may be retained in de-identified form when needed to preserve an activity.",
@@ -68,7 +81,7 @@ export const PRIVACY_SECTIONS: readonly LegalSection[] = [
   },
   {
     id: "choices",
-    heading: "7. Your choices and requests",
+    heading: "8. Your choices and requests",
     paragraphs: [
       "You can edit optional profile information from your Profile page and use its deletion control for an eligible personal account. Privacy, access, correction, or administrator-reviewed deletion requests can also be submitted through the in-site Contact form; their status and the administrator's final response are visible in your profile. For security, self-service deletion and reviewed account-deletion requests must originate from the signed-in account concerned.",
       "The platform does not currently operate behavioural advertising cookies or a third-party marketing analytics programme. Essential browser storage is used for authentication, preferences, and local drafts. If that changes materially, this notice and the consent flow will be updated before the change is relied upon.",
@@ -76,16 +89,16 @@ export const PRIVACY_SECTIONS: readonly LegalSection[] = [
   },
   {
     id: "minors",
-    heading: "8. School and younger users",
+    heading: "9. School and younger users",
     paragraphs: [
       "EconMind OS is designed for school and community learning. Students should use it in accordance with their school, parent or guardian, and applicable local requirements. Schools and adult coordinators remain responsible for deciding whether and how their students may participate in a particular activity.",
     ],
   },
   {
     id: "changes",
-    heading: "9. Updates and contact",
+    heading: "10. Updates and contact",
     paragraphs: [
-      "This notice is versioned so changes can be understood. Existing users are not interrupted for routine wording or operational updates. For a material change, EconMind OS may request renewed acknowledgement before a relevant feature is used again.",
+      "This notice is versioned so changes can be understood. It includes a Google Sign-In transparency clarification. Existing users are not interrupted for routine wording or operational updates. For a material change, EconMind OS may request renewed acknowledgement before a relevant feature is used again.",
       `Current version: Privacy Notice v${LEGAL_DOCUMENTS.privacy.version}, effective ${LEGAL_DOCUMENTS.privacy.effectiveDate}. Use the signed-in Contact form for requests that need account verification or a recorded response. For general privacy questions or if you cannot sign in, contact ${OFFICIAL_CONTACT_EMAIL}. Account-deletion requests cannot be actioned from an unauthenticated email alone.`,
     ],
   },
@@ -105,6 +118,7 @@ export const TERMS_SECTIONS: readonly LegalSection[] = [
     heading: "2. Accounts and eligibility",
     paragraphs: [
       "You must provide accurate account information and keep your password secure. Do not share a personal account. Invitation-code access is deliberately view-only and cannot create saved work, school membership, or operational changes.",
+      "Where available, you may use an email-based account method or Google Sign-In. Google Sign-In is optional and does not grant an elevated platform role or change your responsibilities under these Terms.",
       "If you are participating through a school, follow the participation arrangements set by your school and any applicable parent, guardian, or local requirements. Platform administrators may require reasonable verification before granting school, team, professor, or other elevated roles.",
     ],
   },
