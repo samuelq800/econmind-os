@@ -22,6 +22,16 @@ function saveOnboardingChoice(userId: string) {
   window.localStorage.setItem(`${onboardingStoragePrefix}${userId}`, "true");
 }
 
+/**
+ * This only suppresses the loading overlay for an account already confirmed
+ * complete in this browser. The database request still runs on every mount
+ * and remains the authority if setup becomes incomplete or needs attention.
+ */
+function hasCachedOnboardingChoice(userId: string) {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(`${onboardingStoragePrefix}${userId}`) === "true";
+}
+
 const paths: Array<{ id: OnboardingPath; title: string; description: string; icon: typeof School2 }> = [
   { id: "school", title: "Choose an existing school", description: "Associate your account with an approved school. Join a team later with its invite code.", icon: School2 },
   { id: "create_school", title: "Create a school", description: "Submit a school for teacher approval. It does not create a League team or country automatically.", icon: Building2 },
@@ -93,7 +103,7 @@ export function AccountOnboarding() {
     return () => { active = false; };
   }, [step]);
 
-  if (authOpen || viewerAccess || !user || roleLoading || profileError || completedUserId === userId || pathname === "/live-world" || pathname.startsWith("/live-world/")) return null;
+  if (authOpen || viewerAccess || !user || roleLoading || profileError || completedUserId === userId || (userId !== null && checkedUserId !== userId && hasCachedOnboardingChoice(userId)) || pathname === "/live-world" || pathname.startsWith("/live-world/")) return null;
 
   async function acknowledgeInitialDocuments() {
     if (!registrationConsentValid(legalAcceptance)) return;

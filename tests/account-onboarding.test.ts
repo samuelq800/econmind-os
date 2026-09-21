@@ -29,6 +29,7 @@ describe("first-session school path", () => {
     expect(component).toContain("econmind.account-onboarding.completed.");
     expect(component).toContain("localStorage");
     expect(component).toContain("saveOnboardingChoice(userId)");
+    expect(component).toContain("hasCachedOnboardingChoice(userId)");
     expect(component).toContain("if (profile.onboarding_path)");
     expect(component).not.toContain("hasSavedOnboardingChoice(userId)");
     expect(component).toContain("listMyLegalConsents()");
@@ -37,5 +38,6 @@ describe("first-session school path", () => {
     expect(component).toContain("if (authOpen || viewerAccess || !user");
     expect(component).toContain("A transient profile/consent read failure must never lock an established");
     expect(component).toContain("setCompletedUserId(userId);");
+    expect(component).toContain("database request still runs on every mount");
   });
 });
