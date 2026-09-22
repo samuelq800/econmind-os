@@ -54,7 +54,7 @@ const socialLinks = [
     icon: YouTubeIcon,
   },
   {
-    href: "https://www.linkedin.com/in/league-econmind-3a6b68430/",
+    href: "https://lnkd.in/p/dTtiZ_5z",
     label: "LinkedIn",
     icon: LinkedInIcon,
   },

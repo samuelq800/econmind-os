@@ -10,7 +10,7 @@ describe("footer social links", () => {
       "https://www.xiaohongshu.com/user/profile/69be61b90000000034018bcc",
       "https://www.instagram.com/econmind_os/",
       "https://www.youtube.com/@EconmindGroup",
-      "https://www.linkedin.com/in/league-econmind-3a6b68430/",
+      "https://lnkd.in/p/dTtiZ_5z",
     ]) {
       expect(footer).toContain(`href: "${href}"`);
     }
