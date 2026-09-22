@@ -16,7 +16,7 @@ export type TeamMember = {
 export const FOUNDING_TEAM: readonly TeamMember[] = [
   {
     name: "Samuel",
-    role: "Co-Founder",
+    role: "Initial Founder",
     focus: ["Product", "Economic Simulation", "Academic Development"],
     image: "/images/team/samuel-yale.jpg",
     imagePosition: "50% 45%",
@@ -24,7 +24,7 @@ export const FOUNDING_TEAM: readonly TeamMember[] = [
   },
   {
     name: "Yale",
-    role: "Co-Founder",
+    role: "Initial Founder",
     focus: ["Research", "League Development", "Partnerships"],
     image: "/images/team/samuel-yale.jpg",
     imagePosition: "50% 45%",
@@ -33,6 +33,13 @@ export const FOUNDING_TEAM: readonly TeamMember[] = [
 ];
 
 export const REGIONAL_LEADERS: readonly TeamMember[] = [
+  {
+    name: "Richard",
+    role: "Co-Founder",
+    image: "/images/team/richard.jpg",
+    imagePosition: "50% 40%",
+    contact: { type: "wechat", value: "HHR_0211" },
+  },
   {
     name: "Angela",
     role: "East China & National A-Level Lead",
@@ -93,13 +100,6 @@ export const REGIONAL_LEADERS: readonly TeamMember[] = [
     image: "/images/team/scarlett.jpg",
     imagePosition: "50% 33%",
     contact: { type: "wechat", value: "merrywyh2009" },
-  },
-  {
-    name: "Richard",
-    role: "East China & National A-Level Lead",
-    image: "/images/team/richard.jpg",
-    imagePosition: "50% 40%",
-    contact: { type: "wechat", value: "HHR_0211" },
   },
   {
     name: "Sophia Cai",
