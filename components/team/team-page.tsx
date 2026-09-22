@@ -36,7 +36,7 @@ export function TeamPage() {
           </div>
           <article className="mt-12 grid overflow-hidden border border-[var(--line)] bg-[var(--surface)] lg:grid-cols-[1.02fr_.98fr]">
             <div className="relative min-h-[390px] bg-[var(--surface-subtle)] sm:min-h-[510px]">
-              <Image src={withBasePath("/images/team/samuel-yale.jpg")} alt="Samuel and Yale, Co-Founders of EconMind" fill priority sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" style={{ objectPosition: "50% 45%" }} />
+              <Image src={withBasePath("/images/team/samuel-yale.jpg")} alt="Samuel and Yale, Initial Founders of EconMind" fill priority sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" style={{ objectPosition: "50% 45%" }} />
               <span className="absolute bottom-5 left-5 border border-white/45 bg-black/25 px-3 py-2 text-[9px] font-extrabold uppercase tracking-[.16em] text-white backdrop-blur-sm">Joint founding team</span>
             </div>
             <div className="grid content-between p-6 sm:p-9 lg:p-12">
