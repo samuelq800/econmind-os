@@ -43,7 +43,7 @@ describe("footer social links", () => {
   });
 
   it("places the WeChat discussion-group QR code alongside the official support email", () => {
-    expect(footer).toContain('src={withBasePath("/brand/wechat-group-qr.jpg")}');
+    expect(footer).toContain('src={withBasePath("/brand/wechat-group-qr.png")}');
     expect(footer).toContain("WeChat group");
     expect(footer).toContain("For community discussion only.");
     expect(footer).toContain("For official support, email");

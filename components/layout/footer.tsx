@@ -79,7 +79,7 @@ export function Footer() {
           </p>
           <div className="mt-4 flex items-start gap-3">
             <Image
-              src={withBasePath("/brand/wechat-group-qr.jpg")}
+              src={withBasePath("/brand/wechat-group-qr.png")}
               alt="WeChat group QR code for community discussion"
               width={112}
               height={112}
