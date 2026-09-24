@@ -1,6 +1,7 @@
 // EconMind Live Auction preset data.
-// starting_price_usd is a PRESET equal to the published auction estimate LOW bound.
-// It is NOT claimed to be the historical auction's literal opening bid.
+// Historical starting_price_usd presets proxy the published auction estimate LOW bound.
+// Fictional EconMind concepts use an explicitly labelled game price instead.
+// Neither is claimed to be a historical auction's literal opening bid.
 
 export const ECONMIND_AUCTION_PRESETS = [
   {
@@ -401,6 +402,26 @@ export const ECONMIND_AUCTION_PRESETS = [
     "image_output_stem": "jade_05_qianlong_chilong_disc",
     "currency": "USD",
     "starting_price_basis": "LOW_ESTIMATE_PROXY",
+    "image_local_path": null
+  },
+  {
+    "id": "special_yales_egg",
+    "category": "special",
+    "category_zh": "特别藏品",
+    "title_zh": "Yale's Egg",
+    "title_en": "Yale's Egg",
+    "maker_or_period": "EconMind original concept · not a historical auction lot",
+    "auction_house": "EconMind",
+    "auction_year": 2026,
+    "lot_number": "SPECIAL-01",
+    "estimate_low_usd": 500000,
+    "estimate_high_usd": 750000,
+    "starting_price_usd": 500000,
+    "short_description_zh": "EconMind 原创概念藏品：深蓝珐琅与金色纹饰的神秘之蛋。拍卖成交后，蛋壳将裂开，露出 Yale Run 的老虎。图片为原创概念示意，不代表真实历史藏品或市场估价。",
+    "source_url": "",
+    "image_output_stem": "special_01_yales_egg",
+    "currency": "USD",
+    "starting_price_basis": "ECONMIND_GAME_PRICE",
     "image_local_path": null
   }
 ] as const;

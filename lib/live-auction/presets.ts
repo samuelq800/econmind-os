@@ -21,6 +21,7 @@ export const AUCTION_PRESET_IMAGE_PATHS: Record<string, string> = {
   jade_qianlong_prunus_lingzhi_vase: "/images/live-auction/jade_03_qianlong_prunus_lingzhi_vase.jpg",
   jade_qianlong_crab: "/images/live-auction/jade_04_qianlong_crab.jpg",
   jade_qianlong_chilong_disc: "/images/live-auction/jade_05_qianlong_chilong_disc.jpg",
+  special_yales_egg: "/images/live-auction/special_01_yales_egg.jpg",
 };
 
 export const ECONMIND_AUCTION_PRESETS = source.map((preset) => ({ ...preset, imageUrl: AUCTION_PRESET_IMAGE_PATHS[preset.id] ?? null }));
@@ -30,4 +31,7 @@ export const PRESET_CATEGORIES = [
   { id: "painting", label: "画作" },
   { id: "bronze", label: "青铜器" },
   { id: "jade", label: "玉器" },
+  { id: "special", label: "特别藏品" },
 ] as const;
+
+export const YALES_EGG_PRESET_ID = "special_yales_egg";
