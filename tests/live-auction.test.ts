@@ -73,13 +73,17 @@ describe("Live Auction", () => {
     expect(room).toContain("Private information");
   });
 
-  it("ships the authoritative twenty-item preset catalogue and preserves assets with item records", () => {
+  it("ships twenty sourced items plus the fictional Yale's Egg and preserves assets with item records", () => {
     const presets = readFileSync("lib/live-auction/auction-presets-source.ts", "utf8");
     const imageFiles = readdirSync("public/images/live-auction").filter((name) => name.endsWith(".jpg"));
     const room = readFileSync("components/live-auction/live-auction-room.tsx", "utf8");
-    expect((presets.match(/"id":/g) ?? []).length).toBe(20);
+    expect((presets.match(/"id":/g) ?? []).length).toBe(21);
     for (const category of ["porcelain", "painting", "bronze", "jade"]) expect((presets.match(new RegExp(`"category": "${category}"`, "g")) ?? []).length).toBe(5);
-    expect(imageFiles).toHaveLength(20);
+    expect((presets.match(/"category": "special"/g) ?? []).length).toBe(1);
+    expect(presets).toContain('"id": "special_yales_egg"');
+    expect(presets).toContain('"starting_price_usd": 500000');
+    expect(presets).toContain('"starting_price_basis": "ECONMIND_GAME_PRICE"');
+    expect(imageFiles).toHaveLength(21);
     for (const imageFile of imageFiles) expect(statSync(`public/images/live-auction/${imageFile}`).size).toBeGreaterThan(0);
     expect(presetFixes).toContain("add column if not exists image_url");
     expect(presetFixes).toContain("p_preset_id");
@@ -93,5 +97,12 @@ describe("Live Auction", () => {
     expect(room).toContain("PURCHASE COMPLETE");
     expect(room).toContain("The item has been added to your collection.");
     expect(room).toContain("artifact-fallback.svg");
+    expect(room).toContain('item.presetId === YALES_EGG_PRESET_ID');
+    expect(room).toContain("<YaleEggHatch />");
+    expect(room).toContain("<YaleTigerPortrait />");
+    const hatch = readFileSync("components/live-auction/yale-egg-hatch.tsx", "utf8");
+    const hatchStyles = readFileSync("components/live-auction/yale-egg-hatch.module.css", "utf8");
+    expect(hatch).toContain('/games/tiao/spritesheet.webp');
+    expect(hatchStyles).toContain("@media (prefers-reduced-motion: reduce)");
   });
 });
