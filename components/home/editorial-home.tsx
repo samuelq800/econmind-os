@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { HomeDailyBriefPreview } from "@/components/home/home-daily-brief-preview";
 import { HomeLeagueSchoolDirectory } from "@/components/home/home-league-school-directory";
+import { Season1HomePromo } from "@/components/home/season1-home-promo";
 import { LEAGUE_CHALLENGE_CATALOG } from "@/lib/economics/league-arena";
 import { withBasePath } from "@/lib/base-path";
 
@@ -47,6 +48,7 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
 export function EditorialHome() {
   return (
     <main className="editorial-home">
+      <Season1HomePromo />
       <section className="home-hero">
         <div className="home-hero-grid" aria-hidden="true" />
         <div className="mx-auto grid max-w-[1560px] gap-12 px-5 pb-20 pt-16 sm:px-8 lg:grid-cols-[1.03fr_.97fr] lg:px-12 lg:pb-28 lg:pt-24">

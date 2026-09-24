@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const home = readFileSync("components/home/editorial-home.tsx", "utf8");
+const season1Promo = readFileSync("components/home/season1-home-promo.tsx", "utf8");
 const schoolDirectory = readFileSync("components/home/home-league-school-directory.tsx", "utf8");
 const liveSchoolDirectory = readFileSync("components/league/use-live-league-schools.ts", "utf8");
 const leagueAbout = readFileSync("components/league/league-about.tsx", "utf8");
@@ -18,6 +19,15 @@ const explore = readFileSync("app/explore/page.tsx", "utf8");
 
 
 describe("editorial public architecture", () => {
+  it("offers a dismissible Season 1 preview without changing the account-only destination", () => {
+    expect(home).toContain("<Season1HomePromo />");
+    expect(season1Promo).toContain('href="/season1"');
+    expect(season1Promo).toContain('aria-label="Dismiss Season 1 announcement"');
+    expect(season1Promo).toContain("window.sessionStorage");
+    expect(season1Promo).toContain("season1-gateway-wide.jpg");
+    expect(accessControl).toContain('{ path: "/season1", match: "prefix", audience: "account" }');
+  });
+
   it("keeps the requested public front door while preserving the account gate for tools", () => {
     expect(gate).toContain("pageAccessForPath");
     expect(gate).toContain("accountRequired");
