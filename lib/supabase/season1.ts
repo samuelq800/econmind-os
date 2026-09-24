@@ -26,17 +26,15 @@ type Season1LobbyRpcData = Omit<Season1LobbyData, "currentMembership" | "applica
 
 /**
  * Keep the richer participant read model as the source for the page. The
- * original admin read model already exposes the current user's pending
- * application IDs, so use it as a best-effort compatibility field while the
- * participant RPC evolves. This prevents a second click from submitting an
- * application that is already pending.
+ * Participant-scoped pending application IDs keep repeat clicks disabled.
+ * The admin read model must not be required for regular members.
  */
 export const getSeason1Lobby = async () => {
-  const [data, legacy] = await Promise.all([
+  const [data, pendingTeamIds] = await Promise.all([
     rpc<Season1LobbyRpcData>("get_world_preseason_lobby"),
-    rpc<{ applicationTeamIds?: string[] }>("get_world_preseason_admin_lobby").catch(() => null),
+    rpc<string[]>("get_world_preseason_my_pending_team_ids").catch(() => []),
   ]);
-  const applicationTeamIds = legacy?.applicationTeamIds ?? data.applicationTeamIds ?? [];
+  const applicationTeamIds = pendingTeamIds.length ? pendingTeamIds : data.applicationTeamIds ?? [];
   return {
     ...data,
     currentMembership: data.membership,
@@ -44,7 +42,7 @@ export const getSeason1Lobby = async () => {
     pendingApplications: data.applications.map(({ id, teamId, teamName, applicantName }) => ({ id, teamId, teamName, applicantName })),
   };
 };
-export const createSeason1Team = (input: { name: string; description?: string; focus?: string; capacity?: number; recruitmentMode?: "open" | "application_required" | "invite_only"; teamStyle?: "competitive" | "balanced" | "learning"; preferredLanguage?: string; preferences: string[] }) => rpc<string>("world_preseason_create_team", { p_name: input.name, p_description: input.description ?? input.focus ?? "", p_recruitment_mode: input.recruitmentMode ?? "open", p_team_style: input.teamStyle ?? "balanced", p_preferred_language: input.preferredLanguage ?? "English", p_role_preferences: input.preferences });
+export const createSeason1Team = (input: { name: string; description?: string; focus?: string; recruitmentMode?: "open" | "application_required" | "invite_only"; teamStyle?: "competitive" | "balanced" | "learning"; preferredLanguage?: string; preferences: string[] }) => rpc<string>("world_preseason_create_team", { p_name: input.name, p_description: input.description ?? input.focus ?? "", p_recruitment_mode: input.recruitmentMode ?? "open", p_team_style: input.teamStyle ?? "balanced", p_preferred_language: input.preferredLanguage ?? "English", p_role_preferences: input.preferences });
 export const applyToSeason1Team = async (teamId: string, note = "") => {
   try {
     return await rpc<string>("world_preseason_apply_to_team", { p_team_id: teamId, p_note: note });
@@ -70,9 +68,8 @@ export const reportSeason1Message = (messageId: string, reason: string) => rpc<v
 export function subscribeToSeason1Lobby(onChange: () => void): RealtimeChannel | null { const client = getSupabaseBrowserClient(); if (!client) return null; return client.channel("world-preseason-season-1").on("postgres_changes", { event: "*", schema: "public", table: "world_preseason_chat_messages" }, onChange).on("postgres_changes", { event: "*", schema: "public", table: "world_preseason_team_members" }, onChange).on("postgres_changes", { event: "*", schema: "public", table: "world_preseason_team_applications" }, onChange).on("postgres_changes", { event: "*", schema: "public", table: "world_preseason_team_invites" }, onChange).on("postgres_changes", { event: "*", schema: "public", table: "world_preseason_free_agents" }, onChange).subscribe(); }
 export function unsubscribeSeason1Lobby(channel: RealtimeChannel | null) { const client = getSupabaseBrowserClient(); if (client && channel) void client.removeChannel(channel); }
 
-// Compatibility aliases keep the initial admin-only surface functional while
-// the richer participant Team Lobby is progressively rendered from the same
-// season-scoped read model.
+// Compatibility aliases keep the original surface functional while the richer
+// participant Team Lobby is progressively rendered from the same read model.
 export const SEASON_1_ROLE_PREFERENCES: readonly string[] = [];
 export async function getSeason1AdminLobby() { const data = await getSeason1Lobby(); return { ...data, currentMembership: data.membership, applicationTeamIds: data.applicationTeamIds, pendingApplications: data.applications.map(({ id, teamId, teamName, applicantName }) => ({ id, teamId, teamName, applicantName })) }; }
 export const acceptSeason1Application = (id: string) => reviewSeason1Application(id, true);

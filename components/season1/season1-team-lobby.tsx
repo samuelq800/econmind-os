@@ -2,17 +2,22 @@
 
 import Image from "next/image";
 import {
+  ArrowRight,
   Check,
+  Compass,
+  Crown,
   LoaderCircle,
   LockKeyhole,
   MessageCircle,
   Plus,
+  Radio,
   Search,
   Send,
   ShieldCheck,
+  Sparkles,
   UsersRound,
 } from "lucide-react";
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,7 +28,7 @@ import {
   applyToSeason1Team,
   createSeason1Invite,
   createSeason1Team,
-  getSeason1AdminLobby,
+  getSeason1Lobby,
   postSeason1LobbyMessage,
   postSeason1TeamMessage,
   setSeason1Preferences,
@@ -85,6 +90,7 @@ export function Season1TeamLobby() {
     loading: authLoading,
     roleLoading,
     worldSupervisor,
+    openAuth,
   } = useAuth();
   const [lobby, setLobby] = useState<Season1LobbyData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -94,15 +100,15 @@ export function Season1TeamLobby() {
   const [createOpen, setCreateOpen] = useState(false);
   const [teamName, setTeamName] = useState("");
   const [focus, setFocus] = useState("");
-  const [capacity, setCapacity] = useState(6);
   const [draft, setDraft] = useState("");
   const [teamDraft, setTeamDraft] = useState("");
+  const restoredDirectLink = useRef(false);
 
   const refresh = async () => {
     setLoading(true);
     setError("");
     try {
-      setLobby(await getSeason1AdminLobby());
+      setLobby(await getSeason1Lobby());
     } catch (caught) {
       setError(messageFor(caught, "The Season 1 lobby could not be loaded."));
     } finally {
@@ -113,11 +119,22 @@ export function Season1TeamLobby() {
   useEffect(() => {
     if (authLoading || roleLoading) return;
     const timer = window.setTimeout(() => {
-      if (worldSupervisor) void refresh();
+      if (user) void refresh();
       else setLoading(false);
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [authLoading, roleLoading, worldSupervisor]);
+  }, [authLoading, roleLoading, user]);
+
+  useEffect(() => {
+    if (!lobby || restoredDirectLink.current) return;
+    restoredDirectLink.current = true;
+    const targetId = window.location.hash.slice(1);
+    if (!targetId) return;
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById(targetId)?.scrollIntoView({ block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [lobby]);
 
   const currentTeam = lobby?.currentMembership
     ? (lobby.teams.find(
@@ -133,6 +150,8 @@ export function Season1TeamLobby() {
       ),
     [lobby?.teams, query],
   );
+  const canReviewApplications =
+    worldSupervisor || lobby?.currentMembership?.memberRole === "captain";
 
   async function mutate(
     action: () => Promise<unknown>,
@@ -158,7 +177,6 @@ export function Season1TeamLobby() {
       await createSeason1Team({
         name: teamName.trim(),
         focus: focus.trim(),
-        capacity,
         preferences: lobby?.currentMembership?.rolePreferences ?? [],
       });
       setCreateOpen(false);
@@ -214,19 +232,28 @@ export function Season1TeamLobby() {
     });
   }
 
+  function moveSpotlight(event: React.PointerEvent<HTMLElement>) {
+    if (event.pointerType === "touch") return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    event.currentTarget.style.setProperty("--spot-x", `${event.clientX - bounds.left}px`);
+    event.currentTarget.style.setProperty("--spot-y", `${event.clientY - bounds.top}px`);
+  }
+
   if (authLoading || roleLoading || loading)
     return (
       <StateCard
-        title="Checking administrator access…"
+        title="Opening the Season 1 lobby…"
         detail="Loading the real Season 1 lobby."
         loading
       />
     );
-  if (!user || !worldSupervisor)
+  if (!user)
     return (
       <StateCard
-        title="Platform administrator access required"
-        detail="Season 1 currently opens only to Platform Admin accounts."
+        title="Sign in to enter Season 1"
+        detail="This lobby is open to registered EconMind members. Sign in to discover teams."
+        retry={() => openAuth("sign-in")}
+        actionLabel="Sign in"
       />
     );
   if (!lobby)
@@ -239,12 +266,20 @@ export function Season1TeamLobby() {
     );
 
   return (
-    <main className="mx-auto min-h-screen max-w-[1440px] px-5 py-10 sm:px-8 lg:px-12">
+    <main className="season1-lobby min-h-screen px-5 py-8 sm:px-8 lg:px-12" onPointerMove={moveSpotlight}>
       <section className="season1-world-hero relative isolate overflow-hidden rounded-2xl border border-[#2b6f68] px-6 py-10 text-white shadow-2xl sm:px-10 sm:py-14">
         <div className="season1-world-grid" aria-hidden="true" />
         <div className="season1-world-vignette" aria-hidden="true" />
+        <div className="season1-world-beam season1-world-beam-a" aria-hidden="true" />
+        <div className="season1-world-beam season1-world-beam-b" aria-hidden="true" />
+        <div className="season1-world-beam season1-world-beam-c" aria-hidden="true" />
+        <div className="season1-world-horizon" aria-hidden="true" />
+        <div className="season1-world-particles" aria-hidden="true">
+          {Array.from({ length: 18 }, (_, index) => <span key={index} />)}
+        </div>
         <div className="season1-world-visual" aria-hidden="true">
           <span className="season1-world-aura" />
+          <span className="season1-world-halo" />
           <span className="season1-world-orbit season1-world-orbit-one" />
           <span className="season1-world-orbit season1-world-orbit-two" />
           <span className="season1-world-orbit season1-world-orbit-three" />
@@ -258,43 +293,49 @@ export function Season1TeamLobby() {
           />
         </div>
         <div className="season1-world-title" aria-label="70-country world">
-          <p>World Simulation V2</p>
+          <p>Season 1 / Connected World</p>
           <h2>70-COUNTRY WORLD</h2>
         </div>
         <div className="relative z-10 flex min-h-[34rem] flex-col justify-between gap-10 lg:min-h-[37rem]">
           <div className="grid gap-9 lg:grid-cols-[1.12fr_.88fr] lg:items-center">
           <div className="season1-world-copy">
-            <p className="text-[10px] font-extrabold uppercase tracking-[.19em] text-[#9de8c8]">
-              {lobby.season.displayName} · Platform administration
+            <p className="season1-eyebrow">
+              <span className="season1-live-pip" /> {lobby.season.displayName} / Pre-season
             </p>
             <h1 className="mt-4 max-w-3xl text-5xl font-bold tracking-[-.075em] sm:text-6xl lg:text-7xl">
-              Build the team before the world begins.
+              Build your team.<br /><em>Enter the world.</em>
             </h1>
             <p className="mt-6 max-w-2xl text-sm leading-7 text-white/72 sm:text-base">
               This is the real, persistent Pre-Season layer. It creates teams,
               applications, role preferences, readiness, and chat messages only.
               The simulation remains structurally locked.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="season1-hero-actions mt-8 flex flex-wrap gap-3">
               <Button disabled={busy} onClick={() => setCreateOpen(true)}>
-                <Plus size={16} /> Create team
+                <Plus size={16} /> Create your team <ArrowRight size={16} />
               </Button>
               <a
                 href="#discover"
                 className="inline-flex h-10 items-center justify-center rounded-lg border border-white/25 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/18"
               >
-                Discover teams
+                <Compass size={16} /> Explore teams
               </a>
+            </div>
+            <div className="season1-world-proof" aria-label="Pre-season features">
+              <span><UsersRound size={16} /> Real teams</span>
+              <span><Radio size={16} /> Live conversation</span>
+              <span><Sparkles size={16} /> A world to build</span>
             </div>
           </div>
           <Card className="season1-world-status border-white/15 p-5 text-white shadow-none backdrop-blur">
-            <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#9de8c8]">
-              Season status
+            <p className="season1-status-heading">
+              World access <span>Season 1</span>
             </p>
+            <div className="season1-status-opening"><span>PRE-SEASON</span><strong>Build the alliance before launch.</strong></div>
             <dl className="mt-4 divide-y divide-white/13">
               <Status label="Team Lobby" value="Open now" green />
               <Status
-                label="Registration"
+                label="World registration"
                 value={lobby.season.registrationOpen ? "Open" : "Coming soon"}
               />
               <Status
@@ -304,14 +345,20 @@ export function Season1TeamLobby() {
               />
             </dl>
             <p className="mt-4 border-t border-white/13 pt-4 text-[11px] leading-5 text-white/55">
-              Only Platform Admin accounts can enter this initial release. Table
-              writes are restricted to server-side functions.
+              Open to registered EconMind members. Team actions are validated
+              by server-side functions.
             </p>
           </Card>
           </div>
           <WorldCountdown />
         </div>
       </section>
+
+      <nav className="season1-portals" aria-label="Explore the Season 1 lobby">
+        <a href="#discover"><span className="season1-portal-icon"><Compass size={22} /></span><span><small>01 / FIND YOUR PEOPLE</small><strong>Discover Teams</strong><span>Explore real teams and join the story.</span></span><ArrowRight size={18} /></a>
+        <a href="#team-room"><span className="season1-portal-icon"><Crown size={22} /></span><span><small>02 / YOUR HOME BASE</small><strong>Team Room</strong><span>Get ready with your people.</span></span><ArrowRight size={18} /></a>
+        <a href="#world-chat"><span className="season1-portal-icon"><MessageCircle size={22} /></span><span><small>03 / THE COMMONS</small><strong>World Chat</strong><span>Meet the world before it begins.</span></span><ArrowRight size={18} /></a>
+      </nav>
 
       {error && (
         <p
@@ -322,15 +369,16 @@ export function Season1TeamLobby() {
         </p>
       )}
 
-      <section id="discover" className="border-b border-[var(--line)] py-14">
+      <section id="discover" className="season1-chapter season1-discover border-b border-[var(--line)] py-14">
         <div className="flex flex-wrap items-end justify-between gap-5">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[var(--accent)]">
-              Discover teams
+            <p className="season1-chapter-label">
+              01 / Explore the lobby
             </p>
             <h2 className="mt-2 text-4xl font-bold tracking-[-.06em]">
-              Real teams, no simulation state.
+              Find your people. <em>Shape tomorrow.</em>
             </h2>
+            <p className="season1-chapter-subtitle">Every great world starts with a team. Choose the one you want to build with.</p>
           </div>
           <Button
             size="sm"
@@ -352,7 +400,7 @@ export function Season1TeamLobby() {
             placeholder="Search teams or recruitment focus"
           />
         </label>
-        <div className="mt-6 grid gap-4 lg:grid-cols-3">
+        <div className="season1-team-grid mt-6 grid gap-4 lg:grid-cols-3">
           {visibleTeams.map((team) => (
             <TeamCard
               key={team.id}
@@ -372,7 +420,7 @@ export function Season1TeamLobby() {
         </div>
       </section>
 
-      <section className="grid gap-7 border-b border-[var(--line)] py-14 lg:grid-cols-[.9fr_1.1fr]">
+      <section id="roles" className="season1-chapter season1-roles grid gap-7 border-b border-[var(--line)] py-14 lg:grid-cols-[.9fr_1.1fr]">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[var(--accent)]">
             Role preferences
@@ -447,8 +495,8 @@ export function Season1TeamLobby() {
         </Card>
       </section>
 
-      <section className="grid gap-7 border-b border-[var(--line)] py-14 lg:grid-cols-[1.05fr_.95fr]">
-        <Card className="p-6">
+      <section id="team-room" className="season1-chapter season1-rooms grid gap-7 border-b border-[var(--line)] py-14 lg:grid-cols-[1.05fr_.95fr]">
+        <Card className="season1-room-card p-6">
           <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[var(--accent)]">
             My Team Room
           </p>
@@ -500,14 +548,14 @@ export function Season1TeamLobby() {
             </div>
           )}
         </Card>
-        <Card className="p-6">
+        <Card className="season1-room-card p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[var(--accent)]">
                 Pending applications
               </p>
               <h2 className="mt-2 text-2xl font-bold tracking-[-.045em]">
-                Admin review queue
+                Application activity
               </h2>
             </div>
             <ShieldCheck className="text-[var(--accent)]" size={22} />
@@ -526,15 +574,20 @@ export function Season1TeamLobby() {
                     Applied to {application.teamName}
                   </p>
                 </div>
-                <Button
-                  size="sm"
-                  disabled={busy}
-                  onClick={() =>
-                    void mutate(() => acceptSeason1Application(application.id))
-                  }
-                >
-                  <Check size={14} /> Accept
-                </Button>
+                {canReviewApplications &&
+                (worldSupervisor || application.teamId === currentTeam?.id) ? (
+                  <Button
+                    size="sm"
+                    disabled={busy}
+                    onClick={() =>
+                      void mutate(() => acceptSeason1Application(application.id))
+                    }
+                  >
+                    <Check size={14} /> Accept
+                  </Button>
+                ) : (
+                  <Badge>Pending</Badge>
+                )}
               </article>
             ))}
             {!lobby.pendingApplications.length && (
@@ -546,8 +599,8 @@ export function Season1TeamLobby() {
         </Card>
       </section>
 
-      <section className="grid gap-7 py-14 lg:grid-cols-[1.05fr_.95fr]">
-        <Card className="p-6">
+      <section id="world-chat" className="season1-chapter season1-commons grid gap-7 py-14 lg:grid-cols-[1.05fr_.95fr]">
+        <Card className="season1-room-card p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[var(--accent)]">
@@ -564,7 +617,7 @@ export function Season1TeamLobby() {
           </p>
           <Chat
             title="Lobby messages"
-            detail="Platform Admins only in this release."
+            detail="Registered members can take part."
             messages={lobby.messages}
             value={draft}
             onChange={setDraft}
@@ -572,7 +625,7 @@ export function Season1TeamLobby() {
             disabled={busy}
           />
         </Card>
-        <Card className="bg-[linear-gradient(145deg,color-mix(in_srgb,var(--surface)_90%,var(--accent-soft)),var(--surface))] p-6">
+        <Card className="season1-room-card bg-[linear-gradient(145deg,color-mix(in_srgb,var(--surface)_90%,var(--accent-soft)),var(--surface))] p-6">
           <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[var(--accent)]">
             Guardrails
           </p>
@@ -583,7 +636,7 @@ export function Season1TeamLobby() {
             {[
               "The only stored records are pre-season teams, membership, preferences, readiness, applications, and chat.",
               "No team action writes a country, office, policy, economic state, or simulation event.",
-              "Registration remains closed and simulation remains locked by the Season 1 record.",
+              "World registration remains closed and simulation remains locked by the Season 1 record.",
               "Direct browser writes are revoked; all mutations are validated by database functions.",
             ].map((item) => (
               <li
@@ -664,24 +717,9 @@ export function Season1TeamLobby() {
                   className="min-h-28 resize-y rounded-lg border border-[var(--line-strong)] bg-[var(--surface)] p-3 text-sm outline-none focus:border-[var(--accent)]"
                 />
               </label>
-              <label className="grid gap-2 text-xs font-bold text-[var(--ink-muted)]">
-                Capacity
-                <input
-                  type="number"
-                  min={2}
-                  max={12}
-                  value={capacity}
-                  onChange={(event) =>
-                    setCapacity(
-                      Math.min(
-                        12,
-                        Math.max(2, Number(event.target.value) || 2),
-                      ),
-                    )
-                  }
-                  className="h-10 rounded-lg border border-[var(--line-strong)] bg-[var(--surface)] px-3 text-sm outline-none focus:border-[var(--accent)]"
-                />
-              </label>
+              <p className="text-xs text-[var(--ink-muted)]">
+                Team capacity follows the Season 1 limit of {lobby.season.config.maximumTeamSize} members.
+              </p>
               <Button type="submit" disabled={busy}>
                 {busy ? (
                   <LoaderCircle className="animate-spin" size={16} />
@@ -712,7 +750,7 @@ function TeamCard({
   onApply: () => void;
 }) {
   return (
-    <Card className="flex min-w-0 flex-col p-5">
+    <Card className="season1-team-card flex min-w-0 flex-col p-5">
       <div className="flex items-start justify-between gap-3">
         <span className="grid size-10 place-items-center rounded-lg bg-[var(--accent-soft)] text-base font-black text-[var(--accent)]">
           {team.name[0]}
@@ -855,11 +893,13 @@ function StateCard({
   detail,
   loading = false,
   retry,
+  actionLabel = "Try again",
 }: {
   title: string;
   detail: string;
   loading?: boolean;
   retry?: () => void;
+  actionLabel?: string;
 }) {
   return (
     <main className="mx-auto grid min-h-screen max-w-6xl place-items-center px-5">
@@ -880,7 +920,7 @@ function StateCard({
         </p>
         {retry && (
           <Button className="mt-6" onClick={retry}>
-            Try again
+            {actionLabel}
           </Button>
         )}
       </Card>
