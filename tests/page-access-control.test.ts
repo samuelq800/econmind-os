@@ -38,9 +38,9 @@ describe("central frontend page access policy", () => {
     expect(pageAccessForPath("/admin/governance").audience).toBe("account");
     expect(pageAccessForPath("/admin/governance").platformRoles).toEqual(["platform_admin"]);
     expect(pageAccessForPath("/season1").audience).toBe("account");
-    expect(pageAccessForPath("/season1").platformRoles).toEqual(["platform_admin"]);
+    expect(pageAccessForPath("/season1").platformRoles).toBeUndefined();
     expect(hasRequiredPageRole(pageAccessForPath("/season1"), "student", "platform_admin")).toBe(true);
-    expect(hasRequiredPageRole(pageAccessForPath("/season1"), "student", "school_leader")).toBe(false);
+    expect(hasRequiredPageRole(pageAccessForPath("/season1"), "student", "school_leader")).toBe(true);
   });
 
   it("keeps unlisted tools account-or-viewer gated while Simulation is open", () => {

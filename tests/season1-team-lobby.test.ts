@@ -6,6 +6,10 @@ const migration = readFileSync(
   "utf8",
 ) + readFileSync("supabase/migrations/20260916010000_expand_world_preseason_team_lobby.sql", "utf8") + readFileSync("supabase/migrations/20260916020000_fix_world_preseason_application_idempotency.sql", "utf8");
 const browserData = readFileSync("lib/supabase/season1.ts", "utf8");
+const memberAccess = readFileSync("supabase/migrations/20260924000000_season1_member_lobby_access.sql", "utf8");
+const navbar = readFileSync("components/layout/navbar.tsx", "utf8");
+const memberAccessWorkflow = readFileSync(".github/workflows/apply-season1-member-access.yml", "utf8");
+const pagesWorkflow = readFileSync(".github/workflows/deploy-pages.yml", "utf8");
 const page = readFileSync(
   "components/season1/season1-team-lobby.tsx",
   "utf8",
@@ -56,9 +60,19 @@ describe("Season 1 pre-season team lobby", () => {
     expect(browserData).not.toContain(".from(");
   });
 
-  it("renders live data and does not retain sample team or chat records", () => {
-    expect(page).toContain("getSeason1AdminLobby");
-    expect(page).toContain("Platform Admin accounts");
+  it("lets signed-in members use the direct lobby link without a main-site entry", () => {
+    expect(page).toContain("getSeason1Lobby");
+    expect(page).toContain("if (user) void refresh()");
+    expect(page).toContain("open to registered EconMind members");
+    expect(page).not.toContain("if (!user || !worldSupervisor)");
+    expect(navbar).not.toContain('href="/season1"');
+    expect(memberAccess).toContain("world_preseason_require_participant()");
+    expect(memberAccess).toContain("applicant_user_id = auth.uid()");
+    expect(memberAccess).toContain("grant execute on function public.get_world_preseason_my_pending_team_ids() to authenticated");
+    expect(memberAccessWorkflow).toContain("20260924000000_season1_member_lobby_access.sql");
+    expect(pagesWorkflow).toContain("Season 1 member access migration is required");
+    expect(browserData).toContain('"get_world_preseason_my_pending_team_ids"');
+    expect(browserData).not.toContain('rpc<{ applicationTeamIds?: string[] }>("get_world_preseason_admin_lobby")');
     expect(page).toContain("This is the real, persistent Pre-Season layer");
     expect(page).not.toContain("Sample team");
   });
@@ -67,7 +81,7 @@ describe("Season 1 pre-season team lobby", () => {
     expect(migration).toContain(
       "on conflict (season_id, team_id, applicant_user_id) where status = 'pending'",
     );
-    expect(browserData).toContain("get_world_preseason_admin_lobby");
+    expect(browserData).toContain("get_world_preseason_my_pending_team_ids");
     expect(browserData).toContain("world_preseason_one_pending_application_idx");
     expect(page).toContain("refresh: false");
     expect(page).toContain("rolePreferences: next");

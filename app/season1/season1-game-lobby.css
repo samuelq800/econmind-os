@@ -1,0 +1,402 @@
+.season1-lobby,
+body:has(.season1-lobby) {
+  --canvas: #06141b;
+  --surface: #0c222a;
+  --surface-subtle: #102b34;
+  --surface-strong: #173b42;
+  --ink: #f3f8f6;
+  --ink-muted: #b0c5c9;
+  --ink-faint: #819da3;
+  --line: #27545c;
+  --line-strong: #3a7378;
+  --accent: #72ead8;
+  --accent-strong: #a2fff0;
+  --accent-soft: #163e3e;
+  --shadow: 0 20px 55px rgba(0, 3, 12, .34);
+}
+
+body:has(.season1-lobby) {
+  color: var(--ink);
+  background: #06141b;
+}
+
+body:has(.season1-lobby) > header,
+body:has(.season1-lobby) header {
+  border-bottom-color: rgba(114, 234, 216, .27);
+  background: rgba(5, 22, 30, .89);
+  box-shadow: 0 5px 25px rgba(0, 4, 11, .24);
+}
+
+body:has(.season1-lobby) footer {
+  border-top-color: rgba(114, 234, 216, .23);
+  background: linear-gradient(180deg, #071a20, #061317);
+}
+
+.season1-lobby {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--ink);
+  background:
+    radial-gradient(ellipse at 52% 14%, rgba(22, 87, 117, .23), transparent 38%),
+    radial-gradient(ellipse at 5% 55%, rgba(13, 83, 79, .16), transparent 31%),
+    linear-gradient(180deg, #03111b 0%, #071a21 47%, #051318 100%);
+}
+
+.season1-lobby::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background:
+    radial-gradient(550px circle at var(--spot-x, 65%) var(--spot-y, 16%), rgba(69, 224, 217, .13), transparent 72%),
+    repeating-linear-gradient(90deg, transparent 0 95px, rgba(72, 190, 193, .018) 96px 97px),
+    repeating-linear-gradient(0deg, transparent 0 95px, rgba(72, 190, 193, .018) 96px 97px);
+}
+
+.season1-lobby > .season1-world-hero,
+.season1-lobby > .season1-portals,
+.season1-lobby > .season1-chapter,
+.season1-lobby > [role="alert"] {
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+}
+
+.season1-lobby .season1-world-hero {
+  min-height: 665px;
+  border: 1px solid rgba(99, 230, 222, .34);
+  border-radius: 23px;
+  background:
+    radial-gradient(ellipse at 69% 24%, rgba(21, 130, 186, .41), transparent 34%),
+    radial-gradient(ellipse at 30% 94%, rgba(31, 170, 151, .2), transparent 52%),
+    linear-gradient(111deg, #061e25 1%, #051b2a 52%, #052337 100%);
+  box-shadow: 0 0 0 1px rgba(10, 227, 210, .08), 0 0 72px rgba(32, 158, 193, .17), 0 36px 95px #01090e;
+}
+
+.season1-lobby .season1-world-hero::before,
+.season1-lobby .season1-world-hero::after {
+  position: absolute;
+  z-index: 5;
+  content: "";
+  pointer-events: none;
+}
+
+.season1-lobby .season1-world-hero::before {
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(500px circle at var(--spot-x, 72%) var(--spot-y, 35%), rgba(134, 247, 242, .12), transparent 70%);
+  mix-blend-mode: screen;
+}
+
+.season1-lobby .season1-world-hero::after {
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid transparent;
+  background: linear-gradient(115deg, transparent 19%, rgba(135, 250, 240, .7) 39%, transparent 55%, rgba(255, 194, 105, .55) 78%, transparent 91%) border-box;
+  mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: .53;
+  animation: season1-border-sweep 7s linear infinite;
+}
+
+.season1-lobby .season1-world-grid {
+  opacity: .54;
+  background-size: 48px 48px, 48px 48px, 100% 100%;
+  animation-duration: 19s;
+}
+
+.season1-lobby .season1-world-vignette {
+  background:
+    linear-gradient(90deg, rgba(1, 9, 17, .79) 0%, rgba(1, 9, 17, .35) 48%, transparent 76%),
+    linear-gradient(0deg, rgba(2, 14, 20, .91), transparent 24%, transparent 78%, rgba(0, 10, 17, .35));
+}
+
+.season1-world-horizon {
+  position: absolute;
+  z-index: 3;
+  bottom: -19%;
+  left: 14%;
+  width: 95%;
+  height: 43%;
+  border: 1px solid rgba(120, 227, 237, .21);
+  border-radius: 50%;
+  transform: rotate(-7deg);
+  background: radial-gradient(ellipse at 50% 0%, rgba(87, 220, 232, .19), transparent 58%);
+  box-shadow: 0 -26px 70px rgba(28, 151, 192, .2);
+  pointer-events: none;
+  animation: season1-horizon-breathe 8s ease-in-out infinite;
+}
+
+.season1-world-beam {
+  position: absolute;
+  z-index: 2;
+  top: -30%;
+  width: 21%;
+  height: 160%;
+  pointer-events: none;
+  transform-origin: top center;
+  background: linear-gradient(90deg, transparent, rgba(83, 226, 237, .12) 46%, rgba(129, 244, 245, .24) 50%, rgba(83, 226, 237, .11) 54%, transparent);
+  filter: blur(21px);
+  mix-blend-mode: screen;
+  animation: season1-beam-sweep 11s ease-in-out infinite alternate;
+}
+
+.season1-world-beam-a { left: 43%; transform: rotate(-35deg); }
+.season1-world-beam-b { left: 74%; background: linear-gradient(90deg, transparent, rgba(255, 192, 106, .12), transparent); animation-delay: -4s; animation-duration: 13s; }
+.season1-world-beam-c { left: 23%; width: 12%; opacity: .68; animation-delay: -8s; animation-duration: 15s; }
+
+.season1-world-particles { position: absolute; z-index: 4; inset: 0; overflow: hidden; pointer-events: none; }
+.season1-world-particles span {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #b9fff7;
+  box-shadow: 0 0 8px 2px rgba(128, 245, 240, .72);
+  opacity: .58;
+  animation: season1-spark-rise 8s linear infinite;
+}
+.season1-world-particles span:nth-child(6n + 1) { left: 12%; top: 70%; animation-delay: -1s; }
+.season1-world-particles span:nth-child(6n + 2) { left: 26%; top: 86%; animation-delay: -5s; }
+.season1-world-particles span:nth-child(6n + 3) { left: 48%; top: 58%; animation-delay: -3s; }
+.season1-world-particles span:nth-child(6n + 4) { left: 69%; top: 84%; animation-delay: -7s; }
+.season1-world-particles span:nth-child(6n + 5) { left: 82%; top: 39%; animation-delay: -2s; }
+.season1-world-particles span:nth-child(6n) { left: 94%; top: 72%; animation-delay: -6s; }
+.season1-world-particles span:nth-child(n + 7) { animation-duration: 11s; width: 2px; height: 2px; }
+.season1-world-particles span:nth-child(n + 13) { animation-duration: 14s; background: #ffd18d; box-shadow: 0 0 9px 2px rgba(255, 177, 77, .7); }
+
+.season1-lobby .season1-world-visual {
+  top: -6rem;
+  right: -1rem;
+  width: clamp(42rem, 67vw, 64rem);
+  opacity: .97;
+  animation-duration: 15s;
+}
+
+.season1-lobby .season1-world-image {
+  filter: drop-shadow(0 0 26px rgba(64, 200, 255, .61)) drop-shadow(0 0 90px rgba(25, 132, 200, .39)) drop-shadow(0 36px 58px rgba(0, 4, 15, .89));
+}
+
+.season1-world-halo {
+  position: absolute;
+  z-index: -1;
+  inset: 11%;
+  border-radius: 50%;
+  background: conic-gradient(from 70deg, transparent, rgba(87, 215, 255, .12), rgba(242, 185, 85, .26), transparent 43%, rgba(127, 255, 232, .22), transparent 78%);
+  filter: blur(35px);
+  animation: season1-halo-turn 24s linear infinite;
+}
+
+.season1-lobby .season1-world-orbit {
+  border-color: rgba(255, 210, 130, .5);
+  box-shadow: 0 0 14px rgba(255, 199, 95, .24), inset 0 0 18px rgba(255, 199, 95, .13);
+}
+.season1-lobby .season1-world-orbit-two { border-color: rgba(103, 242, 234, .45); }
+.season1-lobby .season1-world-orbit-three { border-color: rgba(139, 220, 255, .43); }
+
+.season1-lobby .season1-world-title {
+  top: 1.65rem;
+  right: 2.15rem;
+  max-width: 44%;
+}
+.season1-lobby .season1-world-title p { color: #b4e9ed; font-size: .61rem; }
+.season1-lobby .season1-world-title h2 { color: #ffce84; font-size: clamp(1.25rem, 2.4vw, 2.15rem); }
+
+.season1-lobby .season1-world-copy { max-width: 40rem; }
+.season1-lobby .season1-world-copy h1 { font-family: Georgia, "Times New Roman", serif; font-weight: 500; letter-spacing: -.057em; line-height: .99; }
+.season1-lobby .season1-world-copy h1 em { color: #fbd5a3; font-weight: 400; text-shadow: 0 0 34px rgba(255, 190, 98, .34); }
+.season1-lobby .season1-world-copy > p:not(.season1-eyebrow) { max-width: 29rem; color: #ccdee0; text-shadow: 0 2px 10px #000; }
+
+.season1-eyebrow, .season1-chapter-label {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  color: #a8f3e9;
+  font-size: .67rem;
+  font-weight: 800;
+  letter-spacing: .23em;
+  text-transform: uppercase;
+}
+.season1-live-pip { width: 7px; height: 7px; border-radius: 50%; background: #75f6d8; box-shadow: 0 0 0 5px rgba(93, 231, 198, .09), 0 0 15px #6efbd9; animation: season1-live-pulse 2s ease-in-out infinite; }
+
+.season1-hero-actions button, .season1-hero-actions a {
+  min-height: 48px;
+  padding-inline: 1.25rem;
+  border-radius: 10px;
+  transition: transform .28s ease, box-shadow .28s ease, background-color .28s ease, border-color .28s ease;
+}
+.season1-hero-actions button {
+  color: #072026;
+  background: linear-gradient(120deg, #a8fff0, #61e5d3 62%, #a5fff4);
+  box-shadow: 0 0 21px rgba(88, 245, 217, .37), inset 0 1px #e7fffc;
+}
+.season1-hero-actions a { gap: .55rem; border-color: rgba(140, 240, 239, .53); background: rgba(9, 34, 43, .72); box-shadow: inset 0 1px rgba(179, 249, 247, .13); }
+.season1-hero-actions button:hover, .season1-hero-actions a:hover { transform: translateY(-4px); box-shadow: 0 10px 28px rgba(66, 230, 216, .32); }
+
+.season1-world-proof { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; margin-top: 2.8rem; }
+.season1-world-proof span { display: inline-flex; align-items: center; gap: .5rem; color: #c1d7dc; font-size: .68rem; font-weight: 700; letter-spacing: .11em; text-transform: uppercase; }
+.season1-world-proof svg { color: #7df5e6; filter: drop-shadow(0 0 8px rgba(119, 252, 231, .5)); }
+
+.season1-lobby .season1-world-status {
+  width: min(100%, 370px);
+  justify-self: end;
+  margin-top: 2.25rem;
+  border: 1px solid rgba(131, 243, 235, .45);
+  border-radius: 16px;
+  background: linear-gradient(160deg, rgba(5, 28, 36, .93), rgba(5, 25, 33, .76));
+  box-shadow: 0 19px 55px rgba(0, 5, 15, .58), inset 0 1px rgba(188, 255, 250, .15), 0 0 26px rgba(52, 211, 204, .18);
+  animation: season1-card-float 8s ease-in-out infinite;
+}
+.season1-status-heading { display: flex; justify-content: space-between; color: #a2f7ec; font-size: .67rem; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; }
+.season1-status-heading span { color: #dcb888; }
+.season1-status-opening { display: grid; gap: .25rem; margin-top: 1.4rem; padding: .7rem .85rem; border-left: 2px solid #78eddc; background: rgba(102, 245, 225, .065); }
+.season1-status-opening span { color: #88e8df; font-size: .65rem; font-weight: 800; letter-spacing: .13em; }
+.season1-status-opening strong { font-family: Georgia, serif; font-size: 1.15rem; font-weight: 400; }
+.season1-lobby .season1-world-status dl > div:first-child dd { text-shadow: 0 0 15px rgba(104, 255, 220, .7); }
+
+.season1-lobby .season1-world-countdown { width: min(100%, 570px); margin: 0 0 0 auto; border-color: rgba(137, 232, 230, .52); box-shadow: 0 15px 45px rgba(0, 8, 17, .58), 0 0 21px rgba(64, 211, 221, .2); animation: season1-countdown-glow 4s ease-in-out infinite; }
+.season1-lobby .season1-world-countdown-unit strong { color: #ffcb84; text-shadow: 0 0 18px rgba(255, 175, 82, .36); }
+
+.season1-portals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: -1rem;
+  position: relative;
+  z-index: 9;
+}
+.season1-portals a {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+  min-height: 116px;
+  padding: 1.1rem;
+  overflow: hidden;
+  color: #e9f8f6;
+  border: 1px solid rgba(102, 209, 216, .34);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(17, 50, 58, .98), rgba(5, 28, 36, .98));
+  box-shadow: 0 15px 33px rgba(0, 7, 14, .42), inset 0 1px rgba(200, 253, 246, .12);
+  transition: transform .3s ease, border-color .3s ease, box-shadow .3s ease;
+}
+.season1-portals a::before { position: absolute; inset: 0; content: ""; pointer-events: none; transform: translateX(-115%) skewX(-20deg); background: linear-gradient(90deg, transparent, rgba(143, 255, 235, .18), transparent); transition: transform .65s ease; }
+.season1-portals a:hover { transform: translateY(-9px); border-color: #8ef4df; box-shadow: 0 22px 43px rgba(0, 6, 13, .5), 0 0 22px rgba(63, 221, 208, .27); }
+.season1-portals a:hover::before { transform: translateX(115%) skewX(-20deg); }
+.season1-portal-icon { flex: 0 0 auto; display: grid; width: 52px; height: 52px; place-items: center; border: 1px solid rgba(116, 247, 227, .34); border-radius: 12px; color: #80efdd; background: radial-gradient(circle, rgba(88, 239, 216, .23), rgba(68, 185, 186, .04)); box-shadow: 0 0 20px rgba(61, 217, 207, .2); }
+.season1-portals a > span:nth-child(2) { display: grid; gap: .21rem; min-width: 0; flex: 1; }
+.season1-portals small { color: #8cb7ba; font-size: .59rem; font-weight: 800; letter-spacing: .16em; }
+.season1-portals strong { font-family: Georgia, serif; font-size: 1.28rem; font-weight: 400; }
+.season1-portals a > span:nth-child(2) > span { color: #abc4c8; font-size: .72rem; }
+.season1-portals a > svg { color: #80efdd; transition: transform .3s ease; }
+.season1-portals a:hover > svg { transform: translateX(4px); }
+
+.season1-lobby .season1-discover { order: 1; }
+.season1-lobby .season1-rooms { order: 2; }
+.season1-lobby .season1-commons { order: 3; }
+.season1-lobby .season1-roles { order: 4; }
+.season1-lobby > [role="alert"] { order: 0; }
+.season1-lobby > [role="presentation"] { order: 10; }
+
+.season1-chapter { position: relative; scroll-margin-top: 6rem; border-bottom-color: rgba(83, 157, 164, .19); }
+.season1-chapter::before { position: absolute; top: 0; left: 0; width: 80px; height: 1px; content: ""; background: linear-gradient(90deg, #9bfff0, transparent); box-shadow: 0 0 14px #65e7d7; }
+.season1-chapter h2 { font-family: Georgia, "Times New Roman", serif; font-weight: 400; letter-spacing: -.035em; }
+.season1-chapter h2 em { color: #f3c894; font-weight: 400; }
+.season1-chapter-subtitle { margin-top: .85rem; color: #a8c3c7; font-size: .87rem; }
+.season1-lobby .season1-chapter > .rounded-xl,
+.season1-lobby .season1-chapter > div > .rounded-xl { border-color: rgba(96, 183, 184, .29); background: linear-gradient(145deg, rgba(13, 39, 46, .94), rgba(7, 27, 35, .94)); }
+.season1-lobby .season1-chapter input,
+.season1-lobby .season1-chapter textarea { color: #eefcf9; border-color: rgba(119, 194, 195, .37); background: rgba(9, 33, 42, .78); }
+.season1-lobby .season1-chapter input::placeholder { color: #88a6ad; }
+.season1-lobby .season1-chapter input:focus-visible,
+.season1-lobby .season1-chapter button:focus-visible,
+.season1-lobby .season1-portals a:focus-visible,
+.season1-lobby .season1-hero-actions a:focus-visible { outline: 2px solid #baffee; outline-offset: 3px; }
+.season1-lobby .season1-chapter button:not([disabled]):hover { box-shadow: 0 0 20px rgba(79, 224, 211, .2); }
+
+.season1-team-grid { align-items: stretch; }
+.season1-team-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 300px;
+  border: 1px solid rgba(103, 198, 199, .32);
+  background: linear-gradient(151deg, #12313a, #0a212a 67%);
+  box-shadow: 0 15px 35px rgba(0, 6, 14, .31), inset 0 1px rgba(184, 249, 247, .1);
+  transition: transform .32s cubic-bezier(.2, .8, .2, 1), border-color .3s ease, box-shadow .3s ease;
+}
+.season1-team-card::before { position: absolute; top: 0; left: -30%; width: 60%; height: 100%; content: ""; pointer-events: none; transform: skewX(-22deg) translateX(-150%); background: linear-gradient(90deg, transparent, rgba(115, 244, 226, .12), transparent); transition: transform .7s ease; }
+.season1-team-card::after { position: absolute; top: 0; right: 0; width: 55%; height: 100px; content: ""; pointer-events: none; background: radial-gradient(ellipse at top right, rgba(88, 234, 216, .15), transparent 72%); }
+.season1-team-card:hover { transform: translateY(-8px) scale(1.012); border-color: #82e9df; box-shadow: 0 24px 50px rgba(0, 4, 11, .48), 0 0 25px rgba(72, 231, 216, .19); }
+.season1-team-card:hover::before { transform: skewX(-22deg) translateX(450%); }
+.season1-team-card > * { position: relative; z-index: 1; }
+.season1-team-card h3 { color: #fff; font-family: Georgia, serif; font-weight: 400; }
+.season1-team-card button:not(:disabled) { color: #08262a; background: #7cebdc; }
+
+.season1-rooms, .season1-commons, .season1-roles { align-items: stretch; }
+.season1-room-card {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(104, 192, 197, .34);
+  background: linear-gradient(144deg, rgba(16, 47, 53, .95), rgba(7, 28, 37, .95));
+  box-shadow: 0 20px 45px rgba(0, 5, 12, .28), inset 0 1px rgba(186, 250, 247, .1);
+  transition: transform .3s ease, border-color .3s ease, box-shadow .3s ease;
+}
+.season1-room-card::before { position: absolute; top: 0; left: 10%; width: 38%; height: 2px; content: ""; background: linear-gradient(90deg, transparent, #ffd193, transparent); box-shadow: 0 0 15px 2px rgba(245, 184, 104, .55); animation: season1-edge-travel 7s ease-in-out infinite alternate; }
+.season1-room-card:hover { transform: translateY(-5px); border-color: rgba(132, 243, 230, .7); box-shadow: 0 24px 52px rgba(0, 5, 12, .39), 0 0 19px rgba(65, 223, 209, .18); }
+.season1-room-card h2 { color: #f8f8f4; }
+.season1-room-card [class*="bg-[var(--surface-subtle)]"] { background: rgba(23, 60, 66, .72); }
+
+@keyframes season1-beam-sweep { 0% { transform: rotate(-37deg) translateX(-10%); opacity: .3; } 50% { opacity: .9; } 100% { transform: rotate(33deg) translateX(17%); opacity: .47; } }
+@keyframes season1-border-sweep { 0%, 100% { opacity: .36; filter: hue-rotate(0deg); } 50% { opacity: .86; filter: hue-rotate(35deg); } }
+@keyframes season1-horizon-breathe { 0%, 100% { opacity: .4; transform: rotate(-7deg) scale(1); } 50% { opacity: .82; transform: rotate(-7deg) scale(1.04); } }
+@keyframes season1-halo-turn { to { transform: rotate(360deg); } }
+@keyframes season1-live-pulse { 50% { opacity: .5; box-shadow: 0 0 0 9px rgba(93, 231, 198, .02), 0 0 24px #6efbd9; } }
+@keyframes season1-spark-rise { 0% { opacity: 0; transform: translate3d(0, 24px, 0) scale(.5); } 20% { opacity: .85; } 80% { opacity: .65; } 100% { opacity: 0; transform: translate3d(28px, -90px, 0) scale(1.35); } }
+@keyframes season1-card-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+@keyframes season1-countdown-glow { 0%, 100% { border-color: rgba(137, 232, 230, .45); } 50% { border-color: rgba(246, 199, 121, .72); } }
+@keyframes season1-edge-travel { from { transform: translateX(-30%); } to { transform: translateX(230%); } }
+
+@media (max-width: 1100px) {
+  .season1-lobby .season1-world-visual { right: -8rem; width: 55rem; }
+  .season1-lobby .season1-world-copy { max-width: 34rem; }
+  .season1-lobby .season1-world-status { width: min(100%, 330px); }
+  .season1-portals a { gap: .65rem; padding: .8rem; }
+  .season1-portal-icon { width: 44px; height: 44px; }
+}
+
+@media (max-width: 900px) {
+  .season1-lobby .season1-world-visual { top: -7rem; right: -14rem; opacity: .75; }
+  .season1-lobby .season1-world-status { justify-self: start; margin-top: 0; }
+  .season1-lobby .season1-world-copy > p:not(.season1-eyebrow) { max-width: 36rem; }
+  .season1-lobby .season1-world-countdown { margin-left: 0; }
+  .season1-portals { grid-template-columns: 1fr; margin-top: 1rem; }
+  .season1-portals a { min-height: 90px; }
+}
+
+@media (max-width: 639px) {
+  .season1-lobby { padding-top: .75rem; }
+  .season1-lobby .season1-world-hero { min-height: 0; padding: 1.5rem; }
+  .season1-lobby .season1-world-hero > .relative { min-height: 0; }
+  .season1-lobby .season1-world-title { top: .8rem; right: .8rem; max-width: 68%; }
+  .season1-lobby .season1-world-title h2 { font-size: .95rem; }
+  .season1-lobby .season1-world-title p { font-size: .47rem; }
+  .season1-lobby .season1-world-visual { top: 1rem; right: -18rem; width: 43rem; opacity: .48; }
+  .season1-lobby .season1-world-vignette { background: linear-gradient(90deg, rgba(2, 12, 18, .9), rgba(2, 12, 18, .53)), linear-gradient(to top, rgba(2, 12, 18, .86), transparent 45%); }
+  .season1-lobby .season1-world-copy { padding-top: 4rem; }
+  .season1-lobby .season1-world-copy h1 { font-size: clamp(2.7rem, 12vw, 4rem); }
+  .season1-world-proof { margin-top: 1.8rem; }
+  .season1-lobby .season1-world-status { width: 100%; }
+  .season1-lobby .season1-world-countdown { width: 100%; }
+  .season1-chapter h2 { font-size: 2rem; }
+  .season1-team-card { min-height: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .season1-lobby *, .season1-lobby *::before, .season1-lobby *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
+  .season1-world-beam { opacity: .2; }
+}

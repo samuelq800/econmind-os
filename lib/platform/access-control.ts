@@ -37,9 +37,9 @@ export const PAGE_ACCESS_RULES: readonly PageAccessRule[] = [
   { path: "/simulation/legacy-world/admin", match: "prefix", audience: "account", platformRoles: ["platform_admin"] },
   { path: "/simulation", match: "prefix", audience: "public" },
 
-  // Phase-0 team formation is being prepared by platform administrators only.
-  // This route intentionally has no viewer or general-account access.
-  { path: "/season1", match: "prefix", audience: "account", platformRoles: ["platform_admin"] },
+  // The unlisted Season 1 direct link is open to individual accounts, not viewers.
+  // Active-account and action-specific permissions are enforced by its RPCs.
+  { path: "/season1", match: "prefix", audience: "account" },
 
   // Governance work contains account requests and internal notes.
   { path: "/admin/governance", match: "prefix", audience: "account", platformRoles: ["platform_admin"] },
