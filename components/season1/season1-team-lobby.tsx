@@ -42,48 +42,6 @@ function messageFor(caught: unknown, fallback: string) {
   return caught instanceof Error ? caught.message : fallback;
 }
 
-const season1WorldOpening = Date.parse("2026-09-24T16:00:00.000Z");
-
-function WorldCountdown() {
-  const [now, setNow] = useState<number | null>(null);
-
-  useEffect(() => {
-    const updateClock = () => setNow(Date.now());
-    updateClock();
-    const timer = window.setInterval(updateClock, 1000);
-    return () => window.clearInterval(timer);
-  }, []);
-
-  const remaining = Math.max(0, season1WorldOpening - (now ?? season1WorldOpening));
-  const totalSeconds = Math.floor(remaining / 1000);
-  const units = [
-    { label: "Days", value: Math.floor(totalSeconds / 86_400) },
-    { label: "Hours", value: Math.floor((totalSeconds % 86_400) / 3_600) },
-    { label: "Minutes", value: Math.floor((totalSeconds % 3_600) / 60) },
-    { label: "Seconds", value: totalSeconds % 60 },
-  ];
-
-  return (
-    <section
-      aria-label="Countdown to Season 1 world opening"
-      className="season1-world-countdown"
-    >
-      <div className="season1-world-countdown-intro">
-        <p>World access opens in</p>
-        <span>25 September · 00:00 CST</span>
-      </div>
-      <div className="grid grid-cols-4 gap-2 sm:gap-3">
-        {units.map((unit) => (
-          <div className="season1-world-countdown-unit" key={unit.label}>
-            <strong>{String(unit.value).padStart(2, "0")}</strong>
-            <span>{unit.label}</span>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 export function Season1TeamLobby() {
   const {
     user,
@@ -350,7 +308,6 @@ export function Season1TeamLobby() {
             </p>
           </Card>
           </div>
-          <WorldCountdown />
         </div>
       </section>
 

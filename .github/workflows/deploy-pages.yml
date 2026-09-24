@@ -75,7 +75,7 @@ jobs:
             --request POST \
             --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
             --header "Content-Type: application/json" \
-            --data '{"query":"do $verify$ begin if to_regprocedure('\''public.get_world_preseason_my_pending_team_ids()'\'') is null then raise exception '\''Season 1 member access migration is required'\''; end if; end $verify$;"}' \
+            --data '{"query":"do $verify$ begin if to_regprocedure('\''public.get_world_preseason_my_pending_team_ids()'\'') is null then raise exception '\''Season 1 member access migration is required'\''; end if; if to_regprocedure('\''public.get_world_preseason_opening()'\'') is null or to_regprocedure('\''public.set_world_preseason_opening(timestamptz)'\'') is null then raise exception '\''Season 1 opening gate migration is required'\''; end if; end $verify$;"}' \
             --output /dev/null \
             "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query"
 

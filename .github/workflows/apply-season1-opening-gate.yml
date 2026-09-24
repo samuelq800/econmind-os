@@ -1,0 +1,65 @@
+name: Maintenance · Season 1 opening gate
+run-name: Apply Season 1 opening gate · @${{ github.actor }}
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-production
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify protected configuration
+        run: |
+          test -n "$SUPABASE_ACCESS_TOKEN"
+          test -n "$SUPABASE_PROJECT_REF"
+      - name: Apply and verify Season 1 opening gate
+        run: |
+          payload="$(node <<'NODE'
+          const fs = require('fs');
+          const migration = fs.readFileSync(
+            'supabase/migrations/20260924010000_season1_opening_gate.sql',
+            'utf8',
+          );
+          const verification = String.raw`
+          do $verify$
+          begin
+            if not exists (
+              select 1 from public.world_preseason_seasons
+              where code = 'season-1' and lobby_opens_at is not null
+            ) then
+              raise exception 'Season 1 opening time is unavailable';
+            end if;
+            if to_regprocedure('public.get_world_preseason_opening()') is null
+              or to_regprocedure('public.set_world_preseason_opening(timestamptz)') is null
+              or not has_function_privilege('authenticated', 'public.world_preseason_gate_open()', 'EXECUTE')
+              or not has_function_privilege('authenticated', 'public.get_world_preseason_opening()', 'EXECUTE')
+              or not has_function_privilege('authenticated', 'public.set_world_preseason_opening(timestamptz)', 'EXECUTE')
+              or has_function_privilege('anon', 'public.get_world_preseason_opening()', 'EXECUTE')
+              or has_function_privilege('anon', 'public.set_world_preseason_opening(timestamptz)', 'EXECUTE')
+            then
+              raise exception 'Season 1 opening RPC permissions are invalid';
+            end if;
+          end
+          $verify$;
+          `;
+          process.stdout.write(JSON.stringify({ query: `${migration}\n${verification}` }));
+          NODE
+          )"
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            --header "Content-Type: application/json" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query" \
+            --data "$payload"

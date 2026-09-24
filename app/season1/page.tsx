@@ -1,4 +1,4 @@
-import { Season1TeamLobby } from "@/components/season1/season1-team-lobby";
+import { Season1Entrance } from "@/components/season1/season1-entrance";
 import "./season1-game-lobby.css";
 
 export const metadata = {
@@ -7,5 +7,5 @@ export const metadata = {
 };
 
 export default function Season1Page() {
-  return <Season1TeamLobby />;
+  return <Season1Entrance />;
 }

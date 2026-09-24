@@ -4,6 +4,7 @@ import { getSupabaseBrowserClient, requireSupabaseBrowserClient, throwIfSupabase
 export type Season1RolePreference = string;
 export type Season1Team = { id: string; name: string; description: string; focus: string; capacity: number; recruiting: boolean; recruitmentMode: "open" | "application_required" | "invite_only"; teamStyle: "competitive" | "balanced" | "learning"; preferredLanguage: string; status: string; memberCount: number; readyCount: number; applicationCount: number; teamType: "SCHOOL TEAM" | "CROSS-SCHOOL TEAM" | "OPEN TEAM"; schools: string[] };
 export type Season1Message = { id: string; content: string; messageType: "TEXT" | "TEAM_CARD" | "SYSTEM"; metadata: Record<string, unknown>; createdAt: string; deletedAt: string | null; authorName: string; authorId: string };
+export type Season1Opening = { opensAt: string; serverNow: string; isOpen: boolean };
 export type Season1LobbyData = {
   season: { id: string; code: string; displayName: string; registrationOpen: boolean; simulationLocked: boolean; config: { minimumTeamSize: number; maximumTeamSize: number; roles: string[]; languages: string[] } };
   stats: { players: number; teams: number; freeAgents: number; recruitingTeams: number };
@@ -19,6 +20,9 @@ export type Season1LobbyData = {
 };
 
 async function rpc<T>(name: string, args: Record<string, unknown> = {}) { const { data, error } = await requireSupabaseBrowserClient().rpc(name, args); throwIfSupabaseError(error); return data as T; }
+
+export const getSeason1Opening = () => rpc<Season1Opening>("get_world_preseason_opening");
+export const setSeason1Opening = (opensAt: string) => rpc<Season1Opening>("set_world_preseason_opening", { p_opens_at: opensAt });
 
 type Season1LobbyRpcData = Omit<Season1LobbyData, "currentMembership" | "applicationTeamIds" | "pendingApplications"> & {
   applicationTeamIds?: string[];

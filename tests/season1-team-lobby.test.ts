@@ -15,6 +15,11 @@ const page = readFileSync(
   "utf8",
 );
 const globalStyles = readFileSync("app/globals.css", "utf8");
+const entrance = readFileSync("components/season1/season1-entrance.tsx", "utf8");
+const entranceStyles = readFileSync("components/season1/season1-entrance.module.css", "utf8");
+const openingMigration = readFileSync("supabase/migrations/20260924010000_season1_opening_gate.sql", "utf8");
+const openingWorkflow = readFileSync(".github/workflows/apply-season1-opening-gate.yml", "utf8");
+const route = readFileSync("app/season1/page.tsx", "utf8");
 
 describe("Season 1 pre-season team lobby", () => {
   it("persists only pre-season collaboration records with RLS", () => {
@@ -87,14 +92,42 @@ describe("Season 1 pre-season team lobby", () => {
     expect(page).toContain("rolePreferences: next");
   });
 
-  it("centers the supplied connected-world visual with a live Season 1 countdown", () => {
+  it("keeps the existing Team Lobby behind a widescreen countdown entrance", () => {
     expect(page).toContain("70-COUNTRY WORLD");
-    expect(page).toContain("2026-09-24T16:00:00.000Z");
     expect(page).toContain("season1-connected-world-globe.png");
     expect(globalStyles).toContain(".season1-world-visual");
-    expect(globalStyles).toContain(".season1-world-countdown");
+    expect(route).toContain("<Season1Entrance />");
+    expect(entrance).toContain("getSeason1Opening");
+    expect(entrance).toContain("setSeason1Opening");
+    expect(entrance).toContain("if (!ready || opening || checking) return");
+    expect(entrance).toContain("if (confirmed.isOpen) setEntered(true)");
+    expect(entrance).toContain("<Season1TeamLobby />");
+    expect(entrance).toContain("getElementById(window.location.hash.slice(1))");
+    expect(entranceStyles).toContain(".opening .doorLeft");
+    expect(entranceStyles).toContain(".opening .doorRight");
+    expect(entranceStyles).toContain("prefers-reduced-motion: reduce");
     expect(
       existsSync("public/images/season1/season1-connected-world-globe.png"),
     ).toBe(true);
+    expect(existsSync("public/images/season1/season1-gateway-wide.jpg")).toBe(true);
+  });
+
+  it("stores the GMT+8 opening centrally and restricts edits to platform admins", () => {
+    expect(new Date("2026-09-25T21:00+08:00").toISOString()).toBe("2026-09-25T13:00:00.000Z");
+    expect(openingMigration).toContain("2026-09-25 13:00:00+00");
+    expect(openingMigration).toContain("world_preseason_require_participant()");
+    expect(openingMigration).toContain("world_preseason_gate_open()");
+    expect(openingMigration).toContain("public.is_platform_admin(auth.uid())");
+    for (const policy of ["public_team_discovery", "member_roster_read", "channel_read", "message_read", "free_agent_read"]) {
+      expect(openingMigration).toContain(`alter policy world_preseason_${policy}`);
+    }
+    expect(openingMigration).toContain("grant execute on function public.get_world_preseason_opening() to authenticated");
+    expect(openingMigration).toContain("grant execute on function public.set_world_preseason_opening(timestamptz) to authenticated");
+    expect(openingWorkflow).toContain("20260924010000_season1_opening_gate.sql");
+    expect(pagesWorkflow).toContain("Season 1 opening gate migration is required");
+    expect(entrance).toContain('worldSupervisor && <div className={styles.adminArea}>');
+    expect(entrance).toContain('timeZone: "Asia/Shanghai"');
+    expect(browserData).toContain('"get_world_preseason_opening"');
+    expect(browserData).toContain('"set_world_preseason_opening"');
   });
 });
