@@ -4,7 +4,19 @@ import { describe, expect, it } from "vitest";
 const migration = readFileSync(
   "supabase/migrations/20260916000000_world_preseason_team_lobby.sql",
   "utf8",
-) + readFileSync("supabase/migrations/20260916010000_expand_world_preseason_team_lobby.sql", "utf8") + readFileSync("supabase/migrations/20260916020000_fix_world_preseason_application_idempotency.sql", "utf8");
+) +
+  readFileSync(
+    "supabase/migrations/20260916010000_expand_world_preseason_team_lobby.sql",
+    "utf8",
+  ) +
+  readFileSync(
+    "supabase/migrations/20260916020000_fix_world_preseason_application_idempotency.sql",
+    "utf8",
+  ) +
+  readFileSync(
+    "supabase/migrations/20260916030000_add_world_preseason_team_lifecycle.sql",
+    "utf8",
+  );
 const browserData = readFileSync("lib/supabase/season1.ts", "utf8");
 const page = readFileSync(
   "components/season1/season1-team-lobby.tsx",
@@ -49,6 +61,9 @@ describe("Season 1 pre-season team lobby", () => {
       "world_preseason_respond_to_invite",
       "world_preseason_set_free_agent",
       "world_preseason_report_message",
+      "world_preseason_leave_team",
+      "world_preseason_remove_member",
+      "world_preseason_dissolve_team",
     ]) {
       expect(migration).toContain(`function public.${rpc}`);
       expect(browserData).toContain(`"${rpc}"`);
@@ -82,5 +97,26 @@ describe("Season 1 pre-season team lobby", () => {
     expect(
       existsSync("public/images/season1/season1-connected-world-globe.png"),
     ).toBe(true);
+  });
+
+  it("matches newly created teams to the creator school and prioritises same-school discovery", () => {
+    expect(migration).toContain("add column if not exists school_id uuid");
+    expect(migration).toContain("select school_id into v_school_id");
+    expect(migration).toContain("'sameSchool'");
+    expect(migration).toContain("t.school_id = v_viewer_school_id");
+    expect(page).toContain("Teams linked to ${lobby.viewer.schoolName} are shown first.");
+    expect(page).toContain("Same school");
+  });
+
+  it("keeps team lifecycle controls behind database-authorised captain actions", () => {
+    expect(migration).toContain("Only the team captain can remove members");
+    expect(migration).toContain("Only the team captain can dissolve this team");
+    expect(page).toContain("Captaincy will pass to the longest-serving remaining member");
+    expect(browserData).toContain("world_preseason_leave_team");
+    expect(browserData).toContain("world_preseason_remove_member");
+    expect(browserData).toContain("world_preseason_dissolve_team");
+    expect(page).toContain("Dissolve team");
+    expect(page).toContain("Leave team");
+    expect(page).toContain("Persistent internal chat");
   });
 });

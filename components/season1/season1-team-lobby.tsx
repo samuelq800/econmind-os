@@ -3,13 +3,17 @@
 import Image from "next/image";
 import {
   Check,
+  Crown,
   LoaderCircle,
   LockKeyhole,
+  LogOut,
   MessageCircle,
   Plus,
   Search,
   Send,
   ShieldCheck,
+  Trash2,
+  UserMinus,
   UsersRound,
 } from "lucide-react";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
@@ -23,9 +27,12 @@ import {
   applyToSeason1Team,
   createSeason1Invite,
   createSeason1Team,
+  dissolveSeason1Team,
   getSeason1AdminLobby,
+  leaveSeason1Team,
   postSeason1LobbyMessage,
   postSeason1TeamMessage,
+  removeSeason1Member,
   setSeason1Preferences,
   setSeason1Readiness,
   setSeason1FreeAgent,
@@ -188,6 +195,38 @@ export function Season1TeamLobby() {
     });
   }
 
+  async function leaveCurrentTeam() {
+    if (!currentTeam) return;
+    const captain = lobby?.currentMembership?.memberRole === "captain";
+    const message = captain
+      ? lobby?.members.length === 1
+        ? "Leave this team? As its only member, the team will be dissolved."
+        : "Leave this team? Captaincy will pass to the longest-serving remaining member."
+      : "Leave this team? You can apply to or create another team afterwards.";
+    if (!window.confirm(message)) return;
+    await mutate(() => leaveSeason1Team());
+  }
+
+  async function removeMember(member: Season1LobbyData["members"][number]) {
+    if (
+      !currentTeam ||
+      !window.confirm(`Remove ${member.displayName} from ${currentTeam.name}?`)
+    )
+      return;
+    await mutate(() => removeSeason1Member(member.userId));
+  }
+
+  async function dissolveCurrentTeam() {
+    if (!currentTeam) return;
+    if (
+      !window.confirm(
+        `Dissolve ${currentTeam.name}? All members will be released and pending applications and invites will be withdrawn.`,
+      )
+    )
+      return;
+    await mutate(() => dissolveSeason1Team());
+  }
+
   async function togglePreference(role: Season1RolePreference) {
     const current = lobby?.currentMembership?.rolePreferences ?? [];
     const next = current.includes(role)
@@ -331,6 +370,11 @@ export function Season1TeamLobby() {
             <h2 className="mt-2 text-4xl font-bold tracking-[-.06em]">
               Real teams, no simulation state.
             </h2>
+            <p className="mt-3 text-sm text-[var(--ink-muted)]">
+              {lobby.viewer?.schoolName
+                ? `Teams linked to ${lobby.viewer.schoolName} are shown first.`
+                : "Teams are ordered by recency. Add a verified school to receive same-school priority."}
+            </p>
           </div>
           <Button
             size="sm"
@@ -483,9 +527,85 @@ export function Season1TeamLobby() {
                     : "Mark ready"}
                 </Button>
               </div>
+              <section className="mt-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-bold">Team members</p>
+                    <p className="mt-1 text-xs text-[var(--ink-muted)]">
+                      Captains can remove members or dissolve the team. Everyone
+                      can leave freely while the pre-season is open.
+                    </p>
+                  </div>
+                  <UsersRound
+                    className="shrink-0 text-[var(--accent)]"
+                    size={19}
+                  />
+                </div>
+                <div className="mt-4 divide-y divide-[var(--line)] rounded-xl border border-[var(--line)] bg-[var(--surface-subtle)] px-4">
+                  {lobby.members.map((member) => (
+                    <article
+                      className="flex items-center justify-between gap-3 py-3"
+                      key={member.userId}
+                    >
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="truncate text-sm font-bold">
+                            {member.displayName}
+                          </p>
+                          {member.memberRole === "captain" && (
+                            <Badge className="border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]">
+                              <Crown size={11} /> Captain
+                            </Badge>
+                          )}
+                          {member.userId === user.id && (
+                            <span className="text-[10px] font-bold uppercase tracking-[.12em] text-[var(--ink-faint)]">
+                              You
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-1 text-xs text-[var(--ink-muted)]">
+                          {member.schoolName ??
+                            "Independent / no school affiliation"}
+                        </p>
+                      </div>
+                      {lobby.currentMembership?.memberRole === "captain" &&
+                        member.memberRole !== "captain" && (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            disabled={busy}
+                            onClick={() => void removeMember(member)}
+                          >
+                            <UserMinus size={14} /> Remove
+                          </Button>
+                        )}
+                    </article>
+                  ))}
+                </div>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    disabled={busy}
+                    onClick={() => void leaveCurrentTeam()}
+                  >
+                    <LogOut size={14} /> Leave team
+                  </Button>
+                  {lobby.currentMembership?.memberRole === "captain" && (
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      disabled={busy}
+                      onClick={() => void dissolveCurrentTeam()}
+                    >
+                      <Trash2 size={14} /> Dissolve team
+                    </Button>
+                  )}
+                </div>
+              </section>
               <Chat
                 title="Team Chat"
-                detail="Only active team members can post."
+                detail="Persistent internal chat, visible and writable only to active team members."
                 messages={lobby.teamMessages}
                 value={teamDraft}
                 onChange={setTeamDraft}
@@ -640,6 +760,11 @@ export function Season1TeamLobby() {
               You will become this team’s captain. This creates a real
               pre-season record but no simulation state.
             </p>
+            <p className="mt-2 text-xs leading-5 text-[var(--ink-faint)]">
+              {lobby.viewer?.schoolName
+                ? `Your team will automatically be linked to ${lobby.viewer.schoolName}. You may still recruit members from other schools.`
+                : "No verified school is attached to your account, so this will begin as an open team."}
+            </p>
             <form
               className="mt-6 grid gap-4"
               onSubmit={(event) => void createTeam(event)}
@@ -717,15 +842,22 @@ function TeamCard({
         <span className="grid size-10 place-items-center rounded-lg bg-[var(--accent-soft)] text-base font-black text-[var(--accent)]">
           {team.name[0]}
         </span>
-        <Badge
-          className={
-            team.recruiting
-              ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]"
-              : ""
-          }
-        >
-          {team.recruiting ? "Recruiting" : "Closed"}
-        </Badge>
+        <div className="flex flex-wrap justify-end gap-2">
+          {team.sameSchool && (
+            <Badge className="border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]">
+              Same school
+            </Badge>
+          )}
+          <Badge
+            className={
+              team.recruiting
+                ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]"
+                : ""
+            }
+          >
+            {team.recruiting ? "Recruiting" : "Closed"}
+          </Badge>
+        </div>
       </div>
       <h3 className="mt-6 text-xl font-bold tracking-[-.04em]">{team.name}</h3>
       <p className="mt-2 text-sm leading-6 text-[var(--ink-muted)]">
@@ -734,7 +866,13 @@ function TeamCard({
       <div className="mt-4 flex flex-wrap gap-2 text-[11px] font-bold uppercase tracking-[.08em] text-[var(--ink-muted)]">
         <span>{team.teamType}</span><span>·</span><span>{team.teamStyle}</span><span>·</span><span>{team.preferredLanguage}</span>
       </div>
-      {team.schools.length > 0 && <p className="mt-2 text-xs text-[var(--ink-muted)]">{team.schools.join(" · ")}</p>}
+      {(team.schoolName || team.schools.length > 0) && (
+        <p className="mt-2 text-xs text-[var(--ink-muted)]">
+          {team.schoolName
+            ? `Home school · ${team.schoolName}`
+            : team.schools.join(" · ")}
+        </p>
+      )}
       <div className="mt-5 flex justify-between gap-3 border-t border-[var(--line)] pt-4 text-xs font-semibold text-[var(--ink-faint)]">
         <span>
           {team.memberCount} / {team.capacity} members
