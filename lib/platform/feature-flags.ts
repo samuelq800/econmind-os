@@ -38,7 +38,7 @@ export type PlatformNavigationItem = {
  * working. Simulation and League retain their dedicated secondary navigation.
  */
 export type NavigationSection = {
-  id: "home" | "about" | "explore" | "learn" | "lab" | "simulation" | "league" | "teams" | "community-legal" | "workspace";
+  id: "home" | "about" | "explore" | "learn" | "lab" | "simulation" | "league" | "season1" | "teams" | "community-legal" | "workspace";
   label: string;
   href: string;
   system: ProductSystem;
@@ -104,6 +104,11 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
       { href: "/league/schools", label: "Schools", system: "world-economy", feature: "league", description: "Participating school directory." },
       { href: "/league/about", label: "League about", system: "world-economy", feature: "league", description: "League rules and organisation." },
     ],
+  },
+  {
+    id: "season1", label: "Season 1", href: "/season1", system: "world-economy",
+    description: "Countdown, gateway and the Season 1 Team Lobby for registered members.",
+    children: [],
   },
   {
     id: "teams", label: "Teams", href: "/team", system: "shared",

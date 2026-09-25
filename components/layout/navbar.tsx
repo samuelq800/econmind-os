@@ -14,7 +14,7 @@ import { withBasePath } from "@/lib/base-path";
 import { useTheme } from "./theme-provider";
 
 const navigationSections = availableNavigationSections();
-const compactDesktopSectionIds = new Set(["home", "about", "explore", "learn", "lab", "simulation", "league"]);
+const compactDesktopSectionIds = new Set(["home", "about", "explore", "learn", "lab", "simulation", "league", "season1"]);
 const DESIGNATED_ACCOUNT_MODERATOR_ID = "ffc87a95-f535-4781-9c2d-c2fac962ea9e";
 
 export function Navbar() {

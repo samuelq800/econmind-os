@@ -17,6 +17,7 @@ const expectedTopLevelLabels = [
   "Lab",
   "Simulation",
   "League",
+  "Season 1",
   "Teams",
   "Community & Legal",
   "Workspace",
@@ -39,6 +40,7 @@ describe("Phase 2 information architecture", () => {
       for (const item of section.children) expect(routeHasPage(item.href)).toBe(true);
     }
     expect(NAVIGATION_SECTIONS.find((section) => section.id === "simulation")?.children).toEqual([]);
+    expect(NAVIGATION_SECTIONS.find((section) => section.id === "season1")?.href).toBe("/season1");
   });
 
   it("uses one configuration for desktop, mobile and footer navigation", () => {
@@ -46,6 +48,7 @@ describe("Phase 2 information architecture", () => {
     expect(navbar).toContain("links.map((section) => {");
     expect(navbar).toContain("isNavigationSectionActive");
     expect(navbar).toContain("compactDesktopSectionIds");
+    expect(navbar).toContain('"season1"');
     expect(navbar).toContain("xl:flex 2xl:hidden");
     expect(navbar).toContain("xl:hidden");
     expect(navbar).toContain("2xl:flex");
