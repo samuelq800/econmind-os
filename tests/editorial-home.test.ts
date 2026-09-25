@@ -33,7 +33,7 @@ describe("editorial public architecture", () => {
     expect(gate).toContain("accountRequired");
     expect(accessControl).toContain('{ path: "/about", audience: "public" }');
     expect(accessControl).toContain('{ path: "/cases", match: "prefix", audience: "public" }');
-    expect(nav).toContain("MOBILE_NAVIGATION_GROUPS");
+    expect(nav).toContain('aria-label="Mobile navigation"');
 
   });
 

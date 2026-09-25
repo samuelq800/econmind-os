@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { GlobalSearch } from "@/components/layout/global-search";
 import { getDesignatedAccountAccessStatus, setDesignatedAccountAccess } from "@/lib/supabase/account-moderation";
-import { availableNavigationSections, isNavigationSectionActive, MOBILE_NAVIGATION_GROUPS } from "@/lib/platform/feature-flags";
+import { availableNavigationSections, isNavigationSectionActive } from "@/lib/platform/feature-flags";
 import { canHostLiveSession } from "@/lib/platform/live-session-access";
 import { withBasePath } from "@/lib/base-path";
 import { useTheme } from "./theme-provider";
@@ -22,6 +22,7 @@ export function Navbar() {
   const { theme, toggleTheme, ready } = useTheme();
   const { user, role, platformRole, worldSupervisor, viewerAccess, viewerLoading, loading, openAuth, signOut, endViewerSession } = useAuth();
   const [open, setOpen] = useState(false);
+  const [mobileSection, setMobileSection] = useState<string | null>(null);
   const [accountOpen, setAccountOpen] = useState(false);
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [moderationOpen, setModerationOpen] = useState(false);
@@ -34,6 +35,25 @@ export function Navbar() {
   const compactOverflowLinks = links.filter((section) => !compactDesktopSectionIds.has(section.id));
   const designatedAccountModerator = user?.id === DESIGNATED_ACCOUNT_MODERATOR_ID && worldSupervisor;
   const liveSessionHost = canHostLiveSession(role, platformRole);
+
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    const closeOnDesktop = () => {
+      if (window.innerWidth >= 1280) setOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    window.addEventListener("resize", closeOnDesktop);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+      window.removeEventListener("resize", closeOnDesktop);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!moderationOpen) return;
@@ -73,7 +93,7 @@ export function Navbar() {
 
   return (
     <>
-    <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--canvas)_88%,transparent)] backdrop-blur-xl">
+    <header className={`sticky top-0 border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--canvas)_88%,transparent)] backdrop-blur-xl ${open ? "z-[90]" : "z-50"}`}>
       <div className="mx-auto flex h-16 max-w-[1720px] items-center gap-3 px-5 lg:px-8">
         <Link href="/" className="brand-home-link flex shrink-0 items-center gap-3" onClick={() => setOpen(false)} draggable={false}>
           <span className="brand-badge-mini">
@@ -118,7 +138,7 @@ export function Navbar() {
             );
           })}
         </nav>
-        <nav className="relative hidden min-w-0 flex-1 flex-nowrap items-center justify-center gap-0.5 lg:flex 2xl:hidden" aria-label="Primary navigation">
+        <nav className="relative hidden min-w-0 flex-1 flex-nowrap items-center justify-center gap-0.5 xl:flex 2xl:hidden" aria-label="Primary navigation">
           {compactDesktopLinks.map((section) => {
             const active = isNavigationSectionActive(section, path);
             const hasChildren = section.children.length > 0;
@@ -156,7 +176,7 @@ export function Navbar() {
           </div>
         </nav>
         <div className="ml-auto flex shrink-0 items-center gap-2">
-          <GlobalSearch className="lg:max-xl:hidden" />
+          <GlobalSearch className="xl:max-2xl:hidden" />
           <button
             aria-label="Toggle color theme"
             onClick={toggleTheme}
@@ -238,64 +258,70 @@ export function Navbar() {
           </div>
 
           <button
+            type="button"
             aria-label="Toggle navigation"
-            onClick={() => setOpen((current) => !current)}
-            className="grid size-9 place-items-center rounded-lg border border-[var(--line)] bg-[var(--surface)] lg:hidden"
+            aria-expanded={open}
+            aria-controls="mobile-navigation"
+            onClick={() => { setMobileSection(links.find((section) => isNavigationSectionActive(section, path) && section.children.length > 0)?.id ?? null); setOpen((current) => !current); }}
+            className="grid size-10 place-items-center rounded-lg border border-[var(--line)] bg-[var(--surface)] xl:hidden"
           >
             {open ? <X size={17} /> : <Menu size={17} />}
           </button>
         </div>
       </div>
-      {open && (
-        <nav className="fixed inset-x-0 bottom-0 top-16 overflow-y-auto border-t border-[var(--line)] bg-[var(--canvas)] p-5 shadow-2xl lg:hidden" aria-label="Full navigation">
-          <div className="mx-auto max-w-xl">
-            <p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-[var(--ink-faint)]">Navigate EconMind</p>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              {links.map((section) => (
-                <Link key={section.id} href={section.href} onClick={() => setOpen(false)} aria-current={isNavigationSectionActive(section, path) ? "page" : undefined} className={`rounded-xl border px-4 py-3 text-sm font-bold ${isNavigationSectionActive(section, path) ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]" : "border-[var(--line)] bg-[var(--surface)]"}`}>
-                  {section.label}
-                </Link>
-              ))}
-            </div>
-            <div className="mt-8 grid gap-6">
-              {MOBILE_NAVIGATION_GROUPS.filter(
-                (group) => group.items.length > 0 && links.some((section) => section.label === group.label),
-              ).map((group) => (
-                <section key={group.label}>
-                  <p className="text-[10px] font-extrabold uppercase tracking-[.16em] text-[var(--ink-faint)]">{group.label}</p>
-                  {group.items.length > 0 && <div className="mt-2 grid grid-cols-2 gap-1">
-                    {group.items.map((item) => <Link key={item.href} href={item.href} onClick={() => setOpen(false)} className="rounded-lg px-2 py-2.5 text-sm font-semibold text-[var(--ink-muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]">{item.label}</Link>)}
+    </header>
+    {open && (
+      <div id="mobile-navigation" className="fixed inset-x-0 bottom-0 top-16 z-[80] flex xl:hidden">
+        <nav className="relative flex h-full w-full flex-col overflow-hidden border-t border-[var(--line)] bg-[var(--canvas)] shadow-2xl sm:max-w-[28rem] sm:border-r" aria-label="Mobile navigation">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-7 pt-6 sm:px-6" style={{ paddingBottom: "max(1.75rem, env(safe-area-inset-bottom))" }}>
+            <p className="px-2 text-[11px] font-extrabold uppercase tracking-[.18em] text-[var(--ink-faint)]">Navigate EconMind</p>
+            <div className="mt-4 space-y-1">
+              {links.map((section) => {
+                const active = isNavigationSectionActive(section, path);
+                const children = section.children.filter((item) => item.href !== section.href);
+                const expanded = mobileSection === section.id;
+                return <div key={section.id} className={`overflow-hidden rounded-xl border ${active ? "border-[var(--accent)] bg-[var(--accent-soft)]" : "border-transparent"}`}>
+                  <div className="flex min-h-12 items-center">
+                    <Link href={section.href} onClick={() => setOpen(false)} aria-current={active ? "page" : undefined} className={`flex min-h-12 min-w-0 flex-1 items-center px-4 text-sm font-bold ${active ? "text-[var(--accent)]" : "text-[var(--ink)]"}`}>{section.label}</Link>
+                    {children.length > 0 && <button type="button" aria-label={`${expanded ? "Hide" : "Show"} ${section.label} pages`} aria-expanded={expanded} aria-controls={`mobile-section-${section.id}`} onClick={() => setMobileSection(expanded ? null : section.id)} className="mr-1 grid size-11 shrink-0 place-items-center rounded-lg text-[var(--ink-muted)] hover:bg-[var(--surface-subtle)]"><ChevronDown size={17} className={`transition-transform ${expanded ? "rotate-180" : ""}`} /></button>}
+                  </div>
+                  {children.length > 0 && expanded && <div id={`mobile-section-${section.id}`} className="grid gap-0.5 border-t border-[var(--line)] px-2 py-2">
+                    {children.map((item) => <Link key={item.href} href={item.href} onClick={() => setOpen(false)} aria-current={path === item.href ? "page" : undefined} className={`flex min-h-11 items-center rounded-lg px-3 text-sm ${path === item.href ? "font-bold text-[var(--accent)]" : "font-medium text-[var(--ink-muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"}`}>{item.label}</Link>)}
                   </div>}
-                </section>
-              ))}
+                </div>;
+              })}
             </div>
-          {role === "teacher" && (
-            <Link href="/admin/daily-brief" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--accent)]">
-              <ClipboardCheck size={15} /> Review Daily Brief
-            </Link>
-          )}
-          {role === "professor" && (
-            <Link href="/professor" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--accent)]">
-              <GraduationCap size={15} /> Professor Studio
-            </Link>
-          )}
-          {user ? (
-            <button type="button" onClick={() => { setOpen(false); void signOut(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--red)]">
-              <LogOut size={15} /> Sign out
-            </button>
-          ) : viewerAccess ? (
-            <button type="button" onClick={() => { setOpen(false); endViewerSession(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--red)]">
-              <LogOut size={15} /> Leave viewing mode
-            </button>
-          ) : (
-            <button type="button" onClick={() => { setOpen(false); openAuth("sign-in"); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--accent)]">
-              <LogIn size={15} /> Sign in
-            </button>
-          )}
+            <div className="mt-7 border-t border-[var(--line)] pt-4">
+              <p className="px-2 pb-2 text-[11px] font-extrabold uppercase tracking-[.18em] text-[var(--ink-faint)]">Account</p>
+              {role === "teacher" && (
+                <Link href="/admin/daily-brief" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--accent)]">
+                  <ClipboardCheck size={15} /> Review Daily Brief
+                </Link>
+              )}
+              {role === "professor" && (
+                <Link href="/professor" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--accent)]">
+                  <GraduationCap size={15} /> Professor Studio
+                </Link>
+              )}
+              {user ? (
+                <button type="button" onClick={() => { setOpen(false); void signOut(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--red)]">
+                  <LogOut size={15} /> Sign out
+                </button>
+              ) : viewerAccess ? (
+                <button type="button" onClick={() => { setOpen(false); endViewerSession(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--red)]">
+                  <LogOut size={15} /> Leave viewing mode
+                </button>
+              ) : (
+                <button type="button" onClick={() => { setOpen(false); openAuth("sign-in"); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-[var(--accent)]">
+                  <LogIn size={15} /> Sign in
+                </button>
+              )}
+            </div>
           </div>
         </nav>
-      )}
-    </header>
+        <button type="button" aria-label="Close navigation" onClick={() => setOpen(false)} className="hidden flex-1 bg-black/55 sm:block" />
+      </div>
+    )}
     {moderationOpen && <AccountAccessConsole suspended={targetSuspended} loading={moderationLoading} busy={moderationBusy} message={moderationMessage} onClose={() => setModerationOpen(false)} onChange={updateTargetAccess} />}
     </>
   );

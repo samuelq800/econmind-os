@@ -43,11 +43,11 @@ describe("Phase 2 information architecture", () => {
 
   it("uses one configuration for desktop, mobile and footer navigation", () => {
     expect(navbar).toContain("availableNavigationSections");
-    expect(navbar).toContain("MOBILE_NAVIGATION_GROUPS");
+    expect(navbar).toContain("links.map((section) => {");
     expect(navbar).toContain("isNavigationSectionActive");
     expect(navbar).toContain("compactDesktopSectionIds");
-    expect(navbar).toContain("lg:flex 2xl:hidden");
-    expect(navbar).toContain("lg:hidden");
+    expect(navbar).toContain("xl:flex 2xl:hidden");
+    expect(navbar).toContain("xl:hidden");
     expect(navbar).toContain("2xl:flex");
     expect(footer).toContain("availableNavigationSections");
     expect(footer).toContain("primaryLinks");
