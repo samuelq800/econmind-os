@@ -65,12 +65,12 @@ describe("Season 1 pre-season team lobby", () => {
     expect(browserData).not.toContain(".from(");
   });
 
-  it("lets signed-in members use the direct lobby link without a main-site entry", () => {
+  it("lets signed-in members use the first-level Season 1 entry", () => {
     expect(page).toContain("getSeason1Lobby");
     expect(page).toContain("if (user) void refresh()");
     expect(page).toContain("open to registered EconMind members");
     expect(page).not.toContain("if (!user || !worldSupervisor)");
-    expect(navbar).not.toContain('href="/season1"');
+    expect(navbar).toContain('"season1"');
     expect(memberAccess).toContain("world_preseason_require_participant()");
     expect(memberAccess).toContain("applicant_user_id = auth.uid()");
     expect(memberAccess).toContain("grant execute on function public.get_world_preseason_my_pending_team_ids() to authenticated");
@@ -100,6 +100,7 @@ describe("Season 1 pre-season team lobby", () => {
     expect(entrance).toContain("getSeason1Opening");
     expect(entrance).toContain("setSeason1Opening");
     expect(entrance).toContain("if (!ready || opening || checking) return");
+    expect(entrance).toContain('"Open Lobby"');
     expect(entrance).toContain("if (confirmed.isOpen) setEntered(true)");
     expect(entrance).toContain("<Season1TeamLobby />");
     expect(entrance).toContain("getElementById(window.location.hash.slice(1))");
@@ -117,6 +118,7 @@ describe("Season 1 pre-season team lobby", () => {
     expect(openingMigration).toContain("2026-09-25 13:00:00+00");
     expect(openingMigration).toContain("world_preseason_require_participant()");
     expect(openingMigration).toContain("world_preseason_gate_open()");
+    expect(openingMigration).toContain("account_status = 'active'");
     expect(openingMigration).toContain("public.is_platform_admin(auth.uid())");
     for (const policy of ["public_team_discovery", "member_roster_read", "channel_read", "message_read", "free_agent_read"]) {
       expect(openingMigration).toContain(`alter policy world_preseason_${policy}`);

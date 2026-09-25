@@ -39,6 +39,9 @@ describe("central frontend page access policy", () => {
     expect(pageAccessForPath("/admin/governance").platformRoles).toEqual(["platform_admin"]);
     expect(pageAccessForPath("/season1").audience).toBe("account");
     expect(pageAccessForPath("/season1").platformRoles).toBeUndefined();
+    expect(hasRequiredPageRole(pageAccessForPath("/season1"), "student", null)).toBe(true);
+    expect(hasRequiredPageRole(pageAccessForPath("/season1"), "teacher", null)).toBe(true);
+    expect(hasRequiredPageRole(pageAccessForPath("/season1"), "professor", null)).toBe(true);
     expect(hasRequiredPageRole(pageAccessForPath("/season1"), "student", "platform_admin")).toBe(true);
     expect(hasRequiredPageRole(pageAccessForPath("/season1"), "student", "school_leader")).toBe(true);
   });

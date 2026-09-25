@@ -37,7 +37,7 @@ export const PAGE_ACCESS_RULES: readonly PageAccessRule[] = [
   { path: "/simulation/legacy-world/admin", match: "prefix", audience: "account", platformRoles: ["platform_admin"] },
   { path: "/simulation", match: "prefix", audience: "public" },
 
-  // The unlisted Season 1 direct link is open to individual accounts, not viewers.
+  // The Season 1 navigation entry is open to individual accounts, not viewers.
   // Active-account and action-specific permissions are enforced by its RPCs.
   { path: "/season1", match: "prefix", audience: "account" },
 

@@ -104,6 +104,10 @@ export function Season1Entrance() {
     return () => window.clearTimeout(timer);
   }, [entered]);
 
+  useEffect(() => {
+    if (entered && !window.location.hash) window.scrollTo(0, 0);
+  }, [entered]);
+
   const target = gate ? Date.parse(gate.opensAt) : Number.POSITIVE_INFINITY;
   const remaining = gate ? target - ((now ?? Date.parse(gate.serverNow) - serverOffset) + serverOffset) : 0;
   const ready = gate !== null && now !== null && remaining <= 0;
@@ -193,7 +197,7 @@ export function Season1Entrance() {
         <div className={styles.status}><span className={ready ? styles.readyDot : styles.lockedDot} /> Team Lobby <strong>{ready ? "READY" : "LOCKED"}</strong></div>
         <button type="button" className={styles.openButton} disabled={!ready || opening || checking} onClick={() => void openDoor()}>
           {ready ? <Sparkles size={20} /> : <LockKeyhole size={18} />}
-          {opening ? "Opening the gate…" : checking ? "Checking access…" : "Open Season 1"}
+          {opening ? "Opening the gate…" : checking ? "Checking access…" : "Open Lobby"}
           {ready && !opening && <ArrowRight size={19} />}
         </button>
         <p>{ready ? "Click to open the gateway to Team Lobby." : "The gateway unlocks when the countdown reaches zero."}</p>
