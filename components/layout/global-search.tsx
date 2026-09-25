@@ -202,9 +202,13 @@ export function GlobalSearch({ className = "" }: { className?: string }) {
         onClick={openSearch}
         onFocus={preload}
         onPointerEnter={preload}
-        className={`${styles.trigger} ${className} group flex h-10 shrink-0 items-center rounded-xl border border-[var(--line-strong)] bg-[var(--surface)] text-[var(--ink-muted)] shadow-sm transition-[border-color,background-color,color,box-shadow,transform] duration-200 hover:border-[var(--ink-faint)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--canvas)]`}
+        className={`${styles.trigger} ${className} group flex h-10 shrink-0 items-center rounded-xl border border-[var(--line-strong)] bg-[var(--surface)] text-[var(--ink-muted)] shadow-sm transition-colors hover:border-[var(--ink-faint)] hover:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--canvas)]`}
       >
-        <Search size={16} className={styles.triggerIcon} aria-hidden="true" />
+        <Search
+          size={16}
+          className={styles.triggerIcon}
+          aria-hidden="true"
+        />
         <span className={`${styles.triggerLabel} truncate text-sm font-medium`}>
           Find or go to
         </span>
@@ -219,7 +223,7 @@ export function GlobalSearch({ className = "" }: { className?: string }) {
       {open &&
         createPortal(
           <div
-            className={`${styles.overlay} fixed inset-0 z-[100] overflow-y-auto bg-[color-mix(in_srgb,var(--ink)_28%,transparent)] backdrop-blur-[2px]`}
+            className={`${styles.overlay} fixed inset-0 z-[100] overflow-y-auto bg-[color-mix(in_srgb,var(--ink)_28%,transparent)] p-4 backdrop-blur-[2px]`}
             onMouseDown={(event) => {
               if (event.target === event.currentTarget) closeSearch();
             }}
@@ -229,7 +233,7 @@ export function GlobalSearch({ className = "" }: { className?: string }) {
               role="dialog"
               aria-modal="true"
               aria-labelledby={titleId}
-              className={`${styles.dialog} mx-auto flex w-full max-w-[42rem] flex-col overflow-hidden border border-[var(--line-strong)] bg-[var(--surface)] shadow-2xl`}
+              className={`${styles.dialog} mx-auto flex w-full max-w-[42rem] flex-col overflow-hidden rounded-2xl border border-[var(--line-strong)] bg-[var(--surface)] shadow-2xl`}
             >
               <h2 id={titleId} className="sr-only">
                 Search EconMind OS
@@ -290,9 +294,7 @@ export function GlobalSearch({ className = "" }: { className?: string }) {
                       : `${results.length} search results`}
               </p>
 
-              <div
-                className={`${styles.results} scroll-slim min-h-0 flex-[1_1_auto] overflow-y-auto p-2`}
-              >
+              <div className={`${styles.results} scroll-slim min-h-0 flex-[1_1_auto] overflow-y-auto p-2`}>
                 {loadState === "loading" && (
                   <div className="grid min-h-32 place-items-center text-sm text-[var(--ink-muted)]">
                     Loading features…
@@ -374,9 +376,7 @@ export function GlobalSearch({ className = "" }: { className?: string }) {
                 )}
               </div>
 
-              <div
-                className={`${styles.footer} flex items-center justify-between border-t border-[var(--line)] bg-[var(--surface-subtle)] px-4 pt-2 text-[10px] font-semibold text-[var(--ink-muted)]`}
-              >
+              <div className="flex items-center justify-between border-t border-[var(--line)] bg-[var(--surface-subtle)] px-4 py-2 text-[10px] font-semibold text-[var(--ink-muted)]">
                 <span>↑↓ Navigate · Enter Open</span>
                 <span>Esc Close</span>
               </div>

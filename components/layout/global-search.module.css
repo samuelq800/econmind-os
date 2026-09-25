@@ -17,51 +17,20 @@
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 0;
 }
 
 .dialog {
-  min-height: 100vh;
-  min-height: 100dvh;
-  max-height: 100vh;
-  max-height: 100dvh;
-  border-radius: 0;
-  padding-top: env(safe-area-inset-top);
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
+  margin-block: auto;
 }
 
 .results {
-  max-height: none;
+  max-height: min(58vh, 30rem);
+  max-height: min(58dvh, 30rem);
 }
 
-.footer {
-  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
-}
-
-@media (min-width: 640px) {
-  .overlay {
-    padding: 1rem;
-  }
-
-  .dialog {
-    min-height: 0;
-    max-height: calc(100vh - 2rem);
-    max-height: calc(100dvh - 2rem);
-    margin-block: auto;
-    border-radius: 1rem;
-    padding-top: 0;
-  }
-
-  .results {
-    max-height: min(58vh, 30rem);
-    max-height: min(58dvh, 30rem);
-  }
-
-  .footer {
-    padding-bottom: 0.5rem;
-  }
-}
-
-@media (min-width: 768px) and (max-width: 1279px) {
+@media (min-width: 768px) and (max-width: 1535px) {
   .trigger {
     width: 11rem;
     justify-content: space-between;
@@ -81,9 +50,9 @@
   }
 }
 
-@media (min-width: 1600px) {
+@media (min-width: 1700px) {
   .trigger {
-    width: 11rem;
+    width: 13rem;
     justify-content: space-between;
     padding-inline: 0.875rem;
   }

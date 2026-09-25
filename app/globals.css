@@ -3134,114 +3134,17 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 .brand-home-link {
-   -webkit-user-drag: none;
-   border-radius: 8px
-}
-
-.site-header {
-   padding-top: env(safe-area-inset-top)
-}
-
-.brand-beta {
-   display: inline-flex;
-   min-height: 1.25rem;
-   align-items: center;
-   justify-content: center;
-   border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
-   border-radius: 999px;
-   background: color-mix(in srgb, var(--accent-soft) 72%, var(--surface));
-   padding: .12rem .42rem;
-   color: var(--accent);
-   font-size: 8px;
-   font-weight: 850;
-   letter-spacing: .11em;
-   line-height: 1;
-   opacity: 1;
-   pointer-events: none;
-   text-transform: uppercase;
-   transform: translateZ(0);
-   transition: border-color .2s ease, background-color .2s ease, color .2s ease, transform .2s ease
+   -webkit-user-drag: none
 }
 
 .brand-home-link:hover .brand-badge-mini {
    box-shadow: 0 0 0 1px rgba(6, 35, 65, .92), 0 0 0 2px rgba(240, 200, 101, .82), 0 7px 17px rgba(5, 29, 51, .25)
 }
 
-.brand-home-link:hover .brand-beta,
-.brand-home-link:focus-visible .brand-beta {
-   border-color: var(--accent);
-   background: var(--accent);
-   color: white;
-   opacity: 1;
-   transform: translateY(-1px)
-}
-
 .brand-home-link:focus-visible {
    border-radius: 6px;
    outline: 2px solid var(--accent);
    outline-offset: 5px
-}
-
-.navbar-popover {
-   transform-origin: top center;
-   animation: navbar-popover-in .16s cubic-bezier(.2, .75, .25, 1) both
-}
-
-.mobile-nav-shell {
-   top: calc(4rem + env(safe-area-inset-top));
-   animation: mobile-nav-fade-in .2s ease-out both
-}
-
-.mobile-nav-panel {
-   animation: mobile-nav-panel-in .28s cubic-bezier(.2, .75, .25, 1) both
-}
-
-.mobile-nav-backdrop {
-   animation: mobile-nav-fade-in .24s ease-out both
-}
-
-.mobile-nav-children {
-   transform-origin: top center;
-   animation: mobile-nav-children-in .2s cubic-bezier(.2, .75, .25, 1) both
-}
-
-@keyframes navbar-popover-in {
-   from { opacity: 0; transform: translateY(-5px) scale(.985) }
-   to { opacity: 1; transform: translateY(0) scale(1) }
-}
-
-@keyframes mobile-nav-fade-in {
-   from { opacity: 0 }
-   to { opacity: 1 }
-}
-
-@keyframes mobile-nav-panel-in {
-   from { opacity: 0; transform: translateX(-18px) }
-   to { opacity: 1; transform: translateX(0) }
-}
-
-@keyframes mobile-nav-children-in {
-   from { opacity: 0; transform: translateY(-6px) }
-   to { opacity: 1; transform: translateY(0) }
-}
-
-@media(max-width:639px) {
-   .brand-badge-mini {
-      width: 2rem;
-      height: 2rem
-   }
-}
-
-@media(prefers-reduced-motion:reduce) {
-   .brand-beta,
-   .navbar-popover,
-   .mobile-nav-shell,
-   .mobile-nav-panel,
-   .mobile-nav-backdrop,
-   .mobile-nav-children {
-      animation: none !important;
-      transition: none !important
-   }
 }
 
 /* The hero seal moves like a suspended enamel medallion: a slow lift, orbiting
