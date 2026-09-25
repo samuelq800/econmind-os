@@ -6,7 +6,7 @@ import { pageAccessForPath } from "@/lib/platform/access-control";
 import { legalAcknowledgementErrorMessage } from "@/lib/supabase/governance";
 
 const migration = readFileSync("supabase/migrations/20260823000000_governance_privacy_legal.sql", "utf8");
-const currentLegalMigration = readFileSync("supabase/migrations/20260921010000_activate_current_legal_documents.sql", "utf8");
+const currentLegalMigration = readFileSync("supabase/migrations/20260921010000_activate_current_legal_documents.sql", "utf8").replace(/\r\n/g, "\n");
 const authDialog = readFileSync("components/auth/auth-dialog.tsx", "utf8");
 const about = readFileSync("app/about/page.tsx", "utf8");
 const featureFlags = readFileSync("lib/platform/feature-flags.ts", "utf8");
