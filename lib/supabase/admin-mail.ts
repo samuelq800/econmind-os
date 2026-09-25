@@ -16,8 +16,10 @@ export async function listMailRecipients(): Promise<MailRecipient[]> {
   }
 }
 
-// Do not fetch HTML or attachment binaries into the reader. React renders only plaintext.
+// HTML is fetched only for the selected conversation, then sanitized and sandboxed.
+// Lists, latest-sender lookups, and attachments retain their existing lightweight shape.
 const MESSAGE_COLUMNS = "id,thread_id,direction,sender_email,sender_name,recipient_email,recipient_name,subject,body_text,delivery_status,actor_user_id,actor_display_name,has_attachments,attachments,created_at,received_at,sent_at,delivered_at,failed_at,failure_code,request_id,provider_message_id";
+const READER_MESSAGE_COLUMNS = `${MESSAGE_COLUMNS},body_html`;
 const THREAD_COLUMNS = "id,subject,created_at,updated_at,last_message_at,last_inbound_at,last_outbound_at,message_count,last_message_preview,last_sender_email,last_sender_name,has_attachments";
 
 function page<T>(rows: T[] | null): MailPage<T> {
@@ -56,7 +58,7 @@ export async function getMailThread(threadId: string): Promise<MailThread> {
 /** Newest page first; the reader reverses it and prepends older pages for chronological reading. */
 export async function listThreadMessages(threadId: string, pageIndex = 0): Promise<MailPage<MailMessage>> {
   const start = pageStart(pageIndex);
-  const { data, error } = await client().from("mail_messages").select(MESSAGE_COLUMNS)
+  const { data, error } = await client().from("mail_messages").select(READER_MESSAGE_COLUMNS)
     .eq("thread_id", threadId).order("created_at", { ascending: false })
     .order("id", { ascending: false }).range(start, start + MAIL_PAGE_SIZE);
   fail(error);

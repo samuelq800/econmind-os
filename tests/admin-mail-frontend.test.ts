@@ -103,7 +103,7 @@ describe("browser mail transport", () => {
     expect(invoke).toHaveBeenCalledTimes(1);
   });
 
-  it("paginates Inbox by last activity and Sent by outbound direction without reading HTML", async () => {
+  it("paginates Inbox by last activity and Sent by outbound direction without loading HTML into lists", async () => {
     const query = queryMock(Array.from({ length: 26 }, (_, index) => ({ id: String(index) })));
     const inbox = await listMailInbox(1);
     expect(query.not).toHaveBeenCalledWith("last_inbound_at", "is", null);
@@ -119,6 +119,7 @@ describe("browser mail transport", () => {
   it("reads older thread pages and independently selects the latest inbound sender", async () => {
     const query = queryMock([{ sender_email: "latest@example.com" }]);
     await listThreadMessages(threadId, 2);
+    expect(query.select.mock.calls.at(-1)?.[0]).toContain("body_html");
     expect(query.range).toHaveBeenCalledWith(50, 75);
     expect(query.eq).toHaveBeenCalledWith("thread_id", threadId);
     const latest = await getLatestInboundMessage(threadId);
@@ -130,10 +131,12 @@ describe("browser mail transport", () => {
 
 describe("Mail Terminal static and content safety boundaries", () => {
   const ui = readFileSync("components/admin/mail-terminal.tsx", "utf8");
+  const htmlBody = readFileSync("components/admin/mail-html-body.tsx", "utf8");
   const adapter = readFileSync("lib/supabase/admin-mail.ts", "utf8");
-  it("renders plaintext and metadata with no HTML injection or browser history writes", () => {
+  it("isolates HTML in a sandbox and leaves mail writes on the server", () => {
     expect(ui).not.toContain("dangerouslySetInnerHTML");
-    expect(ui).not.toContain("body_html");
+    expect(htmlBody).toContain('sandbox="allow-popups allow-popups-to-escape-sandbox"');
+    expect(htmlBody).toContain("srcDoc={document}");
     expect(adapter).not.toMatch(/\.(insert|update|delete|upsert)\(/);
     expect(ui).toContain("Attachments are available in the forwarded management copy.");
     expect(adapter).not.toContain("api.brevo.com");

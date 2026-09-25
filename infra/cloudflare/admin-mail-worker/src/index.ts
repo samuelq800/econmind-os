@@ -222,7 +222,7 @@ async function makePayload(message: ForwardableEmailMessage): Promise<InboundPay
     recipient_name: recipientName(email.to),
     subject: cleanHeader(email.subject, 998) || "(No subject)",
     body_text: plaintext(email),
-    // Inert audit field only. The application must never render this as HTML.
+    // The admin reader sanitizes and isolates this untrusted display copy.
     body_html: email.html ? cleanBody(email.html).slice(0, MAX_BODY_CHARS) : null,
     internet_message_id: messageIds(email.messageId)[0] ?? null,
     in_reply_to: messageIds(email.inReplyTo).at(-1) ?? null,

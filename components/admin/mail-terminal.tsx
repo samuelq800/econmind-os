@@ -11,6 +11,7 @@ import { getProfile } from "@/lib/supabase/data";
 import { getLatestInboundMessage, getMailThread, listMailInbox, listSentMail, listThreadMessages, MailSendError, sendAdminMail, type SendMailResult } from "@/lib/supabase/admin-mail";
 
 import { MailRecipientPicker } from "@/components/admin/mail-recipient-picker";
+import { MailHtmlBody } from "@/components/admin/mail-html-body";
 
 type MailView = "inbox" | "sent" | "compose";
 const EMPTY_DRAFT: MailDraft = { to: "", subject: "", message: "" };
@@ -194,7 +195,7 @@ function MessageCard({ message, onForward }: { message: MailMessage; onForward: 
       <p className="mt-3 break-words text-sm font-semibold">{message.subject || "(No subject)"}</p>
       {!inbound && <div className="mt-3 flex flex-wrap items-center gap-2"><Status status={message.delivery_status} /><span className="text-xs text-[var(--ink-muted)]">Sent by {message.actor_display_name || "EconMind Admin"}</span></div>}
     </div>
-    <div className="p-5"><p dir="auto" className="whitespace-pre-wrap break-words text-sm leading-7 [overflow-wrap:anywhere]">{message.body_text || "No plain-text content. The original message is available in the forwarded management copy."}</p>
+    <div className="p-5">{inbound && message.body_html ? <MailHtmlBody html={message.body_html} fallback={message.body_text} /> : <p dir="auto" className="whitespace-pre-wrap break-words text-sm leading-7 [overflow-wrap:anywhere]">{message.body_text || "No plain-text content. The original message is available in the forwarded management copy."}</p>}
       {message.has_attachments && <div className="mt-5 rounded-lg border border-[var(--line)] bg-[var(--canvas)] p-4"><p className="flex items-center gap-2 text-xs font-bold"><Paperclip size={14} />Attachments ({message.attachments?.length || "metadata unavailable"})</p><ul className="mt-3 space-y-2">{message.attachments?.map((attachment, index) => <li key={`${attachment.filename}:${index}`} className="break-words text-xs leading-5"><span className="font-semibold">{attachment.filename || "Unnamed attachment"}</span><span className="block text-[var(--ink-muted)]">{attachment.content_type} · {formatAttachmentSize(attachment.size)}</span></li>)}</ul><p className="mt-3 text-xs leading-5 text-[var(--ink-muted)]">Attachments are available in the forwarded management copy.</p></div>}
       {!inbound && <details className="mt-5 border-t border-[var(--line)] pt-3 text-xs text-[var(--ink-muted)]"><summary className="cursor-pointer font-semibold">Delivery details</summary><dl className="mt-3 grid gap-2 break-all"><div><dt className="inline font-semibold">Request: </dt><dd className="inline">{message.request_id || "Unavailable"}</dd></div><div><dt className="inline font-semibold">Provider message: </dt><dd className="inline">{message.provider_message_id || "Awaiting confirmation"}</dd></div>{message.delivered_at && <div><dt className="inline font-semibold">Delivered: </dt><dd className="inline">{timestamp(message.delivered_at)}</dd></div>}{message.failure_code && <div><dt className="inline font-semibold">Failure: </dt><dd className="inline">{message.failure_code}</dd></div>}</dl>{message.delivery_status === "pending" && <p className="mt-3 leading-5">The outcome may be uncertain. Verify this request before sending another email.</p>}</details>}
     </div>

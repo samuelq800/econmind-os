@@ -28,6 +28,7 @@ export type MailMessage = {
   recipient_name: string | null;
   subject: string;
   body_text: string;
+  body_html?: string | null;
   delivery_status: MailDeliveryStatus;
   actor_user_id: string | null;
   actor_display_name: string | null;

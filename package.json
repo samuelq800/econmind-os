@@ -25,13 +25,15 @@
     "pdfjs-dist": "6.3.289",
     "react": "19.2.7",
     "react-dom": "19.2.7",
-    "recharts": "3.10.0"
+    "recharts": "3.10.0",
+    "sanitize-html": "^2.17.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "22.20.1",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
+    "@types/sanitize-html": "^2.16.1",
     "eslint": "9.39.5",
     "eslint-config-next": "16.2.10",
     "prettier": "3.9.5",
