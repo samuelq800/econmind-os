@@ -103,7 +103,7 @@ describe("admin mail send authorization and immutable identity", () => {
     expect(await response.json()).toMatchObject({ ok: true, messageId, threadId, status: "accepted" });
     expect(store.rpc.mock.calls[0]).toEqual(["mail_begin_send", { p_request_id: requestId, p_actor_user_id: actorId, p_actor_display_name: "David Zhang", p_to: validSend.to, p_subject: validSend.subject, p_body_text: validSend.message, p_thread_id: null }]);
     const request = fetcher.mock.calls[0][1]!;
-    expect(JSON.parse(request.body as string)).toEqual({ sender: { email: "admin@econmind.group", name: "David Zhang · EconMind" }, replyTo: { email: "admin@econmind.group", name: "EconMind" }, to: [{ email: validSend.to }], subject: validSend.subject, textContent: validSend.message, htmlContent: renderAdminMailHtml(validSend.message), headers: { idempotencyKey: requestId } });
+    expect(JSON.parse(request.body as string)).toEqual({ sender: { email: "admin@econmind.group", name: "David Zhang · EconMind" }, replyTo: { email: "admin@econmind.group", name: "EconMind" }, to: [{ email: validSend.to }], subject: validSend.subject, textContent: validSend.message, htmlContent: renderAdminMailHtml(validSend.message, "David Zhang"), headers: { idempotencyKey: requestId } });
     expect(request.headers).not.toHaveProperty("Idempotency-Key");
     expect(store.rpc.mock.calls[1]).toEqual(["mail_complete_send", { p_message_id: messageId, p_provider_message_id: "Provider.CaseSensitive@brevo.example", p_failure_code: null }]);
   });

@@ -4,10 +4,12 @@ import { renderAdminMailHtml } from "../supabase/functions/_shared/mail-template
 
 describe("branded outgoing mail", () => {
   it("escapes authored text while preserving line breaks and the official badge", () => {
-    const html = renderAdminMailHtml('Hello <script>alert("x")</script> & team\nSecond line');
+    const html = renderAdminMailHtml('Hello <script>alert("x")</script> & team\nSecond line', 'David <script>alert("x")</script>');
     expect(html).toContain("https://econmind.group/brand/econmind-badge-96.png");
     expect(html).toContain("EconMind");
     expect(html).toContain("Hello &lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt; &amp; team<br>Second line");
+    expect(html).toContain("David &lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt; · EconMind");
+    expect(html).toContain("FROM<br>");
     expect(html).not.toContain("<script>");
   });
 
@@ -17,5 +19,6 @@ describe("branded outgoing mail", () => {
     expect(html).toContain("EconMind");
     expect(html).toContain("{{ .Token }}");
     expect(html).toContain('href="{{ .ConfirmationURL }}"');
+    expect(html).toContain("From: EconMind");
   });
 });
