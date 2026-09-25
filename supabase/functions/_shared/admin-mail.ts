@@ -1,4 +1,5 @@
 /** Runtime-independent mail handlers. Only the service-role adapter may write history. */
+import { renderAdminMailHtml } from "./mail-template.ts";
 export const OFFICIAL_MAIL_ADDRESS = "admin@econmind.group";
 
 export const mailCors = {
@@ -185,6 +186,7 @@ export function createSendAdminEmailHandler(deps: { store: MailStore; brevoApiKe
             to: [{ email: to }],
             subject,
             textContent: message,
+            htmlContent: renderAdminMailHtml(message),
             // Brevo's dedicated idempotency guide documents this JSON headers property,
             // not an HTTP Idempotency-Key. Its 30-minute TTL supplements our durable DB guard.
             // https://developers.brevo.com/docs/heterogenous-versions-batch-emails
