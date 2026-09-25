@@ -36,9 +36,9 @@ describe("official EconMind badge", () => {
     expect(home).toMatch(
       /className="home-hero-badge"\s+draggable=\{false\}/,
     );
-    expect(navbar).toContain(
-      '<Link href="/" className="brand-home-link flex shrink-0 items-center gap-3" onClick={() => setOpen(false)} draggable={false}>',
-    );
+    expect(navbar).toContain("brand-home-link");
+    expect(navbar).toMatch(/<Link[\s\S]*?href="\/"[\s\S]*?draggable=\{false\}/);
+    expect(navbar).toContain('className="brand-beta"');
     expect(navbar).toMatch(
       /draggable=\{false\}\s+className="brand-badge-mini-image"/,
     );

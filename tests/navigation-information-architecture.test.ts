@@ -49,9 +49,10 @@ describe("Phase 2 information architecture", () => {
     expect(navbar).toContain("isNavigationSectionActive");
     expect(navbar).toContain("compactDesktopSectionIds");
     expect(navbar).toContain('"season1"');
-    expect(navbar).toContain("xl:flex 2xl:hidden");
+    expect(navbar).toContain("xl:flex");
     expect(navbar).toContain("xl:hidden");
-    expect(navbar).toContain("2xl:flex");
+    expect(navbar).not.toContain("2xl:flex");
+    expect(navbar).toContain("compactOverflowLinks");
     expect(footer).toContain("availableNavigationSections");
     expect(footer).toContain("primaryLinks");
   });

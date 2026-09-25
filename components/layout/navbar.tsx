@@ -93,9 +93,9 @@ export function Navbar() {
 
   return (
     <>
-    <header className={`sticky top-0 border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--canvas)_88%,transparent)] backdrop-blur-xl ${open ? "z-[90]" : "z-50"}`}>
-      <div className="mx-auto flex h-16 max-w-[1720px] items-center gap-3 px-5 lg:px-8">
-        <Link href="/" className="brand-home-link flex shrink-0 items-center gap-3" onClick={() => setOpen(false)} draggable={false}>
+    <header className={`site-header sticky top-0 border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--canvas)_88%,transparent)] backdrop-blur-xl ${open ? "z-[90]" : "z-50"}`}>
+      <div className="mx-auto flex h-16 max-w-[1720px] items-center gap-2 px-3 sm:gap-3 sm:px-5 lg:px-8">
+        <Link href="/" className="brand-home-link flex shrink-0 items-center gap-2 sm:gap-3" onClick={() => setOpen(false)} draggable={false}>
           <span className="brand-badge-mini">
             <Image
               src={withBasePath("/brand/econmind-badge-96.png")}
@@ -107,49 +107,21 @@ export function Navbar() {
               className="brand-badge-mini-image"
             />
           </span>
-          <span className="text-sm font-extrabold">EconMind OS</span>
-          <span className="hidden rounded border border-[var(--line)] px-1.5 py-.5 text-[9px] font-bold uppercase tracking-widest text-[var(--ink-faint)] sm:inline">Beta</span>
+          <span className="whitespace-nowrap text-[13px] font-extrabold sm:text-sm">EconMind<span className="max-[359px]:hidden"> OS</span></span>
+          <span className="brand-beta" aria-label="Beta version">Beta</span>
         </Link>
-        <nav className="hidden min-w-0 flex-1 flex-nowrap items-center justify-center gap-0.5 2xl:flex" aria-label="Primary navigation">
-          {links.map((section) => {
-            const active = isNavigationSectionActive(section, path);
-            const hasChildren = section.children.length > 0;
-            return (
-              <div key={section.id} className="relative shrink-0" onMouseEnter={() => hasChildren && setOpenSection(section.id)} onMouseLeave={() => setOpenSection(null)}>
-                <div className={`flex items-center rounded-lg ${active ? "bg-[var(--surface-strong)]" : "text-[var(--ink-muted)] hover:text-[var(--ink)]"}`}>
-                  <Link href={section.href} aria-current={active ? "page" : undefined} className="whitespace-nowrap px-2.5 py-2 text-xs font-semibold 2xl:px-3 2xl:text-sm" onClick={() => setOpenSection(null)}>{section.label}</Link>
-                  {hasChildren && <button type="button" aria-label={`Open ${section.label} navigation`} aria-expanded={openSection === section.id} onClick={() => setOpenSection((current) => current === section.id ? null : section.id)} className="-ml-1 grid size-6 place-items-center rounded-md hover:bg-[var(--surface-subtle)]"><ChevronDown size={13} /></button>}
-                </div>
-                {hasChildren && openSection === section.id && (
-                  <div className="absolute left-0 top-full z-50 w-[19rem] pt-2">
-                    <div className="overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-xl">
-                      <p className="px-3 pb-2 pt-1 text-[10px] font-extrabold uppercase tracking-[.14em] text-[var(--ink-faint)]">{section.description}</p>
-                      {section.children.map((item) => {
-                        const itemActive = path === item.href || path.startsWith(`${item.href}/`);
-                        return <Link key={item.href} href={item.href} onClick={() => setOpenSection(null)} className={`block rounded-lg px-3 py-2.5 ${itemActive ? "bg-[var(--accent-soft)] text-[var(--accent)]" : "hover:bg-[var(--surface-subtle)]"}`}>
-                          <span className="block text-xs font-bold">{item.label}</span>
-                          {item.description && <span className="mt-0.5 block text-[11px] leading-4 text-[var(--ink-muted)]">{item.description}</span>}
-                        </Link>;
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </nav>
-        <nav className="relative hidden min-w-0 flex-1 flex-nowrap items-center justify-center gap-0.5 xl:flex 2xl:hidden" aria-label="Primary navigation">
+        <nav className="relative hidden min-w-0 flex-1 flex-nowrap items-center justify-center gap-0.5 xl:flex" aria-label="Primary navigation">
           {compactDesktopLinks.map((section) => {
             const active = isNavigationSectionActive(section, path);
             const hasChildren = section.children.length > 0;
             return (
               <div key={section.id} className="relative shrink-0" onMouseEnter={() => hasChildren && setOpenSection(section.id)} onMouseLeave={() => setOpenSection(null)}>
-                <div className={`flex items-center rounded-lg ${active ? "bg-[var(--surface-strong)]" : "text-[var(--ink-muted)] hover:text-[var(--ink)]"}`}>
+                <div className={`flex items-center rounded-lg transition-colors duration-200 ${active ? "bg-[var(--surface-strong)]" : "text-[var(--ink-muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"}`}>
                   <Link href={section.href} aria-current={active ? "page" : undefined} className="whitespace-nowrap px-2.5 py-2 text-xs font-semibold" onClick={() => setOpenSection(null)}>{section.label}</Link>
-                  {hasChildren && <button type="button" aria-label={`Open ${section.label} navigation`} aria-expanded={openSection === section.id} onClick={() => setOpenSection((current) => current === section.id ? null : section.id)} className="-ml-1 grid size-6 place-items-center rounded-md hover:bg-[var(--surface-subtle)]"><ChevronDown size={13} /></button>}
+                  {hasChildren && <button type="button" aria-label={`Open ${section.label} navigation`} aria-expanded={openSection === section.id} onClick={() => setOpenSection((current) => current === section.id ? null : section.id)} className="-ml-1 grid size-7 place-items-center rounded-md transition-colors hover:bg-[var(--surface-strong)]"><ChevronDown size={13} className={`transition-transform duration-200 ${openSection === section.id ? "rotate-180" : ""}`} /></button>}
                 </div>
                 {hasChildren && openSection === section.id && (
-                  <div className="absolute left-0 top-full z-50 w-[19rem] pt-2">
+                  <div className="navbar-popover absolute left-0 top-full z-50 w-[19rem] pt-2">
                     <div className="overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-xl">
                       <p className="px-3 pb-2 pt-1 text-[10px] font-extrabold uppercase tracking-[.14em] text-[var(--ink-faint)]">{section.description}</p>
                       {section.children.map((item) => <Link key={item.href} href={item.href} onClick={() => setOpenSection(null)} className="block rounded-lg px-3 py-2.5 hover:bg-[var(--surface-subtle)]"><span className="block text-xs font-bold">{item.label}</span></Link>)}
@@ -160,9 +132,9 @@ export function Navbar() {
             );
           })}
           <div className="relative shrink-0" onMouseEnter={() => setOpenSection("desktop-more")} onMouseLeave={() => setOpenSection(null)}>
-            <button type="button" aria-label="Open more navigation" aria-expanded={openSection === "desktop-more"} onClick={() => setOpenSection((current) => current === "desktop-more" ? null : "desktop-more")} className={`flex items-center gap-1 whitespace-nowrap rounded-lg px-2.5 py-2 ${compactOverflowLinks.some((section) => isNavigationSectionActive(section, path)) ? "bg-[var(--surface-strong)]" : "text-[var(--ink-muted)] hover:text-[var(--ink)]"}`} style={{ fontSize: "0.75rem", fontWeight: 600, lineHeight: "1rem" }}><span style={{ fontSize: "0.75rem", fontWeight: 600, lineHeight: "1rem" }}>More</span><ChevronDown size={13} /></button>
+            <button type="button" aria-label="Open more navigation" aria-expanded={openSection === "desktop-more"} onClick={() => setOpenSection((current) => current === "desktop-more" ? null : "desktop-more")} className={`flex items-center gap-1 whitespace-nowrap rounded-lg px-2.5 py-2 text-xs font-semibold leading-4 transition-colors duration-200 ${compactOverflowLinks.some((section) => isNavigationSectionActive(section, path)) ? "bg-[var(--surface-strong)]" : "text-[var(--ink-muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"}`}><span>More</span><ChevronDown size={13} className={`transition-transform duration-200 ${openSection === "desktop-more" ? "rotate-180" : ""}`} /></button>
             {openSection === "desktop-more" && (
-              <div className="absolute right-0 top-full z-50 w-[18rem] pt-2">
+              <div className="navbar-popover absolute right-0 top-full z-50 w-[18rem] pt-2">
                 <div className="overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-xl">
                   {compactOverflowLinks.map((section) => (
                     <div key={section.id} className="border-b border-[var(--line)] py-1 last:border-b-0">
@@ -175,12 +147,12 @@ export function Navbar() {
             )}
           </div>
         </nav>
-        <div className="ml-auto flex shrink-0 items-center gap-2">
-          <GlobalSearch className="xl:max-2xl:hidden" />
+        <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <GlobalSearch />
           <button
             aria-label="Toggle color theme"
             onClick={toggleTheme}
-            className="grid size-9 place-items-center rounded-lg border border-[var(--line)] bg-[var(--surface)]"
+            className="grid size-9 place-items-center rounded-lg border border-[var(--line)] bg-[var(--surface)] transition-[border-color,background-color,color,transform] duration-200 hover:border-[var(--ink-faint)] hover:bg-[var(--surface-subtle)] active:scale-95"
           >
             {ready && theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
           </button>
@@ -263,7 +235,7 @@ export function Navbar() {
             aria-expanded={open}
             aria-controls="mobile-navigation"
             onClick={() => { setMobileSection(links.find((section) => isNavigationSectionActive(section, path) && section.children.length > 0)?.id ?? null); setOpen((current) => !current); }}
-            className="grid size-10 place-items-center rounded-lg border border-[var(--line)] bg-[var(--surface)] xl:hidden"
+            className="grid size-10 place-items-center rounded-lg border border-[var(--line)] bg-[var(--surface)] transition-[border-color,background-color,color,transform] duration-200 hover:border-[var(--ink-faint)] hover:bg-[var(--surface-subtle)] active:scale-95 xl:hidden"
           >
             {open ? <X size={17} /> : <Menu size={17} />}
           </button>
@@ -271,8 +243,8 @@ export function Navbar() {
       </div>
     </header>
     {open && (
-      <div id="mobile-navigation" className="fixed inset-x-0 bottom-0 top-16 z-[80] flex xl:hidden">
-        <nav className="relative flex h-full w-full flex-col overflow-hidden border-t border-[var(--line)] bg-[var(--canvas)] shadow-2xl sm:max-w-[28rem] sm:border-r" aria-label="Mobile navigation">
+      <div id="mobile-navigation" className="mobile-nav-shell fixed inset-x-0 bottom-0 z-[80] flex xl:hidden">
+        <nav className="mobile-nav-panel relative flex h-full w-full flex-col overflow-hidden border-t border-[var(--line)] bg-[var(--canvas)] shadow-2xl sm:max-w-[28rem] sm:border-r" aria-label="Mobile navigation">
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-7 pt-6 sm:px-6" style={{ paddingBottom: "max(1.75rem, env(safe-area-inset-bottom))" }}>
             <p className="px-2 text-[11px] font-extrabold uppercase tracking-[.18em] text-[var(--ink-faint)]">Navigate EconMind</p>
             <div className="mt-4 space-y-1">
@@ -280,12 +252,12 @@ export function Navbar() {
                 const active = isNavigationSectionActive(section, path);
                 const children = section.children.filter((item) => item.href !== section.href);
                 const expanded = mobileSection === section.id;
-                return <div key={section.id} className={`overflow-hidden rounded-xl border ${active ? "border-[var(--accent)] bg-[var(--accent-soft)]" : "border-transparent"}`}>
+                return <div key={section.id} className={`overflow-hidden rounded-xl border transition-[border-color,background-color] duration-200 ${active ? "border-[var(--accent)] bg-[var(--accent-soft)]" : "border-transparent"}`}>
                   <div className="flex min-h-12 items-center">
                     <Link href={section.href} onClick={() => setOpen(false)} aria-current={active ? "page" : undefined} className={`flex min-h-12 min-w-0 flex-1 items-center px-4 text-sm font-bold ${active ? "text-[var(--accent)]" : "text-[var(--ink)]"}`}>{section.label}</Link>
                     {children.length > 0 && <button type="button" aria-label={`${expanded ? "Hide" : "Show"} ${section.label} pages`} aria-expanded={expanded} aria-controls={`mobile-section-${section.id}`} onClick={() => setMobileSection(expanded ? null : section.id)} className="mr-1 grid size-11 shrink-0 place-items-center rounded-lg text-[var(--ink-muted)] hover:bg-[var(--surface-subtle)]"><ChevronDown size={17} className={`transition-transform ${expanded ? "rotate-180" : ""}`} /></button>}
                   </div>
-                  {children.length > 0 && expanded && <div id={`mobile-section-${section.id}`} className="grid gap-0.5 border-t border-[var(--line)] px-2 py-2">
+                  {children.length > 0 && expanded && <div id={`mobile-section-${section.id}`} className="mobile-nav-children grid gap-0.5 border-t border-[var(--line)] px-2 py-2">
                     {children.map((item) => <Link key={item.href} href={item.href} onClick={() => setOpen(false)} aria-current={path === item.href ? "page" : undefined} className={`flex min-h-11 items-center rounded-lg px-3 text-sm ${path === item.href ? "font-bold text-[var(--accent)]" : "font-medium text-[var(--ink-muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"}`}>{item.label}</Link>)}
                   </div>}
                 </div>;
@@ -319,7 +291,7 @@ export function Navbar() {
             </div>
           </div>
         </nav>
-        <button type="button" aria-label="Close navigation" onClick={() => setOpen(false)} className="hidden flex-1 bg-black/55 sm:block" />
+        <button type="button" aria-label="Close navigation" onClick={() => setOpen(false)} className="mobile-nav-backdrop hidden flex-1 bg-black/55 sm:block" />
       </div>
     )}
     {moderationOpen && <AccountAccessConsole suspended={targetSuspended} loading={moderationLoading} busy={moderationBusy} message={moderationMessage} onClose={() => setModerationOpen(false)} onChange={updateTargetAccess} />}
