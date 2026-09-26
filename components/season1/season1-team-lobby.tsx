@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import {
   ArrowRight,
   Check,
@@ -225,6 +226,10 @@ export function Season1TeamLobby() {
 
   return (
     <main className="season1-lobby min-h-screen px-5 py-8 sm:px-8 lg:px-12" onPointerMove={moveSpotlight}>
+      <nav aria-label="Season 1" className="mb-5 flex flex-wrap gap-3 text-sm font-bold">
+        <Link href="/season1" aria-current="page" className="rounded-lg bg-[var(--accent-soft)] px-4 py-2 text-[var(--accent)]">Season 1 Lobby</Link>
+        <Link href="/season1/my-team" className="rounded-lg border border-[var(--line)] px-4 py-2 hover:bg-[var(--surface-subtle)]">My Team</Link>
+      </nav>
       <section className="season1-world-hero relative isolate overflow-hidden rounded-2xl border border-[#2b6f68] px-6 py-10 text-white shadow-2xl sm:px-10 sm:py-14">
         <div className="season1-world-grid" aria-hidden="true" />
         <div className="season1-world-vignette" aria-hidden="true" />
@@ -269,7 +274,7 @@ export function Season1TeamLobby() {
               The simulation remains structurally locked.
             </p>
             <div className="season1-hero-actions mt-8 flex flex-wrap gap-3">
-              <Button disabled={busy} onClick={() => setCreateOpen(true)}>
+              <Button disabled={busy || Boolean(currentTeam)} onClick={() => setCreateOpen(true)}>
                 <Plus size={16} /> Create your team <ArrowRight size={16} />
               </Button>
               <a
@@ -313,7 +318,7 @@ export function Season1TeamLobby() {
 
       <nav className="season1-portals" aria-label="Explore the Season 1 lobby">
         <a href="#discover"><span className="season1-portal-icon"><Compass size={22} /></span><span><small>01 / FIND YOUR PEOPLE</small><strong>Discover Teams</strong><span>Explore real teams and join the story.</span></span><ArrowRight size={18} /></a>
-        <a href="#team-room"><span className="season1-portal-icon"><Crown size={22} /></span><span><small>02 / YOUR HOME BASE</small><strong>Team Room</strong><span>Get ready with your people.</span></span><ArrowRight size={18} /></a>
+        <Link href="/season1/my-team"><span className="season1-portal-icon"><Crown size={22} /></span><span><small>02 / YOUR HOME BASE</small><strong>My Team</strong><span>Team code, members and readiness.</span></span><ArrowRight size={18} /></Link>
         <a href="#world-chat"><span className="season1-portal-icon"><MessageCircle size={22} /></span><span><small>03 / THE COMMONS</small><strong>World Chat</strong><span>Meet the world before it begins.</span></span><ArrowRight size={18} /></a>
       </nav>
 

@@ -228,6 +228,9 @@ export function Navbar() {
                 {user && <Link href="/learn/research/my" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold hover:bg-[var(--surface-subtle)]">
                   <BookOpen size={14} /> My Research
                 </Link>}
+                {user && <Link href="/season1/my-team" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold hover:bg-[var(--surface-subtle)]">
+                  <UserRound size={14} /> My Team · Season 1
+                </Link>}
                 {user && <Link href="/profile" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold hover:bg-[var(--surface-subtle)]">
                   <UserRound size={14} /> Profile & privacy
                 </Link>}

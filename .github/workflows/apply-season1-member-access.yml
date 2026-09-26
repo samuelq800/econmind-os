@@ -53,3 +53,19 @@ jobs:
             --header "Content-Type: application/json" \
             "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query" \
             --data "$payload"
+      - name: Apply and verify six-member teams and My Team
+        run: |
+          payload="$(node <<'NODE'
+          const fs = require('fs');
+          const migration = fs.readFileSync('supabase/migrations/20260926000000_season1_my_team.sql', 'utf8');
+          const verification = fs.readFileSync('scripts/verify-season1-my-team.sql', 'utf8');
+          // Verify before the migration transaction commits.
+          process.stdout.write(JSON.stringify({ query: migration.replace(/commit;\s*$/, `${verification}\ncommit;`) }));
+          NODE
+          )"
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            --header "Content-Type: application/json" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query" \
+            --data "$payload" --output /dev/null

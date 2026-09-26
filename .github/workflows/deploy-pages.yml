@@ -79,6 +79,19 @@ jobs:
             --output /dev/null \
             "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query"
 
+      - name: Verify Season 1 My Team release prerequisites
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+        run: |
+          payload="$(node -e 'process.stdout.write(JSON.stringify({ query: require("fs").readFileSync("scripts/verify-season1-my-team.sql", "utf8") }))')"
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            --header "Content-Type: application/json" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query" \
+            --data "$payload" --output /dev/null
+
       - name: Export static website
         env:
           GITHUB_PAGES: "true"
