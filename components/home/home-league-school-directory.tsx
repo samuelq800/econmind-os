@@ -17,7 +17,7 @@ export function HomeLeagueSchoolDirectory() {
           <p className="home-eyebrow">Live League directory</p>
           <h2>{schoolCount} schools.<br />One world view.</h2>
         </div>
-        <p className="max-w-md text-sm leading-6 text-[var(--ink-muted)]">A city-level view of the participating network. Every plotted point comes from a reviewed roster identity and a verified city key—never from AI inference or a guessed campus address.</p>
+        <p className="max-w-md text-sm leading-6 text-[var(--ink-muted)]">A city-level view of the participating network. Every plotted point comes from an approved school identity and a verified city key—never from AI inference or a guessed campus address.</p>
       </div>
 
       <HomeSchoolNetworkMap schools={schools} syncStatus={syncStatus} />

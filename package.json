@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "league:snapshot": "node scripts/snapshot-public-league-directory.mjs",
     "calibration:validate": "node scripts/validate-economic-calibration.mjs",
     "calibration:check": "node scripts/validate-economic-calibration.mjs --strict && vitest run tests/calibration-package.test.ts",
     "world:launch": "node scripts/launch-continuous-world.mjs",

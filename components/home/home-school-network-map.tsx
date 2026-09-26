@@ -154,8 +154,8 @@ export function HomeSchoolNetworkMap({
 
           <p className={styles.syncStatus} data-status={syncStatus} role="status" aria-live="polite">
             {syncStatus === "syncing" && "Checking live school profiles…"}
-            {syncStatus === "live" && "Live directory checked; verified roster remains available."}
-            {syncStatus === "fallback" && "Live profile sync unavailable; verified roster remains available."}
+            {syncStatus === "live" && "Live directory checked; published directory remains available."}
+            {syncStatus === "fallback" && "Live profile sync unavailable; latest published directory remains available."}
           </p>
         </aside>
       </div>

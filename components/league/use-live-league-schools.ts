@@ -6,6 +6,7 @@ import {
   withDirectorySyncTimeout,
   type LeagueDirectorySchool,
 } from "@/lib/league/school-directory";
+import { publicDirectorySnapshot } from "@/lib/league/public-directory-snapshot";
 import { listPublicLeagueSchools } from "@/lib/supabase/league-directory";
 
 export type LeagueDirectorySyncStatus = "syncing" | "live" | "fallback";
@@ -15,7 +16,7 @@ export type LeagueDirectorySyncStatus = "syncing" | "live" | "fallback";
  * directory source so every displayed school total has the same meaning.
  */
 export function useLiveLeagueSchools() {
-  const [schools, setSchools] = useState<LeagueDirectorySchool[]>(() => mergeLeagueDirectory([]));
+  const [schools, setSchools] = useState<LeagueDirectorySchool[]>(() => mergeLeagueDirectory(publicDirectorySnapshot));
   const [syncStatus, setSyncStatus] = useState<LeagueDirectorySyncStatus>("syncing");
 
   useEffect(() => {
@@ -27,6 +28,7 @@ export function useLiveLeagueSchools() {
       inFlight = true;
       try {
         const rows = await withDirectorySyncTimeout(listPublicLeagueSchools());
+        if (rows.length === 0) throw new Error("The live League directory is empty.");
         if (!active) return;
         setSchools(mergeLeagueDirectory(rows));
         setSyncStatus("live");

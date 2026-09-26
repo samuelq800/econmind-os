@@ -92,7 +92,7 @@ function Step({ number, title, detail }: { number: string; title: string; detail
 
 function schoolCountStatus(status: "syncing" | "live" | "fallback") {
   if (status === "live") return "Live directory checked";
-  if (status === "fallback") return "Verified roster shown while live sync reconnects";
+  if (status === "fallback") return "Latest published directory shown while live sync reconnects";
   return "Checking live directory…";
 }
 

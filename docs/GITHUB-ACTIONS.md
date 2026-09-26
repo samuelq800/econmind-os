@@ -7,7 +7,7 @@ a deployment, or narrowly scoped maintenance.
 | Workflow                                  | Trigger                            | Production effect                                                                                        |
 | ----------------------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | `CI · Verify source`                      | Pull requests to `main`, or manual | None. Runs formatting, type, lint, test, and build checks.                                               |
-| `Deploy · Website (GitHub Pages)`         | Pushes to `main`, or manual        | Atomically replaces the Pages artifact after source and Supabase schema checks pass.                     |
+| `Deploy · Website (GitHub Pages)`         | Pushes to `main`, manual, or every six hours | Refreshes the public League directory snapshot, then atomically replaces the Pages artifact after source and Supabase schema checks pass. |
 | `Deploy · Supabase backend`               | Manual only                        | Dry-runs migrations by default; optional inputs apply migrations, Auth configuration, or Edge Functions. |
 | `Maintenance · Account suspension schema` | Manual only                        | Reapplies and verifies the checked-in account-suspension migration.                                      |
 | `Maintenance · Daily Brief source policy` | Manual only                        | Reapplies the checked-in Daily Brief source-policy migration.                                            |

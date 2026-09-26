@@ -51,7 +51,7 @@ describe("editorial public architecture", () => {
     expect(home).not.toContain("PARTICIPATING_SCHOOLS");
     expect(schoolDirectory).toContain("useLiveLeagueSchools");
     expect(schoolDirectoryModel).toContain("PARTICIPATING_SCHOOLS");
-    expect(liveSchoolDirectory).toContain("mergeLeagueDirectory([])");
+    expect(liveSchoolDirectory).toContain("mergeLeagueDirectory(publicDirectorySnapshot)");
     expect(schoolDirectory).toContain("verified city key");
     expect(schoolNetworkMap).toContain("school.school_name");
     expect(schoolRoster).toContain("HD Ningbo School");

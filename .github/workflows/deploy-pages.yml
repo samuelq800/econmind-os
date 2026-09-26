@@ -5,6 +5,9 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    # GitHub Pages serves static HTML. Refresh its public League directory four times a day.
+    - cron: "17 */6 * * *"
 
 permissions:
   contents: read
@@ -113,7 +116,9 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_ENABLE_CONTINUOUS_WORLD: ${{ vars.NEXT_PUBLIC_ENABLE_CONTINUOUS_WORLD }}
-        run: pnpm build
+        run: |
+          pnpm league:snapshot
+          pnpm build
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

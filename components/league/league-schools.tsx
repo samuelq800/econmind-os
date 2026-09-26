@@ -9,6 +9,7 @@ import { SchoolDirectoryLedger } from "@/components/league/school-directory-ledg
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { participatingSchoolKey } from "@/lib/league/participating-schools";
+import { publicDirectorySnapshot } from "@/lib/league/public-directory-snapshot";
 import { mergeLeagueDirectory, withDirectorySyncTimeout, type LeagueDirectorySchool } from "@/lib/league/school-directory";
 import { networkRegionForSchool } from "@/lib/league/school-network";
 import { getLeagueContext } from "@/lib/supabase/league";
@@ -21,7 +22,7 @@ function normaliseName(name: string) {
 
 export function LeagueSchools({ profileName }: { profileName?: string | null }) {
   const { user } = useAuth();
-  const [schools, setSchools] = useState<LeagueDirectorySchool[]>(() => mergeLeagueDirectory([]));
+  const [schools, setSchools] = useState<LeagueDirectorySchool[]>(() => mergeLeagueDirectory(publicDirectorySnapshot));
   const [publicTeams, setPublicTeams] = useState<PublicLeagueTeam[]>([]);
   const [syncStatus, setSyncStatus] = useState<"syncing" | "live" | "fallback">("syncing");
   const [teamsStatus, setTeamsStatus] = useState<"idle" | "syncing" | "live" | "fallback">(profileName ? "syncing" : "idle");
@@ -34,6 +35,7 @@ export function LeagueSchools({ profileName }: { profileName?: string | null }) 
     setSyncStatus("syncing");
     try {
       const rows = await withDirectorySyncTimeout(listPublicLeagueSchools());
+      if (rows.length === 0) throw new Error("The live League directory is empty.");
       if (!mounted.current) return;
       setSchools(mergeLeagueDirectory(rows));
       setSyncStatus("live");
@@ -87,7 +89,7 @@ export function LeagueSchools({ profileName }: { profileName?: string | null }) 
     return <SchoolProfile school={selected} teams={selectedTeams} teamsStatus={teamsStatus} canManage={Boolean(selected && canManage && selected.school_id === leaderSchoolId)} refresh={load} syncing={syncStatus === "syncing"} />;
   }
 
-  return <main className="mx-auto min-h-screen max-w-[1440px] px-5 py-10 sm:px-8 lg:px-12"><header className="grid gap-7 border-b border-[var(--line)] pb-9 lg:grid-cols-[1.1fr_.9fr] lg:items-end"><div><p className="text-[10px] font-bold uppercase tracking-[.18em] text-[var(--accent)]">EconMind League · partner network</p><h1 className="mt-2 text-5xl font-bold tracking-[-.07em] sm:text-6xl">Schools</h1><p className="mt-4 max-w-2xl text-sm leading-7 text-[var(--ink-muted)]">Each school is a public League identity. School Leaders manage their school profile, member community and local Team structure.</p></div><Card className="p-5"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--accent)]">Directory access</p><p className="mt-2 text-sm leading-6 text-[var(--ink-muted)]">School names and public Team counts are visible here. Membership, invite codes and individual records remain private.</p></Card></header><section className="mt-10"><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-[10px] font-bold uppercase tracking-[.16em] text-[var(--accent)]">Participating schools</p><h2 className="mt-2 text-2xl font-bold">{schools.length} schools in the public network</h2><p className="mt-2 text-xs text-[var(--ink-faint)]" role="status" aria-live="polite">{syncStatus === "syncing" && "Checking live profiles…"}{syncStatus === "live" && "Live directory checked."}{syncStatus === "fallback" && "Live sync unavailable; verified roster shown."}</p></div><Link href="/league/join" className="inline-flex items-center gap-2 text-sm font-bold text-[var(--accent)]">Join your school <ArrowRight size={14} /></Link></div><div className="mt-6 overflow-hidden rounded-2xl border border-[var(--line-strong)] shadow-[var(--shadow)]"><SchoolDirectoryLedger schools={schools} /></div></section></main>;
+  return <main className="mx-auto min-h-screen max-w-[1440px] px-5 py-10 sm:px-8 lg:px-12"><header className="grid gap-7 border-b border-[var(--line)] pb-9 lg:grid-cols-[1.1fr_.9fr] lg:items-end"><div><p className="text-[10px] font-bold uppercase tracking-[.18em] text-[var(--accent)]">EconMind League · partner network</p><h1 className="mt-2 text-5xl font-bold tracking-[-.07em] sm:text-6xl">Schools</h1><p className="mt-4 max-w-2xl text-sm leading-7 text-[var(--ink-muted)]">Each school is a public League identity. School Leaders manage their school profile, member community and local Team structure.</p></div><Card className="p-5"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--accent)]">Directory access</p><p className="mt-2 text-sm leading-6 text-[var(--ink-muted)]">School names and public Team counts are visible here. Membership, invite codes and individual records remain private.</p></Card></header><section className="mt-10"><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-[10px] font-bold uppercase tracking-[.16em] text-[var(--accent)]">Participating schools</p><h2 className="mt-2 text-2xl font-bold">{schools.length} schools in the public network</h2><p className="mt-2 text-xs text-[var(--ink-faint)]" role="status" aria-live="polite">{syncStatus === "syncing" && "Checking live profiles…"}{syncStatus === "live" && "Live directory checked."}{syncStatus === "fallback" && "Live sync unavailable; latest published directory shown."}</p></div><Link href="/league/join" className="inline-flex items-center gap-2 text-sm font-bold text-[var(--accent)]">Join your school <ArrowRight size={14} /></Link></div><div className="mt-6 overflow-hidden rounded-2xl border border-[var(--line-strong)] shadow-[var(--shadow)]"><SchoolDirectoryLedger schools={schools} /></div></section></main>;
 }
 
 export function LeagueSchoolProfile() {
