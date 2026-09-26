@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { Season1WorldArtwork } from "./season1-world-artwork";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -14,7 +14,6 @@ import {
   Radio,
   Search,
   Send,
-  ShieldCheck,
   Sparkles,
   UsersRound,
 } from "lucide-react";
@@ -23,17 +22,13 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { withBasePath } from "@/lib/base-path";
 import {
-  acceptSeason1Application,
   applyToSeason1Team,
   createSeason1Invite,
   createSeason1Team,
   getSeason1Lobby,
   postSeason1LobbyMessage,
-  postSeason1TeamMessage,
   setSeason1Preferences,
-  setSeason1Readiness,
   setSeason1FreeAgent,
   type Season1LobbyData,
   type Season1RolePreference,
@@ -48,7 +43,6 @@ export function Season1TeamLobby() {
     user,
     loading: authLoading,
     roleLoading,
-    worldSupervisor,
     openAuth,
   } = useAuth();
   const [lobby, setLobby] = useState<Season1LobbyData | null>(null);
@@ -60,7 +54,6 @@ export function Season1TeamLobby() {
   const [teamName, setTeamName] = useState("");
   const [focus, setFocus] = useState("");
   const [draft, setDraft] = useState("");
-  const [teamDraft, setTeamDraft] = useState("");
   const restoredDirectLink = useRef(false);
 
   const refresh = async () => {
@@ -109,8 +102,6 @@ export function Season1TeamLobby() {
       ),
     [lobby?.teams, query],
   );
-  const canReviewApplications =
-    worldSupervisor || lobby?.currentMembership?.memberRole === "captain";
 
   async function mutate(
     action: () => Promise<unknown>,
@@ -154,16 +145,6 @@ export function Season1TeamLobby() {
     });
   }
 
-  async function sendTeamMessage(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!currentTeam) return;
-    const content = teamDraft.trim();
-    if (!content) return;
-    await mutate(async () => {
-      await postSeason1TeamMessage(currentTeam.id, content);
-      setTeamDraft("");
-    });
-  }
 
   async function togglePreference(role: Season1RolePreference) {
     const current = lobby?.currentMembership?.rolePreferences ?? [];
@@ -231,34 +212,7 @@ export function Season1TeamLobby() {
         <Link href="/season1/my-team" className="rounded-lg border border-[var(--line)] px-4 py-2 hover:bg-[var(--surface-subtle)]">My Team</Link>
       </nav>
       <section className="season1-world-hero relative isolate overflow-hidden rounded-2xl border border-[#2b6f68] px-6 py-10 text-white shadow-2xl sm:px-10 sm:py-14">
-        <div className="season1-world-grid" aria-hidden="true" />
-        <div className="season1-world-vignette" aria-hidden="true" />
-        <div className="season1-world-beam season1-world-beam-a" aria-hidden="true" />
-        <div className="season1-world-beam season1-world-beam-b" aria-hidden="true" />
-        <div className="season1-world-beam season1-world-beam-c" aria-hidden="true" />
-        <div className="season1-world-horizon" aria-hidden="true" />
-        <div className="season1-world-particles" aria-hidden="true">
-          {Array.from({ length: 18 }, (_, index) => <span key={index} />)}
-        </div>
-        <div className="season1-world-visual" aria-hidden="true">
-          <span className="season1-world-aura" />
-          <span className="season1-world-halo" />
-          <span className="season1-world-orbit season1-world-orbit-one" />
-          <span className="season1-world-orbit season1-world-orbit-two" />
-          <span className="season1-world-orbit season1-world-orbit-three" />
-          <Image
-            alt=""
-            className="season1-world-image"
-            fill
-            priority
-            sizes="(min-width: 1024px) 760px, 92vw"
-            src={withBasePath("/images/season1/season1-connected-world-globe.png")}
-          />
-        </div>
-        <div className="season1-world-title" aria-label="70-country world">
-          <p>Season 1 / Connected World</p>
-          <h2>70-COUNTRY WORLD</h2>
-        </div>
+        <Season1WorldArtwork />
         <div className="relative z-10 flex min-h-[34rem] flex-col justify-between gap-10 lg:min-h-[37rem]">
           <div className="grid gap-9 lg:grid-cols-[1.12fr_.88fr] lg:items-center">
           <div className="season1-world-copy">
@@ -457,108 +411,15 @@ export function Season1TeamLobby() {
         </Card>
       </section>
 
-      <section id="team-room" className="season1-chapter season1-rooms grid gap-7 border-b border-[var(--line)] py-14 lg:grid-cols-[1.05fr_.95fr]">
-        <Card className="season1-room-card p-6">
-          <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[var(--accent)]">
-            My Team Room
-          </p>
-          <h2 className="mt-2 text-2xl font-bold tracking-[-.045em]">
-            {currentTeam?.name ?? "Join a team to open Team Room."}
-          </h2>
-          {currentTeam ? (
-            <>
-              <p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">
-                {currentTeam.focus ||
-                  "This team has not written a recruitment focus yet."}
-              </p>
-              <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[var(--line)] bg-[var(--surface-subtle)] p-4">
-                <div>
-                  <p className="text-sm font-bold">Team readiness</p>
-                  <p className="mt-1 text-xs text-[var(--ink-muted)]">
-                    {currentTeam.readyCount} / {currentTeam.memberCount} current
-                    members are ready.
-                  </p>
-                </div>
-                <Button
-                  variant="secondary"
-                  disabled={busy}
-                  onClick={() =>
-                    void mutate(() =>
-                      setSeason1Readiness(!lobby.currentMembership!.isReady),
-                    )
-                  }
-                >
-                  {lobby.currentMembership?.isReady
-                    ? "Mark not ready"
-                    : "Mark ready"}
-                </Button>
-              </div>
-              <Chat
-                title="Team Chat"
-                detail="Only active team members can post."
-                messages={lobby.teamMessages}
-                value={teamDraft}
-                onChange={setTeamDraft}
-                onSubmit={sendTeamMessage}
-                disabled={busy}
-              />
-            </>
-          ) : (
-            <div className="mt-6 rounded-xl border border-dashed border-[var(--line-strong)] bg-[var(--surface-subtle)] p-5 text-sm leading-6 text-[var(--ink-muted)]">
-              Create a team, or apply to a recruiting team. Acceptance adds the
-              actual membership and unlocks Team Chat.
-            </div>
-          )}
-        </Card>
-        <Card className="season1-room-card p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[var(--accent)]">
-                Pending applications
-              </p>
-              <h2 className="mt-2 text-2xl font-bold tracking-[-.045em]">
-                Application activity
-              </h2>
-            </div>
-            <ShieldCheck className="text-[var(--accent)]" size={22} />
+      <section id="team-room" className="season1-chapter border-b border-[var(--line)] py-10">
+        <Link href="/season1/my-team" className="group flex flex-wrap items-center justify-between gap-6 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-7 transition hover:border-[var(--accent)] sm:p-9">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[.18em] text-[var(--accent)]">My Team · Dedicated workspace</p>
+            <h2 className="mt-3 text-3xl font-bold">{currentTeam?.name ?? "Your team starts here."}</h2>
+            <p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">Team code, members, readiness, private chat and applications — on one dedicated page.</p>
           </div>
-          <div className="mt-5 divide-y divide-[var(--line)] border-y border-[var(--line)]">
-            {lobby.pendingApplications.map((application) => (
-              <article
-                className="flex flex-wrap items-center justify-between gap-3 py-4"
-                key={application.id}
-              >
-                <div>
-                  <p className="text-sm font-bold">
-                    {application.applicantName}
-                  </p>
-                  <p className="mt-1 text-xs text-[var(--ink-muted)]">
-                    Applied to {application.teamName}
-                  </p>
-                </div>
-                {canReviewApplications &&
-                (worldSupervisor || application.teamId === currentTeam?.id) ? (
-                  <Button
-                    size="sm"
-                    disabled={busy}
-                    onClick={() =>
-                      void mutate(() => acceptSeason1Application(application.id))
-                    }
-                  >
-                    <Check size={14} /> Accept
-                  </Button>
-                ) : (
-                  <Badge>Pending</Badge>
-                )}
-              </article>
-            ))}
-            {!lobby.pendingApplications.length && (
-              <p className="py-5 text-sm text-[var(--ink-muted)]">
-                No applications await review.
-              </p>
-            )}
-          </div>
-        </Card>
+          <span className="inline-flex items-center gap-3 rounded-xl bg-[var(--accent)] px-6 py-3 font-bold text-[#08262a]">Open My Team <ArrowRight size={20} /></span>
+        </Link>
       </section>
 
       <section id="world-chat" className="season1-chapter season1-commons grid gap-7 py-14 lg:grid-cols-[1.05fr_.95fr]">

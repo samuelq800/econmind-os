@@ -60,6 +60,23 @@ export const getSeason1Lobby = async () => {
     pendingApplications: data.applications.map(({ id, teamId, teamName, applicantName }) => ({ id, teamId, teamName, applicantName })),
   };
 };
+
+/** Combine existing authorized reads; never mix a roster with another team's chat. */
+export async function getSeason1TeamWorkspace() {
+  const [myTeam, lobby] = await Promise.all([getSeason1MyTeam(), getSeason1Lobby()]);
+  if ((myTeam.team?.id ?? null) !== (lobby.currentMembership?.teamId ?? null)) {
+    throw new Error("Your team membership changed. Refresh to load your current team.");
+  }
+  return {
+    ...myTeam,
+    messages: myTeam.team ? lobby.teamMessages : [],
+    applications: myTeam.team
+      ? lobby.applications.filter((application) => application.teamId === myTeam.team!.id)
+      : [],
+    roles: lobby.season.config.roles,
+  };
+}
+export type Season1TeamWorkspaceData = Awaited<ReturnType<typeof getSeason1TeamWorkspace>>;
 export const createSeason1Team = (input: { name: string; description?: string; focus?: string; recruitmentMode?: "open" | "application_required" | "invite_only"; teamStyle?: "competitive" | "balanced" | "learning"; preferredLanguage?: string; preferences: string[] }) => rpc<string>("world_preseason_create_team", { p_name: input.name, p_description: input.description ?? input.focus ?? "", p_recruitment_mode: input.recruitmentMode ?? "open", p_team_style: input.teamStyle ?? "balanced", p_preferred_language: input.preferredLanguage ?? "English", p_role_preferences: input.preferences });
 export const applyToSeason1Team = async (teamId: string, note = "") => {
   try {

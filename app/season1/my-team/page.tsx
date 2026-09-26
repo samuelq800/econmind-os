@@ -1,4 +1,5 @@
 import { Season1MyTeam } from "@/components/season1/season1-my-team";
+import "../season1-game-lobby.css";
 
 export const metadata = {
   title: "My Team · Season 1",
