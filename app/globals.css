@@ -3137,6 +3137,15 @@ input[type=range]::-webkit-slider-thumb {
    -webkit-user-drag: none
 }
 
+.brand-beta {
+   color: var(--ink-muted)
+}
+
+.brand-home-link:hover .brand-beta,
+.brand-home-link:focus-visible .brand-beta {
+   color: var(--ink)
+}
+
 .brand-home-link:hover .brand-badge-mini {
    box-shadow: 0 0 0 1px rgba(6, 35, 65, .92), 0 0 0 2px rgba(240, 200, 101, .82), 0 7px 17px rgba(5, 29, 51, .25)
 }

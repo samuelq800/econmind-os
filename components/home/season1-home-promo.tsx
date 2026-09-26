@@ -41,7 +41,7 @@ export function Season1HomePromo() {
         <span className="relative flex min-h-[238px] flex-col justify-between p-5 pr-14 sm:p-6 sm:pr-14">
           <span className="text-[10px] font-extrabold uppercase tracking-[.24em] text-[#b5e1df]">EconMind World · Season 1</span>
           <span>
-            <strong className="block font-serif text-3xl leading-tight tracking-[-.045em] sm:text-[2.1rem]">The world is open.</strong>
+            <strong className="block font-serif text-3xl leading-tight tracking-[-.045em] sm:text-[2.1rem]">Season 1 is now open.</strong>
             <span className="mt-2 block text-xs font-medium leading-5 text-white/80">Build teams. Shape strategies. Simulate real change.</span>
             <span className="mt-4 inline-flex items-center gap-1.5 rounded-md border border-[#c9ad75] bg-[#0b2229]/80 px-3 py-2 text-xs font-bold text-[#f4dcaa] transition-colors group-hover:bg-[#12343c]">Open Season 1 <ArrowUpRight size={14} /></span>
           </span>

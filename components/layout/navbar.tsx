@@ -108,7 +108,7 @@ export function Navbar() {
             />
           </span>
           <span className="text-sm font-extrabold">EconMind OS</span>
-          <span className="hidden rounded border border-[var(--line)] px-1.5 py-.5 text-[9px] font-bold uppercase tracking-widest text-[var(--ink-faint)] sm:inline">Beta</span>
+          <span className="brand-beta hidden shrink-0 rounded border border-[var(--line)] px-1.5 py-.5 text-[9px] font-bold uppercase tracking-widest sm:inline">Beta</span>
         </Link>
         <nav className="hidden min-w-0 flex-1 flex-nowrap items-center justify-center gap-0.5 2xl:flex" aria-label="Primary navigation">
           {links.map((section) => {
@@ -117,7 +117,7 @@ export function Navbar() {
             return (
               <div key={section.id} className="relative shrink-0" onMouseEnter={() => hasChildren && setOpenSection(section.id)} onMouseLeave={() => setOpenSection(null)}>
                 <div className={`flex items-center rounded-lg ${active ? "bg-[var(--surface-strong)]" : "text-[var(--ink-muted)] hover:text-[var(--ink)]"}`}>
-                  <Link href={section.href} aria-current={active ? "page" : undefined} className="whitespace-nowrap px-2.5 py-2 text-xs font-semibold 2xl:px-3 2xl:text-sm" onClick={() => setOpenSection(null)}>{section.label}</Link>
+                  <Link href={section.href} aria-current={active ? "page" : undefined} className="whitespace-nowrap px-2 py-2 text-xs font-semibold" onClick={() => setOpenSection(null)}>{section.label}</Link>
                   {hasChildren && <button type="button" aria-label={`Open ${section.label} navigation`} aria-expanded={openSection === section.id} onClick={() => setOpenSection((current) => current === section.id ? null : section.id)} className="-ml-1 grid size-6 place-items-center rounded-md hover:bg-[var(--surface-subtle)]"><ChevronDown size={13} /></button>}
                 </div>
                 {hasChildren && openSection === section.id && (

@@ -52,7 +52,7 @@
 
 @media (min-width: 1700px) {
   .trigger {
-    width: 13rem;
+    width: 11rem;
     justify-content: space-between;
     padding-inline: 0.875rem;
   }
