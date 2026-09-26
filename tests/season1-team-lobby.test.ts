@@ -92,20 +92,23 @@ describe("Season 1 pre-season team lobby", () => {
     expect(page).toContain("rolePreferences: next");
   });
 
-  it("keeps the existing Team Lobby behind a widescreen countdown entrance", () => {
+  it("opens the real Team Lobby through a short animated door without a countdown", () => {
     expect(page).toContain("70-COUNTRY WORLD");
     expect(page).toContain("season1-connected-world-globe.png");
     expect(globalStyles).toContain(".season1-world-visual");
     expect(route).toContain("<Season1Entrance />");
     expect(entrance).toContain("getSeason1Opening");
-    expect(entrance).toContain("setSeason1Opening");
+    expect(entrance).not.toContain("countdownUnits");
+    expect(entrance).not.toContain("styles.countdown");
     expect(entrance).toContain("if (!ready || opening || checking) return");
     expect(entrance).toContain('"Open Lobby"');
     expect(entrance).toContain("if (confirmed.isOpen) setEntered(true)");
+    expect(entrance).toContain("reduceMotion ? 80 : 1100");
     expect(entrance).toContain("<Season1TeamLobby />");
     expect(entrance).toContain("getElementById(window.location.hash.slice(1))");
     expect(entranceStyles).toContain(".opening .doorLeft");
     expect(entranceStyles).toContain(".opening .doorRight");
+    expect(entranceStyles).toContain(".doorFrame { left: 26%; top: 35%; width: 48%; height: 47%; }");
     expect(entranceStyles).toContain("prefers-reduced-motion: reduce");
     expect(
       existsSync("public/images/season1/season1-connected-world-globe.png"),
@@ -113,7 +116,7 @@ describe("Season 1 pre-season team lobby", () => {
     expect(existsSync("public/images/season1/season1-gateway-wide.jpg")).toBe(true);
   });
 
-  it("stores the GMT+8 opening centrally and restricts edits to platform admins", () => {
+  it("keeps the server opening gate while removing the countdown settings UI", () => {
     expect(new Date("2026-09-25T21:00+08:00").toISOString()).toBe("2026-09-25T13:00:00.000Z");
     expect(openingMigration).toContain("2026-09-25 13:00:00+00");
     expect(openingMigration).toContain("world_preseason_require_participant()");
@@ -127,8 +130,8 @@ describe("Season 1 pre-season team lobby", () => {
     expect(openingMigration).toContain("grant execute on function public.set_world_preseason_opening(timestamptz) to authenticated");
     expect(openingWorkflow).toContain("20260924010000_season1_opening_gate.sql");
     expect(pagesWorkflow).toContain("Season 1 opening gate migration is required");
-    expect(entrance).toContain('worldSupervisor && <div className={styles.adminArea}>');
-    expect(entrance).toContain('timeZone: "Asia/Shanghai"');
+    expect(entrance).not.toContain("styles.adminArea");
+    expect(entrance).not.toContain("countdownUnits");
     expect(browserData).toContain('"get_world_preseason_opening"');
     expect(browserData).toContain('"set_world_preseason_opening"');
   });
