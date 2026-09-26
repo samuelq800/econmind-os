@@ -14,6 +14,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  member-identity-database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: disposable-test-only
+          POSTGRES_DB: member_identity_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Exercise member identity permissions in disposable PostgreSQL
+        env:
+          PGPASSWORD: disposable-test-only
+        run: psql -h localhost -U postgres -d member_identity_test -f scripts/test-member-identity.sql
+
   season1-database:
     runs-on: ubuntu-latest
     timeout-minutes: 10
