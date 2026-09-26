@@ -93,8 +93,10 @@ describe("Season 1 pre-season team lobby", () => {
   });
 
   it("opens the real Team Lobby through a short animated door without a countdown", () => {
-    expect(page).toContain("70-COUNTRY WORLD");
-    expect(page).toContain("season1-connected-world-globe.png");
+    const artwork = readFileSync("components/season1/season1-world-artwork.tsx", "utf8");
+    expect(page).toContain("<Season1WorldArtwork />");
+    expect(artwork).toContain("70-COUNTRY WORLD");
+    expect(artwork).toContain("season1-connected-world-globe.png");
     expect(globalStyles).toContain(".season1-world-visual");
     expect(route).toContain("<Season1Entrance />");
     expect(entrance).toContain("getSeason1Opening");
