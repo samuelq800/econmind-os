@@ -93,7 +93,7 @@ export default function SupplyDemandPage() {
         [key]: Math.max(0, Math.min(160, c[key] + amount)),
       }));
   return (
-    <>
+    <div className="pilot-model-stage">
       <ModelHeader
         modelKey="supply-demand"
         eyebrow="Model 01 · Market mechanics"
@@ -285,6 +285,6 @@ export default function SupplyDemandPage() {
           />
         }
       />
-    </>
+    </div>
   );
 }

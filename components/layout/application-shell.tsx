@@ -11,6 +11,7 @@ import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
 import { PwaRegistration } from "@/components/pwa/pwa-registration";
 import { ThemeProvider } from "@/components/layout/theme-provider";
+import { VisualPilot } from "@/components/layout/visual-pilot";
 
 function isStandaloneLiveWorld(pathname: string) {
   return pathname === "/live-world" || pathname.startsWith("/live-world/") || pathname === "/live-auction" || pathname.startsWith("/live-auction/");
@@ -23,5 +24,5 @@ export function ApplicationShell({ children }: { children: React.ReactNode }) {
   // not initialise, read, or link the visitor's EconMind account session.
   if (isStandaloneLiveWorld(pathname)) return <>{children}</>;
 
-  return <ThemeProvider><PwaRegistration /><AuthProvider><AccountDeletionProvider><RegisteredAppGate><Navbar />{children}<Footer /></RegisteredAppGate><AuthDialog /><AccountOnboarding /><LegalConsentGate /></AccountDeletionProvider></AuthProvider></ThemeProvider>;
+  return <ThemeProvider><PwaRegistration /><AuthProvider><VisualPilot><AccountDeletionProvider><RegisteredAppGate><Navbar />{children}<Footer /></RegisteredAppGate><AuthDialog /><AccountOnboarding /><LegalConsentGate /></AccountDeletionProvider></VisualPilot></AuthProvider></ThemeProvider>;
 }
