@@ -14,29 +14,29 @@
 }
 
 .glass {
-  background: rgb(190 231 222 / 0%);
+  background: rgb(255 255 255 / 0%);
   backdrop-filter: blur(0px) saturate(1) brightness(1);
   -webkit-backdrop-filter: blur(0px) saturate(1) brightness(1);
   transition: backdrop-filter 1.4s cubic-bezier(.32, 0, .24, 1), -webkit-backdrop-filter 1.4s cubic-bezier(.32, 0, .24, 1), background 1.4s ease;
 }
 
 .blurred .glass {
-  background: rgb(190 231 222 / 16%);
-  backdrop-filter: blur(76px) saturate(1.35) brightness(1.12);
-  -webkit-backdrop-filter: blur(76px) saturate(1.35) brightness(1.12);
+  background: rgb(255 255 255 / 96%);
+  backdrop-filter: blur(76px) saturate(1.15) brightness(2);
+  -webkit-backdrop-filter: blur(76px) saturate(1.15) brightness(2);
 }
 
 .bloom {
   inset: -15%;
   background:
-    radial-gradient(ellipse at 50% 60%, #f4ffe7bd 0%, #c5f5e570 18%, #80d8ce20 43%, transparent 68%),
-    radial-gradient(ellipse at 50% 72%, #ffe3aa30, transparent 55%);
+    radial-gradient(ellipse at 50% 60%, #fff 0%, #fffff5f5 30%, #effff5b8 55%, transparent 85%),
+    radial-gradient(ellipse at 50% 72%, #fff2cfb3, transparent 75%);
   opacity: 0;
   transform: scale(.72);
   transition: opacity 1.4s cubic-bezier(.32, 0, .24, 1), transform 1.8s cubic-bezier(.22, .5, .24, 1);
 }
 
-.blurred .bloom { opacity: .8; transform: scale(1.2); }
+.blurred .bloom { opacity: 1; transform: scale(1.2); }
 .releasing { pointer-events: none; cursor: auto; }
 .releasing .glass { transition-duration: 1.3s; transition-timing-function: cubic-bezier(.22, .6, .28, 1); }
 .releasing .bloom { opacity: 0; transform: scale(1.3); transition-duration: 1.8s; }
@@ -80,7 +80,7 @@
   width: 22%;
   height: 46%;
   border-radius: 42% 42% 4% 4%;
-  background: radial-gradient(ellipse at 50% 58%, #f5ffdf 0%, #b4eee0 26%, #458b8e70 58%, transparent 78%);
+  background: radial-gradient(ellipse at 50% 58%, #fff 0%, #ffffe8 32%, #cefff2b3 58%, transparent 85%);
   filter: blur(20px);
   opacity: .12;
   transform: scale(.92);
@@ -107,8 +107,8 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse at 50% 70%, #efffdd, #a8dfd3 35%, #386b72 76%, #133e48),
-    linear-gradient(0deg, #c1ead4, #234a55);
+    radial-gradient(ellipse at 50% 70%, #fff, #fffff0 45%, #e4fff5 76%, #a4dfd5),
+    linear-gradient(0deg, #fff, #e4fff5);
   opacity: .25;
   transition: opacity 1.4s cubic-bezier(.32, 0, .24, 1);
 }
@@ -166,7 +166,7 @@
 .opening .doorRight { transform: translateX(100%); opacity: .5; }
 .opening .doorFrame::before { opacity: 1; }
 .opening .seam { opacity: 0; filter: blur(6px); transform: translateX(-50%) scaleX(12); }
-.opening .portalGlow { opacity: .85; transform: scale(1.45); }
+.opening .portalGlow { opacity: 1; transform: scale(1.65); }
 .opening .lightTrail { opacity: 1; }
 
 .particles {
