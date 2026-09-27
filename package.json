@@ -14,7 +14,8 @@
     "calibration:check": "node scripts/validate-economic-calibration.mjs --strict && vitest run tests/calibration-package.test.ts",
     "world:launch": "node scripts/launch-continuous-world.mjs",
     "world:render-launch-sql": "node scripts/render-continuous-world-launch-sql.mjs",
-    "world:render-teaching-seed-sql": "node scripts/render-final-world-teaching-seed-sql.mjs"
+    "world:render-teaching-seed-sql": "node scripts/render-final-world-teaching-seed-sql.mjs",
+    "test:world-v2-release-publisher": "vitest run tests/world-v2-release-publisher.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.7",

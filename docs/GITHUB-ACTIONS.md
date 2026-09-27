@@ -13,6 +13,7 @@ a deployment, or narrowly scoped maintenance.
 | `Maintenance · Daily Brief source policy` | Manual only                        | Reapplies the checked-in Daily Brief source-policy migration.                                            |
 | `Maintenance · Live World schema`         | Manual only                        | Reapplies the checked-in Live World migration.                                                           |
 | `Maintenance · Verify school locations`   | Manual only                        | Applies and verifies the five reviewed school city markers.                                               |
+| `Release · World V2 schema`               | Manual only                        | Runs one reviewed, atomic Management API request for the isolated `world_v2` namespace.                  |
 
 ## Safety rules
 
@@ -24,6 +25,9 @@ a deployment, or narrowly scoped maintenance.
 - The general Supabase workflow performs a dry run when no deployment checkbox
   is selected. Migration operations require the database password and a linked
   project; Auth and Edge Function deployments do not.
+- The World V2 release workflow does not use the general migration history,
+  `db push`, or a database password. It pins its reviewed World source and
+  sends one transaction-bearing request only after an explicit confirmation.
 - The website workflow checks required public Supabase objects before building.
   A failed check leaves the currently deployed Pages artifact untouched.
 - Keep production workflows manual. New application work should be verified in

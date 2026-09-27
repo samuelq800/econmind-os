@@ -1,0 +1,71 @@
+name: Release · World V2 schema
+run-name: Release World V2 schema · @${{ github.actor }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RELEASE_WORLD_V2 to authorize the one-time schema publication
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-production
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+      WORLD_V2_RELEASE_SOURCE_COMMIT: 02f59be5026cdf2131eaf6e7fd907d5b87e987b3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify fixed target and explicit release confirmation
+        env:
+          RELEASE_CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          test "$RELEASE_CONFIRMATION" = "RELEASE_WORLD_V2"
+          test "$SUPABASE_PROJECT_REF" = "vimksjrhaxdpnkvgsavz"
+          test -n "$SUPABASE_ACCESS_TOKEN"
+      - name: Fetch the reviewed immutable World V2 source
+        run: |
+          source_root="$RUNNER_TEMP/world-v2-release-source"
+          git clone --no-checkout https://github.com/samuelq800/econmind-os-world-simulation.git "$source_root"
+          git -C "$source_root" checkout --detach "$WORLD_V2_RELEASE_SOURCE_COMMIT"
+          test "$(git -C "$source_root" rev-parse HEAD)" = "$WORLD_V2_RELEASE_SOURCE_COMMIT"
+          test "$(git -C "$source_root" remote get-url origin)" = "https://github.com/samuelq800/econmind-os-world-simulation.git"
+          test -z "$(git -C "$source_root" status --porcelain=v1 --untracked-files=all)"
+          printf 'WORLD_V2_RELEASE_SOURCE_ROOT=%s\n' "$source_root" >> "$GITHUB_ENV"
+      - name: Render the atomic World V2 release request
+        run: |
+          node scripts/render-world-v2-release-query.mjs \
+            --output "$RUNNER_TEMP/world-v2-release-payload.json" \
+            --expectation-output "$RUNNER_TEMP/world-v2-release-expectation.json"
+      - name: Execute exactly one atomic management API request
+        run: |
+          curl --fail --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            --header "Content-Type: application/json" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query" \
+            --data-binary "@$RUNNER_TEMP/world-v2-release-payload.json" \
+            --output "$RUNNER_TEMP/world-v2-release-response.json"
+      - name: Verify exact ledger and table-count evidence
+        run: |
+          mkdir -p artifacts/world-v2-release
+          node scripts/verify-world-v2-release-evidence.mjs \
+            --expected "$RUNNER_TEMP/world-v2-release-expectation.json" \
+            --response "$RUNNER_TEMP/world-v2-release-response.json" \
+            --output artifacts/world-v2-release/evidence.json
+      - name: Preserve non-secret release evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: world-v2-release-evidence
+          path: artifacts/world-v2-release/evidence.json
+          if-no-files-found: error
