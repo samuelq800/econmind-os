@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#070b10">
+  <meta name="description" content="Econmind 悬浮磁吸导航交互原型">
+  <title>ECONMIND — Explore the network</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23101315'/%3E%3Cpath d='M10 9h13M10 16h10M10 23h13' stroke='%23cafa71' stroke-width='3'/%3E%3C/svg%3E">
+  <style>:root{color-scheme:dark;--bg:#070b10;--ink:#edf5f7;--muted:#6e828e;--accent:#91edf6;--line:#26333e;--mono:"Cascadia Code","Consolas",monospace;--sans:"Bahnschrift","DIN Alternate","Segoe UI","Microsoft YaHei",sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}button,a{-webkit-tap-highlight-color:transparent}button{font:inherit;color:inherit;cursor:pointer}button:disabled{cursor:default}button:focus-visible,a:focus-visible{outline:1px solid var(--accent);outline-offset:9px}::selection{background:var(--accent);color:#070b10}[hidden]{display:none!important}
+body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 62% 48%,#17343d38,transparent 52%)}.texture{display:none}.app{max-width:1600px;margin:auto;min-height:100svh;padding:0 4.5vw;overflow:hidden;position:relative}
+.header{height:94px;border-bottom:1px solid #d1edff15;display:flex;align-items:center;gap:40px;position:relative;z-index:5}.brand{color:#e4edf2;text-decoration:none;display:flex;gap:13px;align-items:center;letter-spacing:.18em;font-size:18px;font-weight:500}.brand-mark{display:grid;gap:4px;width:22px}.brand-mark i{height:2px;background:var(--accent)}.brand-mark i:nth-child(2){width:14px}.edition{margin-right:auto;font:10px var(--mono);color:#637e8b;letter-spacing:.12em}.header-actions{display:flex;gap:26px;margin-left:auto}.quiet-btn{padding:9px 0;border:0;background:none;color:#8297a2;font-size:12px;display:flex;gap:9px;align-items:center}.quiet-btn:hover{color:#e8f6fa}.quiet-btn svg{width:16px;height:16px}.quiet-btn kbd{font:10px var(--mono);padding:3px 5px;border:1px solid #35424a;border-radius:2px}
+.intro{padding-top:33px;display:flex;align-items:flex-end;justify-content:space-between;gap:25px}.eyebrow{font:10px var(--mono);letter-spacing:.17em;color:#6c8593;margin:0 0 13px}.intro h1{font-weight:350;font-size:clamp(30px,3vw,44px);letter-spacing:-.035em;margin:0;line-height:1.12}.intro h1 em{font-style:normal;color:#91a7b3;font-weight:300}.intro-note{font-size:13px;line-height:1.9;color:#92a9b5;text-align:right;margin:0 0 2px}.intro-note span{font:9px var(--mono);color:#5a737e;letter-spacing:.08em}
+.console{height:clamp(455px,62vh,665px);width:min(1120px,100%);margin:auto;position:relative;isolation:isolate;touch-action:pan-y;user-select:none}.console:before{content:"";position:absolute;inset:6% 1%;z-index:-2;pointer-events:none;background-image:radial-gradient(#87b0bc4a .7px,transparent .9px);background-size:37px 37px;mask-image:radial-gradient(ellipse,#000 0%,transparent 73%)}.console:after{content:"";position:absolute;left:45%;top:12%;width:50%;height:73%;border-radius:50%;background:radial-gradient(ellipse,#53e9fa06,transparent 70%);pointer-events:none;transition:opacity .4s;opacity:.5}.console.is-dragging:after{opacity:1}
+.field-label{position:absolute;left:0;top:28px;color:#3f5a65;font:9px var(--mono);letter-spacing:.14em;pointer-events:none}.field-label:before{content:"+";color:#6c94a2;margin-right:12px}.field-coordinate{position:absolute;right:0;bottom:22px;color:#405e69;font:9px var(--mono);letter-spacing:.1em;pointer-events:none}.field-coordinate:after{content:"+";margin-left:12px;color:#6c94a2}.dust{position:absolute;width:2px;height:2px;border-radius:50%;background:#aff8ff;box-shadow:0 0 7px #8eefff60;opacity:.25;pointer-events:none;animation:signal 5s ease-in-out infinite}.dust:nth-child(2n){width:1px;height:1px;animation-delay:-2s}.dust:nth-child(3n){animation-delay:-3.7s}@keyframes signal{0%,100%{opacity:.12}50%{opacity:.58}}
+.gear{--mx:0px;--my:0px;position:absolute;width:90px;height:90px;transform:translate(-50%,-50%) translate(var(--mx),var(--my));padding:0;border:0;border-radius:50%;background:none;z-index:2;transition:transform .32s cubic-bezier(.2,.8,.2,1),opacity .25s}.gear:before{content:"";position:absolute;inset:0;border:1px solid #a4d4e052;border-radius:50%;background:radial-gradient(circle,#70dcf606,transparent 72%);transition:all .3s}.gear:after{content:"";position:absolute;inset:-12px;border:1px solid #75b4c01c;border-radius:50%;transition:all .35s}
+.gear-label{position:absolute;left:50%;top:111px;width:190px;text-align:center;transform:translateX(-50%);transition:opacity .25s,transform .3s;pointer-events:none}.gear-name{font-size:23px;font-weight:350;letter-spacing:.01em;display:block;line-height:1.1}.gear-meta{display:block;font-size:11px;letter-spacing:.05em;color:#708a97;margin-top:9px;white-space:nowrap}.gear-socket{position:absolute;inset:0;display:grid;place-items:center;color:#b2c7d1;transition:color .3s;pointer-events:none}.gear-socket svg{width:29px;height:29px;stroke-width:1.2}.node-points{position:absolute;inset:0;pointer-events:none}.node-points i{position:absolute;width:3px;height:3px;border-radius:50%;background:#b8f6fc;box-shadow:0 0 8px #8cf7ff70}.node-points i:nth-child(1){left:13px;top:13px}.node-points i:nth-child(2){right:3px;top:29px}.node-points i:nth-child(3){left:31px;bottom:0;opacity:.5}.node-code{position:absolute;left:50%;bottom:112px;transform:translateX(-50%);font:9px var(--mono);letter-spacing:.16em;color:#476673;white-space:nowrap;pointer-events:none}
+.gear:hover:before{border-color:#a5e9f777}.gear:hover .gear-name{color:var(--accent)}.gear.hot{transform:translate(-50%,-50%) translate(var(--mx),var(--my)) scale(1.055)}.gear.hot:before{border-color:#a5f4fcbb;background:#70edff08;box-shadow:0 0 35px #82f1ff0b}.gear.hot:after{inset:-19px;border-color:#a7eafa38}.gear.hot .gear-socket{color:#e6fcff}.gear.hot .gear-name{color:#b2f6ff}.gear.hot .node-code{color:#85d2df}.gear.armed:before{border-color:#daffff;box-shadow:0 0 25px #a5f2ff22}.gear.armed:after{inset:-27px;border-color:#bffaff66}.gear.armed .gear-label{transform:translate(-50%,6px)}.gear.locked{opacity:.35;transform:translate(-50%,-50%) scale(1.25)}
+.home-ring{position:absolute;width:198px;height:198px;transform:translate(-50%,-50%);pointer-events:none;border:0;background:none;opacity:.45;transition:opacity .3s}.home-ring:before,.home-ring:after{content:"";position:absolute;width:7px;height:7px;border-color:#88b3c5;border-style:solid;opacity:.5}.home-ring:before{left:0;top:0;border-width:1px 0 0 1px}.home-ring:after{right:0;bottom:0;border-width:0 1px 1px 0}.is-dragging .home-ring{opacity:.2}.home-caption{position:absolute;transform:translateX(-50%);text-align:center;white-space:nowrap;color:#8ba5b3;font-size:14px;letter-spacing:.04em;transition:opacity .3s}.home-caption b{font-weight:350}.home-caption small{display:block;margin-top:8px;font:9px var(--mono);letter-spacing:.16em;color:#486674}.is-dragging .home-caption{opacity:.35}
+.orb{--diameter:138px;position:absolute;left:0;top:0;width:var(--diameter);height:var(--diameter);margin:calc(var(--diameter)/-2);border:0;padding:0;border-radius:50%;background:none;z-index:4;touch-action:none;cursor:grab;will-change:transform}.orb.dragging{cursor:grabbing}.orb-halo{position:absolute;inset:-9px;border:1px solid #9fe6f11c;border-radius:50%;transition:all .35s}.orb-metal{position:absolute;inset:0;border:1px solid #a6e1ed7a;border-radius:50%;background:#09151ded;box-shadow:0 0 26px #62f0fa08;transition:background .3s,border-color .3s,box-shadow .3s}.orb-metal:before{content:"";position:absolute;inset:8px;border:1px dashed #87c4d627;border-radius:50%}.orb-metal:after{content:"";position:absolute;left:16px;top:18px;width:4px;height:4px;background:#d2fdff;border-radius:50%;box-shadow:98px 58px 0 -1px #d2fdff,26px 111px 0 -1px #9de9f4,0 0 10px #9eefff}
+.orb-face{position:absolute;inset:20px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:11px;pointer-events:none}.orb-symbol{font:30px var(--mono);font-weight:300;letter-spacing:.03em;color:#d1f9ff;text-shadow:0 0 25px #a3efff20}.orb-status{font:8px var(--mono);letter-spacing:.17em;color:#699da9}.orb-hint{position:absolute;left:50%;top:-45px;transform:translateX(-50%);font:9px var(--mono);letter-spacing:.17em;white-space:nowrap;color:#6d929f;transition:opacity .2s}.orb-hint:before{content:"";display:inline-block;width:4px;height:4px;border-radius:50%;background:#a3f2fc;box-shadow:0 0 10px #9bf6ff;vertical-align:2px;margin-right:10px}.is-dragging .orb-hint{opacity:0}.core-cross{position:absolute;left:50%;top:50%;width:58px;height:46px;transform:translate(-50%,-55%);pointer-events:none}.core-cross:before,.core-cross:after{content:"";position:absolute;top:0;bottom:0;width:5px;border-style:solid;border-color:#6fb8c633}.core-cross:before{left:-13px;border-width:1px 0 1px 1px}.core-cross:after{right:-13px;border-width:1px 1px 1px 0}
+.orb.dragging .orb-halo{inset:-17px;border-color:#a6e8f544}.orb.dragging .orb-metal{border-color:#c3f7ffba;background:#091921f5;box-shadow:0 0 45px #73d8f410}.orb.armed .orb-halo{inset:-22px;border-color:#c4faff88}.orb.armed .orb-metal{border-color:#eaffff;box-shadow:0 0 36px #7cedff24;background:#123039f5}.orb.armed .orb-status{color:#c5fbff}.orb.locked{animation:resolve .45s ease-in-out}@keyframes resolve{50%{scale:.87}100%{scale:1}}.orb.locked .orb-halo{animation:lock-ring .7s ease-out forwards}@keyframes lock-ring{to{inset:-85px;opacity:0}}.pulse{position:absolute;width:120px;height:120px;border:1px solid #b4f7ff88;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%);animation:shock .6s ease-out forwards;z-index:3}@keyframes shock{from{opacity:.7;scale:.65}to{opacity:0;scale:2.2}}
+.statusbar{border-top:1px solid #b4dfff14;min-height:76px;display:flex;align-items:center;justify-content:space-between;gap:24px}.readout{display:flex;align-items:center;gap:14px;min-width:195px}.readout-digit{font:26px var(--mono);width:30px;color:var(--accent)}.readout-title{font-size:13px;color:#b7cbd4}.readout-sub{display:block;font:9px var(--mono);letter-spacing:.07em;color:#537885;margin-top:6px}.instruction{font-size:13px;letter-spacing:.03em;color:#7796a3;text-align:center}.instruction b{font-weight:400;color:#c3e5ed}.steps{display:flex;gap:19px;font:11px var(--sans);color:#4f6c79;white-space:nowrap}.steps .active{color:#c4f8ff}.footer{display:flex;justify-content:space-between;border-top:1px solid #b4dfff08;padding:18px 0 25px;font:9px var(--mono);color:#486672;letter-spacing:.09em}.footer span:last-child{color:#728e99}
+.home-view{transition:opacity .35s,filter .45s,transform .45s}.home-view.departing{opacity:0;filter:blur(5px);transform:scale(1.035);pointer-events:none}.transition-curtain{position:fixed;inset:0;pointer-events:none;z-index:15;background:#b3f9ff;opacity:0}.transition-curtain.run{animation:flash .7s ease-out}@keyframes flash{0%{opacity:0}38%{opacity:.045}100%{opacity:0}}
+.destination{min-height:calc(100svh - 94px);padding-top:32px;animation:enter .5s both}@keyframes enter{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}.destination-top{display:flex;justify-content:space-between;align-items:center;gap:20px}.back-btn{border:0;padding:10px 0;background:none;color:#a8c8d4;display:flex;gap:12px;font-size:13px}.back-btn:hover{color:#e0faff}.route-number{font:11px var(--mono);letter-spacing:.13em;color:#698b9a}.destination-main{display:grid;grid-template-columns:1.15fr 1fr;gap:8%;padding:90px 0 80px;min-height:535px;align-items:start}.destination h2{font-size:clamp(76px,9vw,136px);font-weight:350;line-height:1;letter-spacing:-.07em;margin:0 0 32px}.destination h2:after{content:".";color:var(--accent)}#destinationTitle:focus{outline:none}.destination-lead{font-size:25px;font-weight:350;line-height:1.65;color:#c5dbe4;margin:0;max-width:550px}.destination-description{font-size:14px;color:#849da9;line-height:1.9;max-width:400px;margin-top:24px}.topic-list{padding-top:7px}.topic{display:grid;grid-template-columns:40px 1fr 20px;gap:12px;border-top:1px solid #344953;padding:27px 0}.topic:last-child{border-bottom:1px solid #344953}.topic-index{font:10px var(--mono);color:#5b7a88;padding-top:4px}.topic strong{font-size:22px;font-weight:400;display:block;margin-bottom:10px}.topic p{font-size:13px;margin:0;color:#88a2ae;line-height:1.8}.topic-mark{font-size:17px;color:#9bcbd7}.destination-bottom{display:flex;justify-content:space-between;align-items:center;gap:20px;border-top:1px solid #b4dfff19;padding:22px 0}.destination-bottom p{font:11px var(--mono);color:#64828e;margin:0}.mini-gears{display:flex;gap:10px}.mini-gears button{border:1px solid #344952;padding:11px 17px;border-radius:2px;background:transparent;color:#aec7d1;font-size:12px}.mini-gears button:hover,.mini-gears button[aria-current="page"]{background:var(--accent);color:#12303c;border-color:var(--accent)}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.noscript{padding:20px;border:1px solid var(--accent);color:var(--accent)}
+@media(max-width:1000px){.edition{display:none}.console{height:535px}.gear-label{width:170px}.gear-name{font-size:22px}.intro h1{font-size:37px}.destination-main{gap:5%;padding-top:65px}.destination h2{font-size:90px}}
+@media(max-width:700px){.app{padding:0 23px}.header{height:78px;gap:10px}.brand{font-size:14px;gap:10px}.brand-mark{width:18px}.header-actions{gap:16px}.quiet-btn{font-size:11px}.quiet-btn kbd{display:none}.intro{padding-top:26px;display:block}.intro h1{font-size:32px}.eyebrow{font-size:9px;margin-bottom:12px}.intro-note{text-align:left;margin-top:14px;font-size:12px}.intro-note span{display:none}.console{height:490px;width:100%;margin-top:9px}.field-label,.field-coordinate,.node-code{display:none}.gear{width:70px;height:70px}.gear-label{top:87px;width:154px}.gear-name{font-size:19px}.gear-meta{font-size:10px;margin-top:7px}.gear-socket svg{width:25px;height:25px}.node-code{bottom:89px;font-size:8px}.node-points i:nth-child(1){left:10px;top:10px}.node-points i:nth-child(2){right:1px;top:25px}.node-points i:nth-child(3){left:23px}.orb{--diameter:108px}.orb-metal:before{inset:6px}.orb-metal:after{left:12px;top:14px;box-shadow:78px 40px 0 -1px #d2fdff,26px 88px 0 -1px #9de9f4,0 0 10px #9eefff}.orb-face{inset:15px;gap:9px}.orb-symbol{font-size:25px}.orb-status{font-size:7px}.orb-hint{font-size:8px;top:-37px}.core-cross{width:42px;height:38px}.core-cross:before{left:-10px}.core-cross:after{right:-10px}.home-ring{width:151px;height:151px}.home-caption{font-size:12px}.home-caption small{font-size:8px}.statusbar{flex-wrap:wrap;gap:0;padding:17px 0}.readout{min-width:0;width:50%}.readout-digit{font-size:23px;width:26px}.readout-title{font-size:12px}.readout-sub{font-size:8px}.steps{order:2;width:50%;justify-content:flex-end;font-size:10px;gap:13px}.instruction{order:3;text-align:left;width:100%;font-size:12px;margin:18px 0 0}.footer{font-size:8px;letter-spacing:0;padding:17px 0}.destination{padding-top:24px;min-height:calc(100svh - 78px)}.destination-main{grid-template-columns:1fr;gap:40px;padding:45px 0}.destination h2{font-size:76px;margin-bottom:25px}.destination-lead{font-size:23px}.destination-description{font-size:13px}.topic{padding:22px 0}.topic strong{font-size:21px}.destination-bottom{align-items:flex-start;flex-direction:column;gap:20px}.mini-gears{gap:7px}.mini-gears button{padding:10px 14px}.route-number{font-size:9px}}
+@media(max-width:370px){.app{padding:0 16px}.brand{font-size:13px}.header-actions{gap:12px}.intro h1{font-size:29px}.gear{width:64px;height:64px}.gear-label{top:80px;width:140px}.gear-name{font-size:18px}.gear-meta{font-size:9px}.node-code{bottom:83px}.orb{--diameter:98px}.orb-symbol{font-size:23px}.orb-metal:after{box-shadow:68px 35px 0 -1px #d2fdff,26px 78px 0 -1px #9de9f4}.home-ring{width:135px;height:135px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}.dust{animation:none;opacity:.2}}
+</style>
+</head>
+<body>
+  <div class="texture" aria-hidden="true"></div>
+  <div class="app">
+    <header class="header">
+      <a href="#" class="brand" id="brand" aria-label="Econmind 导航首页"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>ECONMIND</a>
+      <div class="edition">CONNECTED PERSPECTIVES</div>
+      <div class="header-actions">
+        <button class="quiet-btn" id="sound" aria-pressed="false" aria-label="开启交互音效"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path id="soundWave" d="m17 9 5 6m0-6-5 6"/></svg><span id="soundLabel">声音 关</span></button>
+        <button class="quiet-btn" id="reset" aria-label="回到起点"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M4 10a8 8 0 1 1 1 7M4 4v6h6"/></svg>归位 <kbd>ESC</kbd></button>
+      </div>
+    </header>
+    <main>
+      <section class="home-view" id="home" aria-label="悬浮磁吸导航">
+        <div class="intro">
+          <div><p class="eyebrow">ECONMIND / EXPLORATION FIELD</p><h1>Explore the <em>network.</em></h1></div>
+          <p class="intro-note">从一个节点，走向新的视角。<br><span>DRAG TO CONNECT</span></p>
+        </div>
+        <div class="console" id="console">
+          <span class="field-label" aria-hidden="true">OPEN FIELD</span><span class="field-coordinate" aria-hidden="true">ECONMIND / DISCOVER</span>
+          <span class="dust" style="left:20%;top:17%" aria-hidden="true"></span><span class="dust" style="left:52%;top:26%" aria-hidden="true"></span><span class="dust" style="left:57%;top:65%" aria-hidden="true"></span><span class="dust" style="left:85%;top:26%" aria-hidden="true"></span><span class="dust" style="left:18%;top:73%" aria-hidden="true"></span><span class="dust" style="left:48%;top:85%" aria-hidden="true"></span><span class="dust" style="left:64%;top:12%" aria-hidden="true"></span><span class="dust" style="left:91%;top:75%" aria-hidden="true"></span>
+          <button class="gear" data-route="team" aria-label="进入 Team 团队页面"><span class="gear-label"><span class="gear-name">Team</span><span class="gear-meta">与同行者相遇</span></span><span class="gear-socket" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor"><circle cx="13" cy="11" r="4"/><path d="M5 26v-3a8 8 0 0 1 16 0v3M23 8a4 4 0 0 1 0 8M25 20a6 6 0 0 1 3 6"/></svg></span></button>
+          <button class="gear" data-route="research" aria-label="进入 Research 研究页面"><span class="gear-label"><span class="gear-name">Research</span><span class="gear-meta">从问题走向洞察</span></span><span class="gear-socket" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor"><circle cx="14" cy="14" r="8.5"/><path d="m20.5 20.5 7 7M10 16l3-5 3 6 3-4"/></svg></span></button>
+          <button class="gear" data-route="projects" aria-label="进入 Projects 项目页面"><span class="gear-label"><span class="gear-name">Projects</span><span class="gear-meta">让想法开始发生</span></span><span class="gear-socket" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor"><path d="m16 4 11 6.5v12L16 29 5 22.5v-12L16 4Zm-11 6.5 11 6.5 11-6.5M16 17v12M10.5 7.25l11 6.5"/></svg></span></button>
+          <div class="home-ring" id="homeRing" aria-hidden="true"></div>
+          <div class="home-caption" id="homeCaption" aria-hidden="true"><b>Background</b><small>CORE NODE</small></div>
+          <button class="orb" id="orb" aria-label="拖动核心节点靠近左侧节点，松手进入；也可按方向键选择并按回车进入" aria-describedby="keyboardHelp"><span class="orb-hint" aria-hidden="true">HOLD TO CONNECT</span><span class="orb-halo" aria-hidden="true"></span><span class="orb-metal" aria-hidden="true"></span><span class="core-cross" aria-hidden="true"></span><span class="orb-face" aria-hidden="true"><span class="orb-symbol" id="orbSymbol">BG</span><span class="orb-status" id="orbStatus">EXPLORE</span></span></button>
+        </div>
+        <div class="statusbar">
+          <div class="readout"><span class="readout-digit" id="readoutDigit">○</span><div><span class="readout-title" id="readoutTitle">自由探索</span><span class="readout-sub" id="readoutSub">FOLLOW YOUR CURIOSITY</span></div></div>
+          <p class="instruction" id="instruction">拖动核心靠近一个节点，<b>松手进入</b></p>
+          <div class="steps" aria-hidden="true"><span id="step1">拖动</span><span id="step2">靠近</span><span id="step3">进入</span></div>
+        </div>
+        <footer class="footer"><span>ECONMIND / EXPLORE WITH CURIOSITY</span><span>也可以直接点击入口 ↗</span></footer>
+      </section>
+      <section class="destination" id="destination" hidden aria-labelledby="destinationTitle">
+        <div class="destination-top"><button class="back-btn" id="back">← <span>返回探索</span></button><div class="route-number" id="routeNumber"></div></div>
+        <div class="destination-main"><div><p class="eyebrow" id="destinationEyebrow"></p><h2 id="destinationTitle" tabindex="-1"></h2><p class="destination-lead" id="destinationLead"></p><p class="destination-description" id="destinationDescription"></p></div><div class="topic-list" id="topics"></div></div>
+        <div class="destination-bottom"><p>ECONMIND / 页面内容为交互演示</p><nav class="mini-gears" aria-label="切换页面"><button data-go="team">Team</button><button data-go="research">Research</button><button data-go="projects">Projects</button></nav></div>
+      </section>
+      <p class="sr-only" id="keyboardHelp">可以直接点击节点。核心节点获得焦点后，使用上、下、左、右方向键选择，回车确认，Escape 归位。</p><div class="sr-only" role="status" aria-live="polite" id="announce"></div>
+      <noscript><p class="noscript">此交互需要启用 JavaScript。</p></noscript>
+    </main>
+  </div>
+  <div class="transition-curtain" id="curtain" aria-hidden="true"></div>
+  <script>
+  (() => {
+    'use strict';
+    const $ = id => document.getElementById(id);
+    const stage = $('console'), orb = $('orb'), home = $('home'), destination = $('destination');
+    const gears = [...document.querySelectorAll('.gear')];
+    gears.forEach((node,i)=>{const points=document.createElement('span');points.className='node-points';points.setAttribute('aria-hidden','true');points.innerHTML='<i></i><i></i><i></i>';const code=document.createElement('span');code.className='node-code';code.setAttribute('aria-hidden','true');code.textContent=['PEOPLE','KNOWLEDGE','EXPERIMENTS'][i];node.append(points,code);});
+    const routes = {
+      team: {title:'Team', index:'01', symbol:'T', eyebrow:'THE PEOPLE BEHIND THE QUESTIONS', lead:'因好奇而相遇，<br>为理解世界而同行。', description:'不同的视角，共同的探索。走近 Econmind 的人、协作与想法。', topics:[['共同研究','从一个值得追问的问题开始，把不同学科的视角带到同一张桌上。'],['开放讨论','让观点相遇，让每一次交流推动理解向前一步。'],['一起创造','将想法变成可以共同检验、改进和分享的成果。']]},
+      research: {title:'Research', index:'02', symbol:'R', eyebrow:'BETTER QUESTIONS. DEEPER UNDERSTANDING.', lead:'从现象出发，<br>向规律再走一步。', description:'用经济学的视角提出问题，以模型、数据与讨论接近答案。', topics:[['宏观与系统','观察增长、周期与政策如何共同塑造我们身处的世界。'],['行为与选择','理解个体如何决策，以及这些选择怎样汇聚成集体结果。'],['数据与方法','连接现实观察与理论假设，让结论经得起证据的检验。']]},
+      projects: {title:'Projects', index:'03', symbol:'P', eyebrow:'A PLACE FOR IDEAS TO BECOME REAL', lead:'让思想离开纸面，<br>让可能开始发生。', description:'通过可交互的实验与工具，把抽象问题转化为可探索的体验。', topics:[['经济模拟','改变初始条件，观察复杂系统如何演化。'],['可视化探索','让数据中的关系与结构变得可见、可理解。'],['实验与工具','从轻量原型出发，用实际体验发现新的问题。']]}
+    };
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let geometry, pos={x:0,y:0}, aim={x:0,y:0}, velocity={x:0,y:0};
+    let dragging=false, pointerId=null, offset={x:0,y:0}, candidate=-1, armed=false;
+    let busy=false, currentRoute='', keySelection=-1, lastFrame=0, frameId=0, navTimer=0, revealTimer=0, soundOn=false, audio;
+    const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+    const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+    function announce(text){$('announce').textContent=text;}
+    function status(digit,title,sub,copy){$('readoutDigit').textContent=digit;$('readoutTitle').textContent=title;$('readoutSub').textContent=sub;$('instruction').innerHTML=copy;}
+    function setSteps(n){[1,2,3].forEach(i=>$('step'+i).classList.toggle('active',i<=n));}
+    function play(kind){
+      if(!soundOn)return;
+      try{audio ||= new (window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')void audio.resume();const t=audio.currentTime, gain=audio.createGain(),osc=audio.createOscillator();osc.type='sine';osc.frequency.setValueAtTime(kind==='lock'?170:kind==='snap'?620:270,t);osc.frequency.exponentialRampToValueAtTime(kind==='lock'?65:140,t+.09);gain.gain.setValueAtTime(.0001,t);gain.gain.exponentialRampToValueAtTime(kind==='lock'?.13:.055,t+.007);gain.gain.exponentialRampToValueAtTime(.0001,t+.13);osc.connect(gain);gain.connect(audio.destination);osc.start(t);osc.stop(t+.15);}catch{}
+    }
+    function layout(){
+      if(home.hidden)return;
+      if(dragging)cancelDrag();
+      const w=stage.clientWidth,h=stage.clientHeight,mobile=w<660;
+      const origin={x:w*(mobile?.78:.74),y:h*.5};
+      const minTargetX=mobile?77:95;
+      const points=mobile?[{x:Math.max(minTargetX,w*.37),y:h*.16},{x:Math.max(minTargetX,w*.23),y:h*.46},{x:Math.max(minTargetX,w*.37),y:h*.76}]:[{x:w*.40,y:h*.18},{x:w*.26,y:h*.47},{x:w*.40,y:h*.77}];
+      // Stable hit targets: visual attraction never changes the selection geometry.
+      geometry={w,h,mobile,origin,points,magnet:mobile?91:150,lock:mobile?51:68};
+      gears.forEach((g,i)=>{g.style.left=points[i].x+'px';g.style.top=points[i].y+'px';});
+      $('homeRing').style.left=origin.x+'px';$('homeRing').style.top=origin.y+'px';$('homeCaption').style.left=origin.x+'px';$('homeCaption').style.top=(origin.y+(mobile?102:126))+'px';
+      pos={...origin};aim={...origin};velocity={x:0,y:0};if(!busy)setCandidate(-1,false);paint();
+    }
+    function paint(){orb.style.transform=`translate3d(${pos.x}px,${pos.y}px,0)`;}
+    function animate(time){
+      const dt=Math.min((time-lastFrame)/16.667||1,2);lastFrame=time;
+      const stiffness=dragging?(armed?.27:.28):.115, friction=dragging?.57:.75;
+      for(const axis of ['x','y']){velocity[axis]=(velocity[axis]+(aim[axis]-pos[axis])*stiffness*dt)*Math.pow(friction,dt);pos[axis]+=velocity[axis]*dt;}
+      if(reducedMotion.matches&&!dragging){pos={...aim};velocity={x:0,y:0};}
+      paint();
+      if(dragging||distance(pos,aim)>.05||Math.hypot(velocity.x,velocity.y)>.05)frameId=requestAnimationFrame(animate);else{pos={...aim};paint();frameId=0;}
+    }
+    function moveTo(point){aim={...point};if(!frameId){lastFrame=performance.now();frameId=requestAnimationFrame(animate);}}
+    function setCandidate(index,isArmed){
+      const changed=candidate!==index, justArmed=isArmed&&!armed;
+      candidate=index;armed=isArmed;
+      gears.forEach((g,i)=>{g.classList.toggle('hot',i===index);g.classList.toggle('armed',i===index&&isArmed);if(i!==index){g.style.setProperty('--mx','0px');g.style.setProperty('--my','0px');}});
+      orb.classList.toggle('armed',isArmed);
+      if(index>=0){const route=routes[gears[index].dataset.route];$('orbSymbol').textContent=route.symbol;$('orbStatus').textContent=isArmed?'RELEASE':'CONNECT';status(isArmed?'◉':'○',route.title+(isArmed?' · 松手进入':' · 正在靠近'),isArmed?'CONNECTED':'GETTING CLOSER',isArmed?'<b>'+route.title+' 已选中</b>，松手进入':'靠近 '+route.title+'，让好奇继续');setSteps(isArmed?3:2);if(changed)announce('正在靠近 '+route.title);if(justArmed){play('snap');announce(route.title+' 已选中，松手进入');}}
+      else{$('orbSymbol').textContent='BG';$('orbStatus').textContent='EXPLORE';status('○',dragging?'选择你的方向':'自由探索','FOLLOW YOUR CURIOSITY',dragging?'自由移动，靠近一个节点，<b>松手进入</b>':'拖动核心靠近一个节点，<b>松手进入</b>');setSteps(dragging?1:0);}
+    }
+    function pointerPoint(e){const r=stage.getBoundingClientRect();return{x:e.clientX-r.left-offset.x,y:e.clientY-r.top-offset.y};}
+    function updateDrag(e){
+      let raw=pointerPoint(e);raw={x:clamp(raw.x,geometry.mobile?30:50,geometry.w-40),y:clamp(raw.y,40,geometry.h-40)};
+      let best=-1,dist=Infinity;geometry.points.forEach((p,i)=>{const d=distance(raw,p);if(d<dist){dist=d;best=i;}});
+      // A small release margin prevents flicker while the two surfaces feel connected.
+      if(armed&&candidate>=0&&distance(raw,geometry.points[candidate])<geometry.lock*1.30){best=candidate;dist=distance(raw,geometry.points[candidate]);}
+      const inRange=dist<geometry.magnet,isArmed=dist<geometry.lock||(armed&&best===candidate&&dist<geometry.lock*1.30);
+      setCandidate(inRange?best:-1,isArmed);
+      if(inRange){const p=geometry.points[best],t=1-dist/geometry.magnet,pull=isArmed?.92:(t*t*(3-2*t))*.68;gears[best].style.setProperty('--mx',clamp((raw.x-p.x)*t*.18,-13,13)+'px');gears[best].style.setProperty('--my',clamp((raw.y-p.y)*t*.18,-13,13)+'px');moveTo({x:raw.x+(p.x-raw.x)*pull,y:raw.y+(p.y-raw.y)*pull});}
+      else{moveTo(raw);}
+    }
+    function endCapture(){const id=pointerId;dragging=false;pointerId=null;orb.classList.remove('dragging');stage.classList.remove('is-dragging');try{if(id!==null&&orb.hasPointerCapture(id))orb.releasePointerCapture(id);}catch{}}
+    function cancelDrag(){endCapture();keySelection=-1;setCandidate(-1,false);if(geometry)moveTo(geometry.origin);}
+    function onPointerDown(e){if(busy||currentRoute||e.button!==0||dragging)return;e.preventDefault();keySelection=-1;dragging=true;pointerId=e.pointerId;const r=stage.getBoundingClientRect();offset={x:e.clientX-r.left-pos.x,y:e.clientY-r.top-pos.y};orb.setPointerCapture(pointerId);orb.focus({preventScroll:true});orb.classList.add('dragging');stage.classList.add('is-dragging');setCandidate(-1,false);play('hold');}
+    orb.addEventListener('pointerdown',onPointerDown);
+    orb.addEventListener('pointermove',e=>{if(dragging&&e.pointerId===pointerId)updateDrag(e);});
+    orb.addEventListener('pointerup',e=>{if(!dragging||e.pointerId!==pointerId)return;updateDrag(e);const selected=armed?candidate:-1;endCapture();if(selected>=0)engage(selected);else{setCandidate(-1,false);moveTo(geometry.origin);announce('已回到起点');}});
+    orb.addEventListener('pointercancel',()=>{if(dragging)cancelDrag();});
+    orb.addEventListener('lostpointercapture',()=>{if(dragging)cancelDrag();});
+    window.addEventListener('blur',()=>{if(dragging)cancelDrag();});
+    document.addEventListener('visibilitychange',()=>{if(document.hidden&&dragging)cancelDrag();});
+    function burst(point){if(reducedMotion.matches)return;const pulse=document.createElement('div');pulse.className='pulse';pulse.style.left=point.x+'px';pulse.style.top=point.y+'px';stage.appendChild(pulse);pulse.addEventListener('animationend',()=>pulse.remove(),{once:true});}
+    function engage(index){
+      if(busy)return;busy=true;keySelection=-1;setCandidate(index,true);moveTo(geometry.points[index]);orb.disabled=true;gears.forEach(g=>g.disabled=true);play('lock');
+      status('◉','连接成功','CONNECTED','正在进入 <b>'+routes[gears[index].dataset.route].title+'</b>');
+      navTimer=setTimeout(()=>{orb.classList.add('locked');gears[index].classList.add('locked');burst(geometry.points[index]);},reducedMotion.matches?0:160);
+      revealTimer=setTimeout(()=>navigate(gears[index].dataset.route,true),reducedMotion.matches?30:540);
+    }
+    function clearNavigation(){clearTimeout(navTimer);clearTimeout(revealTimer);$('curtain').classList.remove('run');home.classList.remove('departing');busy=false;orb.disabled=false;gears.forEach(g=>{g.disabled=false;g.classList.remove('locked');});orb.classList.remove('locked');}
+    function renderRoute(route){
+      const data=routes[route];currentRoute=route;home.hidden=true;destination.hidden=false;
+      $('routeNumber').textContent='EXPLORE / '+data.title.toUpperCase();$('destinationEyebrow').textContent=data.eyebrow;$('destinationTitle').textContent=data.title;$('destinationLead').innerHTML=data.lead;$('destinationDescription').textContent=data.description;
+      $('topics').replaceChildren(...data.topics.map(([title,copy],i)=>{const el=document.createElement('div');el.className='topic';const n=document.createElement('span');n.className='topic-index';n.textContent='0'+(i+1);const wrap=document.createElement('div');const strong=document.createElement('strong');strong.textContent=title;const p=document.createElement('p');p.textContent=copy;wrap.append(strong,p);const mark=document.createElement('span');mark.className='topic-mark';mark.textContent='↗';mark.setAttribute('aria-hidden','true');el.append(n,wrap,mark);return el;}));
+      document.querySelectorAll('[data-go]').forEach(b=>{if(b.dataset.go===route)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
+      document.title=data.title+' — ECONMIND';window.scrollTo({top:0,behavior:'instant'});$('destinationTitle').focus({preventScroll:true});announce('已进入 '+data.title+' 页面');
+    }
+    function navigate(route,animate=false){
+      clearNavigation();if(!routes[route]){goHome(false);return;}
+      busy=true;
+      if(animate&&!reducedMotion.matches){home.classList.add('departing');$('curtain').classList.add('run');navTimer=setTimeout(()=>{history.pushState({route},'','#'+route);renderRoute(route);},320);revealTimer=setTimeout(()=>{busy=false;$('curtain').classList.remove('run');},850);}
+      else{if(location.hash!=='#'+route)history.pushState({route},'','#'+route);renderRoute(route);busy=false;}
+    }
+    function goHome(updateHistory=true){
+      clearNavigation();endCapture();const wasRoute=Boolean(currentRoute);currentRoute='';destination.hidden=true;home.hidden=false;keySelection=-1;if(updateHistory&&location.hash)history.pushState({},'',location.pathname+location.search);document.title='ECONMIND — Explore the network';layout();setCandidate(-1,false);moveTo(geometry.origin);if(wasRoute){window.scrollTo({top:0,behavior:'instant'});orb.focus({preventScroll:true});}announce('已回到起点');
+    }
+    gears.forEach((g,i)=>g.addEventListener('click',()=>engage(i)));
+    document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>{if(!busy)navigate(b.dataset.go);}));
+    $('back').addEventListener('click',()=>goHome());$('reset').addEventListener('click',()=>goHome());$('brand').addEventListener('click',e=>{e.preventDefault();goHome();});
+    $('sound').addEventListener('click',()=>{soundOn=!soundOn;$('sound').setAttribute('aria-pressed',String(soundOn));$('sound').setAttribute('aria-label',soundOn?'关闭交互音效':'开启交互音效');$('soundLabel').textContent='声音 '+(soundOn?'开':'关');$('soundWave').setAttribute('d',soundOn?'M17 8q4 4 0 8M20 5q7 7 0 14':'m17 9 5 6m0-6-5 6');if(soundOn)play('snap');});
+    orb.addEventListener('keydown',e=>{
+      if(busy||dragging)return;
+      if(['ArrowDown','ArrowRight','ArrowUp','ArrowLeft'].includes(e.key)){e.preventDefault();const forward=e.key==='ArrowDown'||e.key==='ArrowRight';keySelection=keySelection<0?(forward?0:2):(keySelection+(forward?1:2))%3;setCandidate(keySelection,true);moveTo(geometry.points[keySelection]);$('instruction').innerHTML='按 <b>Enter</b> 进入，按 Esc 归位';}
+      else if((e.key==='Enter'||e.key===' ')&&keySelection>=0){e.preventDefault();engage(keySelection);}
+    });
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();goHome();}});
+    const handleLocation=()=>{clearNavigation();const route=location.hash.slice(1);if(routes[route])renderRoute(route);else goHome(false);};
+    window.addEventListener('popstate',handleLocation);window.addEventListener('hashchange',handleLocation);
+    let resizeTimer;window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(!busy)layout();},100);});
+    layout();if(routes[location.hash.slice(1)])renderRoute(location.hash.slice(1));
+  })();
+  </script>
+</body>
+</html>
