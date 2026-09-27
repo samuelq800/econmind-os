@@ -15,6 +15,29 @@ const WORLD_V2_RELEASE_OWNER = "main-site-release-chain";
 const WORLD_V2_RELEASE_VERSION = "WORLD_V2_MAIN_SITE_RELEASE_HANDOFF-1";
 const WORLD_V2_EXPECTED_MIGRATION_COUNT = 17;
 const WORLD_V2_EXPECTED_TABLE_COUNT = 21;
+const WORLD_V2_EXPECTED_TABLE_NAMES = Object.freeze([
+  "authoritative_commit_authorization",
+  "authoritative_event",
+  "command_queue",
+  "command_receipt",
+  "command_submission",
+  "current_commit_authorization",
+  "current_materialization",
+  "current_negotiation_party_membership",
+  "event_consumer_receipt",
+  "financial_posting_batch",
+  "inventory_posting",
+  "narrow_transfer_approval_reference",
+  "narrow_transfer_approval_signature",
+  "narrow_transfer_proposal",
+  "notification_outbox",
+  "opening_seed",
+  "projection_entitlement",
+  "read_projection",
+  "schema_release",
+  "world_head",
+  "world_writer_lease",
+]);
 
 export class WorldV2ReleaseRendererError extends Error {
   constructor(code) {
@@ -296,13 +319,97 @@ select jsonb_build_object(
 `;
 }
 
+function renderRecoveryQuery(handoff) {
+  const expectedLedgerValues = releaseRows(handoff)
+    .map(
+      (row) =>
+        `(${sqlLiteral(row.migration_id)}, ${sqlLiteral(row.artifact_sha256)}, ${sqlLiteral(row.source_repo_commit)}, ${row.release_order})`,
+    )
+    .join(",\n          ");
+  const expectedTableNames = WORLD_V2_EXPECTED_TABLE_NAMES.map(sqlLiteral).join(
+    ", ",
+  );
+  return `do $world_v2_release_recovery$
+declare
+  namespace_present boolean;
+  actual_ledger jsonb := '[]'::jsonb;
+  actual_table_names jsonb := '[]'::jsonb;
+  actual_migration_count bigint := 0;
+  actual_table_count bigint := 0;
+  ledger_matches boolean := false;
+  tables_match boolean := false;
+  classification text;
+begin
+  namespace_present := to_regnamespace('world_v2') is not null;
+  if not namespace_present then
+    classification := 'ABSENT';
+  else
+    begin
+      select coalesce(jsonb_agg(jsonb_build_object(
+        'migration_id', migration_id,
+        'artifact_sha256', artifact_sha256,
+        'source_repo_commit', source_repo_commit,
+        'release_order', release_order
+      ) order by release_order), '[]'::jsonb), count(*)
+        into actual_ledger, actual_migration_count
+        from world_v2.schema_release;
+      ledger_matches := actual_migration_count = ${WORLD_V2_EXPECTED_MIGRATION_COUNT}
+        and not exists (
+          select 1
+          from (values
+            ${expectedLedgerValues}
+          ) as expected(migration_id, artifact_sha256, source_repo_commit, release_order)
+          full join world_v2.schema_release as actual
+            using (migration_id)
+          where actual.migration_id is distinct from expected.migration_id
+             or actual.artifact_sha256 is distinct from expected.artifact_sha256
+             or actual.source_repo_commit is distinct from expected.source_repo_commit
+             or actual.release_order is distinct from expected.release_order
+        );
+      select count(*), coalesce(jsonb_agg(table_name order by table_name), '[]'::jsonb)
+        into actual_table_count, actual_table_names
+        from information_schema.tables
+        where table_schema = 'world_v2' and table_type = 'BASE TABLE';
+      tables_match := actual_table_count = ${WORLD_V2_EXPECTED_TABLE_COUNT}
+        and actual_table_names = to_jsonb(array[${expectedTableNames}]);
+    exception
+      when undefined_table or undefined_column then
+        ledger_matches := false;
+        tables_match := false;
+    end;
+    if ledger_matches and tables_match then
+      classification := 'EXPECTED_RELEASE_METADATA_MATCH';
+    else
+      classification := 'CONFLICT';
+    end if;
+  end if;
+  perform set_config(
+    'world_v2_release_recovery.evidence',
+    jsonb_build_object(
+      'status', classification,
+      'handoff_source_commit', ${sqlLiteral(WORLD_V2_RELEASE_SOURCE_COMMIT)},
+      'migration_count', actual_migration_count,
+      'table_count', actual_table_count,
+      'table_names', actual_table_names,
+      'schema_release', actual_ledger
+    )::text,
+    false
+  );
+end
+$world_v2_release_recovery$;
+
+select current_setting('world_v2_release_recovery.evidence')::jsonb
+  as world_v2_release_recovery;
+`;
+}
+
 function parseArguments(argv) {
   const result = {};
   for (let index = 0; index < argv.length; index += 2) {
     const flag = argv[index];
     const value = argv[index + 1];
     if (
-      !["--output", "--expectation-output", "--sql-output"].includes(flag) ||
+      !["--mode", "--output", "--expectation-output", "--sql-output"].includes(flag) ||
       typeof value !== "string" ||
       result[flag] !== undefined
     ) {
@@ -313,6 +420,9 @@ function parseArguments(argv) {
   if (!result["--output"] || !result["--expectation-output"]) {
     fail("WORLD_V2_RELEASE_RENDER_ARGUMENTS_INVALID");
   }
+  if (result["--mode"] && !["apply", "recovery"].includes(result["--mode"])) {
+    fail("WORLD_V2_RELEASE_RENDER_MODE_INVALID");
+  }
   return result;
 }
 
@@ -321,7 +431,13 @@ async function main() {
   const handoff = await loadReviewedHandoff(
     process.env.WORLD_V2_RELEASE_SOURCE_ROOT,
   );
+  const mode = argumentsMap["--mode"] ?? "apply";
+  const query =
+    mode === "recovery"
+      ? renderRecoveryQuery(handoff)
+      : renderAtomicQuery(handoff);
   const expectation = {
+    expected_table_names: WORLD_V2_EXPECTED_TABLE_NAMES,
     handoff_source_commit: WORLD_V2_RELEASE_SOURCE_COMMIT,
     migration_count: WORLD_V2_EXPECTED_MIGRATION_COUNT,
     schema_release: releaseRows(handoff),
@@ -329,7 +445,7 @@ async function main() {
   };
   await writeFile(
     path.resolve(argumentsMap["--output"]),
-    `${JSON.stringify({ query: renderAtomicQuery(handoff) })}\n`,
+    `${JSON.stringify({ query })}\n`,
     "utf8",
   );
   await writeFile(
@@ -340,7 +456,7 @@ async function main() {
   if (argumentsMap["--sql-output"]) {
     await writeFile(
       path.resolve(argumentsMap["--sql-output"]),
-      renderAtomicQuery(handoff),
+      query,
       "utf8",
     );
   }

@@ -46,6 +46,15 @@ jobs:
       - name: Render the one-transaction release SQL from reviewed bytes
         run: |
           node scripts/render-world-v2-release-query.mjs \
+            --mode recovery \
+            --output "$RUNNER_TEMP/world-v2-release-recovery-before-payload.json" \
+            --expectation-output "$RUNNER_TEMP/world-v2-release-recovery-before-expectation.json" \
+            --sql-output "$RUNNER_TEMP/world-v2-release-recovery-before.sql"
+          psql -h localhost -U postgres -d world_v2_release_runner -v ON_ERROR_STOP=1 \
+            -f "$RUNNER_TEMP/world-v2-release-recovery-before.sql" \
+            > "$RUNNER_TEMP/world-v2-release-recovery-before.txt"
+          grep -q "ABSENT" "$RUNNER_TEMP/world-v2-release-recovery-before.txt"
+          node scripts/render-world-v2-release-query.mjs \
             --output "$RUNNER_TEMP/world-v2-release-payload.json" \
             --expectation-output "$RUNNER_TEMP/world-v2-release-expectation.json" \
             --sql-output "$RUNNER_TEMP/world-v2-release.sql"
@@ -63,3 +72,29 @@ jobs:
           test "$(psql -h localhost -U postgres -d world_v2_release_runner -Atc "select to_regnamespace('world_v2')::text")" = "world_v2"
           after_fingerprint="$(psql -h localhost -U postgres -d world_v2_release_runner -Atc "select md5(coalesce(string_agg(id::text || ':' || label, ',' order by id), '')) from public.world_v2_release_runner_sentinel")"
           test "$before_fingerprint" = "$after_fingerprint"
+          node scripts/render-world-v2-release-query.mjs \
+            --mode recovery \
+            --output "$RUNNER_TEMP/world-v2-release-recovery-after-payload.json" \
+            --expectation-output "$RUNNER_TEMP/world-v2-release-recovery-after-expectation.json" \
+            --sql-output "$RUNNER_TEMP/world-v2-release-recovery-after.sql"
+          psql -h localhost -U postgres -d world_v2_release_runner -v ON_ERROR_STOP=1 \
+            -f "$RUNNER_TEMP/world-v2-release-recovery-after.sql" \
+            > "$RUNNER_TEMP/world-v2-release-recovery-after.txt"
+          grep -q "EXPECTED_RELEASE_METADATA_MATCH" "$RUNNER_TEMP/world-v2-release-recovery-after.txt"
+      - name: Verify injected failure rolls back the complete disposable release
+        run: |
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 \
+            -c "create database world_v2_release_rollback"
+          psql -h localhost -U postgres -d world_v2_release_rollback -v ON_ERROR_STOP=1 \
+            -c "create table public.world_v2_release_rollback_sentinel (id integer primary key, label text not null)"
+          psql -h localhost -U postgres -d world_v2_release_rollback -v ON_ERROR_STOP=1 \
+            -c "insert into public.world_v2_release_rollback_sentinel values (1, 'before-failure'), (2, 'stable')"
+          rollback_before="$(psql -h localhost -U postgres -d world_v2_release_rollback -Atc "select md5(coalesce(string_agg(id::text || ':' || label, ',' order by id), '')) from public.world_v2_release_rollback_sentinel")"
+          node --input-type=module -e 'import { readFile, writeFile } from "node:fs/promises"; const sql = await readFile(process.argv[1], "utf8"); const marker = "-- 6: 0006_world_v2_writer_lease_lineage_guard"; if (!sql.includes(marker)) process.exit(2); await writeFile(process.argv[2], sql.replace(marker, `select 1 / 0;\n${marker}`), "utf8");' "$RUNNER_TEMP/world-v2-release.sql" "$RUNNER_TEMP/world-v2-release-failure.sql"
+          if psql -h localhost -U postgres -d world_v2_release_rollback -v ON_ERROR_STOP=1 \
+            -f "$RUNNER_TEMP/world-v2-release-failure.sql" > "$RUNNER_TEMP/world-v2-release-failure.txt"; then
+            exit 1
+          fi
+          test "$(psql -h localhost -U postgres -d world_v2_release_rollback -Atc "select to_regnamespace('world_v2') is null")" = "t"
+          rollback_after="$(psql -h localhost -U postgres -d world_v2_release_rollback -Atc "select md5(coalesce(string_agg(id::text || ':' || label, ',' order by id), '')) from public.world_v2_release_rollback_sentinel")"
+          test "$rollback_before" = "$rollback_after"

@@ -33,6 +33,9 @@ reviewed source commit, 17-row release ledger, and 21-table count. The
 workflow verifies that response against its loader-derived expectation and
 uploads the normalized evidence artifact. It never logs or persists a token,
 password, database URL, request payload, or remote response body.
+If the transport or evidence parser cannot establish that result, the release
+workflow records `WORLD_V2_RELEASE_UNKNOWN`, fails, and never retries the DDL
+automatically.
 
 ## Credential boundary
 
@@ -49,3 +52,23 @@ tracked file.
 Dispatching this workflow is a separate publication decision. This source
 slice neither dispatches it nor executes remote DDL. It does not initialize a
 World, alter legacy site data, change browser permissions, or advance Gate B.
+
+## Uncertain post-commit outcome
+
+If the release request times out, the network disconnects, or the returned
+evidence cannot be verified after `COMMIT`, do not dispatch the release
+workflow again. Use the separate manual **Recover · World V2 schema release**
+workflow. It performs one fixed-target, read-only Management API query from
+the same reviewed source and returns one of these fail-closed classifications:
+
+- `ABSENT`: no `world_v2` namespace was observed.
+- `EXPECTED_RELEASE_METADATA_MATCH`: the exact 17-row ledger, 21 base-table
+  count, and every expected table name match the reviewed source. This is
+  schema metadata evidence only; it is not a World initialization, runtime
+  health check, or Gate B approval.
+- `CONFLICT`: a namespace exists but its metadata does not exactly match.
+
+`ABSENT`, `CONFLICT`, malformed evidence, or a transport failure leave the
+recovery workflow failed after preserving any available non-secret evidence.
+They never trigger a DDL retry, repair, drop, seed, or mutation of legacy
+schemas. Stop and obtain a new release decision for every non-exact outcome.
