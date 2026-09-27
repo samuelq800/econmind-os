@@ -1,3 +1,4 @@
+/* A single forward movement; the doorway stays mounted during the handoff. */
 .transitionVeil {
   position: fixed;
   inset: 0;
@@ -6,108 +7,51 @@
   cursor: wait;
 }
 
-.glass, .rays, .bloom, .lensRing {
+.glass, .bloom {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 
 .glass {
-  background: rgb(215 250 244 / 0%);
+  background: rgb(190 231 222 / 0%);
   backdrop-filter: blur(0px) saturate(1) brightness(1);
   -webkit-backdrop-filter: blur(0px) saturate(1) brightness(1);
-  transition: backdrop-filter 1s cubic-bezier(.55, 0, .2, 1), -webkit-backdrop-filter 1s cubic-bezier(.55, 0, .2, 1), background 1s ease;
+  transition: backdrop-filter 1.4s cubic-bezier(.32, 0, .24, 1), -webkit-backdrop-filter 1.4s cubic-bezier(.32, 0, .24, 1), background 1.4s ease;
 }
 
 .blurred .glass {
-  background: rgb(215 250 244 / 26%);
-  backdrop-filter: blur(90px) saturate(1.8) brightness(1.4);
-  -webkit-backdrop-filter: blur(90px) saturate(1.8) brightness(1.4);
+  background: rgb(190 231 222 / 16%);
+  backdrop-filter: blur(76px) saturate(1.35) brightness(1.12);
+  -webkit-backdrop-filter: blur(76px) saturate(1.35) brightness(1.12);
 }
 
 .bloom {
-  inset: -25%;
+  inset: -15%;
   background:
-    radial-gradient(ellipse at 50% 57%, #ffffefeb 0%, #dbfff7a8 12%, #99f6e650 29%, transparent 57%),
-    radial-gradient(ellipse at 57% 53%, #ffe0a45c, transparent 48%);
+    radial-gradient(ellipse at 50% 60%, #f4ffe7bd 0%, #c5f5e570 18%, #80d8ce20 43%, transparent 68%),
+    radial-gradient(ellipse at 50% 72%, #ffe3aa30, transparent 55%);
   opacity: 0;
-  transform: scale(.35);
-  transition: opacity .95s ease, transform 1.05s cubic-bezier(.55, 0, .2, 1);
+  transform: scale(.72);
+  transition: opacity 1.4s cubic-bezier(.32, 0, .24, 1), transform 1.8s cubic-bezier(.22, .5, .24, 1);
 }
 
-.blurred .bloom { opacity: .92; transform: scale(1.35); }
+.blurred .bloom { opacity: .8; transform: scale(1.2); }
+.releasing { pointer-events: none; cursor: auto; }
+.releasing .glass { transition-duration: 1.3s; transition-timing-function: cubic-bezier(.22, .6, .28, 1); }
+.releasing .bloom { opacity: 0; transform: scale(1.3); transition-duration: 1.8s; }
 
-.rays {
-  inset: -35%;
-  background: repeating-conic-gradient(from 8deg at 50% 58%, transparent 0deg 11deg, #c8fff530 11.3deg, transparent 12deg 24deg);
-  mask-image: radial-gradient(ellipse at 50% 58%, transparent 10%, #000 42%, transparent 72%);
-  opacity: 0;
-  transform-origin: 50% 58%;
-}
-
-.blurred .rays { animation: rush 1.05s cubic-bezier(.4, 0, .2, 1) both; }
-
-.lensRing {
-  inset: 8% 22%;
-  border: 2px solid #e5fff890;
-  border-radius: 50%;
-  box-shadow: 0 0 22px #a2ffe680, inset 0 0 36px #eafff370, 12px 0 45px #83d9ff30, -12px 0 45px #ffe0a430;
-  opacity: 0;
-  transform-origin: 50% 62%;
-}
-
-.blurred .lensRing { animation: lensPass 1.05s cubic-bezier(.6, .05, .2, 1) both; }
-
-/* Focus returns first; the light and camera settle a beat later. */
-.releasing .glass { animation: focusReturn 1.65s ease-out both; }
-.releasing .bloom { animation: afterglow 2.2s ease-out both; }
-.releasing .rays, .releasing .lensRing { opacity: 0; }
-
-.viewport { overflow: clip; }
+.viewport { position: relative; overflow: clip; }
 .scene { transform-origin: 50% 62%; }
-.pulling { animation: pullThrough 1.05s cubic-bezier(.58, .02, .8, .45) both; }
-.pulling .content { opacity: 0; transition: opacity .35s ease; }
-.arrival { transform: scale(1.075); transform-origin: 50% 40vh; }
-.settling { animation: landing 2.2s cubic-bezier(.16, 1, .3, 1) both; }
+.scene.opening { animation: approach 2s cubic-bezier(.3, 0, .25, 1) both; }
+.scene.departing { position: absolute; inset: 0 0 auto; pointer-events: none; }
+.scene.dissolving { opacity: 0; transition: opacity 1s cubic-bezier(.22, .6, .28, 1); }
+.opening .content { opacity: 0; transition: opacity .9s ease .15s; }
 
-@keyframes pullThrough {
-  0% { transform: perspective(900px) translateZ(0) scale(1, 1); filter: brightness(1); }
-  45% { transform: perspective(900px) translateZ(80px) scale(1.12, 1.06); filter: brightness(1.25); }
-  100% { transform: perspective(900px) translateZ(220px) scale(1.9, 1.55); filter: brightness(1.8); }
+@keyframes approach {
+  from { transform: scale(1); }
+  to { transform: scale(1.28); }
 }
-
-@keyframes rush {
-  0% { opacity: 0; transform: scale(.55, .7); }
-  45% { opacity: .8; }
-  100% { opacity: 0; transform: scale(2.2, 1.7); }
-}
-
-@keyframes lensPass {
-  0% { opacity: 0; transform: scale(.25, .5); }
-  35% { opacity: .65; }
-  100% { opacity: 0; transform: scale(3.5, 2.5); }
-}
-
-@keyframes focusReturn {
-  0% { backdrop-filter: blur(90px) saturate(1.8) brightness(1.4); -webkit-backdrop-filter: blur(90px) saturate(1.8) brightness(1.4); background: rgb(215 250 244 / 26%); }
-  48% { backdrop-filter: blur(12px) saturate(1.3) brightness(1.08); -webkit-backdrop-filter: blur(12px) saturate(1.3) brightness(1.08); background: rgb(215 250 244 / 6%); }
-  70% { backdrop-filter: blur(5px) saturate(1.12) brightness(1.03); -webkit-backdrop-filter: blur(5px) saturate(1.12) brightness(1.03); }
-  100% { backdrop-filter: blur(0px) saturate(1) brightness(1); -webkit-backdrop-filter: blur(0px) saturate(1) brightness(1); background: transparent; }
-}
-
-@keyframes afterglow {
-  0% { opacity: .92; transform: scale(1.35); }
-  42% { opacity: .22; transform: scale(1.55); }
-  70% { opacity: .09; transform: scale(1.6); }
-  100% { opacity: 0; transform: scale(1.65); }
-}
-
-@keyframes landing {
-  0% { transform: scale(1.075); }
-  65% { transform: scale(.997); }
-  100% { transform: scale(1); }
-}
-
 .scene {
   position: relative;
   isolation: isolate;
@@ -136,10 +80,11 @@
   width: 22%;
   height: 46%;
   border-radius: 42% 42% 4% 4%;
-  background: radial-gradient(ellipse at 50% 58%, #b9fff2 0%, #42c9d8 28%, #155977 67%, transparent 100%);
-  filter: blur(12px);
-  opacity: .07;
-  transition: opacity .7s ease .1s;
+  background: radial-gradient(ellipse at 50% 58%, #f5ffdf 0%, #b4eee0 26%, #458b8e70 58%, transparent 78%);
+  filter: blur(20px);
+  opacity: .12;
+  transform: scale(.92);
+  transition: opacity 1.5s ease, transform 1.8s cubic-bezier(.22, .5, .24, 1);
 }
 
 .doorFrame {
@@ -157,16 +102,26 @@
   perspective: 900px;
 }
 
+.doorFrame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 70%, #efffdd, #a8dfd3 35%, #386b72 76%, #133e48),
+    linear-gradient(0deg, #c1ead4, #234a55);
+  opacity: .25;
+  transition: opacity 1.4s cubic-bezier(.32, 0, .24, 1);
+}
+
 .door {
   position: relative;
   width: 50%;
   height: 100%;
   background:
-    linear-gradient(90deg, #e3b65d30 0%, transparent 10%, transparent 88%, #efd7986b 100%),
-    repeating-linear-gradient(155deg, transparent 0 16px, #dda95412 17px, transparent 19px 40px),
-    linear-gradient(118deg, #102129 0%, #192c2d 35%, #081519 69%, #213135 100%);
+    linear-gradient(90deg, #e3b65d25 0%, transparent 8%, transparent 92%, #efd79855 100%),
+    linear-gradient(115deg, #071c24 0%, #254044 42%, #122b30 55%, #0a1e27 100%);
   box-shadow: inset 0 0 22px #000a, inset 0 0 2px 1px #d2a9657a;
-  transition: transform 1s cubic-bezier(.2, .8, .22, 1);
+  transition: transform 1.5s cubic-bezier(.42, 0, .18, 1), opacity 1.4s ease;
 }
 
 .door::before {
@@ -190,7 +145,7 @@
   transform: translateX(-50%);
   background: #fff0b4;
   box-shadow: 0 0 10px 3px #ffe494, 0 0 32px 8px #f4bf5aab;
-  transition: opacity .45s ease;
+  transition: opacity 1s ease, filter 1s ease, transform 1s ease;
 }
 
 .lightTrail {
@@ -207,10 +162,11 @@
   transition: opacity .75s ease .1s;
 }
 
-.opening .doorLeft { transform: translateX(-105%) rotateY(-28deg); }
-.opening .doorRight { transform: translateX(105%) rotateY(28deg); }
-.opening .seam { opacity: 0; }
-.opening .portalGlow { opacity: .95; }
+.opening .doorLeft { transform: translateX(-100%); opacity: .5; }
+.opening .doorRight { transform: translateX(100%); opacity: .5; }
+.opening .doorFrame::before { opacity: 1; }
+.opening .seam { opacity: 0; filter: blur(6px); transform: translateX(-50%) scaleX(12); }
+.opening .portalGlow { opacity: .85; transform: scale(1.45); }
 .opening .lightTrail { opacity: 1; }
 
 .particles {
@@ -264,6 +220,7 @@
 .openButton { display: inline-flex; align-items: center; justify-content: center; gap: 13px; min-width: min(340px, 100%); min-height: 55px; padding: 10px 28px; border: 1px solid #90e8d7; border-radius: 11px; background: linear-gradient(120deg, #52cfbd, #91ecda); color: #062321; font-size: 17px; font-weight: 800; box-shadow: 0 0 25px #62d8c352; transition: transform .2s ease, filter .2s ease; }
 .openButton:hover:not(:disabled) { transform: translateY(-3px); filter: brightness(1.1); }
 .openButton:disabled { cursor: not-allowed; border-color: #81948f80; background: #273735bf; color: #afbdb7; box-shadow: none; }
+.opening .openButton:disabled { border-color: #90e8d7; background: linear-gradient(120deg, #52cfbd, #91ecda); color: #062321; }
 .bottom > p { margin-top: 11px; color: #d2dfd9; font-size: 11px; letter-spacing: .13em; text-transform: uppercase; }
 .bottom .error { max-width: 550px; padding: 8px 12px; border: 1px solid #ed9b9b; border-radius: 8px; background: #411e26e8; color: #ffe2e2; font-size: 12px; letter-spacing: 0; text-transform: none; }
 
@@ -284,10 +241,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .glass { transition-duration: .01ms; }
-  .pulling, .settling { animation: none; }
-  .arrival { transform: none; }
-  .rays, .lensRing, .bloom { display: none; }
-  .releasing .glass { animation-duration: .15s; }
+  .scene.opening { animation: none; }
+  .bloom { display: none; }
+  .releasing .glass, .scene.dissolving { transition-duration: .15s; }
   .particles i { animation: none; display: none; }
-  .door, .portalGlow, .lightTrail, .seam, .openButton { transition-duration: .01ms; }
+  .door, .doorFrame::before, .portalGlow, .lightTrail, .seam, .openButton, .opening .content { transition-duration: .01ms; transition-delay: 0s; }
 }

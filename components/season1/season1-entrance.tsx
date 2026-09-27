@@ -77,16 +77,30 @@ function Season1EntranceScene() {
     // Paint the populated lobby under the blur before bringing it into focus.
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const timer = window.setTimeout(() => setBlurred(false), 80);
-    const cleanup = window.setTimeout(() => setOpening(false), reduceMotion ? 250 : 2280);
+    const cleanup = window.setTimeout(() => setOpening(false), reduceMotion ? 300 : 1880);
     return () => { window.clearTimeout(timer); window.clearTimeout(cleanup); };
   }, [entered]);
 
   useEffect(() => {
-    if (!opening) return;
+    if (!opening || entered) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = previous; };
-  }, [opening]);
+  }, [opening, entered]);
+
+  useEffect(() => {
+    if ((!checking && !opening) || entered) return;
+    // A stalled request must never leave the entrance covered indefinitely.
+    const timeout = window.setTimeout(() => {
+      attempt.current += 1;
+      if (openingTimer.current !== null) window.clearTimeout(openingTimer.current);
+      setOpening(false);
+      setBlurred(false);
+      setChecking(false);
+      setError("The lobby is taking too long to respond. Please try again.");
+    }, 20_000);
+    return () => window.clearTimeout(timeout);
+  }, [checking, opening, entered]);
 
   useEffect(() => {
     if (!entered || !window.location.hash) return;
@@ -120,8 +134,8 @@ function Season1EntranceScene() {
       const animation = new Promise<void>((resolve) => {
         openingTimer.current = window.setTimeout(() => {
           setBlurred(true);
-          openingTimer.current = window.setTimeout(resolve, reduceMotion ? 80 : 1050);
-        }, reduceMotion ? 80 : 1100);
+          openingTimer.current = window.setTimeout(resolve, reduceMotion ? 80 : 1400);
+        }, reduceMotion ? 80 : 600);
       });
       // Fetch during the door animation; never mount the lobby's loading card.
       const [preparedLobby] = await Promise.all([getSeason1Lobby(), animation]);
@@ -140,7 +154,7 @@ function Season1EntranceScene() {
       setBlurred(false);
       setError(errorMessage(caught));
     } finally {
-      setChecking(false);
+      if (currentAttempt === attempt.current) setChecking(false);
     }
   }
 
@@ -149,12 +163,11 @@ function Season1EntranceScene() {
   return <>
     {opening && createPortal(<div className={`${styles.transitionVeil} ${blurred ? styles.blurred : ""} ${entered && !blurred ? styles.releasing : ""}`} aria-hidden="true">
       <div className={styles.glass} />
-      <div className={styles.rays} />
-      <div className={styles.lensRing} />
       <div className={styles.bloom} />
     </div>, document.body)}
-    <div className={styles.viewport} inert={opening}>
-    {entered && ready && lobby ? <div className={opening ? `${styles.arrival} ${!blurred ? styles.settling : ""}` : undefined}><Season1TeamLobby initialLobby={lobby} /></div> : <main className={`${styles.scene} ${opening ? styles.opening : ""} ${blurred ? styles.pulling : ""}`} style={{ backgroundImage: `url("${withBasePath("/images/season1/season1-gateway-wide.jpg")}")` }}>
+    <div className={styles.viewport} inert={opening && !entered}>
+    {entered && ready && lobby && <Season1TeamLobby initialLobby={lobby} />}
+    {(!entered || opening) && <main aria-hidden={entered || undefined} inert={entered} className={`${styles.scene} ${opening ? styles.opening : ""} ${entered ? styles.departing : ""} ${entered && !blurred ? styles.dissolving : ""}`} style={{ backgroundImage: `url("${withBasePath("/images/season1/season1-gateway-wide.jpg")}")` }}>
     <div className={styles.vignette} aria-hidden="true" />
     <div className={styles.portalGlow} aria-hidden="true" />
     <div className={styles.doorFrame} aria-hidden="true">
@@ -168,7 +181,7 @@ function Season1EntranceScene() {
     <div className={styles.content}>
       <div className={styles.heading}>
         <p className={styles.eyebrow}>EconMind World <span>·</span> Season 1</p>
-        <h1>{opening ? "The world is opening." : "Enter the world."}</h1>
+        <h1>Enter the world.</h1>
         <p className={styles.subtitle}>Build teams. Shape strategies. Simulate real change.</p>
       </div>
 
