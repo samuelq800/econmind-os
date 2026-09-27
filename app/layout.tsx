@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { ApplicationShell } from "@/components/layout/application-shell";
 import { withBasePath } from "@/lib/base-path";
 import "./globals.css";
+import "./visual-pilot-city.css";
 
 const siteUrl = new URL(
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://econmind.group",
