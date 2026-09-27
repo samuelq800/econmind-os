@@ -75,8 +75,9 @@ function Season1EntranceScene() {
   useEffect(() => {
     if (!entered) return;
     // Paint the populated lobby under the blur before bringing it into focus.
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const timer = window.setTimeout(() => setBlurred(false), 80);
-    const cleanup = window.setTimeout(() => setOpening(false), 780);
+    const cleanup = window.setTimeout(() => setOpening(false), reduceMotion ? 250 : 2280);
     return () => { window.clearTimeout(timer); window.clearTimeout(cleanup); };
   }, [entered]);
 
@@ -119,7 +120,7 @@ function Season1EntranceScene() {
       const animation = new Promise<void>((resolve) => {
         openingTimer.current = window.setTimeout(() => {
           setBlurred(true);
-          openingTimer.current = window.setTimeout(resolve, reduceMotion ? 80 : 650);
+          openingTimer.current = window.setTimeout(resolve, reduceMotion ? 80 : 1050);
         }, reduceMotion ? 80 : 1100);
       });
       // Fetch during the door animation; never mount the lobby's loading card.
@@ -146,8 +147,14 @@ function Season1EntranceScene() {
   if (authLoading || roleLoading) return <div className={styles.message}>Checking Season 1 access…</div>;
   if (!user) return <div className={styles.message}><p>Sign in to enter Season 1.</p><button type="button" onClick={() => openAuth("sign-in")}>Sign in</button></div>;
   return <>
-    {opening && createPortal(<div className={`${styles.transitionVeil} ${blurred ? styles.blurred : ""}`} aria-hidden="true" />, document.body)}
-    {entered && ready && lobby ? <Season1TeamLobby initialLobby={lobby} /> : <main className={`${styles.scene} ${opening ? styles.opening : ""}`} style={{ backgroundImage: `url("${withBasePath("/images/season1/season1-gateway-wide.jpg")}")` }}>
+    {opening && createPortal(<div className={`${styles.transitionVeil} ${blurred ? styles.blurred : ""} ${entered && !blurred ? styles.releasing : ""}`} aria-hidden="true">
+      <div className={styles.glass} />
+      <div className={styles.rays} />
+      <div className={styles.lensRing} />
+      <div className={styles.bloom} />
+    </div>, document.body)}
+    <div className={styles.viewport} inert={opening}>
+    {entered && ready && lobby ? <div className={opening ? `${styles.arrival} ${!blurred ? styles.settling : ""}` : undefined}><Season1TeamLobby initialLobby={lobby} /></div> : <main className={`${styles.scene} ${opening ? styles.opening : ""} ${blurred ? styles.pulling : ""}`} style={{ backgroundImage: `url("${withBasePath("/images/season1/season1-gateway-wide.jpg")}")` }}>
     <div className={styles.vignette} aria-hidden="true" />
     <div className={styles.portalGlow} aria-hidden="true" />
     <div className={styles.doorFrame} aria-hidden="true">
@@ -177,5 +184,6 @@ function Season1EntranceScene() {
       </div>
     </div>
   </main>}
+    </div>
   </>;
 }
