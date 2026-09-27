@@ -13,6 +13,24 @@ function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Season 1 access could not be checked.";
 }
 
+const lobbySessionKey = "season1:entered-lobby";
+
+function enteredLobbyFor(userId: string) {
+  try { return window.sessionStorage.getItem(lobbySessionKey) === userId; }
+  catch { return false; }
+}
+
+function rememberLobbyEntry(userId: string) {
+  try { window.sessionStorage.setItem(lobbySessionKey, userId); }
+  catch { /* The current visit still works when storage is unavailable. */ }
+}
+
+function forgetLobbyEntry(userId: string) {
+  try {
+    if (window.sessionStorage.getItem(lobbySessionKey) === userId) window.sessionStorage.removeItem(lobbySessionKey);
+  } catch { /* Storage is optional. */ }
+}
+
 export function Season1Entrance() {
   const { user } = useAuth();
   return <Season1EntranceScene key={user?.id ?? "signed-out"} />;
@@ -20,6 +38,7 @@ export function Season1Entrance() {
 
 function Season1EntranceScene() {
   const { user, loading: authLoading, roleLoading, openAuth } = useAuth();
+  const userId = user?.id;
   const [gate, setGate] = useState<Season1Opening | null>(null);
   const [entered, setEntered] = useState(false);
   const [opening, setOpening] = useState(false);
@@ -27,12 +46,14 @@ function Season1EntranceScene() {
   const [lobby, setLobby] = useState<Season1LobbyData | null>(null);
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState("");
+  const [restoring, setRestoring] = useState(true);
   const openingTimer = useRef<number | null>(null);
   const attempt = useRef(0);
 
   const applyGate = useCallback((next: Season1Opening) => {
     setGate(next);
     if (!next.isOpen) {
+      if (userId) forgetLobbyEntry(userId);
       attempt.current += 1;
       if (openingTimer.current !== null) window.clearTimeout(openingTimer.current);
       setEntered(false);
@@ -41,7 +62,7 @@ function Season1EntranceScene() {
       setBlurred(false);
       setLobby(null);
     }
-  }, []);
+  }, [userId]);
 
   const refreshGate = useCallback(async () => {
     try {
@@ -53,17 +74,45 @@ function Season1EntranceScene() {
   }, [applyGate]);
 
   useEffect(() => {
-    if (authLoading || roleLoading || !user) return;
-    const initial = window.setTimeout(() => void refreshGate(), 0);
-    const interval = window.setInterval(() => void refreshGate(), 10_000);
-    const onVisible = () => { if (document.visibilityState === "visible") void refreshGate(); };
+    if (authLoading || roleLoading || !userId) return;
+    const currentUserId = userId;
+    let active = true;
+    let interval: number | null = null;
+    async function initialize() {
+      try {
+        const next = await getSeason1Opening();
+        if (!active) return;
+        applyGate(next);
+        if (next.isOpen && enteredLobbyFor(currentUserId)) {
+          const preparedLobby = await getSeason1Lobby();
+          if (!active) return;
+          const confirmed = await getSeason1Opening();
+          if (!active) return;
+          applyGate(confirmed);
+          if (confirmed.isOpen) {
+            setLobby(preparedLobby);
+            setEntered(true);
+          }
+        }
+        setError("");
+      } catch (caught) {
+        if (active) setError(errorMessage(caught));
+      } finally {
+        if (active) {
+          setRestoring(false);
+          interval = window.setInterval(() => void refreshGate(), 10_000);
+        }
+      }
+    }
+    void initialize();
+    const onVisible = () => { if (interval !== null && document.visibilityState === "visible") void refreshGate(); };
     document.addEventListener("visibilitychange", onVisible);
     return () => {
-      window.clearTimeout(initial);
-      window.clearInterval(interval);
+      active = false;
+      if (interval !== null) window.clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [authLoading, roleLoading, user, refreshGate]);
+  }, [authLoading, roleLoading, userId, applyGate, refreshGate]);
 
   useEffect(() => {
     return () => {
@@ -145,6 +194,7 @@ function Season1EntranceScene() {
       if (currentAttempt !== attempt.current) return;
       applyGate(confirmed);
       if (confirmed.isOpen) {
+        if (userId) rememberLobbyEntry(userId);
         setLobby(preparedLobby);
         setEntered(true);
       }
@@ -161,6 +211,7 @@ function Season1EntranceScene() {
 
   if (authLoading || roleLoading) return <div className={styles.message}>Checking Season 1 access…</div>;
   if (!user) return <div className={styles.message}><p>Sign in to enter Season 1.</p><button type="button" onClick={() => openAuth("sign-in")}>Sign in</button></div>;
+  if (restoring) return <div className={styles.message}>Checking Season 1 access…</div>;
   return <>
     {opening && createPortal(<div className={`${styles.transitionVeil} ${blurred ? styles.blurred : ""} ${entered && !blurred ? styles.releasing : ""}`} aria-hidden="true">
       <div className={styles.bloom} />
