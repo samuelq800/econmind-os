@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { useAuth } from "@/components/auth/auth-provider";
 import { withBasePath } from "@/lib/base-path";
 import { getSeason1Lobby, getSeason1Opening, type Season1LobbyData, type Season1Opening } from "@/lib/supabase/season1";
+import { entranceVisitStorage, hasSeenSeason1Entrance, markSeason1EntranceSeen } from "@/lib/season1/entrance-visit";
 import { Season1TeamLobby } from "./season1-team-lobby";
 import styles from "./season1-entrance.module.css";
 
@@ -13,32 +14,15 @@ function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Season 1 access could not be checked.";
 }
 
-const lobbySessionKey = "season1:entered-lobby";
-
-function enteredLobbyFor(userId: string) {
-  try { return window.sessionStorage.getItem(lobbySessionKey) === userId; }
-  catch { return false; }
-}
-
-function rememberLobbyEntry(userId: string) {
-  try { window.sessionStorage.setItem(lobbySessionKey, userId); }
-  catch { /* The current visit still works when storage is unavailable. */ }
-}
-
-function forgetLobbyEntry(userId: string) {
-  try {
-    if (window.sessionStorage.getItem(lobbySessionKey) === userId) window.sessionStorage.removeItem(lobbySessionKey);
-  } catch { /* Storage is optional. */ }
-}
-
 export function Season1Entrance() {
   const { user } = useAuth();
-  return <Season1EntranceScene key={user?.id ?? "signed-out"} />;
+  return <Season1EntranceScene key={`${user?.id ?? "signed-out"}:${user?.last_sign_in_at ?? "unknown"}`} />;
 }
 
 function Season1EntranceScene() {
   const { user, loading: authLoading, roleLoading, openAuth } = useAuth();
   const userId = user?.id;
+  const loginAt = user?.last_sign_in_at;
   const [gate, setGate] = useState<Season1Opening | null>(null);
   const [entered, setEntered] = useState(false);
   const [opening, setOpening] = useState(false);
@@ -53,7 +37,6 @@ function Season1EntranceScene() {
   const applyGate = useCallback((next: Season1Opening) => {
     setGate(next);
     if (!next.isOpen) {
-      if (userId) forgetLobbyEntry(userId);
       attempt.current += 1;
       if (openingTimer.current !== null) window.clearTimeout(openingTimer.current);
       setEntered(false);
@@ -62,7 +45,7 @@ function Season1EntranceScene() {
       setBlurred(false);
       setLobby(null);
     }
-  }, [userId]);
+  }, []);
 
   const refreshGate = useCallback(async () => {
     try {
@@ -83,7 +66,7 @@ function Season1EntranceScene() {
         const next = await getSeason1Opening();
         if (!active) return;
         applyGate(next);
-        if (next.isOpen && enteredLobbyFor(currentUserId)) {
+        if (next.isOpen && hasSeenSeason1Entrance({ id: currentUserId, last_sign_in_at: loginAt }, entranceVisitStorage())) {
           const preparedLobby = await getSeason1Lobby();
           if (!active) return;
           const confirmed = await getSeason1Opening();
@@ -112,7 +95,7 @@ function Season1EntranceScene() {
       if (interval !== null) window.clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [authLoading, roleLoading, userId, applyGate, refreshGate]);
+  }, [authLoading, roleLoading, userId, loginAt, applyGate, refreshGate]);
 
   useEffect(() => {
     return () => {
@@ -194,7 +177,7 @@ function Season1EntranceScene() {
       if (currentAttempt !== attempt.current) return;
       applyGate(confirmed);
       if (confirmed.isOpen) {
-        if (userId) rememberLobbyEntry(userId);
+        if (user) markSeason1EntranceSeen(user, entranceVisitStorage());
         setLobby(preparedLobby);
         setEntered(true);
       }

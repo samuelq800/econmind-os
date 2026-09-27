@@ -105,6 +105,7 @@ describe("Season 1 pre-season team lobby", () => {
     expect(entrance).toContain("if (!ready || opening || checking) return");
     expect(entrance).toContain('"Open Lobby"');
     expect(entrance).toContain("if (confirmed.isOpen) {");
+    expect(entrance).toContain("markSeason1EntranceSeen(user, entranceVisitStorage())");
     expect(entrance).toContain('window.matchMedia("(prefers-reduced-motion: reduce)")');
     expect(entrance).toContain("<Season1TeamLobby initialLobby={lobby} />");
     expect(entrance).toContain("getElementById(window.location.hash.slice(1))");
