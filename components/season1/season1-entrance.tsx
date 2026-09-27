@@ -134,7 +134,8 @@ function Season1EntranceScene() {
       const animation = new Promise<void>((resolve) => {
         openingTimer.current = window.setTimeout(() => {
           setBlurred(true);
-          openingTimer.current = window.setTimeout(resolve, reduceMotion ? 80 : 1400);
+          // Let the 1.4s fade reach solid white, then hold it for 400ms.
+          openingTimer.current = window.setTimeout(resolve, reduceMotion ? 80 : 1800);
         }, reduceMotion ? 80 : 600);
       });
       // Fetch during the door animation; never mount the lobby's loading card.
@@ -162,8 +163,8 @@ function Season1EntranceScene() {
   if (!user) return <div className={styles.message}><p>Sign in to enter Season 1.</p><button type="button" onClick={() => openAuth("sign-in")}>Sign in</button></div>;
   return <>
     {opening && createPortal(<div className={`${styles.transitionVeil} ${blurred ? styles.blurred : ""} ${entered && !blurred ? styles.releasing : ""}`} aria-hidden="true">
-      <div className={styles.glass} />
       <div className={styles.bloom} />
+      <div className={styles.glass} />
     </div>, document.body)}
     <div className={styles.viewport} inert={opening && !entered}>
     {entered && ready && lobby && <Season1TeamLobby initialLobby={lobby} />}
