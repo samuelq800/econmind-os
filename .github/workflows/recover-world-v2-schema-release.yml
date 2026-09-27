@@ -1,0 +1,89 @@
+name: Recover · World V2 schema release
+run-name: Recover World V2 schema release · @${{ github.actor }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type INSPECT_WORLD_V2_RELEASE to classify an uncertain prior release outcome
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-production
+  cancel-in-progress: false
+
+jobs:
+  classify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+      WORLD_V2_RELEASE_SOURCE_COMMIT: 02f59be5026cdf2131eaf6e7fd907d5b87e987b3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify fixed target and explicit inspection confirmation
+        env:
+          RELEASE_CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          test "$RELEASE_CONFIRMATION" = "INSPECT_WORLD_V2_RELEASE"
+          test "$SUPABASE_PROJECT_REF" = "vimksjrhaxdpnkvgsavz"
+          test -n "$SUPABASE_ACCESS_TOKEN"
+      - name: Fetch the reviewed immutable World V2 source
+        run: |
+          source_root="$RUNNER_TEMP/world-v2-release-source"
+          git clone --no-checkout https://github.com/samuelq800/econmind-os-world-simulation.git "$source_root"
+          git -C "$source_root" checkout --detach "$WORLD_V2_RELEASE_SOURCE_COMMIT"
+          test "$(git -C "$source_root" rev-parse HEAD)" = "$WORLD_V2_RELEASE_SOURCE_COMMIT"
+          test "$(git -C "$source_root" remote get-url origin)" = "https://github.com/samuelq800/econmind-os-world-simulation.git"
+          test -z "$(git -C "$source_root" status --porcelain=v1 --untracked-files=all)"
+          printf 'WORLD_V2_RELEASE_SOURCE_ROOT=%s\n' "$source_root" >> "$GITHUB_ENV"
+      - name: Render the read-only recovery classifier
+        run: |
+          node scripts/render-world-v2-release-query.mjs \
+            --mode recovery \
+            --output "$RUNNER_TEMP/world-v2-release-recovery-payload.json" \
+            --expectation-output "$RUNNER_TEMP/world-v2-release-recovery-expectation.json"
+      - name: Execute exactly one read-only management API request
+        id: request
+        continue-on-error: true
+        run: |
+          curl --fail --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            --header "Content-Type: application/json" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query" \
+            --data-binary "@$RUNNER_TEMP/world-v2-release-recovery-payload.json" \
+            --output "$RUNNER_TEMP/world-v2-release-recovery-response.json"
+      - name: Classify the outcome and write non-secret evidence
+        id: classify
+        if: steps.request.outcome == 'success'
+        continue-on-error: true
+        run: |
+          mkdir -p artifacts/world-v2-release-recovery
+          node scripts/verify-world-v2-release-recovery.mjs \
+            --expected "$RUNNER_TEMP/world-v2-release-recovery-expectation.json" \
+            --response "$RUNNER_TEMP/world-v2-release-recovery-response.json" \
+            --output artifacts/world-v2-release-recovery/evidence.json
+      - name: Record an unknown recovery outcome
+        if: steps.request.outcome != 'success' || steps.classify.outcome != 'success'
+        run: |
+          if test ! -f artifacts/world-v2-release-recovery/evidence.json; then
+            mkdir -p artifacts/world-v2-release-recovery
+            node scripts/write-world-v2-release-unknown.mjs \
+              --output artifacts/world-v2-release-recovery/evidence.json
+          fi
+      - name: Preserve non-secret recovery evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: world-v2-release-recovery-evidence
+          path: artifacts/world-v2-release-recovery/evidence.json
+          if-no-files-found: warn
+      - name: Stop unless exact release metadata is confirmed
+        if: steps.classify.outcome != 'success'
+        run: exit 1
