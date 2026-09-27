@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { withBasePath } from "@/lib/base-path";
 import { getSeason1Opening, type Season1Opening } from "@/lib/supabase/season1";
+import { entranceVisitStorage, hasSeenSeason1Entrance, markSeason1EntranceSeen } from "@/lib/season1/entrance-visit";
 import { Season1TeamLobby } from "./season1-team-lobby";
 import styles from "./season1-entrance.module.css";
 
@@ -13,6 +14,11 @@ function errorMessage(error: unknown) {
 }
 
 export function Season1Entrance() {
+  const { user } = useAuth();
+  return <Season1EntranceSession key={`${user?.id ?? "guest"}:${user?.last_sign_in_at ?? "unknown"}`} />;
+}
+
+function Season1EntranceSession() {
   const { user, loading: authLoading, roleLoading, openAuth } = useAuth();
   const [gate, setGate] = useState<Season1Opening | null>(null);
   const [entered, setEntered] = useState(false);
@@ -26,8 +32,10 @@ export function Season1Entrance() {
     if (!next.isOpen) {
       setEntered(false);
       setOpening(false);
+    } else if (user && hasSeenSeason1Entrance(user, entranceVisitStorage())) {
+      setEntered(true);
     }
-  }, []);
+  }, [user]);
 
   const refreshGate = useCallback(async () => {
     try {
@@ -88,7 +96,10 @@ export function Season1Entrance() {
         try {
           const confirmed = await getSeason1Opening();
           applyGate(confirmed);
-          if (confirmed.isOpen) setEntered(true);
+          if (confirmed.isOpen) {
+            if (user) markSeason1EntranceSeen(user, entranceVisitStorage());
+            setEntered(true);
+          }
         } catch (caught) {
           setError(errorMessage(caught));
         } finally {
@@ -104,6 +115,8 @@ export function Season1Entrance() {
 
   if (authLoading || roleLoading) return <div className={styles.message}>Checking Season 1 access…</div>;
   if (!user) return <div className={styles.message}><p>Sign in to enter Season 1.</p><button type="button" onClick={() => openAuth("sign-in")}>Sign in</button></div>;
+  // Do not flash the door while checking a returning visitor's server access.
+  if (!gate && !error) return <div className={styles.message}>Checking Season 1 access…</div>;
   if (entered && ready) return <Season1TeamLobby />;
 
   return <main className={`${styles.scene} ${opening ? styles.opening : ""}`} style={{ backgroundImage: `url("${withBasePath("/images/season1/season1-gateway-wide.jpg")}")` }}>
