@@ -1,0 +1,100 @@
+name: Verify · World V2 release runner
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/e-main-site-world-v2-release-runner
+
+permissions:
+  contents: read
+
+jobs:
+  native-postgres-17:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: world_v2_release_runner
+          POSTGRES_PASSWORD: disposable-test-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_release_runner"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGPASSWORD: disposable-test-only
+      WORLD_V2_RELEASE_SOURCE_COMMIT: 02f59be5026cdf2131eaf6e7fd907d5b87e987b3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.20.0
+      - name: Fetch the reviewed immutable World V2 source
+        run: |
+          source_root="$RUNNER_TEMP/world-v2-release-source"
+          git clone --no-checkout https://github.com/samuelq800/econmind-os-world-simulation.git "$source_root"
+          git -C "$source_root" checkout --detach "$WORLD_V2_RELEASE_SOURCE_COMMIT"
+          test "$(git -C "$source_root" rev-parse HEAD)" = "$WORLD_V2_RELEASE_SOURCE_COMMIT"
+          test "$(git -C "$source_root" remote get-url origin)" = "https://github.com/samuelq800/econmind-os-world-simulation.git"
+          test -z "$(git -C "$source_root" status --porcelain=v1 --untracked-files=all)"
+          printf 'WORLD_V2_RELEASE_SOURCE_ROOT=%s\n' "$source_root" >> "$GITHUB_ENV"
+      - name: Render the one-transaction release SQL from reviewed bytes
+        run: |
+          node scripts/render-world-v2-release-query.mjs \
+            --mode recovery \
+            --output "$RUNNER_TEMP/world-v2-release-recovery-before-payload.json" \
+            --expectation-output "$RUNNER_TEMP/world-v2-release-recovery-before-expectation.json" \
+            --sql-output "$RUNNER_TEMP/world-v2-release-recovery-before.sql"
+          psql -h localhost -U postgres -d world_v2_release_runner -v ON_ERROR_STOP=1 \
+            -f "$RUNNER_TEMP/world-v2-release-recovery-before.sql" \
+            > "$RUNNER_TEMP/world-v2-release-recovery-before.txt"
+          grep -q "ABSENT" "$RUNNER_TEMP/world-v2-release-recovery-before.txt"
+          node scripts/render-world-v2-release-query.mjs \
+            --output "$RUNNER_TEMP/world-v2-release-payload.json" \
+            --expectation-output "$RUNNER_TEMP/world-v2-release-expectation.json" \
+            --sql-output "$RUNNER_TEMP/world-v2-release.sql"
+      - name: Verify PostgreSQL 17 transaction, ledger, table count, and legacy sentinel
+        run: |
+          psql -h localhost -U postgres -d world_v2_release_runner -v ON_ERROR_STOP=1 \
+            -c "create table public.world_v2_release_runner_sentinel (id integer primary key, label text not null)"
+          psql -h localhost -U postgres -d world_v2_release_runner -v ON_ERROR_STOP=1 \
+            -c "insert into public.world_v2_release_runner_sentinel values (1, 'before-release'), (2, 'stable')"
+          before_fingerprint="$(psql -h localhost -U postgres -d world_v2_release_runner -Atc "select md5(coalesce(string_agg(id::text || ':' || label, ',' order by id), '')) from public.world_v2_release_runner_sentinel")"
+          psql -h localhost -U postgres -d world_v2_release_runner -v ON_ERROR_STOP=1 \
+            -f "$RUNNER_TEMP/world-v2-release.sql" > "$RUNNER_TEMP/world-v2-release-result.txt"
+          test "$(psql -h localhost -U postgres -d world_v2_release_runner -Atc "select count(*) from world_v2.schema_release")" = "17"
+          test "$(psql -h localhost -U postgres -d world_v2_release_runner -Atc "select count(*) from information_schema.tables where table_schema = 'world_v2' and table_type = 'BASE TABLE'")" = "21"
+          test "$(psql -h localhost -U postgres -d world_v2_release_runner -Atc "select to_regnamespace('world_v2')::text")" = "world_v2"
+          after_fingerprint="$(psql -h localhost -U postgres -d world_v2_release_runner -Atc "select md5(coalesce(string_agg(id::text || ':' || label, ',' order by id), '')) from public.world_v2_release_runner_sentinel")"
+          test "$before_fingerprint" = "$after_fingerprint"
+          node scripts/render-world-v2-release-query.mjs \
+            --mode recovery \
+            --output "$RUNNER_TEMP/world-v2-release-recovery-after-payload.json" \
+            --expectation-output "$RUNNER_TEMP/world-v2-release-recovery-after-expectation.json" \
+            --sql-output "$RUNNER_TEMP/world-v2-release-recovery-after.sql"
+          psql -h localhost -U postgres -d world_v2_release_runner -v ON_ERROR_STOP=1 \
+            -f "$RUNNER_TEMP/world-v2-release-recovery-after.sql" \
+            > "$RUNNER_TEMP/world-v2-release-recovery-after.txt"
+          grep -q "EXPECTED_RELEASE_METADATA_MATCH" "$RUNNER_TEMP/world-v2-release-recovery-after.txt"
+      - name: Verify injected failure rolls back the complete disposable release
+        run: |
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 \
+            -c "create database world_v2_release_rollback"
+          psql -h localhost -U postgres -d world_v2_release_rollback -v ON_ERROR_STOP=1 \
+            -c "create table public.world_v2_release_rollback_sentinel (id integer primary key, label text not null)"
+          psql -h localhost -U postgres -d world_v2_release_rollback -v ON_ERROR_STOP=1 \
+            -c "insert into public.world_v2_release_rollback_sentinel values (1, 'before-failure'), (2, 'stable')"
+          rollback_before="$(psql -h localhost -U postgres -d world_v2_release_rollback -Atc "select md5(coalesce(string_agg(id::text || ':' || label, ',' order by id), '')) from public.world_v2_release_rollback_sentinel")"
+          node --input-type=module -e 'import { readFile, writeFile } from "node:fs/promises"; const sql = await readFile(process.argv[1], "utf8"); const marker = "-- 6: 0006_world_v2_writer_lease_lineage_guard"; if (!sql.includes(marker)) process.exit(2); await writeFile(process.argv[2], sql.replace(marker, `select 1 / 0;\n${marker}`), "utf8");' "$RUNNER_TEMP/world-v2-release.sql" "$RUNNER_TEMP/world-v2-release-failure.sql"
+          if psql -h localhost -U postgres -d world_v2_release_rollback -v ON_ERROR_STOP=1 \
+            -f "$RUNNER_TEMP/world-v2-release-failure.sql" > "$RUNNER_TEMP/world-v2-release-failure.txt"; then
+            exit 1
+          fi
+          test "$(psql -h localhost -U postgres -d world_v2_release_rollback -Atc "select to_regnamespace('world_v2') is null")" = "t"
+          rollback_after="$(psql -h localhost -U postgres -d world_v2_release_rollback -Atc "select md5(coalesce(string_agg(id::text || ':' || label, ',' order by id), '')) from public.world_v2_release_rollback_sentinel")"
+          test "$rollback_before" = "$rollback_after"

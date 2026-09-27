@@ -106,8 +106,8 @@ describe("Season 1 pre-season team lobby", () => {
     expect(entrance).toContain('"Open Lobby"');
     expect(entrance).toContain("if (confirmed.isOpen) {");
     expect(entrance).toContain("markSeason1EntranceSeen(user, entranceVisitStorage())");
-    expect(entrance).toContain("reduceMotion ? 80 : 1100");
-    expect(entrance).toContain("<Season1TeamLobby />");
+    expect(entrance).toContain('window.matchMedia("(prefers-reduced-motion: reduce)")');
+    expect(entrance).toContain("<Season1TeamLobby initialLobby={lobby} />");
     expect(entrance).toContain("getElementById(window.location.hash.slice(1))");
     expect(entranceStyles).toContain(".opening .doorLeft");
     expect(entranceStyles).toContain(".opening .doorRight");
