@@ -2,9 +2,10 @@
 
 import { ArrowRight, LockKeyhole, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useAuth } from "@/components/auth/auth-provider";
 import { withBasePath } from "@/lib/base-path";
-import { getSeason1Opening, type Season1Opening } from "@/lib/supabase/season1";
+import { getSeason1Lobby, getSeason1Opening, type Season1LobbyData, type Season1Opening } from "@/lib/supabase/season1";
 import { Season1TeamLobby } from "./season1-team-lobby";
 import styles from "./season1-entrance.module.css";
 
@@ -13,19 +14,32 @@ function errorMessage(error: unknown) {
 }
 
 export function Season1Entrance() {
+  const { user } = useAuth();
+  return <Season1EntranceScene key={user?.id ?? "signed-out"} />;
+}
+
+function Season1EntranceScene() {
   const { user, loading: authLoading, roleLoading, openAuth } = useAuth();
   const [gate, setGate] = useState<Season1Opening | null>(null);
   const [entered, setEntered] = useState(false);
   const [opening, setOpening] = useState(false);
+  const [blurred, setBlurred] = useState(false);
+  const [lobby, setLobby] = useState<Season1LobbyData | null>(null);
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState("");
   const openingTimer = useRef<number | null>(null);
+  const attempt = useRef(0);
 
   const applyGate = useCallback((next: Season1Opening) => {
     setGate(next);
     if (!next.isOpen) {
+      attempt.current += 1;
+      if (openingTimer.current !== null) window.clearTimeout(openingTimer.current);
       setEntered(false);
       setOpening(false);
+      setChecking(false);
+      setBlurred(false);
+      setLobby(null);
     }
   }, []);
 
@@ -53,9 +67,25 @@ export function Season1Entrance() {
 
   useEffect(() => {
     return () => {
+      attempt.current += 1;
       if (openingTimer.current !== null) window.clearTimeout(openingTimer.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (!entered) return;
+    // Paint the populated lobby under the blur before bringing it into focus.
+    const timer = window.setTimeout(() => setBlurred(false), 80);
+    const cleanup = window.setTimeout(() => setOpening(false), 780);
+    return () => { window.clearTimeout(timer); window.clearTimeout(cleanup); };
+  }, [entered]);
+
+  useEffect(() => {
+    if (!opening) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previous; };
+  }, [opening]);
 
   useEffect(() => {
     if (!entered || !window.location.hash) return;
@@ -75,8 +105,10 @@ export function Season1Entrance() {
     if (!ready || opening || checking) return;
     setChecking(true);
     setError("");
+    const currentAttempt = ++attempt.current;
     try {
       const latest = await getSeason1Opening();
+      if (currentAttempt !== attempt.current) return;
       applyGate(latest);
       if (!latest.isOpen) {
         setError("Team Lobby is not open yet. Please try again shortly.");
@@ -84,18 +116,27 @@ export function Season1Entrance() {
       }
       setOpening(true);
       const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      openingTimer.current = window.setTimeout(async () => {
-        try {
-          const confirmed = await getSeason1Opening();
-          applyGate(confirmed);
-          if (confirmed.isOpen) setEntered(true);
-        } catch (caught) {
-          setError(errorMessage(caught));
-        } finally {
-          setOpening(false);
-        }
-      }, reduceMotion ? 80 : 1100);
+      const animation = new Promise<void>((resolve) => {
+        openingTimer.current = window.setTimeout(() => {
+          setBlurred(true);
+          openingTimer.current = window.setTimeout(resolve, reduceMotion ? 80 : 650);
+        }, reduceMotion ? 80 : 1100);
+      });
+      // Fetch during the door animation; never mount the lobby's loading card.
+      const [preparedLobby] = await Promise.all([getSeason1Lobby(), animation]);
+      if (currentAttempt !== attempt.current) return;
+      const confirmed = await getSeason1Opening();
+      if (currentAttempt !== attempt.current) return;
+      applyGate(confirmed);
+      if (confirmed.isOpen) {
+        setLobby(preparedLobby);
+        setEntered(true);
+      }
     } catch (caught) {
+      if (currentAttempt !== attempt.current) return;
+      if (openingTimer.current !== null) window.clearTimeout(openingTimer.current);
+      setOpening(false);
+      setBlurred(false);
       setError(errorMessage(caught));
     } finally {
       setChecking(false);
@@ -104,9 +145,9 @@ export function Season1Entrance() {
 
   if (authLoading || roleLoading) return <div className={styles.message}>Checking Season 1 access…</div>;
   if (!user) return <div className={styles.message}><p>Sign in to enter Season 1.</p><button type="button" onClick={() => openAuth("sign-in")}>Sign in</button></div>;
-  if (entered && ready) return <Season1TeamLobby />;
-
-  return <main className={`${styles.scene} ${opening ? styles.opening : ""}`} style={{ backgroundImage: `url("${withBasePath("/images/season1/season1-gateway-wide.jpg")}")` }}>
+  return <>
+    {opening && createPortal(<div className={`${styles.transitionVeil} ${blurred ? styles.blurred : ""}`} aria-hidden="true" />, document.body)}
+    {entered && ready && lobby ? <Season1TeamLobby initialLobby={lobby} /> : <main className={`${styles.scene} ${opening ? styles.opening : ""}`} style={{ backgroundImage: `url("${withBasePath("/images/season1/season1-gateway-wide.jpg")}")` }}>
     <div className={styles.vignette} aria-hidden="true" />
     <div className={styles.portalGlow} aria-hidden="true" />
     <div className={styles.doorFrame} aria-hidden="true">
@@ -135,5 +176,6 @@ export function Season1Entrance() {
         {error && <p role="alert" className={styles.error}>{error}</p>}
       </div>
     </div>
-  </main>;
+  </main>}
+  </>;
 }

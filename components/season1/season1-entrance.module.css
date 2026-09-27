@@ -1,3 +1,20 @@
+.transitionVeil {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: transparent;
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  transition: backdrop-filter .65s ease, -webkit-backdrop-filter .65s ease, background .65s ease;
+  cursor: wait;
+}
+
+.blurred {
+  background: #0a202838;
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+}
+
 .scene {
   position: relative;
   isolation: isolate;
@@ -173,6 +190,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .transitionVeil { transition-duration: .01ms; }
   .particles i { animation: none; display: none; }
   .door, .portalGlow, .lightTrail, .seam, .openButton { transition-duration: .01ms; }
 }

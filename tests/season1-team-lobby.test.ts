@@ -104,9 +104,9 @@ describe("Season 1 pre-season team lobby", () => {
     expect(entrance).not.toContain("styles.countdown");
     expect(entrance).toContain("if (!ready || opening || checking) return");
     expect(entrance).toContain('"Open Lobby"');
-    expect(entrance).toContain("if (confirmed.isOpen) setEntered(true)");
+    expect(entrance).toContain("if (confirmed.isOpen) {");
     expect(entrance).toContain("reduceMotion ? 80 : 1100");
-    expect(entrance).toContain("<Season1TeamLobby />");
+    expect(entrance).toContain("<Season1TeamLobby initialLobby={lobby} />");
     expect(entrance).toContain("getElementById(window.location.hash.slice(1))");
     expect(entranceStyles).toContain(".opening .doorLeft");
     expect(entranceStyles).toContain(".opening .doorRight");

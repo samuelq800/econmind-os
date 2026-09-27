@@ -38,15 +38,15 @@ function messageFor(caught: unknown, fallback: string) {
   return caught instanceof Error ? caught.message : fallback;
 }
 
-export function Season1TeamLobby() {
+export function Season1TeamLobby({ initialLobby }: { initialLobby?: Season1LobbyData } = {}) {
   const {
     user,
     loading: authLoading,
     roleLoading,
     openAuth,
   } = useAuth();
-  const [lobby, setLobby] = useState<Season1LobbyData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [lobby, setLobby] = useState<Season1LobbyData | null>(initialLobby ?? null);
+  const [loading, setLoading] = useState(!initialLobby);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
@@ -70,12 +70,13 @@ export function Season1TeamLobby() {
 
   useEffect(() => {
     if (authLoading || roleLoading) return;
+    if (initialLobby) return;
     const timer = window.setTimeout(() => {
       if (user) void refresh();
       else setLoading(false);
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [authLoading, roleLoading, user]);
+  }, [authLoading, roleLoading, user, initialLobby]);
 
   useEffect(() => {
     if (!lobby || restoredDirectLink.current) return;
