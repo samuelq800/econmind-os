@@ -1,8 +1,11 @@
 import { readFile, writeFile } from 'node:fs/promises';
 
-const [phase, responsePath, outputPath] = process.argv.slice(2);
-if (!['schema', 'import'].includes(phase) || !responsePath || !outputPath) {
+const [phase, responsePath, outputPath, batchIndex] = process.argv.slice(2);
+if (!['schema', 'batch', 'import'].includes(phase) || !responsePath || !outputPath) {
   throw new Error('WORLD_V2_COUNTRY_EVIDENCE_ARGUMENTS_INVALID');
+}
+if (phase === 'batch' && !/^\d{3}$/u.test(batchIndex ?? '')) {
+  throw new Error('WORLD_V2_COUNTRY_BATCH_INDEX_INVALID');
 }
 
 const response = JSON.parse(await readFile(responsePath, 'utf8'));
@@ -32,13 +35,25 @@ if (phase === 'schema') {
   ) {
     throw new Error('WORLD_V2_COUNTRY_SCHEMA_EVIDENCE_MISMATCH');
   }
+} else if (phase === 'batch') {
+  if (
+    evidence.phase !== 'BATCH' ||
+    evidence.bundle_id !== 'MAP_LOCKED_2026_09_28' ||
+    Number(evidence.batch_index) !== Number(batchIndex) ||
+    !['BUNDLE', 'ARTIFACT', 'PROFILE'].includes(evidence.kind) ||
+    !Number.isInteger(Number(evidence.batch_rows)) ||
+    Number(evidence.batch_rows) < 0
+  ) {
+    throw new Error('WORLD_V2_COUNTRY_BATCH_EVIDENCE_MISMATCH');
+  }
 } else if (
   evidence.phase !== 'IMPORT' ||
   evidence.bundle_id !== 'MAP_LOCKED_2026_09_28' ||
   evidence.source_thread_id !== '01a0e1b0-603c-7e13-81de-2cddb9c5d4c1' ||
   evidence.manifest_sha256 !== 'ea8567accc519baf05a5c48dc74f2102e16e11c88a9b4ba2e2e5b5a14c7ea1a2' ||
   evidence.activation_allowed !== false ||
-  Number(evidence.artifact_count) !== 23 ||
+  Number(evidence.source_artifact_count) !== 23 ||
+  Number(evidence.storage_row_count) !== 36 ||
   Number(evidence.country_count) !== 70
 ) {
   throw new Error('WORLD_V2_COUNTRY_IMPORT_EVIDENCE_MISMATCH');
