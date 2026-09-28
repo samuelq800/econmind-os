@@ -31,7 +31,7 @@ jobs:
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
-      WORLD_V2_CANDIDATE_SOURCE_COMMIT: 878631bff23d8af0d96bda5e58f11fb7eed97b1d
+      WORLD_V2_CANDIDATE_SOURCE_COMMIT: c974f6d6b3090f41c48cc744c0845b79a95cc1cd
     steps:
       - uses: actions/checkout@v4
       - name: Verify fixed target and explicit authorization
@@ -54,8 +54,8 @@ jobs:
         run: |
           node "$WORLD_V2_COUNTRY_SOURCE_ROOT/scripts/render-country-candidate-release.mjs" \
             "$WORLD_V2_COUNTRY_SOURCE_ROOT" schema "$RUNNER_TEMP/world-v2-country-schema.json"
-          node "$WORLD_V2_COUNTRY_SOURCE_ROOT/scripts/render-country-candidate-release.mjs" \
-            "$WORLD_V2_COUNTRY_SOURCE_ROOT" import "$RUNNER_TEMP/world-v2-country-import.json"
+          node "$WORLD_V2_COUNTRY_SOURCE_ROOT/scripts/render-country-candidate-batches.mjs" \
+            "$WORLD_V2_COUNTRY_SOURCE_ROOT" "$RUNNER_TEMP/world-v2-country-batches"
       - name: Publish additive candidate schema through sole main-site chain
         id: schema_request
         if: inputs.mode == 'schema_and_import'
@@ -82,12 +82,29 @@ jobs:
         if: (inputs.mode == 'import_only') || (steps.schema_verify.outcome == 'success')
         continue-on-error: true
         run: |
+          mkdir -p artifacts/world-v2-country-candidate
+          batch_dir="$RUNNER_TEMP/world-v2-country-batches"
+          for request in "$batch_dir"/batch-*.json; do
+            base_name="${request##*/}"
+            batch_id="${base_name%.json}"
+            batch_index="${batch_id#batch-}"
+            response="$RUNNER_TEMP/world-v2-country-${batch_id}-response.json"
+            curl --fail --silent --show-error \
+              --request POST \
+              --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+              --header "Content-Type: application/json" \
+              "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query" \
+              --data-binary "@$request" \
+              --output "$response"
+            node scripts/verify-world-v2-country-candidate.mjs \
+              batch "$response" "artifacts/world-v2-country-candidate/${batch_id}.json" "$batch_index"
+          done
           curl --fail --silent --show-error \
             --request POST \
             --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
             --header "Content-Type: application/json" \
             "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query" \
-            --data-binary "@$RUNNER_TEMP/world-v2-country-import.json" \
+            --data-binary "@$batch_dir/final.json" \
             --output "$RUNNER_TEMP/world-v2-country-import-response.json"
       - name: Verify imported candidate readback
         id: import_verify
