@@ -7,6 +7,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { withBasePath } from "@/lib/base-path";
 import { getSeason1Lobby, getSeason1Opening, type Season1LobbyData, type Season1Opening } from "@/lib/supabase/season1";
 import { entranceVisitStorage, hasSeenSeason1Entrance, markSeason1EntranceSeen } from "@/lib/season1/entrance-visit";
+import { requestSeason1NotificationPermission } from "@/lib/season1/notification-permission";
 import { Season1TeamLobby } from "./season1-team-lobby";
 import styles from "./season1-entrance.module.css";
 
@@ -154,6 +155,10 @@ function Season1EntranceScene() {
     setError("");
     const currentAttempt = ++attempt.current;
     try {
+      // The Open Lobby click is the user gesture required for the browser prompt.
+      // Permission is not an access requirement; denied or unsupported browsers still enter.
+      await requestSeason1NotificationPermission();
+      if (currentAttempt !== attempt.current) return;
       const latest = await getSeason1Opening();
       if (currentAttempt !== attempt.current) return;
       applyGate(latest);

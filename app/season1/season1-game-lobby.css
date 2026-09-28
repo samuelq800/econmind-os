@@ -58,12 +58,44 @@ body:has(.season1-lobby) footer {
 }
 
 .season1-lobby > .season1-world-hero,
+.season1-lobby > .season1-notification-prompt,
 .season1-lobby > .season1-portals,
 .season1-lobby > .season1-chapter,
 .season1-lobby > [role="alert"] {
   width: 100%;
   max-width: 1440px;
   margin-inline: auto;
+}
+
+.season1-notification-prompt {
+  display: flex;
+  align-items: center;
+  gap: .9rem;
+  margin-bottom: 1rem;
+  padding: .85rem 1rem;
+  border: 1px solid rgba(114, 234, 216, .32);
+  border-radius: 12px;
+  color: #dceeed;
+  background: rgba(10, 38, 47, .86);
+}
+.season1-notification-prompt > svg { flex: 0 0 auto; color: #7cecdc; }
+.season1-notification-prompt > div { flex: 1; min-width: 0; }
+.season1-notification-prompt strong { font-size: .84rem; }
+.season1-notification-prompt p { margin-top: .15rem; color: #a9c5c7; font-size: .76rem; line-height: 1.5; }
+.season1-notification-prompt button {
+  flex: 0 0 auto;
+  padding: .5rem .8rem;
+  border: 1px solid #7cecdc;
+  border-radius: 8px;
+  color: #041c22;
+  background: #7cecdc;
+  font-size: .76rem;
+  font-weight: 700;
+}
+.season1-notification-prompt button:hover { background: #a2fff0; }
+@media (max-width: 600px) {
+  .season1-notification-prompt { flex-wrap: wrap; }
+  .season1-notification-prompt button { width: 100%; }
 }
 
 .season1-lobby .season1-world-hero {

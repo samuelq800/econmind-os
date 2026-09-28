@@ -164,6 +164,32 @@ html:not(.dark) .visual-pilot .home-hero::before {inset:0;background-position:ce
 .visual-pilot .home-hero>div:not(.home-hero-grid) {min-height:0;align-items:stretch;}
 .visual-pilot .home-hero-badge-link {width:min(88%,520px);}
 .visual-pilot .home-hero-badge-wrap {width:100%;}
+
+/* Home sky: tiny light changes and infrequent streaks over the existing artwork. */
+.visual-pilot .home-hero::before {animation:home-sky-breathe 42s ease-in-out infinite alternate;will-change:transform;}
+.visual-pilot .home-hero>div:not(.home-hero-grid):not(.home-sky-motion) {position:relative;z-index:1;}
+.visual-pilot .home-sky-motion {position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;background-image:radial-gradient(circle at 21% 16%,#dcfcff99 0 1px,transparent 2px),radial-gradient(circle at 66% 12%,#f6d99a99 0 1px,transparent 2px),radial-gradient(circle at 79% 43%,#c9faff88 0 1px,transparent 2px),radial-gradient(circle at 39% 72%,#dffcff77 0 1px,transparent 2px);background-repeat:no-repeat;animation:home-sky-twinkle 9s ease-in-out infinite alternate;}
+.visual-pilot .home-meteor {position:absolute;display:block;width:clamp(110px,16vw,230px);height:2px;border-radius:999px;background:linear-gradient(90deg,#f8ffff,rgba(167,238,243,.85) 14%,rgba(114,234,216,.4) 48%,transparent);filter:drop-shadow(0 0 5px #b4f5ff);opacity:0;transform:translate3d(360px,-190px,0) rotate(-31deg);will-change:transform,opacity;}
+.visual-pilot .home-meteor::before {content:'';position:absolute;left:0;top:-2px;width:6px;height:6px;border-radius:50%;background:#f8ffff;box-shadow:0 0 12px 3px #b6f2ff99;}
+.visual-pilot .home-meteor-one {left:60%;top:13%;animation:home-meteor-cross 18s linear 3s infinite;}
+.visual-pilot .home-meteor-two {left:76%;top:36%;animation:home-meteor-cross 29s linear 13s infinite;}
+.visual-pilot .home-meteor-three {left:48%;top:2%;animation:home-meteor-cross 37s linear 23s infinite;}
+html:not(.dark) .visual-pilot .home-sky-motion {opacity:.48;}
+@keyframes home-sky-breathe {from {transform:scale(1);filter:brightness(1);}to {transform:scale(1.025);filter:brightness(1.07);}}
+@keyframes home-sky-twinkle {from {opacity:.32;}to {opacity:.74;}}
+@keyframes home-meteor-cross {0%,80% {opacity:0;transform:translate3d(360px,-190px,0) rotate(-31deg);}82% {opacity:0;}84% {opacity:.9;}89% {opacity:.78;}92%,100% {opacity:0;transform:translate3d(-370px,250px,0) rotate(-31deg);}}
+@media(max-width:700px) {
+  .visual-pilot .home-meteor-three {display:none;}
+  .visual-pilot .home-meteor {width:110px;}
+}
+@media(prefers-reduced-motion:reduce) {
+  .visual-pilot .home-hero::before,.visual-pilot .home-sky-motion,.visual-pilot .home-meteor {animation:none!important;}
+  .visual-pilot .home-meteor {display:none;}
+}
+.visual-pilot[data-motion=off] .home-hero::before,
+.visual-pilot[data-motion=off] .home-sky-motion,
+.visual-pilot[data-motion=off] .home-meteor {animation-play-state:paused!important;}
+.visual-pilot[data-motion=off] .home-meteor {display:none;}
 @media(max-width:700px) {
   .visual-pilot .home-hero .home-hero-summary {min-height:350px;}
   .visual-pilot .home-hero-badge-link {width:min(88%,360px);}
