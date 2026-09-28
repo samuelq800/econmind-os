@@ -18,6 +18,7 @@ const expectedTopLevelLabels = [
   "Simulation",
   "League",
   "Season 1",
+  "Competition",
   "Teams",
   "Community & Legal",
   "Workspace",
