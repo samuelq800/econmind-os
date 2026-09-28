@@ -1,6 +1,7 @@
 "use client";
 
 import { Season1WorldArtwork } from "./season1-world-artwork";
+import { Season1NotificationPrompt } from "./season1-notification-prompt";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -212,6 +213,7 @@ export function Season1TeamLobby({ initialLobby }: { initialLobby?: Season1Lobby
         <Link href="/season1" aria-current="page" className="rounded-lg bg-[var(--accent-soft)] px-4 py-2 text-[var(--accent)]">Season 1 Lobby</Link>
         <Link href="/season1/my-team" className="rounded-lg border border-[var(--line)] px-4 py-2 hover:bg-[var(--surface-subtle)]">My Team</Link>
       </nav>
+      <Season1NotificationPrompt />
       <section className="season1-world-hero relative isolate overflow-hidden rounded-2xl border border-[#2b6f68] px-6 py-10 text-white shadow-2xl sm:px-10 sm:py-14">
         <Season1WorldArtwork />
         <div className="relative z-10 flex min-h-[34rem] flex-col justify-between gap-10 lg:min-h-[37rem]">

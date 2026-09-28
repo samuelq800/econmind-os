@@ -51,6 +51,11 @@ export function EditorialHome() {
       <Season1HomePromo />
       <section className="home-hero">
         <div className="home-hero-grid" aria-hidden="true" />
+        <div className="home-sky-motion" aria-hidden="true">
+          <span className="home-meteor home-meteor-one" />
+          <span className="home-meteor home-meteor-two" />
+          <span className="home-meteor home-meteor-three" />
+        </div>
         <div className="mx-auto grid max-w-[1560px] gap-12 px-5 pb-20 pt-16 sm:px-8 lg:grid-cols-[1.03fr_.97fr] lg:px-12 lg:pb-28 lg:pt-24">
           <div className="relative z-10 max-w-4xl">
             <Eyebrow>Interactive economics laboratory</Eyebrow>
