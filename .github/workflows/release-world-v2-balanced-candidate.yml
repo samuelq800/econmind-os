@@ -1,0 +1,134 @@
+name: Release · World V2 balanced country candidate
+run-name: Release World V2 balanced candidate · @${{ github.actor }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RELEASE_WORLD_V2_BALANCED_CANDIDATE
+        required: true
+        type: string
+      mode:
+        description: Schema plus import, or import-only after verified schema recovery
+        required: true
+        default: schema_and_import
+        type: choice
+        options:
+          - schema_and_import
+          - import_only
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-production
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+      WORLD_V2_BALANCED_SOURCE_COMMIT: ae086ce0b51cf3423a5b1ed3522371cfa48b3c92
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify fixed target and explicit authorization
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          test "$CONFIRMATION" = "RELEASE_WORLD_V2_BALANCED_CANDIDATE"
+          test "$SUPABASE_PROJECT_REF" = "vimksjrhaxdpnkvgsavz"
+          test -n "$SUPABASE_ACCESS_TOKEN"
+      - name: Fetch immutable reviewed World V2 source
+        run: |
+          source_root="$RUNNER_TEMP/world-v2-balanced-source"
+          git clone --no-checkout https://github.com/samuelq800/econmind-os-world-simulation.git "$source_root"
+          git -C "$source_root" checkout --detach "$WORLD_V2_BALANCED_SOURCE_COMMIT"
+          test "$(git -C "$source_root" rev-parse HEAD)" = "$WORLD_V2_BALANCED_SOURCE_COMMIT"
+          test "$(git -C "$source_root" remote get-url origin)" = "https://github.com/samuelq800/econmind-os-world-simulation.git"
+          test -z "$(git -C "$source_root" status --porcelain=v1 --untracked-files=all)"
+          printf 'WORLD_V2_BALANCED_SOURCE_ROOT=%s\n' "$source_root" >> "$GITHUB_ENV"
+      - name: Verify complete versioned map and geography files
+        run: node "$WORLD_V2_BALANCED_SOURCE_ROOT/scripts/verify-world-map-file-package.mjs"
+      - name: Render reviewed SQL requests without executing them
+        run: |
+          node "$WORLD_V2_BALANCED_SOURCE_ROOT/scripts/render-balanced-country-candidate-release.mjs" \
+            "$WORLD_V2_BALANCED_SOURCE_ROOT" schema "$RUNNER_TEMP/world-v2-balanced-schema.json"
+          node "$WORLD_V2_BALANCED_SOURCE_ROOT/scripts/render-balanced-country-candidate-release.mjs" \
+            "$WORLD_V2_BALANCED_SOURCE_ROOT" batches "$RUNNER_TEMP/world-v2-balanced-batches"
+      - name: Publish narrow candidate status migration through sole main-site chain
+        id: schema_request
+        if: inputs.mode == 'schema_and_import'
+        continue-on-error: true
+        run: |
+          curl --fail --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            --header "Content-Type: application/json" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query" \
+            --data-binary "@$RUNNER_TEMP/world-v2-balanced-schema.json" \
+            --output "$RUNNER_TEMP/world-v2-balanced-schema-response.json"
+      - name: Verify schema release readback
+        id: schema_verify
+        if: inputs.mode == 'schema_and_import' && steps.schema_request.outcome == 'success'
+        continue-on-error: true
+        run: |
+          mkdir -p artifacts/world-v2-balanced-candidate
+          node scripts/verify-world-v2-balanced-candidate.mjs \
+            schema "$RUNNER_TEMP/world-v2-balanced-schema-response.json" \
+            artifacts/world-v2-balanced-candidate/schema.json
+      - name: Import exact inactive balanced package
+        id: import_request
+        if: (inputs.mode == 'import_only') || (steps.schema_verify.outcome == 'success')
+        continue-on-error: true
+        run: |
+          mkdir -p artifacts/world-v2-balanced-candidate
+          batch_dir="$RUNNER_TEMP/world-v2-balanced-batches"
+          for request in "$batch_dir"/batch-*.json; do
+            base_name="${request##*/}"
+            batch_id="${base_name%.json}"
+            batch_index="${batch_id#batch-}"
+            response="$RUNNER_TEMP/world-v2-balanced-${batch_id}-response.json"
+            curl --fail --silent --show-error \
+              --request POST \
+              --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+              --header "Content-Type: application/json" \
+              "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query" \
+              --data-binary "@$request" \
+              --output "$response"
+            node scripts/verify-world-v2-balanced-candidate.mjs \
+              batch "$response" "artifacts/world-v2-balanced-candidate/${batch_id}.json" "$batch_index"
+          done
+          curl --fail --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            --header "Content-Type: application/json" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query" \
+            --data-binary "@$batch_dir/final.json" \
+            --output "$RUNNER_TEMP/world-v2-balanced-import-response.json"
+      - name: Verify imported candidate readback
+        id: import_verify
+        if: steps.import_request.outcome == 'success'
+        continue-on-error: true
+        run: |
+          node scripts/verify-world-v2-balanced-candidate.mjs \
+            import "$RUNNER_TEMP/world-v2-balanced-import-response.json" \
+            artifacts/world-v2-balanced-candidate/import.json
+      - name: Record uncertain or failed outcome
+        if: steps.import_verify.outcome != 'success'
+        run: |
+          mkdir -p artifacts/world-v2-balanced-candidate
+          node scripts/write-world-v2-release-unknown.mjs \
+            --output artifacts/world-v2-balanced-candidate/outcome-unknown.json
+      - name: Preserve non-secret evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: world-v2-balanced-candidate-evidence
+          path: artifacts/world-v2-balanced-candidate/*.json
+          if-no-files-found: warn
+      - name: Fail closed on incomplete verification
+        if: steps.import_verify.outcome != 'success'
+        run: exit 1
