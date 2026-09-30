@@ -103,30 +103,123 @@ function normalizedPolicyQual(value) {
     .replaceAll(/[()]/g, "");
 }
 
-function normalizedFullPolicyQual(value) {
+function compactSqlPolicy(value) {
   if (typeof value !== "string") return null;
-  const withoutCasts = value.replaceAll("::text", "");
-  let normalized = "";
+  let compact = "";
   let insideLiteral = false;
-  for (const character of withoutCasts) {
+  for (let index = 0; index < value.length; index += 1) {
+    const character = value[index];
     if (character === "'") {
-      insideLiteral = !insideLiteral;
-      normalized += character;
-    } else if (
-      !insideLiteral &&
-      (/\s/u.test(character) || character === "(" || character === ")")
-    ) {
+      compact += character;
+      if (insideLiteral && value[index + 1] === "'") {
+        compact += value[index + 1];
+        index += 1;
+      } else {
+        insideLiteral = !insideLiteral;
+      }
+    } else if (!insideLiteral && value.slice(index, index + 6) === "::text") {
+      index += 5;
+    } else if (!insideLiteral && /\s/u.test(character)) {
       continue;
     } else {
-      normalized += character;
+      compact += character;
     }
   }
-  return normalized;
+  return insideLiteral ? null : compact;
+}
+
+function hasWholeExpressionParentheses(value) {
+  if (!value.startsWith("(") || !value.endsWith(")")) return false;
+  let depth = 0;
+  let insideLiteral = false;
+  for (let index = 0; index < value.length; index += 1) {
+    const character = value[index];
+    if (character === "'") {
+      if (insideLiteral && value[index + 1] === "'") {
+        index += 1;
+      } else {
+        insideLiteral = !insideLiteral;
+      }
+    } else if (!insideLiteral && character === "(") {
+      depth += 1;
+    } else if (!insideLiteral && character === ")") {
+      depth -= 1;
+      if (depth === 0 && index < value.length - 1) return false;
+      if (depth < 0) return false;
+    }
+  }
+  return !insideLiteral && depth === 0;
+}
+
+function withoutWholeExpressionParentheses(value) {
+  let expression = value;
+  while (hasWholeExpressionParentheses(expression)) {
+    expression = expression.slice(1, -1);
+  }
+  return expression;
+}
+
+function isIdentifierCharacter(value) {
+  return typeof value === "string" && /[A-Za-z0-9_]/u.test(value);
+}
+
+function splitTopLevelBooleanOperator(value, operator) {
+  const parts = [];
+  let start = 0;
+  let depth = 0;
+  let insideLiteral = false;
+  for (let index = 0; index < value.length; index += 1) {
+    const character = value[index];
+    if (character === "'") {
+      if (insideLiteral && value[index + 1] === "'") {
+        index += 1;
+      } else {
+        insideLiteral = !insideLiteral;
+      }
+      continue;
+    }
+    if (insideLiteral) continue;
+    if (character === "(") {
+      depth += 1;
+      continue;
+    }
+    if (character === ")") {
+      depth -= 1;
+      continue;
+    }
+    if (
+      depth === 0 &&
+      value.slice(index, index + operator.length).toUpperCase() === operator &&
+      !isIdentifierCharacter(value[index - 1])
+    ) {
+      parts.push(value.slice(start, index));
+      start = index + operator.length;
+      index += operator.length - 1;
+    }
+  }
+  if (parts.length === 0) return [value];
+  parts.push(value.slice(start));
+  return parts;
+}
+
+function normalizedFullPolicyQual(value) {
+  const compact = compactSqlPolicy(value);
+  if (compact === null) return null;
+  const expression = withoutWholeExpressionParentheses(compact);
+  const orParts = splitTopLevelBooleanOperator(expression, "OR");
+  if (orParts.length > 1) {
+    return ["OR", ...orParts.map(normalizedFullPolicyQual)];
+  }
+  const andParts = splitTopLevelBooleanOperator(expression, "AND");
+  if (andParts.length > 1) {
+    return ["AND", ...andParts.map(normalizedFullPolicyQual)];
+  }
+  return expression;
 }
 
 function fullPolicyQual() {
   const roots = FULL_JSON_ARTIFACT_PATHS.map((path) => `'${path}'`).join(",");
-  return `bundle_id='${BUNDLE_ID}'ANDartifact_path=ANYARRAY[${roots}]ORartifact_path~'${FULL_READER_CHUNK_PATTERN}'`;
+  return `(bundle_id='${BUNDLE_ID}'AND(artifact_path=ANY(ARRAY[${roots}])ORartifact_path~'${FULL_READER_CHUNK_PATTERN}'))`;
 }
 
 function expectedPolicies(includeFullReaderPolicy) {
@@ -160,7 +253,7 @@ function expectedPolicies(includeFullReaderPolicy) {
       roles: [READER_ROLE],
       command: "SELECT",
       permissive: "PERMISSIVE",
-      qual: fullPolicyQual(),
+      qual: normalizedFullPolicyQual(fullPolicyQual()),
       with_check: null,
     });
   }
@@ -169,20 +262,18 @@ function expectedPolicies(includeFullReaderPolicy) {
 
 function exactPolicies(actual, includeFullReaderPolicy) {
   if (!Array.isArray(actual)) return false;
-  return exactJson(
-    actual.map((policy) => {
-      if (!isPlainObject(policy)) return policy;
-      return {
-        ...policy,
-        qual:
-          policy.name ===
-          "country_candidate_artifact_selected_full_source_server_read"
-            ? normalizedFullPolicyQual(policy.qual)
-            : normalizedPolicyQual(policy.qual),
-      };
-    }),
-    expectedPolicies(includeFullReaderPolicy),
-  );
+  const normalizedActual = actual.map((policy) => {
+    if (!isPlainObject(policy)) return policy;
+    return {
+      ...policy,
+      qual:
+        policy.name ===
+        "country_candidate_artifact_selected_full_source_server_read"
+          ? normalizedFullPolicyQual(policy.qual)
+          : normalizedPolicyQual(policy.qual),
+    };
+  });
+  return exactJson(normalizedActual, expectedPolicies(includeFullReaderPolicy));
 }
 
 function responseEvidence(response) {
