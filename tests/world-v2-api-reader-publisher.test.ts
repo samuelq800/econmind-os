@@ -58,7 +58,7 @@ describe("World V2 selected-country API reader publisher", () => {
     expect(workflow).toContain(
       'test "$SUPABASE_PROJECT_REF" = "vimksjrhaxdpnkvgsavz"',
     );
-    expect(workflow).toContain("181665ca04b9ac352ce080ff75276fb9ea50a186");
+    expect(workflow).toContain("41fedbb0cbd64b7dca510aa1daddaeab5571cef6");
     expect(workflow.match(/database\/query/g)).toHaveLength(1);
     expect(workflow).toContain("write-world-v2-release-unknown.mjs");
     expect(unknownOutcomeWriter).toContain("WORLD_V2_RELEASE_UNKNOWN");
