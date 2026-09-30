@@ -20,7 +20,7 @@ const DESIGNATED_ACCOUNT_MODERATOR_ID = "ffc87a95-f535-4781-9c2d-c2fac962ea9e";
 export function Navbar() {
   const path = usePathname() ?? "/";
   const { theme, toggleTheme, ready } = useTheme();
-  const { user, role, platformRole, worldSupervisor, viewerAccess, viewerLoading, loading, openAuth, signOut, endViewerSession } = useAuth();
+  const { user, profileDisplayName, role, platformRole, worldSupervisor, viewerAccess, viewerLoading, loading, openAuth, signOut, endViewerSession } = useAuth();
   const [open, setOpen] = useState(false);
   const [mobileSection, setMobileSection] = useState<string | null>(null);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -35,6 +35,7 @@ export function Navbar() {
   const compactOverflowLinks = links.filter((section) => !compactDesktopSectionIds.has(section.id));
   const designatedAccountModerator = user?.id === DESIGNATED_ACCOUNT_MODERATOR_ID && worldSupervisor;
   const liveSessionHost = canHostLiveSession(role, platformRole);
+  const accountName = profileDisplayName || "My account";
 
   useEffect(() => {
     if (!open) return;
@@ -189,11 +190,12 @@ export function Navbar() {
             {user ? (
               <button
                 type="button"
+                aria-label={`Open account menu for ${accountName}`}
                 onClick={() => setAccountOpen((current) => !current)}
                 className="flex h-9 max-w-48 items-center gap-2 rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 text-xs font-bold"
               >
                 <span className="grid size-5 shrink-0 place-items-center rounded-full bg-[var(--accent-soft)] text-[var(--accent)]"><UserRound size={12} /></span>
-                <span className="truncate">{user.email}</span>
+                <span className="truncate">{accountName}</span>
               </button>
             ) : viewerAccess ? (
               <button
@@ -217,7 +219,7 @@ export function Navbar() {
               <div className="absolute right-0 top-11 w-64 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-xl">
                 <div className="border-b border-[var(--line)] px-3 py-2">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--ink-faint)]">{viewerAccess ? "Invitation viewer" : "Signed in"}</p>
-                  <p className="mt-1 truncate text-xs font-semibold">{viewerAccess ? viewerAccess.label ?? "Read-only access" : user?.email}</p>
+                  <p className="mt-1 truncate text-xs font-semibold">{viewerAccess ? viewerAccess.label ?? "Read-only access" : accountName}</p>
                 </div>
                 {user && <Link href="/dashboard" onClick={() => setAccountOpen(false)} className="mt-1 flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold hover:bg-[var(--surface-subtle)]">
                   <Cloud size={14} /> Workspace dashboard

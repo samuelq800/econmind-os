@@ -19,6 +19,7 @@ export type AuthMode = "sign-in" | "sign-up" | "verify-sign-up" | "forgot-passwo
 
 type AuthContextValue = {
   user: User | null;
+  profileDisplayName: string | null;
   role: AppRole;
   platformRole: LeaguePlatformRole | null;
   worldSupervisor: boolean;
@@ -44,6 +45,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [profileDisplayName, setProfileDisplayName] = useState<string | null>(null);
   const currentAuthUserId = useRef<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<AppRole>("guest");
@@ -74,6 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (nextUser && nextUser.id !== currentAuthUserId.current) setRoleLoading(true);
       currentAuthUserId.current = nextUser?.id ?? null;
       setUser(nextUser);
+      setProfileDisplayName(nextUser ? profileMetadataFallback(nextUser.user_metadata).displayName : null);
       const currentUrl = new URL(window.location.href);
       const authMarker = currentUrl.searchParams.get("auth");
       const fragment = new URLSearchParams(currentUrl.hash.replace(/^#/, ""));
@@ -131,7 +134,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const supabase = getSupabaseBrowserClient();
-    if (!supabase || !user) { queueMicrotask(() => { setRole("guest"); setPlatformRole(null); setProfileError(null); setRoleLoading(false); }); return; }
+    if (!supabase || !user) { queueMicrotask(() => { setRole("guest"); setPlatformRole(null); setProfileDisplayName(null); setProfileError(null); setRoleLoading(false); }); return; }
     let active = true;
 
     const refreshRole = () => {
@@ -149,7 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!active) return;
         if (data?.account_status === "suspended") {
           await supabase.auth.signOut({ scope: "local" });
-          if (active) { setRole("guest"); setPlatformRole(null); setRoleLoading(false); }
+          if (active) { setRole("guest"); setPlatformRole(null); setProfileDisplayName(null); setRoleLoading(false); }
           return;
         }
         if (!data) throw new Error("Account profile is unavailable.");
@@ -165,6 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (updateError) console.warn("Optional profile avatar could not be initialized.");
         }
         if (!active) return;
+        setProfileDisplayName(data.display_name?.trim() || missing.displayName || null);
         setRole(
           data?.role === "teacher" || data?.role === "professor"
             ? data.role
@@ -193,6 +197,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
+      profileDisplayName,
       role,
       platformRole,
       worldSupervisor,
@@ -232,7 +237,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setViewerAccess(null);
       },
     }),
-    [user, role, platformRole, worldSupervisor, viewerAccess, viewerLoading, roleLoading, profileError, loading, configured, authOpen, authMode, authNotice],
+    [user, profileDisplayName, role, platformRole, worldSupervisor, viewerAccess, viewerLoading, roleLoading, profileError, loading, configured, authOpen, authMode, authNotice],
   );
 
 
