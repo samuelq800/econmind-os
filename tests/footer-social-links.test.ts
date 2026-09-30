@@ -6,6 +6,7 @@ const footer = readFileSync("components/layout/footer.tsx", "utf8");
 describe("footer social links", () => {
   it("links to every official EconMind social profile", () => {
     for (const href of [
+      "https://m.weibo.cn/u/9096812202",
       "https://x.com/EconmindGroup",
       "https://www.xiaohongshu.com/user/profile/69be61b90000000034018bcc",
       "https://www.instagram.com/econmind_os/",
@@ -23,6 +24,7 @@ describe("footer social links", () => {
     expect(footer).toContain("opens in a new tab");
 
     for (const icon of [
+      "WeiboIcon",
       "XIcon",
       "XiaohongshuIcon",
       "InstagramIcon",
