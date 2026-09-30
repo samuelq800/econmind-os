@@ -1,0 +1,31 @@
+name: Verify World V2 selected-country API reader publisher
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/e-world-v2-api-reader-publisher
+    paths:
+      - .github/workflows/release-world-v2-api-reader.yml
+      - .github/workflows/verify-world-v2-api-reader-publisher.yml
+      - scripts/verify-world-v2-api-reader-release.mjs
+      - tests/world-v2-api-reader-publisher.test.ts
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.20.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec vitest run tests/world-v2-api-reader-publisher.test.ts
