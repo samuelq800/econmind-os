@@ -313,6 +313,39 @@ describe("World V2 full-data API reader publisher", () => {
         authority: "SERVER_ONLY_INACTIVE_CANDIDATE_FULL_DATA_READ",
       });
 
+      const invalidChunkGrouping = evidence(
+        "AFTER_FULL_READER_RELEASE",
+        afterLedger,
+        true,
+      );
+      const fullReaderPolicy =
+        invalidChunkGrouping.rows[0].evidence.candidate_table_policies.find(
+          (policy) =>
+            policy.name ===
+            "country_candidate_artifact_selected_full_source_server_read",
+        );
+      if (!fullReaderPolicy) {
+        throw new Error("missing full-reader policy test fixture");
+      }
+      fullReaderPolicy.qual = fullReaderPolicy.qual.replace(
+        FULL_READER_CHUNK_PATTERN,
+        `^${FULL_JSON_ARTIFACT_PATHS.join("|")}\\.part[0-9]{4}$`,
+      );
+      writeFileSync(afterPath, JSON.stringify(invalidChunkGrouping));
+      expect(
+        spawnSync(
+          process.execPath,
+          [
+            "scripts/verify-world-v2-api-full-reader-release.mjs",
+            beforePath,
+            afterPath,
+            expectationPath,
+            outputPath,
+          ],
+          { stdio: "pipe" },
+        ).status,
+      ).not.toBe(0);
+
       const invalidAfter = evidence(
         "AFTER_FULL_READER_RELEASE",
         afterLedger,

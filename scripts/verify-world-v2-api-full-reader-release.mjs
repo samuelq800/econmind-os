@@ -103,13 +103,30 @@ function normalizedPolicyQual(value) {
     .replaceAll(/[()]/g, "");
 }
 
+function normalizedFullPolicyQual(value) {
+  if (typeof value !== "string") return null;
+  const withoutCasts = value.replaceAll("::text", "");
+  let normalized = "";
+  let insideLiteral = false;
+  for (const character of withoutCasts) {
+    if (character === "'") {
+      insideLiteral = !insideLiteral;
+      normalized += character;
+    } else if (
+      !insideLiteral &&
+      (/\s/u.test(character) || character === "(" || character === ")")
+    ) {
+      continue;
+    } else {
+      normalized += character;
+    }
+  }
+  return normalized;
+}
+
 function fullPolicyQual() {
   const roots = FULL_JSON_ARTIFACT_PATHS.map((path) => `'${path}'`).join(",");
-  const normalizedChunkPattern = FULL_READER_CHUNK_PATTERN.replaceAll(
-    /[()]/g,
-    "",
-  );
-  return `bundle_id='${BUNDLE_ID}'ANDartifact_path=ANYARRAY[${roots}]ORartifact_path~'${normalizedChunkPattern}'`;
+  return `bundle_id='${BUNDLE_ID}'ANDartifact_path=ANYARRAY[${roots}]ORartifact_path~'${FULL_READER_CHUNK_PATTERN}'`;
 }
 
 function expectedPolicies(includeFullReaderPolicy) {
@@ -153,11 +170,17 @@ function expectedPolicies(includeFullReaderPolicy) {
 function exactPolicies(actual, includeFullReaderPolicy) {
   if (!Array.isArray(actual)) return false;
   return exactJson(
-    actual.map((policy) =>
-      isPlainObject(policy)
-        ? { ...policy, qual: normalizedPolicyQual(policy.qual) }
-        : policy,
-    ),
+    actual.map((policy) => {
+      if (!isPlainObject(policy)) return policy;
+      return {
+        ...policy,
+        qual:
+          policy.name ===
+          "country_candidate_artifact_selected_full_source_server_read"
+            ? normalizedFullPolicyQual(policy.qual)
+            : normalizedPolicyQual(policy.qual),
+      };
+    }),
     expectedPolicies(includeFullReaderPolicy),
   );
 }
