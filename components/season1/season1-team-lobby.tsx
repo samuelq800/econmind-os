@@ -1,5 +1,6 @@
 "use client";
 
+import { Season1WorldChat } from "./season1-world-chat";
 import { Season1WorldArtwork } from "./season1-world-artwork";
 import { Season1NotificationPrompt } from "./season1-notification-prompt";
 import Link from "next/link";
@@ -10,11 +11,9 @@ import {
   Crown,
   LoaderCircle,
   LockKeyhole,
-  MessageCircle,
   Plus,
   Radio,
   Search,
-  Send,
   Sparkles,
   UsersRound,
 } from "lucide-react";
@@ -28,7 +27,6 @@ import {
   createSeason1Invite,
   createSeason1Team,
   getSeason1Lobby,
-  postSeason1LobbyMessage,
   setSeason1Preferences,
   setSeason1FreeAgent,
   type Season1LobbyData,
@@ -54,7 +52,6 @@ export function Season1TeamLobby({ initialLobby }: { initialLobby?: Season1Lobby
   const [createOpen, setCreateOpen] = useState(false);
   const [teamName, setTeamName] = useState("");
   const [focus, setFocus] = useState("");
-  const [draft, setDraft] = useState("");
   const restoredDirectLink = useRef(false);
 
   const refresh = async () => {
@@ -136,17 +133,6 @@ export function Season1TeamLobby({ initialLobby }: { initialLobby?: Season1Lobby
       setFocus("");
     });
   }
-
-  async function sendLobbyMessage(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const content = draft.trim();
-    if (!content) return;
-    await mutate(async () => {
-      await postSeason1LobbyMessage(content);
-      setDraft("");
-    });
-  }
-
 
   async function togglePreference(role: Season1RolePreference) {
     const current = lobby?.currentMembership?.rolePreferences ?? [];
@@ -276,7 +262,6 @@ export function Season1TeamLobby({ initialLobby }: { initialLobby?: Season1Lobby
       <nav className="season1-portals" aria-label="Explore the Season 1 lobby">
         <a href="#discover"><span className="season1-portal-icon"><Compass size={22} /></span><span><small>01 / FIND YOUR PEOPLE</small><strong>Discover Teams</strong><span>Explore real teams and join the story.</span></span><ArrowRight size={18} /></a>
         <Link href="/season1/my-team"><span className="season1-portal-icon"><Crown size={22} /></span><span><small>02 / YOUR HOME BASE</small><strong>My Team</strong><span>Team code, members and readiness.</span></span><ArrowRight size={18} /></Link>
-        <a href="#world-chat"><span className="season1-portal-icon"><MessageCircle size={22} /></span><span><small>03 / THE COMMONS</small><strong>World Chat</strong><span>Meet the world before it begins.</span></span><ArrowRight size={18} /></a>
       </nav>
 
       {error && (
@@ -425,32 +410,8 @@ export function Season1TeamLobby({ initialLobby }: { initialLobby?: Season1Lobby
         </Link>
       </section>
 
-      <section id="world-chat" className="season1-chapter season1-commons grid gap-7 py-14 lg:grid-cols-[1.05fr_.95fr]">
-        <Card className="season1-room-card p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[var(--accent)]">
-                World Lobby Chat
-              </p>
-              <h2 className="mt-2 text-2xl font-bold tracking-[-.045em]">
-                Persistent pre-season conversation.
-              </h2>
-            </div>
-            <MessageCircle className="text-[var(--accent)]" size={22} />
-          </div>
-          <p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">
-            Messages are stored outside the Simulation Event Ledger.
-          </p>
-          <Chat
-            title="Lobby messages"
-            detail="Registered members can take part."
-            messages={lobby.messages}
-            value={draft}
-            onChange={setDraft}
-            onSubmit={sendLobbyMessage}
-            disabled={busy}
-          />
-        </Card>
+      <Season1WorldChat seasonId={lobby.season.id} initialMessages={lobby.messages} />
+      <section className="season1-chapter py-14">
         <Card className="season1-room-card bg-[linear-gradient(145deg,color-mix(in_srgb,var(--surface)_90%,var(--accent-soft)),var(--surface))] p-6">
           <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[var(--accent)]">
             Guardrails
@@ -623,71 +584,6 @@ function TeamCard({
               : "Recruitment closed"}
       </Button>
     </Card>
-  );
-}
-
-function Chat({
-  title,
-  detail,
-  messages,
-  value,
-  onChange,
-  onSubmit,
-  disabled,
-}: {
-  title: string;
-  detail: string;
-  messages: Season1LobbyData["messages"];
-  value: string;
-  onChange: (value: string) => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>;
-  disabled: boolean;
-}) {
-  return (
-    <section className="mt-6">
-      <p className="text-xs font-bold">{title}</p>
-      <p className="mt-1 text-xs text-[var(--ink-muted)]">{detail}</p>
-      <ol
-        className="mt-4 grid max-h-64 gap-3 overflow-y-auto"
-        aria-label={title}
-      >
-        {messages.map((message) => (
-          <li className="flex gap-3" key={message.id}>
-            <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[var(--surface-strong)] text-[10px] font-black text-[var(--accent)]">
-              {message.authorName[0]}
-            </span>
-            <div>
-              <p className="rounded-lg rounded-tl-none bg-[var(--surface-subtle)] px-3 py-2 text-xs leading-5 text-[var(--ink-muted)]">
-                {message.content}
-              </p>
-              <p className="mt-1 text-[10px] text-[var(--ink-faint)]">
-                {message.authorName}
-              </p>
-            </div>
-          </li>
-        ))}
-      </ol>
-      <form
-        className="mt-5 flex gap-2"
-        onSubmit={(event) => void onSubmit(event)}
-      >
-        <label className="sr-only" htmlFor={`${title}-input`}>
-          {title} message
-        </label>
-        <input
-          id={`${title}-input`}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          disabled={disabled}
-          maxLength={1000}
-          placeholder="Write a message"
-          className="h-10 min-w-0 flex-1 rounded-lg border border-[var(--line-strong)] bg-[var(--surface)] px-3 text-sm outline-none focus:border-[var(--accent)]"
-        />
-        <Button type="submit" disabled={disabled}>
-          <Send size={15} /> Send
-        </Button>
-      </form>
-    </section>
   );
 }
 

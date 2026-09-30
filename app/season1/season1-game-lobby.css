@@ -432,3 +432,68 @@ body:has(.season1-lobby) footer {
   .season1-lobby *, .season1-lobby *::before, .season1-lobby *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
   .season1-world-beam { opacity: .2; }
 }
+
+/* The world channel stays available without interrupting the team workspace. */
+.season1-lobby > .season1-portals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.season1-world-chat {
+  position: fixed; z-index: 45; top: 6rem; right: 1.25rem; bottom: 1.25rem;
+  display: flex; flex-direction: column; width: 22rem; min-height: 0;
+  overflow: hidden; color: #edf9f6; background: #0a222b;
+  border: 1px solid #3a7378; border-radius: 18px;
+  box-shadow: 0 24px 80px #0009, inset 0 1px #baf9ec18;
+}
+.season1-world-chat[hidden], .season1-chat-toggle[hidden] { display: none; }
+.season1-chat-toggle {
+  position: fixed; z-index: 44; right: 1.25rem; bottom: max(1.25rem, env(safe-area-inset-bottom));
+  display: inline-flex; align-items: center; gap: .65rem; min-height: 48px;
+  padding: .75rem 1.1rem; border: 1px solid #87e8d7; border-radius: 999px;
+  color: #08262a; background: #8aebd8; font-size: .875rem; font-weight: 800;
+  box-shadow: 0 8px 32px #0006; cursor: pointer;
+}
+.season1-chat-count { display: grid; min-width: 24px; height: 24px; padding: 0 5px; place-items: center; border-radius: 999px; color: #fff; background: #143d45; font-size: .7rem; }
+.season1-world-chat .season1-chat-header {
+  display: flex; flex-shrink: 0; align-items: flex-start; justify-content: space-between;
+  gap: .75rem; padding: 1.1rem 1rem; border-bottom: 1px solid #27545c;
+  background: linear-gradient(125deg, #123841, #0a222b); box-shadow: none;
+}
+.season1-chat-eyebrow { color: #a8d7ce; font-size: .6rem; font-weight: 800; letter-spacing: .16em; }
+.season1-chat-header h2 { display: flex; align-items: center; gap: .5rem; margin-top: .45rem; font-family: Georgia, serif; font-size: 1.5rem; }
+.season1-chat-caption { margin-top: .3rem; color: #a5c4c7; font-size: .72rem; }
+.season1-chat-icon-button { display: grid; flex-shrink: 0; width: 44px; height: 44px; place-items: center; border: 1px solid #3a7378; border-radius: 10px; color: #c2f5e9; background: #163740; cursor: pointer; }
+.season1-chat-stream { position: relative; display: flex; flex: 1; min-height: 0; }
+.season1-chat-messages { flex: 1; min-width: 0; overflow-y: auto; overscroll-behavior: contain; padding: 1rem; scrollbar-width: thin; scrollbar-color: #44777d transparent; }
+.season1-chat-message { margin-bottom: 1rem; }
+.season1-chat-author { display: flex; justify-content: space-between; gap: .75rem; margin-bottom: .35rem; color: #a7cbc9; font-size: .65rem; }
+.season1-chat-author span { overflow-wrap: anywhere; font-weight: 700; }
+.season1-chat-author time { flex-shrink: 0; color: #85a7ab; }
+.season1-chat-message > p { padding: .65rem .8rem; border: 1px solid #284e58; border-radius: 0 12px 12px; color: #e0eeeb; background: #12323c; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .82rem; line-height: 1.65; }
+.season1-chat-message.is-own > p { border-color: #387b72; border-radius: 12px 0 12px 12px; background: #173d3d; }
+.season1-chat-empty { padding: 3rem .5rem; color: #9fbabd; text-align: center; font-size: .85rem; line-height: 1.8; }
+.season1-chat-latest { position: absolute; bottom: .65rem; left: 50%; transform: translateX(-50%); display: inline-flex; align-items: center; gap: .4rem; width: max-content; max-width: 95%; min-height: 40px; padding: .4rem .8rem; border: 1px solid #67b7a9; border-radius: 999px; color: #e5fff6; background: #1a4e49; font-size: .7rem; box-shadow: 0 3px 15px #0005; cursor: pointer; }
+.season1-chat-compose { flex-shrink: 0; padding: .9rem 1rem max(.9rem, env(safe-area-inset-bottom)); border-top: 1px solid #27545c; background: #0b242d; }
+.season1-chat-compose textarea { display: block; width: 100%; min-height: 70px; max-height: 140px; resize: vertical; padding: .7rem; border: 1px solid #3a7378; border-radius: 10px; color: #edf9f6; background: #071c24; font-size: 16px; line-height: 1.5; }
+.season1-chat-compose textarea::placeholder { color: #85a6a9; }
+.season1-chat-compose-footer { display: flex; align-items: center; justify-content: space-between; gap: .7rem; margin-top: .6rem; }
+.season1-chat-compose-footer > span { color: #89a9ab; font-size: .65rem; }
+.season1-chat-compose-footer button { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-height: 44px; min-width: 88px; padding: .5rem 1rem; border-radius: 9px; color: #08262a; background: #8aebd8; font-size: .8rem; font-weight: 800; cursor: pointer; }
+.season1-chat-compose-footer button:disabled { opacity: .45; cursor: default; }
+.season1-chat-error { flex-shrink: 0; padding: .65rem 1rem; color: #ffd2c8; background: #492e32; font-size: .75rem; }
+.season1-chat-error button { margin-top: .4rem; min-height: 36px; text-decoration: underline; cursor: pointer; }
+.season1-world-chat button:focus-visible, .season1-chat-toggle:focus-visible, .season1-world-chat textarea:focus-visible { outline: 2px solid #baffee; outline-offset: 3px; }
+@media (min-width: 1440px) {
+  .season1-lobby:has(.season1-world-chat:not([hidden])) { padding-right: 25rem; }
+}
+@media (max-width: 900px) {
+  .season1-lobby > .season1-portals { grid-template-columns: 1fr; }
+}
+@media (max-width: 639px) {
+  .season1-world-chat {
+    top: calc(var(--chat-viewport-top, 0px) + env(safe-area-inset-top) + .5rem);
+    right: .5rem; bottom: auto; width: calc(100% - 1rem);
+    height: calc(var(--chat-viewport-height, 100dvh) - env(safe-area-inset-top) - 1rem);
+    border-radius: 14px;
+  }
+  .season1-chat-toggle { right: .75rem; bottom: calc(env(safe-area-inset-bottom) + .75rem); }
+  .season1-chat-compose textarea { resize: none; min-height: 60px; }
+  .season1-world-chat .season1-chat-header { padding: .75rem 1rem; }
+}
