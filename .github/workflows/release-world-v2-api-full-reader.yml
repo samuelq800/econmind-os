@@ -1,0 +1,122 @@
+name: Release · World V2 full-data API reader
+run-name: Release World V2 full-data API reader · @${{ github.actor }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RELEASE_WORLD_V2_API_FULL_READER
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-production
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+      WORLD_V2_API_FULL_READER_SOURCE_COMMIT: ede72d1adc97272c56ec0733227d72c2b8e89207
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify fixed target and explicit authorization
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          test "$CONFIRMATION" = "RELEASE_WORLD_V2_API_FULL_READER"
+          test "$SUPABASE_PROJECT_REF" = "vimksjrhaxdpnkvgsavz"
+          test -n "$SUPABASE_ACCESS_TOKEN"
+      - name: Fetch immutable reviewed World V2 source
+        run: |
+          source_root="$RUNNER_TEMP/world-v2-api-full-reader-source"
+          git clone --no-checkout https://github.com/samuelq800/econmind-os-world-simulation.git "$source_root"
+          git -C "$source_root" checkout --detach "$WORLD_V2_API_FULL_READER_SOURCE_COMMIT"
+          test "$(git -C "$source_root" rev-parse HEAD)" = "$WORLD_V2_API_FULL_READER_SOURCE_COMMIT"
+          test "$(git -C "$source_root" remote get-url origin)" = "https://github.com/samuelq800/econmind-os-world-simulation.git"
+          test -z "$(git -C "$source_root" status --porcelain=v1 --untracked-files=all)"
+          printf 'WORLD_V2_API_FULL_READER_SOURCE_ROOT=%s\n' "$source_root" >> "$GITHUB_ENV"
+      - name: Render reviewed preflight, atomic request, and read-only diagnostic
+        run: |
+          mkdir -p artifacts/world-v2-api-full-reader
+          node scripts/render-world-v2-api-full-reader-release.mjs \
+            "$WORLD_V2_API_FULL_READER_SOURCE_ROOT" \
+            "$RUNNER_TEMP/world-v2-api-full-reader-before-request.json" \
+            "$RUNNER_TEMP/world-v2-api-full-reader-apply-request.json" \
+            artifacts/world-v2-api-full-reader/expectation.json \
+            "$RUNNER_TEMP/world-v2-api-full-reader-diagnostic-request.json"
+      - name: Read exact 0020 baseline before 0021 publication
+        id: before
+        continue-on-error: true
+        run: |
+          curl --fail --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            --header "Content-Type: application/json" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query" \
+            --data-binary "@$RUNNER_TEMP/world-v2-api-full-reader-before-request.json" \
+            --output artifacts/world-v2-api-full-reader/before-response.json
+      - name: Verify exact 0020 baseline before the write request
+        id: preflight_evidence
+        if: steps.before.outcome == 'success'
+        continue-on-error: true
+        run: |
+          node scripts/verify-world-v2-api-full-reader-release.mjs \
+            --preflight \
+            artifacts/world-v2-api-full-reader/before-response.json \
+            artifacts/world-v2-api-full-reader/expectation.json \
+            artifacts/world-v2-api-full-reader/precondition-evidence.json
+      - name: Execute exactly one atomic 0021 management API request
+        id: apply
+        if: steps.before.outcome == 'success' && steps.preflight_evidence.outcome == 'success'
+        continue-on-error: true
+        run: |
+          curl --fail --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            --header "Content-Type: application/json" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query" \
+            --data-binary "@$RUNNER_TEMP/world-v2-api-full-reader-apply-request.json" \
+            --output artifacts/world-v2-api-full-reader/after-response.json
+      - name: Verify exact before and after evidence
+        id: evidence
+        if: steps.before.outcome == 'success' && steps.preflight_evidence.outcome == 'success' && steps.apply.outcome == 'success'
+        continue-on-error: true
+        run: |
+          node scripts/verify-world-v2-api-full-reader-release.mjs \
+            artifacts/world-v2-api-full-reader/before-response.json \
+            artifacts/world-v2-api-full-reader/after-response.json \
+            artifacts/world-v2-api-full-reader/expectation.json \
+            artifacts/world-v2-api-full-reader/evidence.json
+      - name: Run read-only diagnostic after an uncertain or failed outcome
+        if: steps.before.outcome != 'success' || steps.preflight_evidence.outcome != 'success' || steps.apply.outcome != 'success' || steps.evidence.outcome != 'success'
+        continue-on-error: true
+        run: |
+          curl --fail --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            --header "Content-Type: application/json" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query" \
+            --data-binary "@$RUNNER_TEMP/world-v2-api-full-reader-diagnostic-request.json" \
+            --output artifacts/world-v2-api-full-reader/read-only-diagnostic-response.json
+      - name: Record uncertain or failed outcome
+        if: steps.before.outcome != 'success' || steps.preflight_evidence.outcome != 'success' || steps.apply.outcome != 'success' || steps.evidence.outcome != 'success'
+        run: |
+          node scripts/write-world-v2-release-unknown.mjs \
+            --output artifacts/world-v2-api-full-reader/outcome-unknown.json
+      - name: Preserve non-secret evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: world-v2-api-full-reader-evidence
+          path: artifacts/world-v2-api-full-reader/*.json
+          if-no-files-found: warn
+      - name: Fail closed on incomplete verification
+        if: steps.before.outcome != 'success' || steps.preflight_evidence.outcome != 'success' || steps.apply.outcome != 'success' || steps.evidence.outcome != 'success'
+        run: exit 1
