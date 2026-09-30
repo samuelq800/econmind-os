@@ -265,7 +265,6 @@ function catalogEvidenceQuery(phase) {
   const rootValues = FULL_JSON_ARTIFACT_PATHS.map(
     (root) => `(${sqlLiteral(root)})`,
   ).join(", ");
-  const chunkPattern = sqlLiteral(FULL_READER_CHUNK_PATTERN);
   return `select jsonb_build_object(
   'phase', ${sqlLiteral(phase)},
   'ledger_entries', coalesce((
@@ -379,9 +378,13 @@ function catalogEvidenceQuery(phase) {
       'computed_sha256', world_v2.authoritative_sha256(content_utf8),
       'content_bytes', octet_length(content_utf8)
     ) order by artifact_path)
-    from world_v2.country_candidate_artifact
-    where bundle_id = ${sqlLiteral(BUNDLE_ID)}
-      and (artifact_path in (${roots}) or artifact_path ~ ${chunkPattern})
+    from world_v2.country_candidate_artifact artifact
+    where artifact.bundle_id = ${sqlLiteral(BUNDLE_ID)}
+      and (artifact.artifact_path in (${roots}) or exists (
+        select 1 from (values ${rootValues}) as source(artifact_path)
+        where left(artifact.artifact_path, length(source.artifact_path) + 5)
+          = source.artifact_path || '.part'
+      ))
   ), '[]'::jsonb),
   'full_json_source_digests', coalesce((
     select jsonb_agg(jsonb_build_object(
@@ -393,16 +396,16 @@ function catalogEvidenceQuery(phase) {
         from world_v2.country_candidate_artifact artifact
         where artifact.bundle_id = ${sqlLiteral(BUNDLE_ID)}
           and (artifact.artifact_path = source.artifact_path
-            or artifact.artifact_path ~
-              ('^' || source.artifact_path || '\\.part[0-9]{4}$'))
+            or left(artifact.artifact_path, length(source.artifact_path) + 5)
+              = source.artifact_path || '.part')
       ),
       'content_bytes', (
         select sum(octet_length(artifact.content_utf8))
         from world_v2.country_candidate_artifact artifact
         where artifact.bundle_id = ${sqlLiteral(BUNDLE_ID)}
           and (artifact.artifact_path = source.artifact_path
-            or artifact.artifact_path ~
-              ('^' || source.artifact_path || '\\.part[0-9]{4}$'))
+            or left(artifact.artifact_path, length(source.artifact_path) + 5)
+              = source.artifact_path || '.part')
       )
     ) order by source.artifact_path)
     from (values ${rootValues}) as source(artifact_path)

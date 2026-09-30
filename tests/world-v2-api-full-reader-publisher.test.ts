@@ -311,6 +311,9 @@ describe("World V2 full-data API reader publisher", () => {
     expect(renderer).toContain(MIGRATION_SHA256);
     expect(renderer).toContain(MIGRATION_SOURCE_COMMIT);
     expect(renderer).toContain("PREVIOUS_MIGRATION_COUNT = 20");
+    expect(renderer).toContain(
+      "left(artifact.artifact_path, length(source.artifact_path) + 5)",
+    );
     expect(verifier).toContain("WORLD_V2_FULL_READER_EVIDENCE_MISMATCH");
     expect(verifier).toContain("full_json_storage_rows");
   });
@@ -437,6 +440,20 @@ describe("World V2 full-data API reader publisher", () => {
             );
             if (!part) throw new Error("missing part fixture");
             rows.push({ ...part, artifact_path: `${geographyRoot}.part0058` });
+            rows.sort((left, right) =>
+              left.artifact_path.localeCompare(right.artifact_path),
+            );
+          },
+        },
+        {
+          name: "malformed extra part number",
+          mutate: (value) => {
+            const rows = value.rows[0].evidence.full_json_storage_rows;
+            const part = rows.find(
+              (row) => row.artifact_path === `${geographyRoot}.part0057`,
+            );
+            if (!part) throw new Error("missing part fixture");
+            rows.push({ ...part, artifact_path: `${geographyRoot}.part10000` });
             rows.sort((left, right) =>
               left.artifact_path.localeCompare(right.artifact_path),
             );
@@ -641,5 +658,5 @@ describe("World V2 full-data API reader publisher", () => {
     } finally {
       rmSync(outputRoot, { force: true, recursive: true });
     }
-  });
+  }, 30_000);
 });
