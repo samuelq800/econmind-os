@@ -5,6 +5,45 @@ const MIGRATION_ID = "0020_world_v2_official_country_reader";
 const MIGRATION_SHA256 =
   "083e06aca86763e4bc32a34347c1a86b26aa910f3c6a191b9393021347211618";
 const MIGRATION_SOURCE_COMMIT = "f3413bae195b75e80d28d6afa314ca0e394bdfbc";
+const READER_ROLE = "world_v2_api_reader";
+const LOGIN_ROLE = "world_v2_api_login";
+
+const expectedColumnSelectPrivileges = [
+  { table: "country_candidate_artifact", column: "bundle_id" },
+  { table: "country_candidate_artifact", column: "artifact_path" },
+  { table: "country_candidate_artifact", column: "content_sha256" },
+  { table: "country_candidate_artifact", column: "content_utf8" },
+  { table: "country_candidate_bundle", column: "bundle_id" },
+  {
+    table: "country_candidate_bundle",
+    column: "package_manifest_sha256",
+  },
+  { table: "country_candidate_bundle", column: "source_status" },
+  { table: "country_candidate_bundle", column: "activation_allowed" },
+];
+
+const expectedPolicies = [
+  {
+    schema: "world_v2",
+    table: "country_candidate_artifact",
+    name: "country_candidate_artifact_selected_source_server_read",
+    roles: [READER_ROLE],
+    command: "SELECT",
+    permissive: "PERMISSIVE",
+    qual: "bundle_id='BALANCED_2026_09_28_V1'ANDartifact_path='source/646174612f636f756e74726965732e6a736f6e'",
+    with_check: null,
+  },
+  {
+    schema: "world_v2",
+    table: "country_candidate_bundle",
+    name: "country_candidate_bundle_selected_source_server_read",
+    roles: [READER_ROLE],
+    command: "SELECT",
+    permissive: "PERMISSIVE",
+    qual: "bundle_id='BALANCED_2026_09_28_V1'",
+    with_check: null,
+  },
+];
 
 function fail(code) {
   const error = new Error(code);
@@ -25,16 +64,39 @@ function rows(response) {
   return value;
 }
 
+function isPlainObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function exactJson(actual, expected) {
+  return JSON.stringify(actual) === JSON.stringify(expected);
+}
+
 function leastPrivilegeRole(value) {
   return (
-    value !== null &&
-    typeof value === "object" &&
-    !Array.isArray(value) &&
+    isPlainObject(value) &&
     value.can_login === false &&
     value.can_bypass_rls === false &&
     value.is_superuser === false &&
     value.inherits_privileges === false
   );
+}
+
+function normalizedPolicyQual(value) {
+  if (typeof value !== "string") return null;
+  return value
+    .replaceAll("::text", "")
+    .replaceAll(/\s+/g, "")
+    .replaceAll(/[()]/g, "");
+}
+
+function exactPolicies(value) {
+  if (!Array.isArray(value)) return false;
+  const normalized = value.map((policy) => {
+    if (!isPlainObject(policy)) return null;
+    return { ...policy, qual: normalizedPolicyQual(policy.qual) };
+  });
+  return exactJson(normalized, expectedPolicies);
 }
 
 const [responsePath, outputPath] = process.argv.slice(2);
@@ -45,9 +107,7 @@ if (!responsePath || !outputPath || process.argv.length !== 4) {
 const response = JSON.parse(await readFile(path.resolve(responsePath), "utf8"));
 const evidence = rows(response)[0]?.evidence;
 if (
-  evidence === null ||
-  typeof evidence !== "object" ||
-  Array.isArray(evidence) ||
+  !isPlainObject(evidence) ||
   evidence.phase !== "SCHEMA" ||
   evidence.migration_id !== MIGRATION_ID ||
   evidence.artifact_sha256 !== MIGRATION_SHA256 ||
@@ -55,15 +115,30 @@ if (
   Number(evidence.release_order) !== 20 ||
   !leastPrivilegeRole(evidence.reader_role) ||
   !leastPrivilegeRole(evidence.login_role) ||
-  evidence.login_may_set_reader_role !== true ||
-  Number(evidence.selected_source_policy_count) !== 2
+  !exactJson(evidence.reader_memberships, [
+    {
+      member: LOGIN_ROLE,
+      role: READER_ROLE,
+      admin_option: false,
+      inherit_option: false,
+      set_option: true,
+    },
+  ]) ||
+  !exactJson(evidence.schema_usage, ["public", "world_v2"]) ||
+  !exactJson(
+    evidence.column_select_privileges,
+    expectedColumnSelectPrivileges,
+  ) ||
+  !exactJson(evidence.table_select_privileges, []) ||
+  !exactJson(evidence.nonselect_table_privileges, []) ||
+  !exactPolicies(evidence.selected_source_policies)
 ) {
   fail("WORLD_V2_API_READER_EVIDENCE_MISMATCH");
 }
 
 await writeFile(
   path.resolve(outputPath),
-  `${JSON.stringify(
+  JSON.stringify(
     {
       status: "WORLD_V2_API_READER_RELEASE_VERIFIED",
       authority: "SERVER_ONLY_INACTIVE_CANDIDATE_READ",
@@ -71,7 +146,7 @@ await writeFile(
     },
     null,
     2,
-  )}\n`,
+  ) + "\n",
   "utf8",
 );
 process.stdout.write("WORLD_V2_API_READER_RELEASE_VERIFIED\n");
