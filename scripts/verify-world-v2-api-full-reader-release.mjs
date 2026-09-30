@@ -3,7 +3,9 @@ import path from "node:path";
 
 import {
   FULL_JSON_ARTIFACT_PATHS,
+  FULL_JSON_STORAGE_ROW_COUNT,
   FULL_READER_CHUNK_PATTERN,
+  MAX_PART_BYTES,
   MIGRATION_ID,
   MIGRATION_SHA256,
   MIGRATION_SOURCE_COMMIT,
@@ -290,6 +292,112 @@ function responseEvidence(response) {
   return rows[0].evidence;
 }
 
+function exactStorageExpectation(expectation) {
+  const bundle = expectation.candidate_bundle;
+  const sources = expectation.full_json_source_digests;
+  const rows = expectation.full_json_storage_rows;
+  if (
+    !isPlainObject(bundle) ||
+    bundle.bundle_id !== BUNDLE_ID ||
+    typeof bundle.source_thread_id !== "string" ||
+    !/^[0-9a-f]{64}$/u.test(bundle.package_manifest_sha256) ||
+    bundle.source_status !== "IMPLEMENTED_UNVERIFIED_CANDIDATE" ||
+    bundle.activation_allowed !== false ||
+    !Array.isArray(sources) ||
+    sources.length !== FULL_JSON_ARTIFACT_PATHS.length ||
+    !Array.isArray(rows) ||
+    rows.length !== FULL_JSON_STORAGE_ROW_COUNT
+  ) {
+    return false;
+  }
+  let rootCount = 0;
+  let chunkedCount = 0;
+  let rowIndex = 0;
+  for (const [index, source] of sources.entries()) {
+    if (
+      !isPlainObject(source) ||
+      source.artifact_path !== FULL_JSON_ARTIFACT_PATHS[index] ||
+      !/^[0-9a-f]{64}$/u.test(source.content_sha256) ||
+      !Number.isSafeInteger(source.content_bytes) ||
+      source.content_bytes <= 0
+    ) {
+      return false;
+    }
+    const root = source.artifact_path;
+    const storage = [];
+    while (
+      rowIndex < rows.length &&
+      (rows[rowIndex]?.artifact_path === root ||
+        rows[rowIndex]?.artifact_path?.startsWith(`${root}.part`))
+    ) {
+      const row = rows[rowIndex];
+      if (
+        !isPlainObject(row) ||
+        row.bundle_id !== BUNDLE_ID ||
+        !/^[0-9a-f]{64}$/u.test(row.content_sha256) ||
+        !Number.isSafeInteger(row.content_bytes) ||
+        row.content_bytes <= 0 ||
+        row.content_bytes > MAX_PART_BYTES
+      ) {
+        return false;
+      }
+      storage.push(row);
+      rowIndex += 1;
+    }
+    if (storage.length === 1 && storage[0].artifact_path === root) {
+      rootCount += 1;
+      if (
+        source.content_bytes > MAX_PART_BYTES ||
+        storage[0].content_sha256 !== source.content_sha256
+      ) {
+        return false;
+      }
+    } else {
+      chunkedCount += 1;
+      if (storage.length < 2 || source.content_bytes <= MAX_PART_BYTES) {
+        return false;
+      }
+      for (const [partIndex, row] of storage.entries()) {
+        if (
+          row.artifact_path !==
+          `${root}.part${String(partIndex + 1).padStart(4, "0")}`
+        ) {
+          return false;
+        }
+      }
+    }
+    if (
+      storage.reduce((sum, row) => sum + row.content_bytes, 0) !==
+      source.content_bytes
+    ) {
+      return false;
+    }
+  }
+  return rowIndex === rows.length && rootCount === 23 && chunkedCount === 11;
+}
+
+function exactStorageEvidence(evidence, expectation) {
+  const rows = evidence.full_json_storage_rows;
+  if (!Array.isArray(rows)) return false;
+  const normalizedRows = [];
+  for (const row of rows) {
+    if (!isPlainObject(row) || row.computed_sha256 !== row.content_sha256) {
+      return false;
+    }
+    const stored = { ...row };
+    delete stored.computed_sha256;
+    normalizedRows.push(stored);
+  }
+  return (
+    exactJson(evidence.candidate_bundle, expectation.candidate_bundle) &&
+    exactJson(normalizedRows, expectation.full_json_storage_rows) &&
+    exactJson(
+      evidence.full_json_source_digests,
+      expectation.full_json_source_digests,
+    )
+  );
+}
+
 function validateExpectation(expectation) {
   if (
     !isPlainObject(expectation) ||
@@ -310,7 +418,11 @@ function validateExpectation(expectation) {
       source_repo_commit: MIGRATION_SOURCE_COMMIT,
       release_order: 21,
     }) ||
-    !exactJson(expectation.full_json_artifact_paths, FULL_JSON_ARTIFACT_PATHS)
+    !exactJson(
+      expectation.full_json_artifact_paths,
+      FULL_JSON_ARTIFACT_PATHS,
+    ) ||
+    !exactStorageExpectation(expectation)
   ) {
     fail("WORLD_V2_FULL_READER_EXPECTATION_INVALID");
   }
@@ -318,7 +430,7 @@ function validateExpectation(expectation) {
 
 function validateEvidence(
   evidence,
-  { phase, ledger, includeFullReaderPolicy },
+  { phase, ledger, includeFullReaderPolicy, expectation },
 ) {
   if (
     evidence.phase !== phase ||
@@ -363,7 +475,7 @@ function validateEvidence(
       evidence.candidate_table_policies,
       includeFullReaderPolicy,
     ) ||
-    !exactJson(evidence.full_json_artifact_paths, FULL_JSON_ARTIFACT_PATHS)
+    !exactStorageEvidence(evidence, expectation)
   ) {
     fail("WORLD_V2_FULL_READER_EVIDENCE_MISMATCH");
   }
@@ -390,6 +502,7 @@ if (args[0] === "--preflight") {
     phase: "BEFORE_FULL_READER_RELEASE",
     ledger: expectation.before_ledger,
     includeFullReaderPolicy: false,
+    expectation,
   });
   await writeFile(
     path.resolve(outputPath),
@@ -431,11 +544,13 @@ if (args[0] === "--preflight") {
     phase: "BEFORE_FULL_READER_RELEASE",
     ledger: expectation.before_ledger,
     includeFullReaderPolicy: false,
+    expectation,
   });
   validateEvidence(after, {
     phase: "AFTER_FULL_READER_RELEASE",
     ledger: expectation.after_ledger,
     includeFullReaderPolicy: true,
+    expectation,
   });
 
   await writeFile(

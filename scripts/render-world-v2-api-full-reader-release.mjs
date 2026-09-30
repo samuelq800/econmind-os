@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 export const MIGRATION_ID = "0021_world_v2_official_full_data_reader";
 export const MIGRATION_PATH =
@@ -16,6 +17,8 @@ const READER_ROLE = "world_v2_api_reader";
 const LOGIN_ROLE = "world_v2_api_login";
 const FULL_READER_POLICY =
   "country_candidate_artifact_selected_full_source_server_read";
+export const MAX_PART_BYTES = 150_000;
+export const FULL_JSON_STORAGE_ROW_COUNT = 142;
 
 const FULL_JSON_SOURCE_FILES = Object.freeze([
   "assumptions.json",
@@ -87,6 +90,112 @@ function jsonLiteral(value) {
   return sqlLiteral(JSON.stringify(value));
 }
 
+function sha256(value) {
+  return createHash("sha256").update(value, "utf8").digest("hex");
+}
+
+// Mirrors storageArtifacts in the pinned World 0019 import renderer. The
+// verified loader supplies the exact UTF-8 source and hashes before splitting.
+function splitUtf8(content) {
+  const parts = [];
+  let current = "";
+  let bytes = 0;
+  for (const character of content) {
+    const size = Buffer.byteLength(character, "utf8");
+    if (bytes + size > MAX_PART_BYTES && current !== "") {
+      parts.push(current);
+      current = "";
+      bytes = 0;
+    }
+    current += character;
+    bytes += size;
+  }
+  if (current !== "") parts.push(current);
+  return parts;
+}
+
+async function verifiedStorageExpectation(sourceRoot, checksums) {
+  const loaderPath = path.join(
+    sourceRoot,
+    "scripts/balanced-country-candidate-intake.mjs",
+  );
+  const { loadBalancedCountryCandidate } = await import(
+    pathToFileURL(loaderPath).href
+  );
+  const bundle = await loadBalancedCountryCandidate(sourceRoot);
+  if (bundle.candidateId !== BUNDLE_ID || bundle.activationAllowed !== false) {
+    fail("WORLD_V2_FULL_READER_FROZEN_BUNDLE_INVALID");
+  }
+  const bySourcePath = new Map(
+    bundle.artifacts.map((artifact) => [artifact.sourcePath, artifact]),
+  );
+  const sources = [];
+  const storageRows = [];
+  for (const checksum of checksums) {
+    if (
+      !checksum.path.startsWith("data/") ||
+      !checksum.path.endsWith(".json")
+    ) {
+      continue;
+    }
+    const artifact = bySourcePath.get(checksum.path);
+    if (
+      !artifact ||
+      artifact.sha256 !== checksum.sha256 ||
+      Buffer.byteLength(artifact.content, "utf8") !== checksum.bytes
+    ) {
+      fail("WORLD_V2_FULL_READER_SOURCE_CONTENT_INVALID");
+    }
+    const parts = splitUtf8(artifact.content);
+    if (parts.length === 0 || parts.length > 9999) {
+      fail("WORLD_V2_FULL_READER_STORAGE_PARTS_INVALID");
+    }
+    sources.push({
+      artifact_path: artifact.path,
+      content_sha256: artifact.sha256,
+      content_bytes: checksum.bytes,
+    });
+    for (const [index, content] of parts.entries()) {
+      storageRows.push({
+        bundle_id: BUNDLE_ID,
+        artifact_path:
+          parts.length === 1
+            ? artifact.path
+            : `${artifact.path}.part${String(index + 1).padStart(4, "0")}`,
+        content_sha256: sha256(content),
+        content_bytes: Buffer.byteLength(content, "utf8"),
+      });
+    }
+  }
+  sources.sort((left, right) =>
+    left.artifact_path.localeCompare(right.artifact_path),
+  );
+  storageRows.sort((left, right) =>
+    left.artifact_path.localeCompare(right.artifact_path),
+  );
+  if (
+    sources.length !== FULL_JSON_ARTIFACT_PATHS.length ||
+    JSON.stringify(sources.map((source) => source.artifact_path)) !==
+      JSON.stringify(FULL_JSON_ARTIFACT_PATHS) ||
+    new Set(storageRows.map((row) => row.artifact_path)).size !==
+      storageRows.length ||
+    storageRows.length !== FULL_JSON_STORAGE_ROW_COUNT
+  ) {
+    fail("WORLD_V2_FULL_READER_STORAGE_SET_INVALID");
+  }
+  return {
+    bundle: {
+      bundle_id: BUNDLE_ID,
+      source_thread_id: bundle.sourceThread,
+      package_manifest_sha256: bundle.manifestSha256,
+      source_status: bundle.sourceStatus,
+      activation_allowed: false,
+    },
+    sources,
+    storageRows,
+  };
+}
+
 async function verifiedSource(sourceRoot) {
   const manifest = JSON.parse(
     await readFile(
@@ -141,15 +250,21 @@ async function verifiedSource(sourceRoot) {
     fail("WORLD_V2_FULL_READER_FROZEN_PATHSET_INVALID");
   }
 
+  const storage = await verifiedStorageExpectation(sourceRoot, checksums);
+
   return Object.freeze({
     manifest,
     migration,
     sql: sqlBuffer.toString("utf8"),
+    storage,
   });
 }
 
 function catalogEvidenceQuery(phase) {
   const roots = FULL_JSON_ARTIFACT_PATHS.map(sqlLiteral).join(", ");
+  const rootValues = FULL_JSON_ARTIFACT_PATHS.map(
+    (root) => `(${sqlLiteral(root)})`,
+  ).join(", ");
   return `select jsonb_build_object(
   'phase', ${sqlLiteral(phase)},
   'ledger_entries', coalesce((
@@ -245,11 +360,55 @@ function catalogEvidenceQuery(phase) {
         'country_candidate_artifact'
       )
   ), '[]'::jsonb),
-  'full_json_artifact_paths', coalesce((
-    select jsonb_agg(artifact_path order by artifact_path)
-    from world_v2.country_candidate_artifact
+  'candidate_bundle', (
+    select jsonb_build_object(
+      'bundle_id', bundle_id,
+      'source_thread_id', source_thread_id,
+      'package_manifest_sha256', package_manifest_sha256,
+      'source_status', source_status,
+      'activation_allowed', activation_allowed
+    ) from world_v2.country_candidate_bundle
     where bundle_id = ${sqlLiteral(BUNDLE_ID)}
-      and artifact_path in (${roots})
+  ),
+  'full_json_storage_rows', coalesce((
+    select jsonb_agg(jsonb_build_object(
+      'bundle_id', bundle_id,
+      'artifact_path', artifact_path,
+      'content_sha256', content_sha256,
+      'computed_sha256', world_v2.authoritative_sha256(content_utf8),
+      'content_bytes', octet_length(content_utf8)
+    ) order by artifact_path)
+    from world_v2.country_candidate_artifact artifact
+    where artifact.bundle_id = ${sqlLiteral(BUNDLE_ID)}
+      and (artifact.artifact_path in (${roots}) or exists (
+        select 1 from (values ${rootValues}) as source(artifact_path)
+        where left(artifact.artifact_path, length(source.artifact_path) + 5)
+          = source.artifact_path || '.part'
+      ))
+  ), '[]'::jsonb),
+  'full_json_source_digests', coalesce((
+    select jsonb_agg(jsonb_build_object(
+      'artifact_path', source.artifact_path,
+      'content_sha256', (
+        select world_v2.authoritative_sha256(
+          string_agg(artifact.content_utf8, '' order by artifact.artifact_path)
+        )
+        from world_v2.country_candidate_artifact artifact
+        where artifact.bundle_id = ${sqlLiteral(BUNDLE_ID)}
+          and (artifact.artifact_path = source.artifact_path
+            or left(artifact.artifact_path, length(source.artifact_path) + 5)
+              = source.artifact_path || '.part')
+      ),
+      'content_bytes', (
+        select sum(octet_length(artifact.content_utf8))
+        from world_v2.country_candidate_artifact artifact
+        where artifact.bundle_id = ${sqlLiteral(BUNDLE_ID)}
+          and (artifact.artifact_path = source.artifact_path
+            or left(artifact.artifact_path, length(source.artifact_path) + 5)
+              = source.artifact_path || '.part')
+      )
+    ) order by source.artifact_path)
+    from (values ${rootValues}) as source(artifact_path)
   ), '[]'::jsonb)
 ) as evidence;`;
 }
@@ -297,6 +456,9 @@ export async function renderWorldV2ApiFullReaderRelease(sourceRoot) {
       after_ledger: afterLedger,
       before_ledger: beforeLedger,
       full_json_artifact_paths: FULL_JSON_ARTIFACT_PATHS,
+      candidate_bundle: release.storage.bundle,
+      full_json_source_digests: release.storage.sources,
+      full_json_storage_rows: release.storage.storageRows,
       migration_id: MIGRATION_ID,
       migration_sha256: MIGRATION_SHA256,
       migration_source_commit: MIGRATION_SOURCE_COMMIT,
