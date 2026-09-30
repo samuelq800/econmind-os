@@ -1,4 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -66,6 +67,69 @@ const FULL_JSON_ARTIFACT_PATHS = [
 const FULL_READER_CHUNK_PATTERN = `^(${FULL_JSON_ARTIFACT_PATHS.join(
   "|",
 )})\\.part[0-9]{4}$`;
+const PART_COUNTS = new Map([
+  ["deposits.json", 2],
+  ["domestic-access.json", 4],
+  ["facilities.json", 13],
+  ["facility-map-links.json", 3],
+  ["geography.json", 57],
+  ["nodes.json", 2],
+  ["production-plans.json", 2],
+  ["regions.json", 5],
+  ["stocks.json", 3],
+  ["trade-plans.json", 4],
+  ["transport-routes.json", 24],
+]);
+
+function sha256(value: string) {
+  return createHash("sha256").update(value).digest("hex");
+}
+
+function storageExpectation() {
+  const sources = [];
+  const rows = [];
+  for (const root of FULL_JSON_ARTIFACT_PATHS) {
+    const sourcePath = Buffer.from(root.slice(7), "hex").toString("utf8");
+    const filename = sourcePath.slice("data/".length);
+    const partCount = PART_COUNTS.get(filename) ?? 1;
+    const partBytes = partCount === 1 ? 100 : 100_000;
+    sources.push({
+      artifact_path: root,
+      content_sha256:
+        partCount === 1
+          ? sha256(`${sourcePath}:1`)
+          : sha256(`full:${sourcePath}`),
+      content_bytes: partCount * partBytes,
+    });
+    for (let index = 1; index <= partCount; index += 1) {
+      rows.push({
+        bundle_id: BUNDLE_ID,
+        artifact_path:
+          partCount === 1
+            ? root
+            : `${root}.part${String(index).padStart(4, "0")}`,
+        content_sha256: sha256(`${sourcePath}:${index}`),
+        content_bytes: partBytes,
+      });
+    }
+  }
+  rows.sort((left, right) =>
+    left.artifact_path.localeCompare(right.artifact_path),
+  );
+  return {
+    candidate_bundle: {
+      bundle_id: BUNDLE_ID,
+      source_thread_id: "fixture-source-thread",
+      package_manifest_sha256: sha256("fixture-manifest"),
+      source_status: "IMPLEMENTED_UNVERIFIED_CANDIDATE",
+      activation_allowed: false,
+    },
+    full_json_source_digests: sources,
+    full_json_storage_rows: rows,
+  };
+}
+
+const STORAGE = storageExpectation();
 
 function baselineLedger() {
   return Array.from({ length: 20 }, (_, index) => ({
@@ -204,7 +268,14 @@ function evidence(
           ],
           table_privileges: [],
           candidate_table_policies: policies(includeFullReaderPolicy),
-          full_json_artifact_paths: FULL_JSON_ARTIFACT_PATHS,
+          candidate_bundle: structuredClone(STORAGE.candidate_bundle),
+          full_json_source_digests: structuredClone(
+            STORAGE.full_json_source_digests,
+          ),
+          full_json_storage_rows: STORAGE.full_json_storage_rows.map((row) => ({
+            ...row,
+            computed_sha256: row.content_sha256,
+          })),
         },
       },
     ],
@@ -241,10 +312,16 @@ describe("World V2 full-data API reader publisher", () => {
     expect(renderer).toContain(MIGRATION_SOURCE_COMMIT);
     expect(renderer).toContain("PREVIOUS_MIGRATION_COUNT = 20");
     expect(verifier).toContain("WORLD_V2_FULL_READER_EVIDENCE_MISMATCH");
-    expect(verifier).toContain("full_json_artifact_paths");
+    expect(verifier).toContain("full_json_storage_rows");
   });
 
-  it("accepts only exact before-and-after ledger, ACL, policy, and root evidence", () => {
+  it("accepts the 23 root and 119 chunk rows with exact ledger, ACL, and policy evidence", () => {
+    expect(STORAGE.full_json_storage_rows).toHaveLength(142);
+    expect(
+      STORAGE.full_json_storage_rows.filter((row) =>
+        row.artifact_path.includes(".part"),
+      ),
+    ).toHaveLength(119);
     const outputRoot = mkdtempSync(
       path.join(tmpdir(), "world-v2-api-full-reader-"),
     );
@@ -282,6 +359,7 @@ describe("World V2 full-data API reader publisher", () => {
           before_ledger: beforeLedger,
           after_ledger: afterLedger,
           full_json_artifact_paths: FULL_JSON_ARTIFACT_PATHS,
+          ...STORAGE,
           migration_id: MIGRATION_ID,
           migration_sha256: MIGRATION_SHA256,
           migration_source_commit: MIGRATION_SOURCE_COMMIT,
@@ -312,6 +390,129 @@ describe("World V2 full-data API reader publisher", () => {
         status: "WORLD_V2_API_FULL_READER_RELEASE_VERIFIED",
         authority: "SERVER_ONLY_INACTIVE_CANDIDATE_FULL_DATA_READ",
       });
+
+      const geographyRoot = `source/${Buffer.from(
+        "data/geography.json",
+        "utf8",
+      ).toString("hex")}`;
+      const storageCases: Array<{
+        name: string;
+        mutate: (value: ReturnType<typeof evidence>) => void;
+      }> = [
+        {
+          name: "missing part",
+          mutate: (value) => {
+            const rows = value.rows[0].evidence.full_json_storage_rows;
+            rows.splice(
+              rows.findIndex(
+                (row) => row.artifact_path === `${geographyRoot}.part0002`,
+              ),
+              1,
+            );
+          },
+        },
+        {
+          name: "duplicate part",
+          mutate: (value) => {
+            const rows = value.rows[0].evidence.full_json_storage_rows;
+            const part = rows.find(
+              (row) => row.artifact_path === `${geographyRoot}.part0002`,
+            );
+            if (!part) throw new Error("missing part fixture");
+            part.artifact_path = `${geographyRoot}.part0001`;
+          },
+        },
+        {
+          name: "out-of-order part",
+          mutate: (value) => {
+            value.rows[0].evidence.full_json_storage_rows.reverse();
+          },
+        },
+        {
+          name: "extra part",
+          mutate: (value) => {
+            const rows = value.rows[0].evidence.full_json_storage_rows;
+            const part = rows.find(
+              (row) => row.artifact_path === `${geographyRoot}.part0057`,
+            );
+            if (!part) throw new Error("missing part fixture");
+            rows.push({ ...part, artifact_path: `${geographyRoot}.part0058` });
+            rows.sort((left, right) =>
+              left.artifact_path.localeCompare(right.artifact_path),
+            );
+          },
+        },
+        {
+          name: "wrong bundle",
+          mutate: (value) => {
+            value.rows[0].evidence.full_json_storage_rows[0]!.bundle_id =
+              "OTHER_BUNDLE";
+          },
+        },
+        {
+          name: "wrong stored hash",
+          mutate: (value) => {
+            value.rows[0].evidence.full_json_storage_rows[0]!.content_sha256 =
+              sha256("wrong");
+          },
+        },
+        {
+          name: "wrong reconstructed hash",
+          mutate: (value) => {
+            value.rows[0].evidence.full_json_source_digests[0]!.content_sha256 =
+              sha256("wrong");
+          },
+        },
+        {
+          name: "root and parts together",
+          mutate: (value) => {
+            const rows = value.rows[0].evidence.full_json_storage_rows;
+            const part = rows.find(
+              (row) => row.artifact_path === `${geographyRoot}.part0001`,
+            );
+            if (!part) throw new Error("missing part fixture");
+            rows.push({ ...part, artifact_path: geographyRoot });
+            rows.sort((left, right) =>
+              left.artifact_path.localeCompare(right.artifact_path),
+            );
+          },
+        },
+        {
+          name: "wrong bundle metadata",
+          mutate: (value) => {
+            value.rows[0].evidence.candidate_bundle.bundle_id = "OTHER_BUNDLE";
+          },
+        },
+        {
+          name: "wrong UTF-8 byte count",
+          mutate: (value) => {
+            value.rows[0].evidence.full_json_storage_rows[0]!.content_bytes += 1;
+          },
+        },
+      ];
+      for (const testCase of storageCases) {
+        const invalidStorage = evidence(
+          "AFTER_FULL_READER_RELEASE",
+          afterLedger,
+          true,
+        );
+        testCase.mutate(invalidStorage);
+        writeFileSync(afterPath, JSON.stringify(invalidStorage));
+        expect(
+          spawnSync(
+            process.execPath,
+            [
+              "scripts/verify-world-v2-api-full-reader-release.mjs",
+              beforePath,
+              afterPath,
+              expectationPath,
+              outputPath,
+            ],
+            { stdio: "pipe" },
+          ).status,
+          testCase.name,
+        ).not.toBe(0);
+      }
 
       const invalidChunkGrouping = evidence(
         "AFTER_FULL_READER_RELEASE",
@@ -419,10 +620,10 @@ describe("World V2 full-data API reader publisher", () => {
         afterLedger,
         true,
       );
-      invalidAfter.rows[0].evidence.full_json_artifact_paths = [
-        ...FULL_JSON_ARTIFACT_PATHS,
-        "source/not-reviewed.json",
-      ];
+      invalidAfter.rows[0].evidence.full_json_storage_rows.push({
+        ...invalidAfter.rows[0].evidence.full_json_storage_rows[0],
+        artifact_path: "source/not-reviewed.json",
+      });
       writeFileSync(afterPath, JSON.stringify(invalidAfter));
       expect(
         spawnSync(
