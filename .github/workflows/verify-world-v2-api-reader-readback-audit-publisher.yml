@@ -1,0 +1,31 @@
+name: Verify World V2 reader readback audit publisher
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/e-reader-readback-audit-publisher
+    paths:
+      - .github/workflows/audit-world-v2-api-reader-readback.yml
+      - .github/workflows/verify-world-v2-api-reader-readback-audit-publisher.yml
+      - scripts/verify-world-v2-api-reader-readback-audit.mjs
+      - tests/world-v2-api-reader-readback-audit-publisher.test.ts
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.20.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec vitest run tests/world-v2-api-reader-readback-audit-publisher.test.ts
