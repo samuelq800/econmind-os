@@ -23,7 +23,7 @@ jobs:
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
-      WORLD_V2_API_READER_SOURCE_COMMIT: 0f78abec88018430ec82ec6a647f049a176d6cda
+      WORLD_V2_API_READER_SOURCE_COMMIT: 701784a3d9c3c8add16baf9c59b51c54182671fe
     steps:
       - uses: actions/checkout@v4
       - name: Verify fixed target and explicit authorization

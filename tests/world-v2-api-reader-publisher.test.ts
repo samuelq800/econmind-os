@@ -108,6 +108,19 @@ function response() {
   };
 }
 
+function jsonbSerializedResponse() {
+  const reorder = (value: unknown): unknown => {
+    if (Array.isArray(value)) return value.map(reorder);
+    if (value === null || typeof value !== "object") return value;
+    return Object.fromEntries(
+      Object.entries(value)
+        .reverse()
+        .map(([key, child]) => [key, reorder(child)]),
+    );
+  };
+  return reorder(response());
+}
+
 describe("World V2 selected-country API reader publisher", () => {
   it("uses one confirmed, fixed-target, fail-closed Management API request", () => {
     expect(workflow).toContain("workflow_dispatch:");
@@ -118,7 +131,7 @@ describe("World V2 selected-country API reader publisher", () => {
     expect(workflow).toContain(
       'test "$SUPABASE_PROJECT_REF" = "vimksjrhaxdpnkvgsavz"',
     );
-    expect(workflow).toContain("0f78abec88018430ec82ec6a647f049a176d6cda");
+    expect(workflow).toContain("701784a3d9c3c8add16baf9c59b51c54182671fe");
     expect(workflow.match(/database\/query/g)).toHaveLength(1);
     expect(workflow).toContain("write-world-v2-release-unknown.mjs");
     expect(unknownOutcomeWriter).toContain("WORLD_V2_RELEASE_UNKNOWN");
@@ -151,10 +164,60 @@ describe("World V2 selected-country API reader publisher", () => {
         authority: "SERVER_ONLY_INACTIVE_CANDIDATE_READ",
       });
 
+      writeFileSync(responsePath, JSON.stringify(jsonbSerializedResponse()));
+      expect(
+        execFileSync(process.execPath, [
+          "scripts/verify-world-v2-api-reader-release.mjs",
+          responsePath,
+          outputPath,
+        ]),
+      ).toBeDefined();
+
       const invalid = response();
       invalid.rows[0].evidence.selected_source_policies[0].table =
         "country_candidate_profile";
       writeFileSync(responsePath, JSON.stringify(invalid));
+      expect(
+        spawnSync(
+          process.execPath,
+          [
+            "scripts/verify-world-v2-api-reader-release.mjs",
+            responsePath,
+            outputPath,
+          ],
+          { stdio: "pipe" },
+        ).status,
+      ).not.toBe(0);
+
+      const unexpectedRoleField = response();
+      Object.assign(unexpectedRoleField.rows[0].evidence.reader_role, {
+        unexpected: true,
+      });
+      writeFileSync(responsePath, JSON.stringify(unexpectedRoleField));
+      expect(
+        spawnSync(
+          process.execPath,
+          [
+            "scripts/verify-world-v2-api-reader-release.mjs",
+            responsePath,
+            outputPath,
+          ],
+          { stdio: "pipe" },
+        ).status,
+      ).not.toBe(0);
+
+      const extraPolicy = response();
+      extraPolicy.rows[0].evidence.selected_source_policies.push({
+        schema: "world_v2",
+        table: "country_candidate_artifact",
+        name: "country_candidate_artifact_unexpected_reader_scope",
+        roles: ["world_v2_api_reader"],
+        command: "SELECT",
+        permissive: "PERMISSIVE",
+        qual: "true",
+        with_check: null,
+      });
+      writeFileSync(responsePath, JSON.stringify(extraPolicy));
       expect(
         spawnSync(
           process.execPath,

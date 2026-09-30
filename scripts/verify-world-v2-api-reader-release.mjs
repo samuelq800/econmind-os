@@ -69,17 +69,41 @@ function isPlainObject(value) {
 }
 
 function exactJson(actual, expected) {
-  return JSON.stringify(actual) === JSON.stringify(expected);
+  if (Object.is(actual, expected)) return true;
+  if (
+    typeof actual !== typeof expected ||
+    actual === null ||
+    expected === null
+  ) {
+    return false;
+  }
+  if (Array.isArray(actual) || Array.isArray(expected)) {
+    return (
+      Array.isArray(actual) &&
+      Array.isArray(expected) &&
+      actual.length === expected.length &&
+      actual.every((value, index) => exactJson(value, expected[index]))
+    );
+  }
+  if (!isPlainObject(actual) || !isPlainObject(expected)) return false;
+  const actualKeys = Object.keys(actual).sort();
+  const expectedKeys = Object.keys(expected).sort();
+  return (
+    actualKeys.length === expectedKeys.length &&
+    actualKeys.every(
+      (key, index) =>
+        key === expectedKeys[index] && exactJson(actual[key], expected[key]),
+    )
+  );
 }
 
 function leastPrivilegeRole(value) {
-  return (
-    isPlainObject(value) &&
-    value.can_login === false &&
-    value.can_bypass_rls === false &&
-    value.is_superuser === false &&
-    value.inherits_privileges === false
-  );
+  return exactJson(value, {
+    can_login: false,
+    can_bypass_rls: false,
+    is_superuser: false,
+    inherits_privileges: false,
+  });
 }
 
 function normalizedPolicyQual(value) {
