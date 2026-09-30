@@ -154,10 +154,14 @@ const evidence = rows(response)[0]?.evidence;
 if (
   !isPlainObject(evidence) ||
   evidence.phase !== "READBACK_AUDIT" ||
-  evidence.migration_id !== MIGRATION_ID ||
-  evidence.artifact_sha256 !== MIGRATION_SHA256 ||
-  evidence.source_repo_commit !== MIGRATION_SOURCE_COMMIT ||
-  Number(evidence.release_order) !== 20 ||
+  !exactJson(evidence.ledger_entries, [
+    {
+      migration_id: MIGRATION_ID,
+      artifact_sha256: MIGRATION_SHA256,
+      source_repo_commit: MIGRATION_SOURCE_COMMIT,
+      release_order: 20,
+    },
+  ]) ||
   !exactJson(evidence.reader_role, {
     can_login: false,
     can_bypass_rls: false,

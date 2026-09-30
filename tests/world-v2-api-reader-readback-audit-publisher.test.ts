@@ -23,11 +23,15 @@ function response() {
       {
         evidence: {
           phase: "READBACK_AUDIT",
-          migration_id: "0020_world_v2_official_country_reader",
-          artifact_sha256:
-            "083e06aca86763e4bc32a34347c1a86b26aa910f3c6a191b9393021347211618",
-          source_repo_commit: "f3413bae195b75e80d28d6afa314ca0e394bdfbc",
-          release_order: 20,
+          ledger_entries: [
+            {
+              migration_id: "0020_world_v2_official_country_reader",
+              artifact_sha256:
+                "083e06aca86763e4bc32a34347c1a86b26aa910f3c6a191b9393021347211618",
+              source_repo_commit: "f3413bae195b75e80d28d6afa314ca0e394bdfbc",
+              release_order: 20,
+            },
+          ],
           reader_role: {
             can_login: false,
             can_bypass_rls: false,
@@ -176,7 +180,7 @@ describe("World V2 reader readback audit publisher", () => {
     expect(workflow).toContain(
       'test "$SUPABASE_PROJECT_REF" = "vimksjrhaxdpnkvgsavz"',
     );
-    expect(workflow).toContain("6db99adebaab33c43f95b065b5dd9eb4d5f1739b");
+    expect(workflow).toContain("d3884d81435816cedd6f8a0a46510dfd49c1ba5e");
     expect(workflow.match(/database\/query/g)).toHaveLength(1);
     expect(workflow).toContain("verify-world-v2-api-reader-readback-audit.mjs");
     expect(workflow).toContain("write-world-v2-release-unknown.mjs");
@@ -214,6 +218,30 @@ describe("World V2 reader readback audit publisher", () => {
       });
 
       expect(verifies(jsonbSerializedResponse(), outputRoot).status).toBe(0);
+
+      const missingLedger = response();
+      missingLedger.rows[0].evidence.ledger_entries = [];
+      expect(verifies(missingLedger, outputRoot).status).not.toBe(0);
+
+      const wrongLedger = response();
+      wrongLedger.rows[0].evidence.ledger_entries[0].artifact_sha256 =
+        "0000000000000000000000000000000000000000000000000000000000000000";
+      expect(verifies(wrongLedger, outputRoot).status).not.toBe(0);
+
+      const wrongSourceLedger = response();
+      wrongSourceLedger.rows[0].evidence.ledger_entries[0].source_repo_commit =
+        "0000000000000000000000000000000000000000";
+      expect(verifies(wrongSourceLedger, outputRoot).status).not.toBe(0);
+
+      const wrongOrderLedger = response();
+      wrongOrderLedger.rows[0].evidence.ledger_entries[0].release_order = 21;
+      expect(verifies(wrongOrderLedger, outputRoot).status).not.toBe(0);
+
+      const duplicateLedger = response();
+      duplicateLedger.rows[0].evidence.ledger_entries.push({
+        ...duplicateLedger.rows[0].evidence.ledger_entries[0],
+      });
+      expect(verifies(duplicateLedger, outputRoot).status).not.toBe(0);
 
       const thirdMembership = response();
       thirdMembership.rows[0].evidence.reader_memberships.push({
