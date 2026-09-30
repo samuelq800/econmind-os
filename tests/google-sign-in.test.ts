@@ -7,6 +7,7 @@ const dialog = readFileSync("components/auth/auth-dialog.tsx", "utf8");
 const provider = readFileSync("components/auth/auth-provider.tsx", "utf8");
 const onboarding = readFileSync("components/auth/account-onboarding.tsx", "utf8");
 const shell = readFileSync("components/layout/application-shell.tsx", "utf8");
+const navbar = readFileSync("components/layout/navbar.tsx", "utf8");
 
 describe("Google sign-in with the existing Supabase account", () => {
   it("returns only to the current site with the configured base path", () => {
@@ -37,6 +38,14 @@ describe("Google sign-in with the existing Supabase account", () => {
     expect(provider).toContain('.is("display_name", null)');
     expect(provider).toContain('.is("avatar_url", null)');
     expect(provider).toContain('data?.account_status === "suspended"');
+  });
+
+  it("shows the registered profile name in the account card instead of the email", () => {
+    expect(provider).toContain("setProfileDisplayName(data.display_name?.trim() || missing.displayName || null)");
+    expect(navbar).toContain('const accountName = profileDisplayName || "My account"');
+    expect(navbar).toContain('<span className="truncate">{accountName}</span>');
+    expect(navbar).not.toContain("user.email");
+    expect(navbar).not.toContain("user?.email");
   });
 
   it("requires explicit initial acknowledgement for unfinished accounts without repeating valid signup consent", () => {
