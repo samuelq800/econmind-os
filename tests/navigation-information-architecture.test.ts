@@ -57,6 +57,18 @@ describe("Phase 2 information architecture", () => {
     expect(footer).toContain("primaryLinks");
   });
 
+  it("shows Competition as a first-level destination with only essential sublinks", () => {
+    const competition = NAVIGATION_SECTIONS.find((section) => section.id === "competition");
+    expect(competition?.href).toBe("/competition");
+    expect(competition?.children.map((item) => item.href)).toEqual([
+      "/competition/profile",
+      "/competition/lobby",
+      "/competition/team",
+    ]);
+    expect(navbar).toContain('"season1", "competition"');
+    expect(isNavigationSectionActive(competition!, "/competition/lobby/teams")).toBe(true);
+  });
+
   it("resolves specific Team routes before the broad League root", () => {
     const league = NAVIGATION_SECTIONS.find((section) => section.id === "league");
     const teams = NAVIGATION_SECTIONS.find((section) => section.id === "teams");

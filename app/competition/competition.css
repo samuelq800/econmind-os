@@ -173,6 +173,34 @@
   color: #a4bcbd;
   margin-top: 4px;
 }
+.cm-required {
+  color: #ffb3aa;
+  font-weight: 800;
+}
+.cm-school-note {
+  margin: 0;
+  color: #a4bcbd;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.cm-plain-label {
+  color: #cde2e0;
+  font-size: 13px;
+  font-weight: 700;
+}
+.cm-lobby-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin-top: 18px;
+}
+.cm-lobby-shortcuts a {
+  color: #79ddd1;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .cm-form {
   display: grid;
   gap: 24px;
@@ -613,6 +641,50 @@
 .cm-drawer li {
   color: #b6d0ce;
   line-height: 1.6;
+}
+.cm-player-profile {
+  margin-top: 22px;
+}
+.cm-detail-group {
+  padding: 20px 0;
+  border-top: 1px solid #315b62;
+}
+.cm-detail-group h3 {
+  margin: 0 0 14px;
+  color: #e8f6f3;
+  font-size: 17px;
+}
+.cm-detail-group h4 {
+  margin: 17px 0 8px;
+  color: #aee9df;
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.cm-detail-group dl,
+.cm-detail-records {
+  display: grid;
+  gap: 8px;
+}
+.cm-detail-records dl {
+  padding: 12px;
+  border: 1px solid #315b62;
+  border-radius: 10px;
+  background: rgba(10, 43, 50, .75);
+}
+.cm-detail-row {
+  display: grid;
+  grid-template-columns: minmax(110px, 38%) minmax(0, 1fr);
+  gap: 12px;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.cm-detail-row dt { color: #8fb1b1; }
+.cm-detail-row dd { color: #e6f4f0; overflow-wrap: anywhere; }
+.cm-profile-note {
+  margin: 8px 0;
+  color: #e2c889 !important;
+  font-size: 12px;
 }
 .cm-drawer form {
   display: grid;
