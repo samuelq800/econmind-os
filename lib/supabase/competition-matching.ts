@@ -60,10 +60,17 @@ export type Player = {
   curriculum: string;
   bio: string;
   strengths: string[];
+  needs?: string[];
+  preferences?: Record<string, unknown>;
   target: string;
   academicDetails: {
+    country?: string | null;
+    location?: string | null;
+    grade?: string | null;
+    graduationYear?: number | null;
     gpa: number | null;
     gpaScale: string | null;
+    gpaSystem?: string | null;
     economics: Record<string, unknown>;
     englishTests: unknown[];
     standardizedTests: unknown[];
@@ -109,6 +116,7 @@ export type CompetitionHome = {
     name: string;
     school?: string;
     city?: string;
+    area?: string;
     grade?: string;
     avatar?: string;
   };
@@ -143,6 +151,16 @@ export const getCompetitionHome = (
     p_division: division ?? null,
     p_offset: offset,
     p_query: query,
+  });
+export const getCompetitionPlayerDetail = (
+  userId: string,
+  competition: string,
+  division: string,
+) =>
+  call<Player>("get_competition_player_detail", {
+    p_target: userId,
+    p_competition: competition,
+    p_division: division,
   });
 export const saveAcademicProfile = (data: AcademicProfile) =>
   call<void>("save_competition_academic_profile", { p_data: data });

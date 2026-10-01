@@ -114,12 +114,8 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
     id: "competition", label: "Competition", href: "/competition", system: "shared",
     description: "NEC and IEO team matching, scouting and team rooms.",
     children: [
-      { href: "/competition", label: "Matching entry", system: "shared", description: "Enter your latest NEC or IEO lobby." },
       { href: "/competition/profile", label: "Academic Profile", system: "shared", description: "Your reusable academic profile and privacy settings." },
-      { href: "/competition/select", label: "Choose competition", system: "shared", description: "Create a NEC or IEO matching profile." },
-      { href: "/competition/lobby/teams", label: "Find teams", system: "shared" },
-      { href: "/competition/lobby/players", label: "Scout players", system: "shared" },
-      { href: "/competition/lobby/requests", label: "Requests", system: "shared" },
+      { href: "/competition/lobby", label: "Matching lobby", system: "shared", description: "Find teams, players and your latest activity." },
       { href: "/competition/team", label: "My team", system: "shared" },
     ],
   },

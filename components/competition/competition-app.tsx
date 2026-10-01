@@ -24,6 +24,8 @@ import {
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { competitionFit as fit } from "@/lib/competition/fit";
+import { prefillAcademicSchoolLocation } from "@/lib/competition/school-prefill";
+import { getMyMemberIdentity } from "@/lib/supabase/member-identity";
 import {
   addCompetitionNeed,
   addCompetitionPlaceholder,
@@ -32,6 +34,7 @@ import {
   createCompetitionTeam,
   getCompetitionHome,
   getCompetitionLounge,
+  getCompetitionPlayerDetail,
   inviteCompetitionPlayer,
   leaveCompetitionTeam,
   markCompetitionNotificationsRead,
@@ -96,8 +99,6 @@ const areaLinks = [
   ["/competition/lobby/teams", "Teams"],
   ["/competition/lobby/players", "Players"],
   ["/competition/team", "My Team"],
-  ["/competition/lobby/requests", "Requests"],
-  ["/competition/lobby/lounge", "Lounge"],
 ];
 
 function message(error: unknown) {
@@ -117,13 +118,15 @@ function Tags({ values }: { values: string[] }) {
 function Field({
   label,
   children,
+  required = false,
 }: {
   label: string;
   children: React.ReactNode;
+  required?: boolean;
 }) {
   return (
     <label className="cm-field">
-      <span>{label}</span>
+      <span>{label}{required && <span className="cm-required" aria-label="required"> *</span>}</span>
       {children}
     </label>
   );
@@ -228,9 +231,8 @@ function AcademicRecordEditor({
         {kind === "competition_records" && (
           <>
             {draft.name === "Other" && (
-              <Field label="Competition name">
+              <Field label="Competition name" required>
                 <input
-                  required
                   value={draft.customName ?? ""}
                   onChange={(event) =>
                     setDraft({ ...draft, customName: event.target.value })
@@ -347,6 +349,7 @@ function AcademicRecordEditor({
       <Button
         type="button"
         variant="secondary"
+        disabled={draft.name === "Other" && !draft.customName?.trim()}
         onClick={() => {
           onChange([
             ...records,
@@ -403,6 +406,9 @@ export function CompetitionApp() {
   const [offset, setOffset] = useState(0);
   const [chosenTeam, setChosenTeam] = useState<Team | null>(null);
   const [chosenPlayer, setChosenPlayer] = useState<Player | null>(null);
+  const [playerDetail, setPlayerDetail] = useState<Player | null>(null);
+  const [playerDetailLoading, setPlayerDetailLoading] = useState(false);
+  const [playerDetailError, setPlayerDetailError] = useState("");
   const [requestMessage, setRequestMessage] = useState("");
   const [messageDraft, setMessageDraft] = useState("");
   const [placeholderName, setPlaceholderName] = useState("");
@@ -419,19 +425,23 @@ export function CompetitionApp() {
       if (!user) return;
       const request = ++latestRequest.current;
       try {
-        const next = await getCompetitionHome(
-          competition,
-          division,
-          page,
-          query,
-        );
+        const [next, member] = await Promise.all([
+          getCompetitionHome(competition, division, page, query),
+          getMyMemberIdentity().catch(() => null),
+        ]);
         if (request !== latestRequest.current) return;
-        setData(next);
-        setAcademic(
-          next.academic
-            ? { ...emptyAcademic, ...next.academic }
-            : { ...emptyAcademic, location: next.identity?.city ?? "" },
-        );
+        const school = member?.school;
+        const identity = {
+          ...next.identity,
+          school: school?.name ?? next.identity?.school,
+          city: school?.city ?? next.identity?.city,
+          area: school?.area ?? undefined,
+        };
+        setData({ ...next, identity });
+        setAcademic(prefillAcademicSchoolLocation(
+          next.academic ? { ...emptyAcademic, ...next.academic } : emptyAcademic,
+          { city: identity.city, area: identity.area },
+        ));
         setError("");
       } catch (caught) {
         if (request !== latestRequest.current) return;
@@ -464,6 +474,23 @@ export function CompetitionApp() {
   }, [search]);
   const activeCompetition = data?.context?.competition;
   const activeDivision = data?.context?.division;
+  const chosenPlayerId = chosenPlayer?.id;
+  useEffect(() => {
+    if (!chosenPlayerId || !activeCompetition || !activeDivision) return;
+    let active = true;
+    queueMicrotask(() => {
+      if (active) {
+        setPlayerDetail(null);
+        setPlayerDetailLoading(true);
+        setPlayerDetailError("");
+      }
+    });
+    void getCompetitionPlayerDetail(chosenPlayerId, activeCompetition, activeDivision)
+      .then((detail) => { if (active) setPlayerDetail(detail); })
+      .catch((caught) => { if (active) setPlayerDetailError(message(caught)); })
+      .finally(() => { if (active) setPlayerDetailLoading(false); });
+    return () => { active = false; };
+  }, [chosenPlayerId, activeCompetition, activeDivision]);
   useEffect(() => {
     if (
       !user ||
@@ -577,6 +604,7 @@ export function CompetitionApp() {
 
   const context = data?.context;
   const myTeam = data?.myTeam;
+  const selectedPlayer = playerDetail?.id === chosenPlayer?.id ? playerDetail : chosenPlayer;
   const preferredCurriculum =
     typeof context?.preferences?.curriculum === "string"
       ? context.preferences.curriculum
@@ -833,6 +861,7 @@ export function CompetitionApp() {
                 <strong>{data.identity?.name || "Member"}</strong>
                 <span>
                   {data.identity?.school || "No school selected"} ·{" "}
+                  {[data.identity?.city, data.identity?.area].filter(Boolean).join(" · ") || "Location not verified"} ·{" "}
                   {data.identity?.grade || "Grade not set"} · Existing EconMind
                   identity
                 </span>
@@ -854,8 +883,18 @@ export function CompetitionApp() {
               className="cm-form"
               onSubmit={(event) => void saveAcademic(event)}
             >
+              {data.identity?.school && (
+                <p className="cm-school-note">School name and verified location are loaded from your EconMind registration. Missing location details can be entered below.</p>
+              )}
               <div className="cm-form-grid">
-                <Field label="Country / region">
+                <Field label="Registered school" required>
+                  <input
+                    readOnly
+                    value={data.identity?.school ?? ""}
+                    placeholder="Select a school in your EconMind profile"
+                  />
+                </Field>
+                <Field label="School country / region" required>
                   <input
                     required
                     maxLength={80}
@@ -866,7 +905,7 @@ export function CompetitionApp() {
                     placeholder="Country or region"
                   />
                 </Field>
-                <Field label="Location / city">
+                <Field label="School location / city" required>
                   <input
                     required
                     maxLength={120}
@@ -877,7 +916,7 @@ export function CompetitionApp() {
                     placeholder="City, region"
                   />
                 </Field>
-                <Field label="Curriculum">
+                <Field label="Curriculum" required>
                   <select
                     required
                     value={academic.curriculum}
@@ -1178,6 +1217,7 @@ export function CompetitionApp() {
                 <button
                   key={competition}
                   type="button"
+                  aria-pressed={selectedCompetition === competition}
                   className={
                     selectedCompetition === competition ? "selected" : ""
                   }
@@ -1188,7 +1228,7 @@ export function CompetitionApp() {
                     );
                   }}
                 >
-                  <span>COMPETITION</span>
+                  <span>COMPETITION <span className="cm-required">*</span></span>
                   <strong>{competition}</strong>
                   <small>
                     {competition === "NEC"
@@ -1203,8 +1243,9 @@ export function CompetitionApp() {
               onSubmit={(event) => void saveContext(event)}
             >
               <div className="cm-form-grid">
-                <Field label="Division">
+                <Field label="Division" required>
                   <select
+                    required
                     value={selectedDivision}
                     onChange={(event) =>
                       setSelectedDivision(event.target.value)
@@ -1219,8 +1260,9 @@ export function CompetitionApp() {
                       ))}
                   </select>
                 </Field>
-                <Field label="I am">
+                <Field label="I am" required>
                   <select
+                    required
                     value={status}
                     onChange={(event) => setStatus(event.target.value)}
                   >
@@ -1432,13 +1474,20 @@ export function CompetitionApp() {
                 >
                   Scout the network <ChevronRight size={16} />
                 </Link>
+                <div className="cm-lobby-shortcuts">
+                  <Link href="/competition/lobby/requests">Requests {pending.length > 0 ? `(${pending.length})` : ""}</Link>
+                  <Link href="/competition/lobby/lounge">Division lounge</Link>
+                  <Link href="/competition/select">Switch competition</Link>
+                </div>
                 {!myTeam && context.status === "looking_for_teammates" && (
                   <form
                     className="cm-mini-form"
                     onSubmit={(event) => void createTeam(event)}
                   >
                     <h3>Create a team</h3>
+                    <label className="cm-plain-label" htmlFor="cm-create-team-name">Team name <span className="cm-required">*</span></label>
                     <input
+                      id="cm-create-team-name"
                       required
                       minLength={2}
                       maxLength={80}
@@ -1695,6 +1744,7 @@ export function CompetitionApp() {
                       {isOwner
                         ? `Posting for ${myTeam?.name}`
                         : "Posting as an individual"}
+                      <span className="cm-required"> *</span>
                     </span>
                     <textarea
                       required
@@ -1794,7 +1844,9 @@ export function CompetitionApp() {
                     })();
                   }}
                 >
+                  <label className="cm-plain-label" htmlFor="cm-lobby-message">Message <span className="cm-required">*</span></label>
                   <input
+                    id="cm-lobby-message"
                     required
                     maxLength={500}
                     value={lobbyMessage}
@@ -1950,7 +2002,9 @@ export function CompetitionApp() {
                       }}
                     >
                       <h3>Add existing member</h3>
+                      <label className="cm-plain-label" htmlFor="cm-placeholder-name">Name <span className="cm-required">*</span></label>
                       <input
+                        id="cm-placeholder-name"
                         required
                         placeholder="Name"
                         value={placeholderName}
@@ -2052,7 +2106,9 @@ export function CompetitionApp() {
                     setMessageDraft("");
                   }}
                 >
+                  <label className="cm-plain-label" htmlFor="cm-team-message">Team message <span className="cm-required">*</span></label>
                   <input
+                    id="cm-team-message"
                     required
                     maxLength={1200}
                     value={messageDraft}
@@ -2120,6 +2176,9 @@ export function CompetitionApp() {
                     {chosenTeam.members + chosenTeam.placeholders}/
                     {chosenTeam.capacity} seats
                   </p>
+                  <p>Target: {chosenTeam.target || "Open to all goals"} · {chosenTeam.recruiting ? "Recruiting" : "Recruitment closed"}</p>
+                  <h3>Looking for</h3>
+                  {chosenTeam.needs.flat().length > 0 ? <Tags values={chosenTeam.needs.flat()} /> : <p>No specific strengths requested.</p>}
                   <h3>Why this match</h3>
                   <ul>
                     {fit(
@@ -2129,7 +2188,6 @@ export function CompetitionApp() {
                       <li key={reason}>{reason}</li>
                     ))}
                   </ul>
-                  <Tags values={chosenTeam.needs.flat()} />
                   <form
                     onSubmit={(event) => {
                       event.preventDefault();
@@ -2193,12 +2251,9 @@ export function CompetitionApp() {
                     PLAYER · {context?.competition} {context?.division}
                   </div>
                   <h2>{chosenPlayer.name}</h2>
-                  <p>
-                    {chosenPlayer.school || "EconMind member"} ·{" "}
-                    {chosenPlayer.curriculum}
-                  </p>
-                  <p>{chosenPlayer.bio}</p>
-                  <Tags values={chosenPlayer.strengths} />
+                  <PlayerAcademicDetails player={selectedPlayer!} />
+                  {playerDetailLoading && <p className="cm-profile-note">Loading full academic profile…</p>}
+                  {playerDetailError && <p className="cm-profile-note">Additional profile details are unavailable: {playerDetailError}</p>}
                   <h3>Why this match</h3>
                   <ul>
                     {fit(
@@ -2210,57 +2265,6 @@ export function CompetitionApp() {
                       <li key={reason}>{reason}</li>
                     ))}
                   </ul>
-                  {chosenPlayer.academicDetails?.gpa != null && (
-                    <p>
-                      GPA: {chosenPlayer.academicDetails.gpa} /{" "}
-                      {chosenPlayer.academicDetails.gpaScale}
-                    </p>
-                  )}
-                  {Object.keys(chosenPlayer.academicDetails?.economics ?? {})
-                    .length > 0 && (
-                    <p>
-                      Economics:{" "}
-                      {Object.entries(chosenPlayer.academicDetails.economics)
-                        .map(([key, value]) => `${key}: ${String(value)}`)
-                        .join(" · ")}
-                    </p>
-                  )}
-                  {chosenPlayer.academicDetails?.competitionRecords?.length >
-                    0 && (
-                    <div>
-                      <h3>Competition history</h3>
-                      {chosenPlayer.academicDetails.competitionRecords.map(
-                        (record, index) => (
-                          <p key={index}>{JSON.stringify(record)}</p>
-                        ),
-                      )}
-                    </div>
-                  )}
-                  {chosenPlayer.academicDetails?.amcRecords?.length > 0 && (
-                    <p>
-                      AMC:{" "}
-                      {chosenPlayer.academicDetails.amcRecords
-                        .map((record) => JSON.stringify(record))
-                        .join(" · ")}
-                    </p>
-                  )}
-                  {chosenPlayer.academicDetails?.englishTests?.length > 0 && (
-                    <p>
-                      English:{" "}
-                      {chosenPlayer.academicDetails.englishTests
-                        .map((record) => JSON.stringify(record))
-                        .join(" · ")}
-                    </p>
-                  )}
-                  {chosenPlayer.academicDetails?.standardizedTests?.length >
-                    0 && (
-                    <p>
-                      SAT / ACT:{" "}
-                      {chosenPlayer.academicDetails.standardizedTests
-                        .map((record) => JSON.stringify(record))
-                        .join(" · ")}
-                    </p>
-                  )}
                   {isOwner && myTeam && (
                     <form
                       onSubmit={(event) => {
@@ -2374,6 +2378,7 @@ function TeamCard({
       </span>
       <h3>{team.name}</h3>
       <p>{team.introduction || "Building a team for the competition."}</p>
+      <p>Target: {team.target || "Open to all goals"}</p>
       <Tags values={team.needs.flat()} />
       <footer>
         <span>
@@ -2404,6 +2409,8 @@ function PlayerCard({
         {player.school || "EconMind member"} ·{" "}
         {player.curriculum || "Curriculum pending"}
       </p>
+      {player.academicDetails?.gpa != null && <p>GPA {player.academicDetails.gpa}{player.academicDetails.gpaScale ? ` / ${player.academicDetails.gpaScale}` : ""}</p>}
+      {player.academicDetails?.competitionRecords?.length > 0 && <p>{player.academicDetails.competitionRecords.length} competition record(s) shared</p>}
       <Tags values={player.strengths} />
       <footer>
         <span>{player.target || "Open to opportunities"}</span>
@@ -2413,4 +2420,62 @@ function PlayerCard({
       </footer>
     </button>
   );
+}
+
+function displayValue(value: unknown): string | null {
+  if (typeof value === "string") return value.trim() || null;
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  return null;
+}
+
+function detailLabel(key: string) {
+  return key.replace(/([a-z])([A-Z])/g, "$1 $2").replaceAll("_", " ");
+}
+
+function DetailRow({ label, value }: { label: string; value: string | null | undefined }) {
+  return <div className="cm-detail-row"><dt>{label}</dt><dd>{value || "Not provided or not shared"}</dd></div>;
+}
+
+function DetailObject({ label, values }: { label: string; values: Record<string, unknown> | undefined }) {
+  const entries = Object.entries(values ?? {}).map(([key, value]) => [key, displayValue(value)] as const).filter(([, value]) => value);
+  return <section className="cm-detail-group"><h3>{label}</h3>{entries.length ? <dl>{entries.map(([key, value]) => <DetailRow key={key} label={detailLabel(key)} value={value} />)}</dl> : <p>Not provided or not shared.</p>}</section>;
+}
+
+function DetailRecords({ label, records }: { label: string; records: unknown[] | undefined }) {
+  return <section className="cm-detail-group"><h3>{label}</h3>{records?.length ? <div className="cm-detail-records">{records.map((record, index) => {
+    const values = record && typeof record === "object" && !Array.isArray(record) ? record as Record<string, unknown> : { result: record };
+    const entries = Object.entries(values).map(([key, value]) => [key, displayValue(value)] as const).filter(([, value]) => value);
+    return <dl key={index}>{entries.map(([key, value]) => <DetailRow key={key} label={detailLabel(key)} value={value} />)}</dl>;
+  })}</div> : <p>Not provided or not shared.</p>}</section>;
+}
+
+function PlayerAcademicDetails({ player }: { player: Player }) {
+  const academic = player.academicDetails;
+  const location = [academic?.location, academic?.country].filter(Boolean).join(" · ");
+  const gpa = academic?.gpa == null ? null : `${academic.gpa}${academic.gpaScale ? ` / ${academic.gpaScale}` : ""}`;
+  return <div className="cm-player-profile">
+    <section className="cm-detail-group"><h3>Identity &amp; school</h3><dl>
+      <DetailRow label="School" value={player.school} />
+      <DetailRow label="School location" value={location} />
+      <DetailRow label="Current grade" value={academic?.grade} />
+      <DetailRow label="Expected graduation" value={academic?.graduationYear?.toString()} />
+      <DetailRow label="Curriculum" value={player.curriculum} />
+    </dl></section>
+    <section className="cm-detail-group"><h3>Academic snapshot</h3><dl>
+      <DetailRow label="GPA" value={gpa} />
+      <DetailRow label="GPA system" value={academic?.gpaSystem} />
+    </dl></section>
+    <DetailObject label="Economics" values={academic?.economics} />
+    <DetailRecords label="IELTS / TOEFL" records={academic?.englishTests} />
+    <DetailRecords label="SAT / ACT" records={academic?.standardizedTests} />
+    <DetailRecords label="AMC" records={academic?.amcRecords} />
+    <DetailRecords label="Competition history" records={academic?.competitionRecords} />
+    <section className="cm-detail-group"><h3>Matching profile</h3><dl>
+      <DetailRow label="Goal" value={player.target} />
+      <DetailRow label="Introduction" value={player.bio} />
+    </dl><h4>Strengths</h4>{player.strengths.length ? <Tags values={player.strengths} /> : <p>Not provided.</p>}
+    <h4>Looking for</h4>{player.needs?.length ? <Tags values={player.needs} /> : <p>Not provided.</p>}</section>
+    <DetailObject label="Preferred teammate profile" values={player.preferences} />
+  </div>;
 }
