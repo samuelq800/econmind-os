@@ -27,7 +27,7 @@ export const setSeason1Opening = (opensAt: string) => rpc<Season1Opening>("set_w
 export type Season1MyTeamData = {
   team: {
     id: string; name: string; code: string; description: string; capacity: number;
-    status: string; recruitmentMode: Season1Team["recruitmentMode"];
+    status: string; recruitmentMode: Season1Team["recruitmentMode"]; recruitmentLocked: boolean;
     preferredLanguage: string; teamStyle: string; captainUserId: string;
   } | null;
   membership: { memberRole: "captain" | "member"; isReady: boolean } | null;
@@ -36,6 +36,7 @@ export type Season1MyTeamData = {
 export const getSeason1MyTeam = () => rpc<Season1MyTeamData>("get_world_preseason_my_team");
 export const applyToSeason1TeamByCode = (code: string) => rpc<string>("world_preseason_apply_by_team_code", { p_code: code.trim().toUpperCase() });
 export const removeSeason1TeamMember = (teamId: string, userId: string) => rpc<void>("world_preseason_remove_member", { p_team_id: teamId, p_user_id: userId });
+export const setSeason1TeamLock = (teamId: string, locked: boolean) => rpc<void>("world_preseason_set_team_lock", { p_team_id: teamId, p_locked: locked });
 export const leaveSeason1Team = (teamId: string) => rpc<void>("world_preseason_leave_team", { p_team_id: teamId });
 
 type Season1LobbyRpcData = Omit<Season1LobbyData, "currentMembership" | "applicationTeamIds" | "pendingApplications"> & {

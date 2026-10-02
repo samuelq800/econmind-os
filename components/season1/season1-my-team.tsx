@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Season1WorldArtwork } from "./season1-world-artwork";
 import {
   applyToSeason1TeamByCode, getSeason1TeamWorkspace, leaveSeason1Team,
-  removeSeason1TeamMember, setSeason1Readiness,
+  removeSeason1TeamMember, setSeason1Readiness, setSeason1TeamLock,
   postSeason1TeamMessage, reviewSeason1Application, setSeason1Preferences,
   subscribeToSeason1Lobby, unsubscribeSeason1Lobby, type Season1TeamWorkspaceData,
 } from "@/lib/supabase/season1";
@@ -86,7 +86,7 @@ export function Season1MyTeam() {
   async function applyWithCode(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!code.trim()) return;
-    await act(() => applyToSeason1TeamByCode(code), "Application sent. Your captain must approve it before you join the team.");
+    await act(() => applyToSeason1TeamByCode(code), "You have joined the team.");
   }
 
   async function copyCode() {
@@ -163,7 +163,7 @@ export function Season1MyTeam() {
               <input id="season1-team-code" required maxLength={32} autoCapitalize="characters" autoComplete="off" value={code} onChange={(event) => setCode(event.target.value)} placeholder="EM-T1-…" className="min-w-0 flex-1 rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 py-2 uppercase" />
               <Button type="submit" disabled={busy || !code.trim()}>Apply with code</Button>
             </div>
-            <p className="mt-2 text-xs leading-5 text-[var(--ink-muted)]">The captain approves applications. Invite-only teams require a personal invitation.</p>
+            <p className="mt-2 text-xs leading-5 text-[var(--ink-muted)]">Applications join automatically when the team is unlocked and has space.</p>
           </form>
         </Card>
       ) : <>
@@ -184,9 +184,11 @@ export function Season1MyTeam() {
             {[["Members", `${data.members.length} / ${team.capacity}`], ["Ready", `${data.members.filter((member) => member.isReady).length} / ${data.members.length}`], ["Language", team.preferredLanguage], ["Status", team.status]].map(([label, value]) => <div key={label}><dt className="text-xs text-[var(--ink-muted)]">{label}</dt><dd className="mt-1 text-lg font-bold capitalize">{value}</dd></div>)}
           </dl>
           <div className="mt-6 flex flex-wrap items-center gap-4">
+            {captain && <Button variant="secondary" disabled={busy || rosterLocked} onClick={() => void act(() => setSeason1TeamLock(team.id, !team.recruitmentLocked), team.recruitmentLocked ? "Team unlocked. Applications join automatically." : "Team locked. New members cannot join.")}>{team.recruitmentLocked ? "Unlock team" : "Lock team"}</Button>}
             <Button variant="secondary" disabled={busy || rosterLocked} onClick={() => void act(() => setSeason1Readiness(!data.membership?.isReady), "Readiness updated.")}>{data.membership?.isReady ? "Mark not ready" : "Mark ready"}</Button>
             <a href="#team-chat" className="text-sm font-bold text-[var(--accent)]">Go to team chat →</a>
           </div>
+          <p className="mt-4 text-sm text-[var(--ink-muted)]">{team.recruitmentLocked ? "Team locked: new members cannot join. The captain can still remove members." : "Applications are accepted automatically while recruitment is open, up to six members."}</p>
         </Card>
         <Card className="season1-room-card mt-6 p-6 sm:p-8">
           <h2 className="text-2xl font-bold">Team members</h2>
@@ -245,13 +247,13 @@ export function Season1MyTeam() {
           <Card className="season1-room-card p-6 sm:p-8">
             <p className="text-xs font-bold uppercase tracking-[.18em] text-[var(--accent)]">Recruitment / Application activity</p>
             <h2 className="mt-3 text-3xl">{captain ? "Review team applications" : "Applications"}</h2>
-            <p className="mt-3 text-sm text-[var(--ink-muted)]">{captain ? "Approve or decline requests to join your team. Six members maximum, including you." : "Applications require the team captain’s approval."}</p>
+            <p className="mt-3 text-sm text-[var(--ink-muted)]">New applications join automatically. Earlier pending requests can still be reviewed by the captain.</p>
             <div className="mt-6 divide-y divide-[var(--line)] border-y border-[var(--line)]">
               {!data.applications.length && <p className="py-6 text-sm text-[var(--ink-muted)]">No pending applications.</p>}
               {data.applications.map((application) => <article key={application.id} className="flex flex-wrap items-center justify-between gap-4 py-5">
                 <div><h3 className="font-bold">{application.applicantName}</h3><p className="mt-1 text-sm text-[var(--ink-muted)]">Applied to {application.teamName}</p>{application.note && <p className="mt-2 whitespace-pre-wrap break-words text-sm">{application.note}</p>}</div>
                 {captain && application.teamId === team?.id ? <div className="flex gap-3">
-                  <Button disabled={busy || rosterLocked || data.members.length >= team.capacity} onClick={() => void act(() => reviewSeason1Application(application.id, true), "Application accepted.")}><Check size={16} /> Accept</Button>
+                  <Button disabled={busy || rosterLocked || team.recruitmentLocked || data.members.length >= team.capacity} onClick={() => void act(() => reviewSeason1Application(application.id, true), "Application accepted.")}><Check size={16} /> Accept</Button>
                   <Button variant="secondary" disabled={busy || rosterLocked} onClick={() => { if (window.confirm(`Decline ${application.applicantName}'s application?`)) void act(() => reviewSeason1Application(application.id, false), "Application declined."); }}><X size={16} /> Decline</Button>
                 </div> : <span className="text-sm text-[var(--ink-muted)]">Pending</span>}
               </article>)}

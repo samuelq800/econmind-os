@@ -127,4 +127,5 @@ set role authenticated;
 select pg_temp.expect_error('select public.get_world_preseason_my_team()','has not opened yet');
 reset role;
 select 'PASS: Season 1 capacity, migration replay, code applications, privacy, member removal/exit and six-member enforcement' as result;
+\ir test-season1-auto-join-lock.sql
 \ir verify-season1-my-team.sql

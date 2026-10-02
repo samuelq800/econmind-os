@@ -567,8 +567,7 @@ function TeamCard({
         <span>{team.readyCount} ready</span>
       </div>
       <p className="mt-3 text-xs text-[var(--ink-muted)]">
-        {team.applicationCount} pending application
-        {team.applicationCount === 1 ? "" : "s"}
+        Applications are accepted automatically while recruitment is open.
       </p>
       <Button
         className="mt-5 w-full"

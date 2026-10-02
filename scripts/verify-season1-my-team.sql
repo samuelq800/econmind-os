@@ -6,7 +6,8 @@ begin
     'public.get_world_preseason_my_team()',
     'public.world_preseason_apply_by_team_code(text)',
     'public.world_preseason_remove_member(uuid,uuid)',
-    'public.world_preseason_leave_team(uuid)'
+    'public.world_preseason_leave_team(uuid)',
+    'public.world_preseason_set_team_lock(uuid,boolean)'
   ] loop
     if to_regprocedure(signature) is null then raise exception 'Season 1 My Team migration required: %',signature; end if;
     if not has_function_privilege('authenticated',signature,'EXECUTE')
