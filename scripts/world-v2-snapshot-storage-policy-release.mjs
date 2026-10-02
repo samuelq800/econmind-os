@@ -10,7 +10,7 @@ import {
 } from "./world-v2-source-snapshot-transport.mjs";
 import { permissionEvidence } from "./run-world-v2-source-snapshot-release.mjs";
 
-export const POLICY_SOURCE_COMMIT = "ea89db1cf05aa34384ebd908aba498e3703a28c9";
+export const POLICY_SOURCE_COMMIT = "e5814c018dfd585e71ecd271f19eee624d6ea255";
 export const POLICY_SOURCE_TREE = "e67e17cc97103b73464a4b2ddbf80487f05100f2";
 export const POLICY_MIGRATION_ID = "0022_world_v2_snapshot_storage_veto";
 export const POLICY_SQL_SHA256 =
@@ -198,7 +198,7 @@ export function policyObservationSql() {
         left join pg_attrdef d on d.adrelid=a.attrelid and d.adnum=a.attnum
         where n.nspname='storage' and c.relname in ('objects','buckets') and a.attnum>0 and not a.attisdropped)),
     'old_bucket_rows', (select jsonb_build_object('count',count(*),'sha256',encode(sha256(convert_to(coalesce(string_agg(to_jsonb(b)::text,E'\\n' order by id),''),'UTF8')),'hex'))
-      from storage.buckets b where id<>${literal(BUCKET)}),
+      from (select * from storage.buckets where id<>${literal(BUCKET)} order by id limit 101) b),
     'new_scope_rows',jsonb_build_object('buckets',(select count(*) from storage.buckets where id=${literal(BUCKET)}),
       'objects',(select count(*) from storage.objects where bucket_id=${literal(BUCKET)})),
     'world_roles',(select jsonb_agg(jsonb_build_object('name',rolname,'login',rolcanlogin,'super',rolsuper,'bypass',rolbypassrls,'inherit',rolinherit) order by rolname)
@@ -206,7 +206,8 @@ export function policyObservationSql() {
     'source_state',(select jsonb_build_object('bundle_id',bundle_id,'package_manifest_sha256',package_manifest_sha256,'source_status',source_status,'activation_allowed',activation_allowed)
       from world_v2.country_candidate_bundle where bundle_id='BALANCED_2026_09_28_V1'),
     'ledger',coalesce((select jsonb_agg(jsonb_build_object('migration_id',migration_id,'artifact_sha256',artifact_sha256,
-      'source_repo_commit',source_repo_commit,'release_order',release_order) order by release_order) from world_v2.schema_release),'[]'::jsonb)
+      'source_repo_commit',source_repo_commit,'release_order',release_order) order by release_order)
+      from (select migration_id,artifact_sha256,source_repo_commit,release_order from world_v2.schema_release order by release_order limit 23) bounded_ledger),'[]'::jsonb)
   ) as observation`;
 }
 function expectedNewPolicies() {
@@ -518,6 +519,8 @@ async function main() {
       JSON.stringify(
         {
           ...result,
+          main_site_commit: process.env.GITHUB_SHA ?? "NOT_RUN",
+          github_run_id: process.env.GITHUB_RUN_ID ?? "NOT_RUN",
           response_sha256: hash(raw),
           release_fingerprint: await policyReleaseFingerprint(),
         },
@@ -532,6 +535,8 @@ async function main() {
       JSON.stringify(
         {
           status: "UNKNOWN_STOP_NO_RETRY",
+          main_site_commit: process.env.GITHUB_SHA ?? "NOT_RUN",
+          github_run_id: process.env.GITHUB_RUN_ID ?? "NOT_RUN",
           migration_id: POLICY_MIGRATION_ID,
           migration_sha256: POLICY_SQL_SHA256,
           release_fingerprint: await policyReleaseFingerprint(),

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import baseline from "../docs/evidence/world-v2-storage-preflight-37021759785.json" with { type: "json" };
@@ -9,6 +9,9 @@ import {
   policyObservationSql,
   summarizePolicyPermission,
   verifiedPolicySource,
+  POLICY_SOURCE_COMMIT,
+  POLICY_SOURCE_TREE,
+  POLICY_SQL_SHA256,
 } from "./world-v2-snapshot-storage-policy-release.mjs";
 import { verifyStorageWriteBoundary } from "./world-v2-source-snapshot-transport.mjs";
 
@@ -131,6 +134,11 @@ export async function exercisePolicyProtocol(database, worldRoot) {
     [
       "scope_collision",
       "insert into storage.buckets values('world-v2-official-source-v1',true)",
+      "SCOPE_ROWS_CONFLICT",
+    ],
+    [
+      "bounded_old_bucket_overflow",
+      "insert into storage.buckets select 'bounded-old-'||i,true from generate_series(1,101) i",
       "SCOPE_ROWS_CONFLICT",
     ],
     [
@@ -274,7 +282,20 @@ export async function exercisePolicyProtocol(database, worldRoot) {
     "repeat_refused",
     "ordinary_roles_denied_old_scope_preserved",
   );
-  return { status: "PASS", productionAccess: false, results };
+  return {
+    status: "PASS",
+    productionAccess: false,
+    results,
+    database: database.target ?? "INJECTED_DISPOSABLE_ENGINE",
+    world_source_commit: POLICY_SOURCE_COMMIT,
+    world_migration_tree: POLICY_SOURCE_TREE,
+    migration_sha256: POLICY_SQL_SHA256,
+    main_site_commit: execFileSync("git", ["rev-parse", "HEAD"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    }).trim(),
+    github_run_id: process.env.GITHUB_RUN_ID ?? "NOT_RUN",
+  };
 }
 
 function nativeDatabase() {
@@ -320,6 +341,7 @@ function nativeDatabase() {
     "world_snapshot_policy_test:17",
   );
   return {
+    target: "PG17_LOOPBACK:world_snapshot_policy_test",
     exec: async (sql) => {
       execute(sql);
     },
@@ -343,13 +365,15 @@ if (
   fileURLToPath(import.meta.url) === path.resolve(process.argv[1])
 ) {
   try {
-    console.log(
+    const result =
       JSON.stringify(
         await exercisePolicyProtocol(nativeDatabase(), process.argv[2]),
         null,
         2,
-      ),
-    );
+      ) + "\n";
+    if (process.argv[3])
+      await writeFile(process.argv[3], result, { flag: "wx", mode: 0o600 });
+    console.log(result);
   } catch (error) {
     // Native adapter accepts only the fixed fixture connection and synthetic
     // fixture contents, never production environment credentials or records.

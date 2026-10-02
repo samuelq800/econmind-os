@@ -21,7 +21,7 @@ jobs:
       SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
       WORLD_V2_SNAPSHOT_POLICY_RELEASE_LOCK: ${{ vars.WORLD_V2_SNAPSHOT_POLICY_RELEASE_LOCK }}
       WORLD_V2_SNAPSHOT_POLICY_CONFIRMATION: ${{ inputs.confirmation }}
-      WORLD_SOURCE_COMMIT: ea89db1cf05aa34384ebd908aba498e3703a28c9
+      WORLD_SOURCE_COMMIT: e5814c018dfd585e71ecd271f19eee624d6ea255
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

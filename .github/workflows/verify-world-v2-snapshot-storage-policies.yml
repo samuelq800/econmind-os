@@ -29,13 +29,25 @@ jobs:
     env:
       PGPASSWORD: disposable-test-only
       DISPOSABLE_SNAPSHOT_POLICY_TEST: PG17_LOOPBACK
-      WORLD_SOURCE_COMMIT: ea89db1cf05aa34384ebd908aba498e3703a28c9
+      WORLD_SOURCE_COMMIT: e5814c018dfd585e71ecd271f19eee624d6ea255
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - run: |
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          git rev-parse HEAD
           git clone --no-checkout https://github.com/samuelq800/econmind-os-world-simulation.git "$RUNNER_TEMP/world-source"
           git -C "$RUNNER_TEMP/world-source" checkout --detach "$WORLD_SOURCE_COMMIT"
-          node scripts/test-world-v2-snapshot-storage-policy-release.mjs "$RUNNER_TEMP/world-source"
+          mkdir -p artifacts/world-v2-snapshot-storage-policy-test
+          node scripts/test-world-v2-snapshot-storage-policy-release.mjs "$RUNNER_TEMP/world-source" \
+            artifacts/world-v2-snapshot-storage-policy-test/proof.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: world-v2-snapshot-storage-policy-pg17-proof
+          path: artifacts/world-v2-snapshot-storage-policy-test/*.json
+          if-no-files-found: warn
