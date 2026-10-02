@@ -1,0 +1,15 @@
+{
+  "status": "UNKNOWN_STOP_NO_RETRY",
+  "main_site_commit": "2598fbd22a40bcda81681f31df8b6417821e7d2b",
+  "github_run_id": "37031019041",
+  "migration_id": "0022_world_v2_snapshot_storage_veto",
+  "migration_sha256": "c1ceebbf6265b54c67230d550f438e1b197415c42b3921cc358cf247482b4ef1",
+  "release_fingerprint": "a4ce294b07e77b6f695c5ba9d4dd445776767fc2e9b431848d86ca8533d50933",
+  "execution_result": "UNKNOWN",
+  "production_requery": "NOT_RUN",
+  "remote_cleanup": "NOT_RUN",
+  "snapshot_publication": "NOT_RUN",
+  "key_acquisition": "NOT_RUN",
+  "deployment": "NOT_RUN",
+  "economic_activation": false
+}

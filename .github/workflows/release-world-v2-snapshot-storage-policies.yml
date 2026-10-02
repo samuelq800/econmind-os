@@ -3,8 +3,16 @@ run-name: World V2 two-policy veto · @${{ github.actor }}
 on:
   workflow_dispatch:
     inputs:
+      phase:
+        description: Independently locked readback or publication; never automatic recovery
+        type: choice
+        required: true
+        default: readback
+        options:
+          - readback
+          - publish
       confirmation:
-        description: RELEASE_WORLD_V2_SNAPSHOT_STORAGE_VETO_ONCE
+        description: Exact phase-specific once-only confirmation
         type: string
         required: true
 permissions:
@@ -20,27 +28,39 @@ jobs:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
       WORLD_V2_SNAPSHOT_POLICY_RELEASE_LOCK: ${{ vars.WORLD_V2_SNAPSHOT_POLICY_RELEASE_LOCK }}
+      WORLD_V2_SNAPSHOT_POLICY_READBACK_LOCK: ${{ vars.WORLD_V2_SNAPSHOT_POLICY_READBACK_LOCK }}
       WORLD_V2_SNAPSHOT_POLICY_CONFIRMATION: ${{ inputs.confirmation }}
+      POLICY_PHASE: ${{ inputs.phase }}
       WORLD_SOURCE_COMMIT: e5814c018dfd585e71ecd271f19eee624d6ea255
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Require separate fixed-candidate RELEASE_GO before production contact
+      - name: Require separate fixed-candidate phase lock before production contact
         run: |
           test "$SUPABASE_PROJECT_REF" = vimksjrhaxdpnkvgsavz
           test -n "$SUPABASE_ACCESS_TOKEN"
-          node scripts/world-v2-snapshot-storage-policy-release.mjs guard
+          case "$POLICY_PHASE" in
+            publish) node scripts/world-v2-snapshot-storage-policy-release.mjs guard ;;
+            readback) node scripts/world-v2-snapshot-storage-policy-readback.mjs guard ;;
+            *) exit 1 ;;
+          esac
           mkdir -m 700 "$RUNNER_TEMP/snapshot-policy-release"
           mkdir -p artifacts/world-v2-snapshot-storage-policy
       - name: Render only exact reviewed World source artifact and atomic protocol
         run: |
           git clone --no-checkout https://github.com/samuelq800/econmind-os-world-simulation.git "$RUNNER_TEMP/snapshot-policy-release/world"
           git -C "$RUNNER_TEMP/snapshot-policy-release/world" checkout --detach "$WORLD_SOURCE_COMMIT"
-          node scripts/world-v2-snapshot-storage-policy-release.mjs render \
-            "$RUNNER_TEMP/snapshot-policy-release/world" "$RUNNER_TEMP/snapshot-policy-release/request.json" \
-            "$RUNNER_TEMP/snapshot-policy-release/expectation.json"
+          case "$POLICY_PHASE" in
+            publish) node scripts/world-v2-snapshot-storage-policy-release.mjs render \
+              "$RUNNER_TEMP/snapshot-policy-release/world" "$RUNNER_TEMP/snapshot-policy-release/request.json" \
+              "$RUNNER_TEMP/snapshot-policy-release/expectation.json" ;;
+            readback) node scripts/world-v2-snapshot-storage-policy-readback.mjs render \
+              "$RUNNER_TEMP/snapshot-policy-release/world" "$RUNNER_TEMP/snapshot-policy-release/request.json" \
+              "$RUNNER_TEMP/snapshot-policy-release/expectation.json" ;;
+            *) exit 1 ;;
+          esac
       - name: Exactly one atomic guarded Management API request; never retry
         id: apply
         run: |
@@ -52,14 +72,24 @@ jobs:
       - name: Require exact two-policy delta, preserved old properties, ledger and write boundary
         id: verify
         run: |
-          node scripts/world-v2-snapshot-storage-policy-release.mjs verify \
-            "$RUNNER_TEMP/snapshot-policy-release/response.json" "$RUNNER_TEMP/snapshot-policy-release/expectation.json" \
-            artifacts/world-v2-snapshot-storage-policy/evidence.json
+          case "$POLICY_PHASE" in
+            publish) node scripts/world-v2-snapshot-storage-policy-release.mjs verify \
+              "$RUNNER_TEMP/snapshot-policy-release/response.json" "$RUNNER_TEMP/snapshot-policy-release/expectation.json" \
+              artifacts/world-v2-snapshot-storage-policy/evidence.json ;;
+            readback) node scripts/world-v2-snapshot-storage-policy-readback.mjs verify \
+              "$RUNNER_TEMP/snapshot-policy-release/response.json" "$RUNNER_TEMP/snapshot-policy-release/expectation.json" \
+              artifacts/world-v2-snapshot-storage-policy/readback.json ;;
+            *) exit 1 ;;
+          esac
       - name: Ambiguous execution or proof failure means UNKNOWN and stop, never retry
         if: always() && (steps.apply.outcome == 'failure' || steps.apply.outcome == 'cancelled' || steps.verify.outcome == 'failure' || steps.verify.outcome == 'cancelled')
         run: |
-          node scripts/world-v2-snapshot-storage-policy-release.mjs unknown \
-            artifacts/world-v2-snapshot-storage-policy/unknown.json
+          case "$POLICY_PHASE" in
+            publish) node scripts/world-v2-snapshot-storage-policy-release.mjs unknown \
+              artifacts/world-v2-snapshot-storage-policy/unknown.json ;;
+            readback) node scripts/world-v2-snapshot-storage-policy-readback.mjs unknown \
+              artifacts/world-v2-snapshot-storage-policy/readback-unknown.json ;;
+          esac
       - name: Preserve non-secret proof only
         if: always()
         uses: actions/upload-artifact@v4

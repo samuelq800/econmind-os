@@ -4,8 +4,11 @@ on:
     paths:
       - scripts/world-v2-snapshot-storage-policy-release.mjs
       - scripts/test-world-v2-snapshot-storage-policy-release.mjs
+      - scripts/world-v2-snapshot-storage-policy-readback.mjs
+      - tests/world-v2-snapshot-storage-policy-readback.test.ts
       - tests/world-v2-snapshot-storage-policy-release.test.ts
       - docs/evidence/world-v2-storage-preflight-37021759785.json
+      - docs/evidence/world-v2-storage-policy-unknown-37031019041.json
       - .github/workflows/*world-v2*snapshot*policies.yml
 permissions:
   contents: read
