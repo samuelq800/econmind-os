@@ -342,7 +342,7 @@ select jsonb_build_object(
     'permissive',p.polpermissive,'command',p.polcmd,'qual',pg_get_expr(p.polqual,p.polrelid),
     'check',pg_get_expr(p.polwithcheck,p.polrelid),
     'applies_to',(select jsonb_agg(r.rolname order by r.rolname) from roles r where 0=any(p.polroles) or exists(
-      select 1 from unnest(p.polroles) role_oid where pg_has_role(r.oid,role_oid,'USAGE')))
+      select 1 from unnest(p.polroles) role_oid where case when role_oid=0 then false else pg_has_role(r.oid,role_oid,'USAGE') end))
   ) order by c.relname,p.polname) from pg_policy p join relations c on c.oid=p.polrelid),'[]'::jsonb)
 ) as evidence;`;
 

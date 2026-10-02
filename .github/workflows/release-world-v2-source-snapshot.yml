@@ -1,23 +1,122 @@
-name: World V2 source snapshot · preparation HOLD
+name: Release · World V2 hash-pinned source snapshot
+run-name: World V2 snapshot ${{ inputs.phase }} · @${{ github.actor }}
 on:
   workflow_dispatch:
+    inputs:
+      phase:
+        type: choice
+        options: [preflight, publish]
+        default: preflight
+        required: true
+      confirmation:
+        description: PREFLIGHT_GO_WORLD_V2_SOURCE_SNAPSHOT_ONCE or RELEASE_GO_WORLD_V2_SOURCE_SNAPSHOT_ONCE
+        type: string
+        required: true
 permissions:
   contents: read
+  actions: read
 concurrency:
   group: supabase-production
   cancel-in-progress: false
 jobs:
-  prepare:
+  controlled:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     env:
-      WORLD_V2_SOURCE_SNAPSHOT_PRODUCTION_ALLOWED: "false"
-      WORLD_V2_SOURCE_SNAPSHOT_WORLD_COMMIT: 45cfa2e7a8f28148d3195448fba2fc19f00b147b
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+      GH_TOKEN: ${{ github.token }}
+      WORLD_V2_SNAPSHOT_AUTHORIZATION_LOCK: ${{ inputs.phase == 'publish' && vars.WORLD_V2_SNAPSHOT_RELEASE_LOCK || vars.WORLD_V2_SNAPSHOT_PREFLIGHT_LOCK }}
+      WORLD_V2_SNAPSHOT_CONFIRMATION: ${{ inputs.confirmation }}
+      WORLD_V2_SOURCE_SNAPSHOT_WORLD_COMMIT: ae57dc090f736ea17aa9d67b0e1295f10c97e4c6
       WORLD_V2_SOURCE_SNAPSHOT_FUNCTION_TREE: 4d38784bf907397e2a71d0f1ff654d9e3cc3991c
     steps:
-      - name: Enforce forward-decision and production permission HOLD
-        run: test "$WORLD_V2_SOURCE_SNAPSHOT_PRODUCTION_ALLOWED" = "true"
-      # No credential retrieval, SQL, bucket write or deployment exists in this
-      # preparation candidate. A reviewed follow-up must implement/authorize it.
       - uses: actions/checkout@v4
-      - run: node --check scripts/world-v2-source-snapshot-publisher.mjs
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Enforce separately approved fixed-candidate lock before production contact
+        env:
+          PHASE: ${{ inputs.phase }}
+        run: |
+          test "$SUPABASE_PROJECT_REF" = vimksjrhaxdpnkvgsavz
+          test -n "$SUPABASE_ACCESS_TOKEN"
+          node scripts/run-world-v2-source-snapshot-release.mjs guard "$PHASE"
+          mkdir -m 700 "$RUNNER_TEMP/world-v2-source-snapshot"
+          mkdir -p artifacts/world-v2-source-snapshot
+      - name: Collect exactly one bounded read-only Storage permission preflight
+        run: |
+          node scripts/run-world-v2-source-snapshot-release.mjs permissions-render "$RUNNER_TEMP/world-v2-source-snapshot/permissions-request.json"
+          curl --fail --silent --show-error --max-time 30 --connect-timeout 10 --max-filesize 262144 --request POST \
+            --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" --header "Content-Type: application/json" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query" \
+            --data-binary "@$RUNNER_TEMP/world-v2-source-snapshot/permissions-request.json" \
+            --output "$RUNNER_TEMP/world-v2-source-snapshot/permissions-response.json"
+          node scripts/run-world-v2-source-snapshot-release.mjs permissions-record \
+            "$RUNNER_TEMP/world-v2-source-snapshot/permissions-response.json" artifacts/world-v2-source-snapshot/permission-evidence.json
+      - name: Require actual write denial before any key acquisition or publication
+        if: inputs.phase == 'publish'
+        run: node scripts/run-world-v2-source-snapshot-release.mjs permissions-verify "$RUNNER_TEMP/world-v2-source-snapshot/permissions-response.json"
+      - uses: supabase/setup-cli@v1
+        if: inputs.phase == 'publish'
+        with:
+          version: 2.115.0
+      - name: Require unused function slug; preserve old function identities
+        if: inputs.phase == 'publish'
+        run: |
+          supabase functions list --project-ref "$SUPABASE_PROJECT_REF" --output json > "$RUNNER_TEMP/world-v2-source-snapshot/functions-before.json"
+          node scripts/world-v2-edge-reader-provision.mjs verify-function-absent "$RUNNER_TEMP/world-v2-source-snapshot/functions-before.json"
+          node scripts/run-world-v2-source-snapshot-release.mjs verify-unused-function-scope "$RUNNER_TEMP/world-v2-source-snapshot/functions-before.json"
+      - name: Obtain exact merged World source and frozen existing DB proof
+        if: inputs.phase == 'publish'
+        run: |
+          git clone --no-checkout https://github.com/samuelq800/econmind-os-world-simulation.git "$RUNNER_TEMP/world-v2-source-snapshot/world"
+          git -C "$RUNNER_TEMP/world-v2-source-snapshot/world" checkout --detach "$WORLD_V2_SOURCE_SNAPSHOT_WORLD_COMMIT"
+          test "$(git -C "$RUNNER_TEMP/world-v2-source-snapshot/world" rev-parse HEAD:supabase/functions/world-v2-official-read)" = "$WORLD_V2_SOURCE_SNAPSHOT_FUNCTION_TREE"
+          gh run download 36672349466 --repo samuelq800/econmind-os --name world-v2-api-full-reader-evidence --dir "$RUNNER_TEMP/world-v2-source-snapshot/db-proof"
+      - name: Publish only 34 fixed bytes create-only; always retire ephemeral credential
+        if: inputs.phase == 'publish'
+        run: |
+          node scripts/run-world-v2-source-snapshot-release.mjs publish \
+            "$RUNNER_TEMP/world-v2-source-snapshot/world" "$RUNNER_TEMP/world-v2-source-snapshot/db-proof/evidence.json" \
+            "$RUNNER_TEMP/world-v2-source-snapshot/permissions-response.json" artifacts/world-v2-source-snapshot/storage-byte-evidence.json
+      - name: Deploy only new reader after complete public byte readback
+        if: inputs.phase == 'publish'
+        run: |
+          test ! -e supabase/functions/world-v2-official-read
+          cp -R "$RUNNER_TEMP/world-v2-source-snapshot/world/supabase/functions/world-v2-official-read" supabase/functions/world-v2-official-read
+          supabase functions list --project-ref "$SUPABASE_PROJECT_REF" --output json > "$RUNNER_TEMP/world-v2-source-snapshot/functions-recheck.json"
+          node scripts/world-v2-edge-reader-provision.mjs verify-function-absent "$RUNNER_TEMP/world-v2-source-snapshot/functions-recheck.json"
+          node scripts/run-world-v2-source-snapshot-release.mjs verify-unused-function-scope "$RUNNER_TEMP/world-v2-source-snapshot/functions-recheck.json"
+          supabase functions deploy world-v2-official-read --project-ref "$SUPABASE_PROJECT_REF" > /dev/null 2>&1
+          supabase functions list --project-ref "$SUPABASE_PROJECT_REF" --output json > "$RUNNER_TEMP/world-v2-source-snapshot/functions-after.json"
+          node scripts/run-world-v2-source-snapshot-release.mjs verify-old-functions \
+            "$RUNNER_TEMP/world-v2-source-snapshot/functions-before.json" "$RUNNER_TEMP/world-v2-source-snapshot/functions-after.json" \
+            artifacts/world-v2-source-snapshot/function-evidence.json
+      - name: Verify snapshot-backed bounded countries route and exact GET/OPTIONS CORS
+        if: inputs.phase == 'publish'
+        run: |
+          curl --fail --silent --show-error --max-time 30 --connect-timeout 10 --max-filesize 262144 --header "Origin: https://samuelq800.github.io" \
+            "https://$SUPABASE_PROJECT_REF.supabase.co/functions/v1/world-v2-official-read/v1/world-data/datasets/countries?limit=1" \
+            --dump-header "$RUNNER_TEMP/world-v2-source-snapshot/countries.headers" --output "$RUNNER_TEMP/world-v2-source-snapshot/countries.json"
+          curl --fail --silent --show-error --max-time 30 --connect-timeout 10 --request OPTIONS --header "Origin: https://samuelq800.github.io" \
+            --header "Access-Control-Request-Method: GET" --header "Access-Control-Request-Headers: Accept" \
+            "https://$SUPABASE_PROJECT_REF.supabase.co/functions/v1/world-v2-official-read/v1/world-data/datasets/countries?limit=1" \
+            --dump-header "$RUNNER_TEMP/world-v2-source-snapshot/options.headers" --output /dev/null
+          node scripts/verify-world-v2-source-snapshot-smoke.mjs \
+            "$RUNNER_TEMP/world-v2-source-snapshot/countries.headers" "$RUNNER_TEMP/world-v2-source-snapshot/countries.json" \
+            "$RUNNER_TEMP/world-v2-source-snapshot/options.headers" artifacts/world-v2-source-snapshot/route-evidence.json
+      - name: Preserve non-secret bounded evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: world-v2-source-snapshot-evidence
+          path: artifacts/world-v2-source-snapshot/*.json
+          if-no-files-found: warn
+      - name: Remove runner-owned permission/source response files; never delete remote objects
+        if: always()
+        run: |
+          test "$RUNNER_TEMP" = /home/runner/work/_temp
+          if test -d "$RUNNER_TEMP/world-v2-source-snapshot"; then
+            find "$RUNNER_TEMP/world-v2-source-snapshot" -maxdepth 1 -type f -exec shred -u {} +
+          fi

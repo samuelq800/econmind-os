@@ -47,13 +47,22 @@ erasure; cleanup retires the capability and drops owned references in finally.
 
 ## Independent release and protected surfaces
 
-This transport module is PARALLEL_PREPARATION, independent of unreviewed PR84.
-It has no CLI, workflow or automatic execution. Only mock HTTP/disposable
-fixtures are authorized now: actual key acquisition, SQL, Storage writes and
-deployment remain NOT_RUN. PR41/84 heads are not modified by this preparation.
+Initial transport module work was PARALLEL_PREPARATION, independent of PR84.
+After B's code-only approval, root merged PR84 at
+`cf4b1f323e4153802d0f37018b9451101106614c` and PR41 at
+`ae57dc090f736ea17aa9d67b0e1295f10c97e4c6`. This new candidate is integrated
+on that exact main-site base; it does not change the previously reviewed heads.
+The World function tree remains the same reviewed tree. Actual key acquisition,
+permission SQL, Storage writes and deployment remain NOT_RUN during this
+implementation; only mock HTTP/disposable fixtures are executed.
 Root alone merges; E alone executes production through the approved main-site
 publisher **after** fixed SHA, necessary CI, B RELEASE_GO and the actual merged
-base are recorded. The old DB publisher and its HOLD remain intact.
+base are recorded. The old DB publisher and its HOLD remain intact. The new
+workflow is fail-closed unless its candidate fingerprint matches a separately
+set `RELEASE_GO:<fingerprint>` repository authorization lock. A fingerprint or
+dispatch confirmation alone is not independent approval. A read-only preflight
+phase uses a distinct `PREFLIGHT_GO:<fingerprint>` lock; it never retrieves a
+Storage key or writes a bucket/object. Neither lock is set by this candidate.
 
 Before any new-scope production publication, one bounded real permission
 evidence collection must establish ordinary anon/authenticated write/delete/
@@ -68,3 +77,32 @@ Never modify old buckets/objects/ACLs/public/auth data/business SQL. No DB LOGIN
 OpeningSeed, World/Worker/Clock activation, second World State or Gate B claim.
 Public snapshots are hash-validated source copies, not WORM or live economics.
 No automatic destructive rollback is authorized or implemented.
+
+## Verification and controlled handoff
+
+The entry point is `scripts/run-world-v2-source-snapshot-release.mjs` and the
+existing new-snapshot workflow, not a second migration publisher. Its review
+fingerprint binds the workflow, CI/native fixture, runner, transports, pinned
+manifest, deployment config, smoke/provision helpers and this forward record.
+`fingerprint` and the mock/unit tests are local-only and never contact Supabase.
+Missing or phase-mismatched locks fail before any production contact. Read-only
+preflight produces predicate hashes and bounded role/relation evidence, never
+raw policies. A collected BLOCKED receipt does not approve publication.
+
+Publication requires the actual permission response, exact clean World source
+commit/tree, all 87 original hashes and the frozen DB proof before key lookup.
+An unused new slug and exactly seven unchanged old function identities are
+required. Only after all 34 public object byte/hash readbacks can the new reader
+deploy. HTTP smoke evidence is explicitly snapshot-backed, not DB connectivity,
+and must include the snapshot transport header plus exact GET/OPTIONS CORS.
+Unknown or partial writes stop without automatic retry or remote cleanup; the
+operator must assess the captured stage and obtain a reviewed recovery decision.
+
+The added disposable PostgreSQL 17 job starts with broad PUBLIC grants/policies
+and proves they are rejected, then checks exact new-bucket restrictive vetoes:
+both anon/authenticated insert, update, delete, upsert and move are denied, while
+old-scope object and bucket operations retain their permissions. This SQL fixture
+is not a production migration and is never submitted by the release workflow.
+Full local tests, typecheck/lint and build are code evidence only. Production
+preflight, key acquisition, bucket/object creation, Edge deploy and actual CORS
+remain NOT_RUN until the separate fixed-candidate release decision.

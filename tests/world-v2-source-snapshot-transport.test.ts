@@ -325,7 +325,9 @@ describe("bounded Storage permission proof", () => {
       })),
       proof.policies.map((p) => ({
         ...p,
-        qual: p.qual.replace(SNAPSHOT_BUCKET, SNAPSHOT_BUCKET.toUpperCase()),
+        qual:
+          p.qual?.replace(SNAPSHOT_BUCKET, SNAPSHOT_BUCKET.toUpperCase()) ??
+          null,
       })),
     ])
       expect(() =>
