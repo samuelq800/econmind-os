@@ -75,16 +75,92 @@ async function isMissing(response) {
   return String(value?.statusCode) === "404" && value?.error === "not_found";
 }
 
+// Keep candidate admission unchanged until an independently reviewed diagnosis.
+function isExistingStorageKeyCandidate(item) {
+  return (
+    (item?.type === "secret" &&
+      item.secret_jwt_template?.role === "service_role") ||
+    (item?.name === "service_role" && item.type !== "publishable")
+  );
+}
+
+/** Aggregate metadata only: never return identifiers, names, keys, templates,
+ * unknown type values or response bytes. Does not acquire/select a credential. */
+export function snapshotPublisherKeyMetadata(entries) {
+  if (!Array.isArray(entries)) fail("SNAPSHOT_PUBLISHER_KEY_RESPONSE_INVALID");
+  if (
+    entries.length > 100 ||
+    entries.some(
+      (item) => !item || typeof item !== "object" || Array.isArray(item),
+    )
+  )
+    fail("SNAPSHOT_PUBLISHER_KEY_METADATA_SHAPE_INVALID");
+  const types = {
+    legacy: 0,
+    publishable: 0,
+    secret: 0,
+    null: 0,
+    missing: 0,
+    other: 0,
+  };
+  const fields = {
+    api_key: 0,
+    id: 0,
+    type: 0,
+    name: 0,
+    secret_jwt_template: 0,
+  };
+  const apiKeyShape = { string: 0, null: 0, missing: 0, other: 0 };
+  const matches = {
+    legacy_name_service_role: 0,
+    secret_template_service_role: 0,
+    existing_selector_candidates: 0,
+  };
+  for (const item of entries) {
+    for (const field of Object.keys(fields))
+      if (Object.hasOwn(item, field)) fields[field]++;
+    const type = !Object.hasOwn(item, "type")
+      ? "missing"
+      : item.type === null
+        ? "null"
+        : ["legacy", "publishable", "secret"].includes(item.type)
+          ? item.type
+          : "other";
+    types[type]++;
+    const shape = !Object.hasOwn(item, "api_key")
+      ? "missing"
+      : item.api_key === null
+        ? "null"
+        : typeof item.api_key === "string"
+          ? "string"
+          : "other";
+    apiKeyShape[shape]++;
+    if (item.type === "legacy" && item.name === "service_role")
+      matches.legacy_name_service_role++;
+    if (
+      item.type === "secret" &&
+      item.secret_jwt_template?.role === "service_role"
+    )
+      matches.secret_template_service_role++;
+    if (isExistingStorageKeyCandidate(item))
+      matches.existing_selector_candidates++;
+  }
+  return {
+    total_entries: entries.length,
+    types,
+    field_presence_counts: fields,
+    api_key_shape_counts: apiKeyShape,
+    known_role_match_counts: matches,
+  };
+}
+
 function existingStorageKey(entries) {
   if (!Array.isArray(entries)) fail("SNAPSHOT_PUBLISHER_KEY_RESPONSE_INVALID");
-  const candidates = entries.filter(
-    (item) =>
-      (item?.type === "secret" &&
-        item.secret_jwt_template?.role === "service_role") ||
-      (item?.name === "service_role" && item.type !== "publishable"),
-  );
-  if (candidates.length !== 1 || typeof candidates[0].api_key !== "string")
-    fail("SNAPSHOT_PUBLISHER_KEY_AMBIGUOUS");
+  const candidates = entries.filter(isExistingStorageKeyCandidate);
+  if (candidates.length === 0) fail("SNAPSHOT_PUBLISHER_KEY_NOT_FOUND");
+  if (candidates.length > 1) fail("SNAPSHOT_PUBLISHER_KEY_MULTIPLE");
+  if (typeof candidates[0].api_key !== "string")
+    fail("SNAPSHOT_PUBLISHER_KEY_TYPE_INVALID");
   const key = candidates[0].api_key;
   if (candidates[0].type === "secret") {
     if (!/^sb_secret_[A-Za-z0-9_-]{20,}$/u.test(key))
