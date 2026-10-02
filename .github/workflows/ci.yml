@@ -100,7 +100,7 @@ jobs:
               echo 'Forbidden effective access unexpectedly passed'
               exit 1
             fi
-            test "$(psql -qAt -h localhost -U postgres -d world_v2_edge_role_test -c \"select rolcanlogin from pg_roles where rolname='world_v2_api_login'\")" = "f"
+            test "$(psql -qAt -h localhost -U postgres -d world_v2_edge_role_test -c "select rolcanlogin from pg_roles where rolname='world_v2_api_login'")" = "f"
           }
           psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d world_v2_edge_role_test \
             -c 'alter role world_v2_api_login nologin; create table public.synthetic_business(value text); grant select on public.synthetic_business to public;'
