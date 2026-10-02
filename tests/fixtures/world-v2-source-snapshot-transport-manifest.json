@@ -1,0 +1,206 @@
+[
+  {
+    "source_path": "data/assumptions.json",
+    "storage_path": "source/646174612f617373756d7074696f6e732e6a736f6e",
+    "sha256": "92fc7883367f11ceea3a6151cb8459c6733b86da7c33c58664be7fad616c39ae",
+    "bytes": 2061
+  },
+  {
+    "source_path": "data/changes.json",
+    "storage_path": "source/646174612f6368616e6765732e6a736f6e",
+    "sha256": "034ff4d1b7b2f57bb4f4b50d83a94f9b515ef8e0b2183448c0a9d7caa88cf0cc",
+    "bytes": 26863
+  },
+  {
+    "source_path": "data/commodity-catalog.json",
+    "storage_path": "source/646174612f636f6d6d6f646974792d636174616c6f672e6a736f6e",
+    "sha256": "b1f9a100bdb80627e31801ffaf1b2c7863a2996cedba0344de8a899c616eff2b",
+    "bytes": 1933
+  },
+  {
+    "source_path": "data/countries.json",
+    "storage_path": "source/646174612f636f756e74726965732e6a736f6e",
+    "sha256": "5d493e93dfab1425731191ba7491cce47949d176e4769b33fdca48d2d31dba89",
+    "bytes": 146348
+  },
+  {
+    "source_path": "data/coverage.json",
+    "storage_path": "source/646174612f636f7665726167652e6a736f6e",
+    "sha256": "c7f9b9de8ebb03faeb79d2987b0377086245986040360a6f20227fa2ea3b6bd1",
+    "bytes": 1686
+  },
+  {
+    "source_path": "data/deposits.json",
+    "storage_path": "source/646174612f6465706f736974732e6a736f6e",
+    "sha256": "62076847d10529da672de8a97607dd98387be459cf6fd617c24d33f29875f516",
+    "bytes": 254092
+  },
+  {
+    "source_path": "data/domestic-access.json",
+    "storage_path": "source/646174612f646f6d65737469632d6163636573732e6a736f6e",
+    "sha256": "2b8e6102479031314ca91560a81f485edb671ab74d233c70e1da40da0be32a09",
+    "bytes": 507222
+  },
+  {
+    "source_path": "data/employment.json",
+    "storage_path": "source/646174612f656d706c6f796d656e742e6a736f6e",
+    "sha256": "f5e5f79d9d0453f291c05840ee468fa71b7e021e29a79766cc75530a1986155f",
+    "bytes": 42708
+  },
+  {
+    "source_path": "data/entities.json",
+    "storage_path": "source/646174612f656e7469746965732e6a736f6e",
+    "sha256": "d53e64a28110ea3615d42be03fc740a2fe72b55e6aeb5d4a584f5d2c117a6593",
+    "bytes": 82043
+  },
+  {
+    "source_path": "data/facilities.json",
+    "storage_path": "source/646174612f666163696c69746965732e6a736f6e",
+    "sha256": "049e39330646048b95636d3a075fc1423ee62762999184a2326df161a198b485",
+    "bytes": 1897241
+  },
+  {
+    "source_path": "data/facility-map-links.json",
+    "storage_path": "source/646174612f666163696c6974792d6d61702d6c696e6b732e6a736f6e",
+    "sha256": "3152c4e62a950adf3c214c69580f754079837f124fc1a0e6f09b72b1793cb5e8",
+    "bytes": 398428
+  },
+  {
+    "source_path": "data/finance.json",
+    "storage_path": "source/646174612f66696e616e63652e6a736f6e",
+    "sha256": "4f30d7dd43aa2190604d4fb73c776a8d4aaa263653dc783def6f7c2c5cc80805",
+    "bytes": 89045
+  },
+  {
+    "source_path": "data/geography.json",
+    "storage_path": "source/646174612f67656f6772617068792e6a736f6e",
+    "sha256": "c1a3d521ae91b37845f764be4ede73d522bc6958be90f4676ad5a19395b26a35",
+    "bytes": 8441668
+  },
+  {
+    "source_path": "data/hazard-proposals.json",
+    "storage_path": "source/646174612f68617a6172642d70726f706f73616c732e6a736f6e",
+    "sha256": "ff4f3f57ad12a03fca93dd457075cc049b87c4852bb20a0de63adec35900fb45",
+    "bytes": 119358
+  },
+  {
+    "source_path": "data/illustration-links.json",
+    "storage_path": "source/646174612f696c6c757374726174696f6e2d6c696e6b732e6a736f6e",
+    "sha256": "e461af7fd390a351d9f57b439a1d092089238cada20de7fab594675fc9167271",
+    "bytes": 43893
+  },
+  {
+    "source_path": "data/land-program.json",
+    "storage_path": "source/646174612f6c616e642d70726f6772616d2e6a736f6e",
+    "sha256": "b8422e551cb4f175280c6d2613bed2acb64ded84c8933e6da3dac0c62a92befa",
+    "bytes": 20679
+  },
+  {
+    "source_path": "data/license-proposals.json",
+    "storage_path": "source/646174612f6c6963656e73652d70726f706f73616c732e6a736f6e",
+    "sha256": "f9a09308b8fcf10f58bc8484beab78b005fa9ee06e02a895fcd81f885597f323",
+    "bytes": 93691
+  },
+  {
+    "source_path": "data/manifest.json",
+    "storage_path": "source/646174612f6d616e69666573742e6a736f6e",
+    "sha256": "b1072645a6ade9eb48b0d105bf38b2c475a9b667f2f14224c805fef88be3befb",
+    "bytes": 3319
+  },
+  {
+    "source_path": "data/nodes.json",
+    "storage_path": "source/646174612f6e6f6465732e6a736f6e",
+    "sha256": "32809165710ca830d21126537c8ff68b90100b3fd3b2eeaf323a16f0f3778962",
+    "bytes": 228393
+  },
+  {
+    "source_path": "data/opening-material-reconciliation.json",
+    "storage_path": "source/646174612f6f70656e696e672d6d6174657269616c2d7265636f6e63696c696174696f6e2e6a736f6e",
+    "sha256": "bb7e7ce2e4a4bb322f98a87411b5e7a7599ed7392e965f516778dc9ec37458f8",
+    "bytes": 2100
+  },
+  {
+    "source_path": "data/population-services.json",
+    "storage_path": "source/646174612f706f70756c6174696f6e2d73657276696365732e6a736f6e",
+    "sha256": "86e828a421346aecaa31c95a7805289a022c80df93399545aeea39f6ce361615",
+    "bytes": 56412
+  },
+  {
+    "source_path": "data/power.json",
+    "storage_path": "source/646174612f706f7765722e6a736f6e",
+    "sha256": "81e910b36558260e0372f6b00474147e431ed502387b78bfdcc0d8dd2f26713e",
+    "bytes": 39232
+  },
+  {
+    "source_path": "data/production-plans.json",
+    "storage_path": "source/646174612f70726f64756374696f6e2d706c616e732e6a736f6e",
+    "sha256": "3b869cdccae4373a5043554e1985a45a19e3ac6bebc8a67671791f4d01e09d04",
+    "bytes": 157825
+  },
+  {
+    "source_path": "data/recipes.json",
+    "storage_path": "source/646174612f726563697065732e6a736f6e",
+    "sha256": "205259654c754d2ebe6e774f3a902f367455bdff4a51f7b0449e0d74334aeb7c",
+    "bytes": 4940
+  },
+  {
+    "source_path": "data/regions.json",
+    "storage_path": "source/646174612f726567696f6e732e6a736f6e",
+    "sha256": "42ef418d90c3f448d390ad9e62971065eb29c3d96fdb4f3dde5fc33ae0cb2bdd",
+    "bytes": 652112
+  },
+  {
+    "source_path": "data/seasonal-water.json",
+    "storage_path": "source/646174612f736561736f6e616c2d77617465722e6a736f6e",
+    "sha256": "704f59f6204096b1f696d9d35c8727845a92f44efd8948b87eda0e740845fc66",
+    "bytes": 62791
+  },
+  {
+    "source_path": "data/settlements.json",
+    "storage_path": "source/646174612f736574746c656d656e74732e6a736f6e",
+    "sha256": "2499806f3d66b4b68571396c80de6d88bfb813674581c59df758a160d29a25cc",
+    "bytes": 94070
+  },
+  {
+    "source_path": "data/stocks.json",
+    "storage_path": "source/646174612f73746f636b732e6a736f6e",
+    "sha256": "d52e68856dabdda6d5488043291ee92100f22c16ea44d34d2000170402ee8153",
+    "bytes": 303774
+  },
+  {
+    "source_path": "data/supplier-concentration-policy.json",
+    "storage_path": "source/646174612f737570706c6965722d636f6e63656e74726174696f6e2d706f6c6963792e6a736f6e",
+    "sha256": "afdb63dc19aeff6a738c3279c00da1939b62d0143d7a4b89619615a4ca0dec55",
+    "bytes": 1942
+  },
+  {
+    "source_path": "data/technology-proposals.json",
+    "storage_path": "source/646174612f746563686e6f6c6f67792d70726f706f73616c732e6a736f6e",
+    "sha256": "111f7b54d0a8dfff31479c14169645d750e5928b03a050f323792b458fef54bb",
+    "bytes": 25196
+  },
+  {
+    "source_path": "data/trade-plans.json",
+    "storage_path": "source/646174612f74726164652d706c616e732e6a736f6e",
+    "sha256": "c3c8c74dc81d13c0115fd1b5fff1b6f886fd79b3b6ba60b9659b126b0db928cd",
+    "bytes": 520880
+  },
+  {
+    "source_path": "data/transit-proposals.json",
+    "storage_path": "source/646174612f7472616e7369742d70726f706f73616c732e6a736f6e",
+    "sha256": "d5b1293e447fef3bb87052cf808222ed2c482779d202250611b289c7165f18ba",
+    "bytes": 27257
+  },
+  {
+    "source_path": "data/transport-routes.json",
+    "storage_path": "source/646174612f7472616e73706f72742d726f757465732e6a736f6e",
+    "sha256": "a55863d91f7fafcfb7776cfb6c6bb94636d4156f59bf8bf20777023bdbba6f66",
+    "bytes": 3487702
+  },
+  {
+    "source_path": "data/water-allocations.json",
+    "storage_path": "source/646174612f77617465722d616c6c6f636174696f6e732e6a736f6e",
+    "sha256": "53b4d7cd0425f6a0789cad2e1bcd0800420a5010f38307e895742df1c0567841",
+    "bytes": 54600
+  }
+]
