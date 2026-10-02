@@ -1,0 +1,76 @@
+name: Release · World V2 two-policy Storage veto
+run-name: World V2 two-policy veto · @${{ github.actor }}
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: RELEASE_WORLD_V2_SNAPSHOT_STORAGE_VETO_ONCE
+        type: string
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: supabase-production
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+      WORLD_V2_SNAPSHOT_POLICY_RELEASE_LOCK: ${{ vars.WORLD_V2_SNAPSHOT_POLICY_RELEASE_LOCK }}
+      WORLD_V2_SNAPSHOT_POLICY_CONFIRMATION: ${{ inputs.confirmation }}
+      WORLD_SOURCE_COMMIT: ea89db1cf05aa34384ebd908aba498e3703a28c9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Require separate fixed-candidate RELEASE_GO before production contact
+        run: |
+          test "$SUPABASE_PROJECT_REF" = vimksjrhaxdpnkvgsavz
+          test -n "$SUPABASE_ACCESS_TOKEN"
+          node scripts/world-v2-snapshot-storage-policy-release.mjs guard
+          mkdir -m 700 "$RUNNER_TEMP/snapshot-policy-release"
+          mkdir -p artifacts/world-v2-snapshot-storage-policy
+      - name: Render only exact reviewed World source artifact and atomic protocol
+        run: |
+          git clone --no-checkout https://github.com/samuelq800/econmind-os-world-simulation.git "$RUNNER_TEMP/snapshot-policy-release/world"
+          git -C "$RUNNER_TEMP/snapshot-policy-release/world" checkout --detach "$WORLD_SOURCE_COMMIT"
+          node scripts/world-v2-snapshot-storage-policy-release.mjs render \
+            "$RUNNER_TEMP/snapshot-policy-release/world" "$RUNNER_TEMP/snapshot-policy-release/request.json" \
+            "$RUNNER_TEMP/snapshot-policy-release/expectation.json"
+      - name: Exactly one atomic guarded Management API request; never retry
+        id: apply
+        run: |
+          curl --fail --silent --show-error --max-time 45 --connect-timeout 10 --max-filesize 262144 \
+            --request POST --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" --header "Content-Type: application/json" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query" \
+            --data-binary "@$RUNNER_TEMP/snapshot-policy-release/request.json" \
+            --output "$RUNNER_TEMP/snapshot-policy-release/response.json"
+      - name: Require exact two-policy delta, preserved old properties, ledger and write boundary
+        id: verify
+        run: |
+          node scripts/world-v2-snapshot-storage-policy-release.mjs verify \
+            "$RUNNER_TEMP/snapshot-policy-release/response.json" "$RUNNER_TEMP/snapshot-policy-release/expectation.json" \
+            artifacts/world-v2-snapshot-storage-policy/evidence.json
+      - name: Ambiguous execution or proof failure means UNKNOWN and stop, never retry
+        if: always() && (steps.apply.outcome == 'failure' || steps.apply.outcome == 'cancelled' || steps.verify.outcome == 'failure' || steps.verify.outcome == 'cancelled')
+        run: |
+          node scripts/world-v2-snapshot-storage-policy-release.mjs unknown \
+            artifacts/world-v2-snapshot-storage-policy/unknown.json
+      - name: Preserve non-secret proof only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: world-v2-snapshot-storage-policy-evidence
+          path: artifacts/world-v2-snapshot-storage-policy/*.json
+          if-no-files-found: warn
+      - name: Retire runner-only request/response files, no remote rollback or retry
+        if: always()
+        run: |
+          test "$RUNNER_TEMP" = /home/runner/work/_temp
+          if test -d "$RUNNER_TEMP/snapshot-policy-release"; then
+            find "$RUNNER_TEMP/snapshot-policy-release" -maxdepth 1 -type f -exec shred -u {} +
+          fi

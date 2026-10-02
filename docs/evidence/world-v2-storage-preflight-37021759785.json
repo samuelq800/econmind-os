@@ -1,0 +1,104 @@
+{
+  "status": "SNAPSHOT_STORAGE_WRITE_BOUNDARY_BLOCKED",
+  "query_sha256": "4c63f4d9c6a6bfae7ef21dd58776e4877d1fbb675175270d6eb952724dced620",
+  "response_sha256": "852f1de68904aa9849e71016249d4c12ce60832c6d9cb3a3249f702730018e00",
+  "project_ref": "vimksjrhaxdpnkvgsavz",
+  "bucket": "world-v2-official-source-v1",
+  "verified": false,
+  "roles": [
+    {
+      "role": "anon",
+      "table": "buckets",
+      "delete": true,
+      "insert": true,
+      "update": true,
+      "superuser": false,
+      "bypass_rls": false,
+      "column_insert": true,
+      "column_update": true,
+      "owner_privileges": false
+    },
+    {
+      "role": "anon",
+      "table": "objects",
+      "delete": true,
+      "insert": true,
+      "update": true,
+      "superuser": false,
+      "bypass_rls": false,
+      "column_insert": true,
+      "column_update": true,
+      "owner_privileges": false
+    },
+    {
+      "role": "authenticated",
+      "table": "buckets",
+      "delete": true,
+      "insert": true,
+      "update": true,
+      "superuser": false,
+      "bypass_rls": false,
+      "column_insert": true,
+      "column_update": true,
+      "owner_privileges": false
+    },
+    {
+      "role": "authenticated",
+      "table": "objects",
+      "delete": true,
+      "insert": true,
+      "update": true,
+      "superuser": false,
+      "bypass_rls": false,
+      "column_insert": true,
+      "column_update": true,
+      "owner_privileges": false
+    }
+  ],
+  "relations": [
+    {
+      "rls": true,
+      "name": "buckets"
+    },
+    {
+      "rls": true,
+      "name": "objects"
+    }
+  ],
+  "policies": [
+    {
+      "table": "objects",
+      "command": "d",
+      "permissive": true,
+      "applies_to": [
+        "authenticated"
+      ],
+      "qual_sha256": "61be84556fcb49bf2b9925fcfe155eb8002dc649c0ed2052c137e1cd59448979",
+      "check_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+    },
+    {
+      "table": "objects",
+      "command": "r",
+      "permissive": true,
+      "applies_to": [
+        "anon",
+        "authenticated"
+      ],
+      "qual_sha256": "e11ada1e3790558999812dd587388204b5bf472297358e1ca25005559a93b3b6",
+      "check_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+    },
+    {
+      "table": "objects",
+      "command": "a",
+      "permissive": true,
+      "applies_to": [
+        "authenticated"
+      ],
+      "qual_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "check_sha256": "578b6c3c7b254590925d59120c6c3c5f3bf1eb2312277169e946f8ea762cabcd"
+    }
+  ],
+  "runtime_or_rpc_isolation": "NOT_CLAIMED",
+  "storage_write": "NOT_RUN",
+  "key_acquisition": "NOT_RUN"
+}

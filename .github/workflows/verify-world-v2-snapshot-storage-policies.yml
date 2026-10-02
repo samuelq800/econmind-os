@@ -1,0 +1,41 @@
+name: Verify · World V2 two-policy atomic Storage protocol
+on:
+  pull_request:
+    paths:
+      - scripts/world-v2-snapshot-storage-policy-release.mjs
+      - scripts/test-world-v2-snapshot-storage-policy-release.mjs
+      - tests/world-v2-snapshot-storage-policy-release.test.ts
+      - docs/evidence/world-v2-storage-preflight-37021759785.json
+      - .github/workflows/*world-v2*snapshot*policies.yml
+permissions:
+  contents: read
+jobs:
+  native-policy-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: disposable-test-only
+          POSTGRES_DB: world_snapshot_policy_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGPASSWORD: disposable-test-only
+      DISPOSABLE_SNAPSHOT_POLICY_TEST: PG17_LOOPBACK
+      WORLD_SOURCE_COMMIT: ea89db1cf05aa34384ebd908aba498e3703a28c9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          git clone --no-checkout https://github.com/samuelq800/econmind-os-world-simulation.git "$RUNNER_TEMP/world-source"
+          git -C "$RUNNER_TEMP/world-source" checkout --detach "$WORLD_SOURCE_COMMIT"
+          node scripts/test-world-v2-snapshot-storage-policy-release.mjs "$RUNNER_TEMP/world-source"
