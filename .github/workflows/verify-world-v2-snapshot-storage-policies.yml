@@ -1,0 +1,53 @@
+name: Verify · World V2 two-policy atomic Storage protocol
+on:
+  pull_request:
+    paths:
+      - scripts/world-v2-snapshot-storage-policy-release.mjs
+      - scripts/test-world-v2-snapshot-storage-policy-release.mjs
+      - tests/world-v2-snapshot-storage-policy-release.test.ts
+      - docs/evidence/world-v2-storage-preflight-37021759785.json
+      - .github/workflows/*world-v2*snapshot*policies.yml
+permissions:
+  contents: read
+jobs:
+  native-policy-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: disposable-test-only
+          POSTGRES_DB: world_snapshot_policy_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGPASSWORD: disposable-test-only
+      DISPOSABLE_SNAPSHOT_POLICY_TEST: PG17_LOOPBACK
+      WORLD_SOURCE_COMMIT: e5814c018dfd585e71ecd271f19eee624d6ea255
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          git rev-parse HEAD
+          git clone --no-checkout https://github.com/samuelq800/econmind-os-world-simulation.git "$RUNNER_TEMP/world-source"
+          git -C "$RUNNER_TEMP/world-source" checkout --detach "$WORLD_SOURCE_COMMIT"
+          mkdir -p artifacts/world-v2-snapshot-storage-policy-test
+          node scripts/test-world-v2-snapshot-storage-policy-release.mjs "$RUNNER_TEMP/world-source" \
+            artifacts/world-v2-snapshot-storage-policy-test/proof.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: world-v2-snapshot-storage-policy-pg17-proof
+          path: artifacts/world-v2-snapshot-storage-policy-test/*.json
+          if-no-files-found: warn
