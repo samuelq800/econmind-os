@@ -1,0 +1,23 @@
+name: World V2 source snapshot · preparation HOLD
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: supabase-production
+  cancel-in-progress: false
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      WORLD_V2_SOURCE_SNAPSHOT_PRODUCTION_ALLOWED: "false"
+      WORLD_V2_SOURCE_SNAPSHOT_WORLD_COMMIT: 45cfa2e7a8f28148d3195448fba2fc19f00b147b
+      WORLD_V2_SOURCE_SNAPSHOT_FUNCTION_TREE: 4d38784bf907397e2a71d0f1ff654d9e3cc3991c
+    steps:
+      - name: Enforce forward-decision and production permission HOLD
+        run: test "$WORLD_V2_SOURCE_SNAPSHOT_PRODUCTION_ALLOWED" = "true"
+      # No credential retrieval, SQL, bucket write or deployment exists in this
+      # preparation candidate. A reviewed follow-up must implement/authorize it.
+      - uses: actions/checkout@v4
+      - run: node --check scripts/world-v2-source-snapshot-publisher.mjs
