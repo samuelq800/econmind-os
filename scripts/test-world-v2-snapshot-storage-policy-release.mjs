@@ -599,7 +599,10 @@ function nativeDatabase() {
       // quiet/tuples-only output excludes the empty COMMIT result.
       if (sql === policyObservationSql())
         return { rows: [{ observation: JSON.parse(text) }] };
-      if (sql.includes("as evidence;"))
+      if (
+        sql.includes("as evidence;") ||
+        sql.includes("as evidence from checked;")
+      )
         return { rows: [{ evidence: JSON.parse(text) }] };
       if (sql.startsWith("select content"))
         return { rows: [{ content: text }] };
