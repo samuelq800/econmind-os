@@ -1,0 +1,185 @@
+name: Release · World V2 public read Edge Function
+run-name: Release World V2 public read Edge Function · @${{ github.actor }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RELEASE_WORLD_V2_EDGE_READER_ONCE
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-production
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Code merge is allowed; production requires a separately reviewed isolation decision.
+      WORLD_V2_EDGE_PRODUCTION_RELEASE_ALLOWED: "false"
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+      WORLD_V2_EDGE_SOURCE_COMMIT: 8efe907592006ea5491c341f4c54bed75bfd107f
+      WORLD_V2_EDGE_TREE_OID: 0e64ed6243ec5d38bfa332b1a601129d329c382b
+    steps:
+      - name: Enforce production HOLD before any production contact
+        run: test "$WORLD_V2_EDGE_PRODUCTION_RELEASE_ALLOWED" = "true"
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.115.0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Verify exact target, source lock, and separate authorization
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          test "$CONFIRMATION" = "RELEASE_WORLD_V2_EDGE_READER_ONCE"
+          test "$SUPABASE_PROJECT_REF" = "vimksjrhaxdpnkvgsavz"
+          test -n "$SUPABASE_ACCESS_TOKEN"
+          test "$WORLD_V2_EDGE_SOURCE_COMMIT" != "0000000000000000000000000000000000000000"
+          test "$WORLD_V2_EDGE_TREE_OID" != "0000000000000000000000000000000000000000"
+          test ! -e supabase/functions/world-v2-official-read
+      - name: Verify local guard tests before production contact
+        run: |
+          node --check scripts/world-v2-edge-reader-provision.mjs
+          pnpm install --frozen-lockfile
+          pnpm exec vitest run tests/world-v2-edge-reader-provision.test.ts tests/world-v2-edge-smoke.test.ts
+      - name: Fetch exact reviewed World Edge source
+        run: |
+          source_root="$RUNNER_TEMP/world-v2-edge-source"
+          git clone --no-checkout https://github.com/samuelq800/econmind-os-world-simulation.git "$source_root"
+          git -C "$source_root" checkout --detach "$WORLD_V2_EDGE_SOURCE_COMMIT"
+          test "$(git -C "$source_root" rev-parse HEAD)" = "$WORLD_V2_EDGE_SOURCE_COMMIT"
+          test -z "$(git -C "$source_root" status --porcelain=v1 --untracked-files=all)"
+          function_root="$source_root/supabase/functions/world-v2-official-read"
+          test -f "$function_root/index.ts"
+          test -f "$function_root/deno.json"
+          test -f "$function_root/deno.lock"
+          test "$(git -C "$source_root" rev-parse HEAD:supabase/functions/world-v2-official-read)" = "$WORLD_V2_EDGE_TREE_OID"
+          test "$(git -C "$source_root" ls-files supabase/functions/world-v2-official-read | wc -l | tr -d ' ')" = "23"
+          test -z "$(find "$function_root" -type l -print -quit)"
+          cp -R "$function_root" supabase/functions/world-v2-official-read
+      - name: Verify live function and secret names are unused
+        run: |
+          mkdir -m 700 "$RUNNER_TEMP/world-v2-edge-reader"
+          supabase functions list --project-ref "$SUPABASE_PROJECT_REF" --output json > "$RUNNER_TEMP/world-v2-edge-reader/functions-before.json"
+          node scripts/world-v2-edge-reader-provision.mjs verify-function-absent "$RUNNER_TEMP/world-v2-edge-reader/functions-before.json"
+          supabase secrets list --project-ref "$SUPABASE_PROJECT_REF" --output json > "$RUNNER_TEMP/world-v2-edge-reader/secrets-before.json"
+          node scripts/world-v2-edge-reader-provision.mjs verify-secrets-absent "$RUNNER_TEMP/world-v2-edge-reader/secrets-before.json"
+      - name: Resolve actual shared transaction pooler without exposing connection details
+        run: |
+          curl --fail --silent --show-error \
+            --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/config/database/pooler" \
+            --output "$RUNNER_TEMP/world-v2-edge-reader/pooler.json"
+      - name: Verify existing 0021 and credentialless role baseline
+        run: |
+          node scripts/world-v2-edge-reader-provision.mjs render-preflight "$RUNNER_TEMP/world-v2-edge-reader/preflight-request.json"
+          curl --fail --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            --header "Content-Type: application/json" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query" \
+            --data-binary "@$RUNNER_TEMP/world-v2-edge-reader/preflight-request.json" \
+            --output "$RUNNER_TEMP/world-v2-edge-reader/preflight-response.json"
+          node scripts/world-v2-edge-reader-provision.mjs verify-preflight "$RUNNER_TEMP/world-v2-edge-reader/preflight-response.json"
+      - name: Generate new ephemeral dedicated credential and recheck absence
+        run: |
+          node scripts/world-v2-edge-reader-provision.mjs render-credential \
+            "$RUNNER_TEMP/world-v2-edge-reader/pooler.json" \
+            "$RUNNER_TEMP/world-v2-edge-reader"
+          supabase functions list --project-ref "$SUPABASE_PROJECT_REF" --output json > "$RUNNER_TEMP/world-v2-edge-reader/functions-recheck.json"
+          node scripts/world-v2-edge-reader-provision.mjs verify-function-absent "$RUNNER_TEMP/world-v2-edge-reader/functions-recheck.json"
+          supabase secrets list --project-ref "$SUPABASE_PROJECT_REF" --output json > "$RUNNER_TEMP/world-v2-edge-reader/secrets-recheck.json"
+          node scripts/world-v2-edge-reader-provision.mjs verify-secrets-absent "$RUNNER_TEMP/world-v2-edge-reader/secrets-recheck.json"
+      - name: Set only new server-side Edge secrets
+        run: |
+          supabase secrets set \
+            --project-ref "$SUPABASE_PROJECT_REF" \
+            --env-file "$RUNNER_TEMP/world-v2-edge-reader/edge.env" \
+            > /dev/null 2>&1
+          supabase secrets list --project-ref "$SUPABASE_PROJECT_REF" --output json > "$RUNNER_TEMP/world-v2-edge-reader/secrets-after.json"
+          node scripts/world-v2-edge-reader-provision.mjs verify-secrets-present "$RUNNER_TEMP/world-v2-edge-reader/secrets-after.json"
+      - name: Execute one guarded LOGIN activation, never migration 0021 again
+        id: activate
+        continue-on-error: true
+        run: |
+          curl --fail --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            --header "Content-Type: application/json" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query" \
+            --data-binary "@$RUNNER_TEMP/world-v2-edge-reader/role-apply-request.json" \
+            --output "$RUNNER_TEMP/world-v2-edge-reader/role-apply-response.json"
+      - name: Verify exact post-activation role state
+        id: verify_role
+        if: steps.activate.outcome == 'success'
+        continue-on-error: true
+        run: node scripts/world-v2-edge-reader-provision.mjs verify-after "$RUNNER_TEMP/world-v2-edge-reader/role-apply-response.json"
+      - name: Read-only role diagnostic after uncertain activation
+        if: steps.activate.outcome != 'success' || steps.verify_role.outcome != 'success'
+        continue-on-error: true
+        run: |
+          curl --fail --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            --header "Content-Type: application/json" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query" \
+            --data-binary "@$RUNNER_TEMP/world-v2-edge-reader/preflight-request.json" \
+            --output "$RUNNER_TEMP/world-v2-edge-reader/role-diagnostic-response.json"
+      - name: Fail closed on uncertain activation; never retry the write
+        if: steps.activate.outcome != 'success' || steps.verify_role.outcome != 'success'
+        run: exit 1
+      - name: Deploy only the new read-only function
+        run: supabase functions deploy world-v2-official-read --project-ref "$SUPABASE_PROJECT_REF"
+      - name: Verify function identity and public route
+        run: |
+          supabase functions list --project-ref "$SUPABASE_PROJECT_REF" --output json > "$RUNNER_TEMP/world-v2-edge-reader/functions-after.json"
+          node scripts/world-v2-edge-reader-provision.mjs verify-function-present "$RUNNER_TEMP/world-v2-edge-reader/functions-after.json"
+          curl --fail --silent --show-error \
+            --header "Origin: https://samuelq800.github.io" \
+            "https://$SUPABASE_PROJECT_REF.supabase.co/functions/v1/world-v2-official-read/v1/world-data/datasets" \
+            --output "$RUNNER_TEMP/world-v2-edge-reader/catalogue-response.json"
+          curl --fail --silent --show-error \
+            --header "Origin: https://samuelq800.github.io" \
+            "https://$SUPABASE_PROJECT_REF.supabase.co/functions/v1/world-v2-official-read/v1/world-data/datasets/countries?limit=1" \
+            --dump-header "$RUNNER_TEMP/world-v2-edge-reader/countries.headers" \
+            --output "$RUNNER_TEMP/world-v2-edge-reader/countries.json"
+          curl --fail --silent --show-error --request OPTIONS \
+            --header "Origin: https://samuelq800.github.io" \
+            --header "Access-Control-Request-Method: GET" \
+            --header "Access-Control-Request-Headers: Accept" \
+            "https://$SUPABASE_PROJECT_REF.supabase.co/functions/v1/world-v2-official-read/v1/world-data/datasets/countries?limit=1" \
+            --dump-header "$RUNNER_TEMP/world-v2-edge-reader/options.headers" --output /dev/null
+          mkdir -p artifacts/world-v2-edge-reader
+          node scripts/verify-world-v2-edge-smoke.mjs \
+            "$RUNNER_TEMP/world-v2-edge-reader/countries.headers" "$RUNNER_TEMP/world-v2-edge-reader/countries.json" \
+            "$RUNNER_TEMP/world-v2-edge-reader/options.headers" artifacts/world-v2-edge-reader/smoke-evidence.json
+      - name: Preserve verified non-secret route summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: world-v2-edge-reader-route-evidence
+          path: artifacts/world-v2-edge-reader/*.json
+          if-no-files-found: warn
+      - name: Remove generated credential files from the runner
+        if: always()
+        run: |
+          test -n "$RUNNER_TEMP"
+          test "$RUNNER_TEMP" = "/home/runner/work/_temp"
+          if test -d "$RUNNER_TEMP/world-v2-edge-reader"; then
+            find "$RUNNER_TEMP/world-v2-edge-reader" -maxdepth 1 -type f -exec shred -u {} +
+          fi

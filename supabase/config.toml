@@ -71,3 +71,9 @@ verify_jwt = false
 
 [functions.brevo-mail-events]
 verify_jwt = false
+
+# Separate public, read-only World V2 source API. Its handler validates the
+# exact route/CORS contract and uses only a dedicated database LOGIN that can
+# SET LOCAL ROLE to the frozen NOLOGIN reader. Never deploy this with workers.
+[functions.world-v2-official-read]
+verify_jwt = false
