@@ -571,15 +571,13 @@ function TeamCard({
       </p>
       <Button
         className="mt-5 w-full"
-        disabled={busy || !team.recruiting || hasTeam || applied}
+        disabled={busy || !team.recruiting || hasTeam}
         onClick={onApply}
       >
-        {applied
-          ? "Application pending"
-          : hasTeam
+        {hasTeam
             ? "You already have a team"
             : team.recruiting
-              ? "Apply to join"
+              ? applied ? "Join team" : "Apply to join"
               : "Recruitment closed"}
       </Button>
     </Card>
