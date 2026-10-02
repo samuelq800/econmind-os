@@ -83,6 +83,11 @@ jobs:
           PGPASSWORD: disposable-test-only
         run: |
           psql -h localhost -U postgres -d world_v2_edge_role_test -f scripts/test-world-v2-edge-reader-provision.sql
+          node scripts/world-v2-edge-reader-provision.mjs render-preflight "$RUNNER_TEMP/world-v2-edge-baseline-request.json"
+          jq -r .query "$RUNNER_TEMP/world-v2-edge-baseline-request.json" \
+            | psql -qAt -v ON_ERROR_STOP=1 -h localhost -U postgres -d world_v2_edge_role_test \
+            | jq -s 'map({evidence: .})' > "$RUNNER_TEMP/world-v2-edge-baseline-response.json"
+          node scripts/world-v2-edge-reader-provision.mjs verify-preflight "$RUNNER_TEMP/world-v2-edge-baseline-response.json"
           node --input-type=module -e 'import { roleActivationSql } from "./scripts/world-v2-edge-reader-provision.mjs"; process.stdout.write(roleActivationSql("ab".repeat(48)))' \
             | psql -qAt -v ON_ERROR_STOP=1 -h localhost -U postgres -d world_v2_edge_role_test \
             > "$RUNNER_TEMP/world-v2-edge-role-after.json"
@@ -95,6 +100,15 @@ jobs:
             exit 1
           fi
           expect_blocked() {
+            preflight_root="$(mktemp -d)"
+            node scripts/world-v2-edge-reader-provision.mjs render-preflight "$preflight_root/request.json"
+            jq -r .query "$preflight_root/request.json" \
+              | psql -qAt -v ON_ERROR_STOP=1 -h localhost -U postgres -d world_v2_edge_role_test \
+              | jq -s 'map({evidence: .})' > "$preflight_root/response.json"
+            if node scripts/world-v2-edge-reader-provision.mjs verify-preflight "$preflight_root/response.json" > /dev/null 2>&1; then
+              echo 'Forbidden effective access passed preflight'
+              exit 1
+            fi
             if node --input-type=module -e 'import { roleActivationSql } from "./scripts/world-v2-edge-reader-provision.mjs"; process.stdout.write(roleActivationSql("ab".repeat(48)))' \
               | psql -qAt -v ON_ERROR_STOP=1 -h localhost -U postgres -d world_v2_edge_role_test > /dev/null 2>&1; then
               echo 'Forbidden effective access unexpectedly passed'
@@ -107,6 +121,9 @@ jobs:
           expect_blocked
           psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d world_v2_edge_role_test \
             -c 'revoke select on public.synthetic_business from public; grant select(value) on public.synthetic_business to public;'
+          expect_blocked
+          psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d world_v2_edge_role_test \
+            -c 'revoke select(value) on public.synthetic_business from public; grant maintain on public.synthetic_business to public;'
           expect_blocked
           psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d world_v2_edge_role_test \
             -c 'drop table public.synthetic_business; create function public.synthetic_mutator() returns integer language sql security definer as $$select 1$$;'

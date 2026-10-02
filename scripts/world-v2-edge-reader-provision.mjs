@@ -64,6 +64,10 @@ function roleSql(name) {
 
 // Effective grants include PUBLIC and apply both before and after SET ROLE.
 // This reads catalogs only; it never reads user data or routine bodies.
+// MAINTAIN was added in PostgreSQL 17; never pass it to older servers.
+const TABLE_ACTIONS_SQL = `array['SELECT','INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER']
+  || case when current_setting('server_version_num')::integer >= 170000
+     then array['MAINTAIN']::text[] else array[]::text[] end`;
 export const EFFECTIVE_ACCESS_SQL = `with audited_roles(role_name) as (
   values ('${LOGIN_ROLE}'), ('${READER_ROLE}')
 ), user_schemas as (
@@ -88,8 +92,7 @@ export const EFFECTIVE_ACCESS_SQL = `with audited_roles(role_name) as (
     null, action.name, null
   from audited_roles audited cross join user_schemas namespace
   join pg_class relation on relation.relnamespace = namespace.oid
-  cross join (values ('SELECT'), ('INSERT'), ('UPDATE'), ('DELETE'),
-    ('TRUNCATE'), ('REFERENCES'), ('TRIGGER')) action(name)
+  cross join unnest(${TABLE_ACTIONS_SQL}) action(name)
   where relation.relkind in ('r', 'p', 'v', 'm', 'f')
     and has_schema_privilege(audited.role_name, namespace.oid, 'USAGE')
     and has_table_privilege(audited.role_name, relation.oid, action.name)
@@ -216,7 +219,7 @@ select jsonb_build_object(
     'schema_usage', has_schema_privilege(role_name, namespace.oid, 'USAGE'),
     'table', case when relation.relkind='S' then null else
       (select jsonb_object_agg(action, has_table_privilege(role_name, relation.oid, action))
-       from unnest(array['SELECT','INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER']) action) end,
+       from unnest(${TABLE_ACTIONS_SQL}) action) end,
     'any_column', case when relation.relkind='S' then null else
       (select jsonb_object_agg(action, has_any_column_privilege(role_name, relation.oid, action))
        from unnest(array['SELECT','INSERT','UPDATE','REFERENCES']) action) end,

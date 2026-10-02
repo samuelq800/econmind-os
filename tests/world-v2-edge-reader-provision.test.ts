@@ -162,6 +162,28 @@ describe("World V2 Edge reader credential provision guard", () => {
       ),
     ).toThrow();
     expect(roleActivationSql(password)).toContain("has_function_privilege");
+    expect(EVIDENCE_SQL).toContain("array['MAINTAIN']");
+    expect(roleActivationSql(password)).toContain("array['MAINTAIN']");
+    expect(() =>
+      verifyEvidence(
+        {
+          ...evidence(false),
+          effective_access: [
+            ...EXPECTED_EFFECTIVE_ACCESS,
+            {
+              role: LOGIN_ROLE,
+              kind: "table",
+              schema: "public",
+              object: "maintain_fixture",
+              column: null,
+              privilege: "MAINTAIN",
+              security_definer: null,
+            },
+          ],
+        },
+        false,
+      ),
+    ).toThrow();
     expect(roleActivationSql(password)).toContain(
       "pg_has_role('world_v2_api_reader'",
     );

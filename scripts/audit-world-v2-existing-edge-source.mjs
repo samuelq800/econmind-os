@@ -25,6 +25,8 @@ export async function summarizeSource(headers, bytes, slug, repositoryRoot) {
         return [
           offset >= 0 ? name.slice(offset) : null,
           libraryOffset >= 0 ? name.slice(libraryOffset) : null,
+          name.startsWith("functions/") ? `supabase/${name}` : null,
+          name.startsWith(`${slug}/`) ? `supabase/functions/${name}` : null,
         ];
       })
       .filter(Boolean);
@@ -50,15 +52,18 @@ export async function summarizeSource(headers, bytes, slug, repositoryRoot) {
       repository_match: repositoryMatch,
       environment_names: [
         ...new Set(
-          [...source.matchAll(/Deno\.env\.get\(\s*['"]([A-Z0-9_]+)['"]/gu)].map(
-            (match) => match[1],
-          ),
+          [
+            ...source.matchAll(
+              /Deno\.env\.get\(\s*['"]([A-Z0-9_]+)['"]|process\.env\.([A-Z0-9_]+)|process\.env\[\s*['"]([A-Z0-9_]+)['"]\s*\]/gu,
+            ),
+          ].map((match) => match[1] ?? match[2] ?? match[3]),
         ),
       ].sort(),
       reads_world_database_url: source.includes("WORLD_DATABASE_URL"),
-      whole_environment_access: /Deno\.env\.toObject\s*\(|process\.env\b/u.test(
-        source,
-      ),
+      whole_environment_access:
+        /Deno\.env\.toObject\s*\(|process\.env\b(?!\s*(?:\.[a-zA-Z_$][\w$]*|\[\s*['"][A-Z0-9_]+['"]\s*\]))/u.test(
+          source,
+        ),
       dynamic_environment_access: /Deno\.env\.get\(\s*[^\s'"]/u.test(source),
       dynamic_execution: /\beval\s*\(|new\s+Function\s*\(/u.test(source),
       dynamic_import: /\bimport\s*\(/u.test(source),

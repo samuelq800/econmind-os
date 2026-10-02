@@ -1,11 +1,18 @@
 # World V2 official-read Edge Function — controlled release candidate
 
-Status: **PREPARATION ONLY / NOT AUTHORIZED FOR PRODUCTION DISPATCH**. This
+Status: **RELEASE_HOLD / EFFECTIVE_ACCESS_BLOCKED / NOT AUTHORIZED FOR PRODUCTION DISPATCH**. This
 candidate builds on the separately verified 0021 database reader publication
 ([run `36672349466`](https://github.com/samuelq800/econmind-os/actions/runs/36672349466)).
 It does not replay 0021, change World opening state, start a worker, or approve
 Gate B. The selected bundle remains `IMPLEMENTED_UNVERIFIED_CANDIDATE` with
 `activation_allowed=false`.
+
+The [2026-10-02 readiness receipt](WORLD_V2_EDGE_READER_READINESS_2026_10_02.md)
+records the actual excess PUBLIC privileges and unchanged NOLOGIN roles.
+The workflow's first-step hard-coded production HOLD prevents all release contact;
+code merge does not unlock it. A separately reviewed isolation decision and code
+change, followed by new release authorization, are required. There is no per-role
+negative PUBLIC revoke shortcut; old ACL changes remain out of scope.
 
 ## Fixed connection contract
 
@@ -40,7 +47,7 @@ Gate B. The selected bundle remains `IMPLEMENTED_UNVERIFIED_CANDIDATE` with
   isolated to one function; this release must not put the URL in GitHub Pages
   source, build variables, artifacts, or logs.
 
-## One-time controlled path, after A and B
+## Future controlled path, only after separately resolving production HOLD
 
 1. A finishes the World repository's reviewed, deterministic self-contained
    Edge function directory. E pins the exact merged World commit and function
@@ -63,8 +70,10 @@ Gate B. The selected bundle remains `IMPLEMENTED_UNVERIFIED_CANDIDATE` with
    retry or deployment follows.
 4. Only after role verification does the workflow deploy the one new
    function, verify its active slug and `verify_jwt=false`, and perform a
-   bounded public catalogue read. D can then use the public function base URL
-   in Pages only after the routed dataset read and browser CORS checks pass.
+   bounded database-backed countries read (`limit=1`) with exact source/selection
+   hashes, count and numeric encoding, plus GET and OPTIONS CORS for the exact
+   Pages origin. A static catalogue HTTP 200 is insufficient. D can then use the
+   public function base URL in Pages only after these routed checks pass.
 
 No new service subscription or paid feature is requested. Edge invocations
 and database connections still consume the existing project's quotas. The

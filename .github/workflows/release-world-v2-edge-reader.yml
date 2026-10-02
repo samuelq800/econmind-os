@@ -21,11 +21,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
+      # Code merge is allowed; production requires a separately reviewed isolation decision.
+      WORLD_V2_EDGE_PRODUCTION_RELEASE_ALLOWED: "false"
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
       WORLD_V2_EDGE_SOURCE_COMMIT: 8efe907592006ea5491c341f4c54bed75bfd107f
       WORLD_V2_EDGE_TREE_OID: 0e64ed6243ec5d38bfa332b1a601129d329c382b
     steps:
+      - name: Enforce production HOLD before any production contact
+        run: test "$WORLD_V2_EDGE_PRODUCTION_RELEASE_ALLOWED" = "true"
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
         with:
@@ -52,7 +56,7 @@ jobs:
         run: |
           node --check scripts/world-v2-edge-reader-provision.mjs
           pnpm install --frozen-lockfile
-          pnpm exec vitest run tests/world-v2-edge-reader-provision.test.ts
+          pnpm exec vitest run tests/world-v2-edge-reader-provision.test.ts tests/world-v2-edge-smoke.test.ts
       - name: Fetch exact reviewed World Edge source
         run: |
           source_root="$RUNNER_TEMP/world-v2-edge-source"
@@ -149,6 +153,28 @@ jobs:
             --header "Origin: https://samuelq800.github.io" \
             "https://$SUPABASE_PROJECT_REF.supabase.co/functions/v1/world-v2-official-read/v1/world-data/datasets" \
             --output "$RUNNER_TEMP/world-v2-edge-reader/catalogue-response.json"
+          curl --fail --silent --show-error \
+            --header "Origin: https://samuelq800.github.io" \
+            "https://$SUPABASE_PROJECT_REF.supabase.co/functions/v1/world-v2-official-read/v1/world-data/datasets/countries?limit=1" \
+            --dump-header "$RUNNER_TEMP/world-v2-edge-reader/countries.headers" \
+            --output "$RUNNER_TEMP/world-v2-edge-reader/countries.json"
+          curl --fail --silent --show-error --request OPTIONS \
+            --header "Origin: https://samuelq800.github.io" \
+            --header "Access-Control-Request-Method: GET" \
+            --header "Access-Control-Request-Headers: Accept" \
+            "https://$SUPABASE_PROJECT_REF.supabase.co/functions/v1/world-v2-official-read/v1/world-data/datasets/countries?limit=1" \
+            --dump-header "$RUNNER_TEMP/world-v2-edge-reader/options.headers" --output /dev/null
+          mkdir -p artifacts/world-v2-edge-reader
+          node scripts/verify-world-v2-edge-smoke.mjs \
+            "$RUNNER_TEMP/world-v2-edge-reader/countries.headers" "$RUNNER_TEMP/world-v2-edge-reader/countries.json" \
+            "$RUNNER_TEMP/world-v2-edge-reader/options.headers" artifacts/world-v2-edge-reader/smoke-evidence.json
+      - name: Preserve verified non-secret route summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: world-v2-edge-reader-route-evidence
+          path: artifacts/world-v2-edge-reader/*.json
+          if-no-files-found: warn
       - name: Remove generated credential files from the runner
         if: always()
         run: |
