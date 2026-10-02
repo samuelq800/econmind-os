@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Check, Copy, Crown, LoaderCircle, LogOut, MessageCircle, RefreshCw, Send, ShieldCheck, UserMinus, UsersRound, X } from "lucide-react";
+import { ArrowRight, Check, Copy, Crown, LoaderCircle, LogOut, MessageCircle, RefreshCw, Send, Share2, ShieldCheck, UserMinus, UsersRound, X } from "lucide-react";
 import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
@@ -22,10 +22,49 @@ export function Season1MyTeam() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [code, setCode] = useState("");
+  const [joinCode, setJoinCode] = useState("");
+  const [shareLink, setShareLink] = useState("");
   const [draft, setDraft] = useState("");
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
   const draftTeam = useRef<string | null>(null);
   const request = useRef(0);
+
+  useEffect(() => {
+    const incoming = new URL(window.location.href).searchParams.get("join")?.trim().toUpperCase() ?? "";
+    const timer = window.setTimeout(() => {
+      if (/^EM-T1-[A-Z0-9]{10}$/.test(incoming)) {
+        setJoinCode(incoming);
+        setCode(incoming);
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const link = new URL("/season1/my-team/", window.location.origin);
+      if (data?.team && loadedFor === user?.id) {
+        link.searchParams.set("join", data.team.code);
+        setShareLink(link.href);
+      } else setShareLink("");
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [data?.team, loadedFor, user?.id]);
+
+  async function shareTeam(copyOnly = false) {
+    if (!shareLink || !data?.team) return;
+    try {
+      if (!copyOnly && navigator.share) {
+        await navigator.share({ title: data.team.name + " · Season 1", text: "Join our EconMind Season 1 team.", url: shareLink });
+      } else {
+        await navigator.clipboard.writeText(shareLink);
+        setMessage("Team link copied. Anyone with the link can join while recruitment is open.");
+      }
+    } catch (caught) {
+      if (caught instanceof DOMException && caught.name === "AbortError") return;
+      setMessage("Select and copy the team link shown below.");
+    }
+  }
 
   const refresh = useCallback(async () => {
     const current = ++request.current;
@@ -125,6 +164,16 @@ export function Season1MyTeam() {
         <Link href="/season1" className="rounded-lg border border-[var(--line)] px-4 py-2 hover:bg-[var(--surface-subtle)]">Season 1 Lobby</Link>
         <Link href="/season1/my-team" aria-current="page" className="rounded-lg bg-[var(--accent-soft)] px-4 py-2 text-[var(--accent)]">My Team</Link>
       </nav>
+      {joinCode && <Card className="season1-room-card mb-8 p-6 sm:p-8">
+        <p className="text-xs font-bold uppercase tracking-widest text-[var(--accent)]">Season 1 / Team invitation</p>
+        <h2 className="mt-3 text-2xl font-bold">Join a team in one click</h2>
+        <p className="mt-3 text-sm text-[var(--ink-muted)]">Team code: <span className="font-mono">{joinCode}</span>. The team must be unlocked and have space.</p>
+        {authLoading || roleLoading || (user && (loading || loadedFor !== user.id)) ? <p role="status" className="mt-4">Loading your account and team…</p>
+          : !user ? <Button className="mt-5" onClick={() => openAuth("sign-in")}>Sign in to join</Button>
+          : team ? <p className="mt-4 font-bold">{team.code === joinCode ? "You are already in this team." : "You already belong to a team. Leave it before joining another."}</p>
+          : <Button className="mt-5" disabled={busy || !data} onClick={() => void act(() => applyToSeason1TeamByCode(joinCode), "You have joined the team.")}>{busy ? "Joining…" : "Join team"}</Button>}
+        {error && <p role="alert" className="mt-4 text-sm text-red-600 dark:text-red-300">{error}</p>}
+      </Card>}
       <section className="season1-world-hero relative isolate overflow-hidden rounded-2xl border border-[#2b6f68] px-6 py-10 text-white shadow-2xl sm:px-10 sm:py-14">
         <Season1WorldArtwork />
         <div className="relative z-10 flex min-h-[34rem] flex-col justify-center gap-10 lg:min-h-[37rem]">
@@ -178,6 +227,11 @@ export function Season1MyTeam() {
               <p className="text-xs font-bold uppercase tracking-widest text-[var(--ink-muted)]">Team code</p>
               <p className="mt-2 select-all break-all font-mono text-lg font-bold text-[var(--accent)]">{team.code}</p>
               <Button size="sm" variant="secondary" className="mt-3" onClick={() => void copyCode()}><Copy size={14} /> Copy code</Button>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button size="sm" variant="secondary" disabled={!shareLink} onClick={() => void shareTeam()}><Share2 size={14} /> Share team link</Button>
+                <Button size="sm" variant="secondary" disabled={!shareLink} onClick={() => void shareTeam(true)}><Copy size={14} /> Copy link</Button>
+              </div>
+              {shareLink && <input aria-label="Team invitation link" readOnly value={shareLink} onFocus={(event) => event.currentTarget.select()} className="mt-3 block w-full min-w-0 rounded-lg border border-[var(--line)] bg-[var(--surface)] p-2 text-xs" />}
             </div>
           </div>
           <dl className="mt-7 grid grid-cols-2 gap-4 border-t border-[var(--line)] pt-6 sm:grid-cols-4">
