@@ -276,8 +276,117 @@ describe("scoped real Storage protocol with mock HTTP only", () => {
         { manifest, managementToken: management, fetchRequest },
         async () => {},
       ),
-    ).rejects.toThrow("KEY_AMBIGUOUS");
+    ).rejects.toThrow("SNAPSHOT_PUBLISHER_KEY_MULTIPLE");
     expect(fetchRequest).toHaveBeenCalledTimes(1);
+  });
+  it.each([
+    [[], "NOT_FOUND"],
+    [
+      [{ type: "publishable", name: "service_role", api_key: credential }],
+      "NOT_FOUND",
+    ],
+    [
+      [
+        {
+          type: "secret",
+          name: "custom",
+          secret_jwt_template: null,
+          api_key: credential,
+        },
+      ],
+      "NOT_FOUND",
+    ],
+    [
+      [
+        {
+          type: "secret",
+          name: "custom",
+          secret_jwt_template: {},
+          api_key: credential,
+        },
+      ],
+      "NOT_FOUND",
+    ],
+    [[{ type: "legacy", name: "service_role", api_key: null }], "TYPE_INVALID"],
+    [[{ type: "legacy", name: "service_role" }], "TYPE_INVALID"],
+    [[{ type: "legacy", name: "service_role", api_key: 17 }], "TYPE_INVALID"],
+    [[{ type: "legacy", name: "service_role", api_key: "" }], "INVALID"],
+    [
+      [
+        {
+          type: "secret",
+          secret_jwt_template: { role: "service_role" },
+          api_key: credential,
+        },
+      ],
+      "INVALID",
+    ],
+    [
+      [
+        { type: "legacy", name: "service_role", api_key: credential },
+        {
+          type: "secret",
+          secret_jwt_template: { role: "service_role" },
+          api_key: "synthetic-only",
+        },
+      ],
+      "MULTIPLE",
+    ],
+  ])(
+    "distinguishes zero/multiple/type/format without Storage or response disclosure (%#)",
+    async (entries, suffix) => {
+      const fetchRequest = vi.fn(async () => json(entries));
+      const operation = vi.fn();
+      await expect(
+        withEphemeralSnapshotTransport(
+          { manifest, managementToken: management, fetchRequest },
+          operation,
+        ),
+      ).rejects.toThrow(`SNAPSHOT_PUBLISHER_KEY_${suffix}`);
+      expect(fetchRequest).toHaveBeenCalledTimes(1);
+      expect(operation).not.toHaveBeenCalled();
+    },
+  );
+  it("retains secret lease protocol and legacy JWT ref/role checks", async () => {
+    const synthetic = "sb_secret_" + "synthetic_mock_only_not_real";
+    const fetchRequest = vi.fn(async (url: string, init: RequestInit) => {
+      if (url.includes("/api-keys?reveal=true"))
+        return json([
+          {
+            type: "secret",
+            secret_jwt_template: { role: "service_role" },
+            api_key: synthetic,
+          },
+        ]);
+      expect(new Headers(init.headers).get("apikey")).toBe(synthetic);
+      expect(new Headers(init.headers).get("authorization")).toBeNull();
+      return json(bucket);
+    });
+    await withEphemeralSnapshotTransport(
+      { manifest, managementToken: management, fetchRequest },
+      (t: SnapshotTransport) => t.getBucket(SNAPSHOT_BUCKET),
+    );
+    expect(fetchRequest).toHaveBeenCalledTimes(2);
+    for (const claims of [
+      { ref: "wrong-project", role: "service_role" },
+      { ref: SNAPSHOT_PROJECT_REF, role: "anon" },
+    ]) {
+      const jwt = [
+        "e30",
+        Buffer.from(JSON.stringify(claims)).toString("base64url"),
+        "synthetic",
+      ].join(".");
+      const rejected = vi.fn(async () =>
+        json([{ name: "service_role", type: "legacy", api_key: jwt }]),
+      );
+      await expect(
+        withEphemeralSnapshotTransport(
+          { manifest, managementToken: management, fetchRequest: rejected },
+          vi.fn(),
+        ),
+      ).rejects.toThrow("SNAPSHOT_PUBLISHER_KEY_INVALID");
+      expect(rejected).toHaveBeenCalledTimes(1);
+    }
   });
 });
 describe("bounded Storage permission proof", () => {
