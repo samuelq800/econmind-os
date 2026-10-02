@@ -4,6 +4,12 @@ run-name: Audit World V2 reader readback · @${{ github.actor }}
 on:
   workflow_dispatch:
     inputs:
+      audit_scope:
+        description: Read-only catalog evidence for the selected reader boundary
+        required: true
+        type: choice
+        default: reader_0020
+        options: [reader_0020, edge_readiness]
       confirmation:
         description: Type AUDIT_WORLD_V2_API_READER_READBACK
         required: true
@@ -34,6 +40,7 @@ jobs:
           test "$SUPABASE_PROJECT_REF" = "vimksjrhaxdpnkvgsavz"
           test -n "$SUPABASE_ACCESS_TOKEN"
       - name: Fetch immutable reviewed World V2 audit source
+        if: inputs.audit_scope != 'edge_readiness'
         run: |
           source_root="$RUNNER_TEMP/world-v2-api-reader-audit-source"
           git clone --no-checkout https://github.com/samuelq800/econmind-os-world-simulation.git "$source_root"
@@ -43,9 +50,13 @@ jobs:
           test -z "$(git -C "$source_root" status --porcelain=v1 --untracked-files=all)"
           printf 'WORLD_V2_API_READER_AUDIT_SOURCE_ROOT=%s\n' "$source_root" >> "$GITHUB_ENV"
       - name: Render one reviewed read-only audit request
+        if: inputs.audit_scope != 'edge_readiness'
         run: |
           node "$WORLD_V2_API_READER_AUDIT_SOURCE_ROOT/scripts/render-world-v2-api-reader-readback-audit.mjs" \
             "$WORLD_V2_API_READER_AUDIT_SOURCE_ROOT" "$RUNNER_TEMP/world-v2-api-reader-audit-request.json"
+      - name: Render catalog-only Edge readiness request
+        if: inputs.audit_scope == 'edge_readiness'
+        run: node scripts/world-v2-edge-reader-provision.mjs render-preflight "$RUNNER_TEMP/world-v2-api-reader-audit-request.json"
       - name: Execute exactly one read-only management API request
         id: request
         continue-on-error: true
@@ -63,9 +74,31 @@ jobs:
         continue-on-error: true
         run: |
           mkdir -p artifacts/world-v2-api-reader-audit
-          node scripts/verify-world-v2-api-reader-readback-audit.mjs \
-            "$RUNNER_TEMP/world-v2-api-reader-audit-response.json" \
-            artifacts/world-v2-api-reader-audit/evidence.json
+          if test "${{ inputs.audit_scope }}" = "edge_readiness"; then
+            node scripts/world-v2-edge-reader-provision.mjs record-readiness \
+              "$RUNNER_TEMP/world-v2-api-reader-audit-response.json" \
+              artifacts/world-v2-api-reader-audit/effective-permission-evidence.json
+          else
+            node scripts/verify-world-v2-api-reader-readback-audit.mjs \
+              "$RUNNER_TEMP/world-v2-api-reader-audit-response.json" \
+              artifacts/world-v2-api-reader-audit/evidence.json
+          fi
+      - uses: supabase/setup-cli@v1
+        if: inputs.audit_scope == 'edge_readiness'
+        with:
+          version: 2.115.0
+      - name: Read function identities, secret names and actual pooler metadata
+        if: inputs.audit_scope == 'edge_readiness'
+        run: |
+          curl --fail --silent --show-error \
+            --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/config/database/pooler" \
+            --output "$RUNNER_TEMP/world-v2-edge-pooler.json"
+          supabase functions list --project-ref "$SUPABASE_PROJECT_REF" --output json > "$RUNNER_TEMP/world-v2-edge-functions.json"
+          supabase secrets list --project-ref "$SUPABASE_PROJECT_REF" --output json > "$RUNNER_TEMP/world-v2-edge-secrets.json"
+          node scripts/world-v2-edge-reader-provision.mjs record-control-plane \
+            "$RUNNER_TEMP/world-v2-edge-pooler.json" "$RUNNER_TEMP/world-v2-edge-functions.json" \
+            "$RUNNER_TEMP/world-v2-edge-secrets.json" artifacts/world-v2-api-reader-audit/control-plane-evidence.json
       - name: Record uncertain or failed audit outcome
         if: steps.request.outcome != 'success' || steps.evidence.outcome != 'success'
         run: |

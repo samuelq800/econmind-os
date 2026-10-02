@@ -31,3 +31,14 @@ create role world_v2_api_reader
 create role world_v2_api_login
   nologin nosuperuser nocreatedb nocreaterole noinherit noreplication nobypassrls;
 grant world_v2_api_reader to world_v2_api_login;
+create table world_v2.country_candidate_artifact (
+  bundle_id text, artifact_path text, content_sha256 text, content_utf8 text
+);
+create table world_v2.country_candidate_bundle (
+  bundle_id text, package_manifest_sha256 text, source_status text, activation_allowed boolean
+);
+grant usage on schema world_v2 to world_v2_api_reader;
+grant select (bundle_id, artifact_path, content_sha256, content_utf8)
+  on world_v2.country_candidate_artifact to world_v2_api_reader;
+grant select (bundle_id, package_manifest_sha256, source_status, activation_allowed)
+  on world_v2.country_candidate_bundle to world_v2_api_reader;

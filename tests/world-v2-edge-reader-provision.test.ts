@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   EVIDENCE_SQL,
+  EXPECTED_EFFECTIVE_ACCESS,
   FUNCTION_SLUG,
   LOGIN_ROLE,
   PROJECT_REF,
@@ -54,6 +55,17 @@ const evidence = (canLogin: boolean) => ({
   },
   login_role: role(canLogin),
   reader_role: role(false),
+  effective_access: EXPECTED_EFFECTIVE_ACCESS,
+  set_role_closure: {
+    [LOGIN_ROLE]: [LOGIN_ROLE, READER_ROLE],
+    [READER_ROLE]: [READER_ROLE],
+  },
+  catalog: {
+    coverage: { roles: 2, schemas: 0, relations: 0, routines: 0 },
+    schemas: [],
+    relations: [],
+    routines: [],
+  },
   login_memberships: [
     {
       role: READER_ROLE,
@@ -106,6 +118,53 @@ describe("World V2 Edge reader credential provision guard", () => {
       ]),
     ).toThrow();
     expect(() => poolerHost([...config, ...config])).toThrow();
+  });
+
+  it("rejects PUBLIC object access and extra SET targets", () => {
+    for (const kind of [
+      "table",
+      "column",
+      "routine",
+      "sequence",
+      "schema_create",
+    ]) {
+      expect(() =>
+        verifyEvidence(
+          {
+            ...evidence(false),
+            effective_access: [
+              ...EXPECTED_EFFECTIVE_ACCESS,
+              {
+                role: LOGIN_ROLE,
+                kind,
+                schema: "public",
+                object: "legacy_mutation",
+                column: null,
+                privilege: kind === "routine" ? "EXECUTE" : "SELECT",
+                security_definer: kind === "routine",
+              },
+            ],
+          },
+          false,
+        ),
+      ).toThrow();
+    }
+    expect(() =>
+      verifyEvidence(
+        {
+          ...evidence(false),
+          set_role_closure: {
+            [LOGIN_ROLE]: [LOGIN_ROLE, READER_ROLE],
+            [READER_ROLE]: [READER_ROLE, "legacy_writer"],
+          },
+        },
+        false,
+      ),
+    ).toThrow();
+    expect(roleActivationSql(password)).toContain("has_function_privilege");
+    expect(roleActivationSql(password)).toContain(
+      "pg_has_role('world_v2_api_reader'",
+    );
   });
 
   it("builds only a server-only TLS credential and one guarded ALTER ROLE", () => {

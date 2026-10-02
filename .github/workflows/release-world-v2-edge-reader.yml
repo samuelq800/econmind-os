@@ -23,10 +23,8 @@ jobs:
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
-      # Replaced with A's reviewed, merged World commit before this candidate
-      # may merge or run. The zero lock deliberately fails the first gate.
-      WORLD_V2_EDGE_SOURCE_COMMIT: 0000000000000000000000000000000000000000
-      WORLD_V2_EDGE_TREE_OID: 0000000000000000000000000000000000000000
+      WORLD_V2_EDGE_SOURCE_COMMIT: 8efe907592006ea5491c341f4c54bed75bfd107f
+      WORLD_V2_EDGE_TREE_OID: 0e64ed6243ec5d38bfa332b1a601129d329c382b
     steps:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1

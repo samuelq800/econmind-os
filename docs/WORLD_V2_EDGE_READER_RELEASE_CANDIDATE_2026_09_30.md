@@ -19,7 +19,8 @@ Gate B. The selected bundle remains `IMPLEMENTED_UNVERIFIED_CANDIDATE` with
   `world_v2_api_login` role, which is currently NOLOGIN and already has the
   reviewed `SET ROLE` membership in the frozen NOLOGIN
   `world_v2_api_reader`. The controlled operation checks the exact 0021 ledger,
-  role attributes, and membership before one `ALTER ROLE ... LOGIN PASSWORD`.
+  role attributes, membership, SET ROLE closure and effective catalog
+  privileges (including PUBLIC) before one `ALTER ROLE ... LOGIN PASSWORD`.
   It does not grant additional privileges or use `postgres`, `service_role`,
   `anon`, or a browser key at runtime.
 - The Edge connection uses this project's **shared transaction pooler**, port
@@ -44,9 +45,11 @@ Gate B. The selected bundle remains `IMPLEMENTED_UNVERIFIED_CANDIDATE` with
 1. A finishes the World repository's reviewed, deterministic self-contained
    Edge function directory. E pins the exact merged World commit and function
    tree OID in
-   `.github/workflows/release-world-v2-edge-reader.yml`; the zero placeholders
-   intentionally prevent a dispatch before that review. CI and B review the
-   final fixed bytes and this credential-operation diff.
+   `.github/workflows/release-world-v2-edge-reader.yml`. The reviewed World
+   source is now merged at `8efe907592006ea5491c341f4c54bed75bfd107f` with
+   function tree `0e64ed6243ec5d38bfa332b1a601129d329c382b`. CI and B must
+   review the final effective-permission guard and this credential-operation
+   diff before publication.
 2. With a separate one-time release authorization, the main-site workflow
    checks the fixed target, unused slug and secret names, real transaction
    pooler configuration, and read-only 0021/NOLOGIN baseline. The existing

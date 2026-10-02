@@ -94,6 +94,26 @@ jobs:
             echo 'Second activation unexpectedly succeeded'
             exit 1
           fi
+          expect_blocked() {
+            if node --input-type=module -e 'import { roleActivationSql } from "./scripts/world-v2-edge-reader-provision.mjs"; process.stdout.write(roleActivationSql("ab".repeat(48)))' \
+              | psql -qAt -v ON_ERROR_STOP=1 -h localhost -U postgres -d world_v2_edge_role_test > /dev/null 2>&1; then
+              echo 'Forbidden effective access unexpectedly passed'
+              exit 1
+            fi
+            test "$(psql -qAt -h localhost -U postgres -d world_v2_edge_role_test -c \"select rolcanlogin from pg_roles where rolname='world_v2_api_login'\")" = "f"
+          }
+          psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d world_v2_edge_role_test \
+            -c 'alter role world_v2_api_login nologin; create table public.synthetic_business(value text); grant select on public.synthetic_business to public;'
+          expect_blocked
+          psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d world_v2_edge_role_test \
+            -c 'revoke select on public.synthetic_business from public; grant select(value) on public.synthetic_business to public;'
+          expect_blocked
+          psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d world_v2_edge_role_test \
+            -c 'drop table public.synthetic_business; create function public.synthetic_mutator() returns integer language sql security definer as $$select 1$$;'
+          expect_blocked
+          psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d world_v2_edge_role_test \
+            -c 'drop function public.synthetic_mutator(); create role synthetic_writer nologin; grant synthetic_writer to world_v2_api_reader with inherit false, set true;'
+          expect_blocked
 
   verify:
     runs-on: ubuntu-latest
