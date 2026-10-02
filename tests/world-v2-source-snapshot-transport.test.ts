@@ -28,6 +28,26 @@ const credential = [
   "synthetic",
 ].join(".");
 const management = "synthetic-management-only";
+const modernCredential = "sb_secret_" + "synthetic_mock_only_not_real";
+const modernEntry = (
+  api_key: unknown = modernCredential,
+  extra: Record<string, unknown> = {},
+) => ({
+  type: "secret",
+  name: "synthetic-custom-name",
+  secret_jwt_template: { role: "service_role" },
+  api_key,
+  ...extra,
+});
+const legacyEntry = (
+  api_key: unknown = credential,
+  extra: Record<string, unknown> = {},
+) => ({
+  type: "legacy",
+  name: "service_role",
+  api_key,
+  ...extra,
+});
 const bucket = {
   id: SNAPSHOT_BUCKET,
   name: SNAPSHOT_BUCKET,
@@ -294,7 +314,7 @@ describe("scoped real Storage protocol with mock HTTP only", () => {
           api_key: credential,
         },
       ],
-      "NOT_FOUND",
+      "METADATA_INVALID",
     ],
     [
       [
@@ -305,7 +325,7 @@ describe("scoped real Storage protocol with mock HTTP only", () => {
           api_key: credential,
         },
       ],
-      "NOT_FOUND",
+      "METADATA_INVALID",
     ],
     [[{ type: "legacy", name: "service_role", api_key: null }], "TYPE_INVALID"],
     [[{ type: "legacy", name: "service_role" }], "TYPE_INVALID"],
@@ -330,7 +350,7 @@ describe("scoped real Storage protocol with mock HTTP only", () => {
           api_key: "synthetic-only",
         },
       ],
-      "MULTIPLE",
+      "INVALID",
     ],
   ])(
     "distinguishes zero/multiple/type/format without Storage or response disclosure (%#)",
@@ -388,6 +408,216 @@ describe("scoped real Storage protocol with mock HTTP only", () => {
       expect(rejected).toHaveBeenCalledTimes(1);
     }
   });
+  it.each([
+    [[modernEntry(), legacyEntry()], modernCredential],
+    [[legacyEntry(), modernEntry()], modernCredential],
+    [
+      [modernEntry(), legacyEntry(), legacyEntry("invalid-unused-legacy")],
+      modernCredential,
+    ],
+    [
+      [
+        modernEntry(),
+        legacyEntry(null, { secret_jwt_template: { role: "anon" } }),
+      ],
+      modernCredential,
+    ],
+    [[modernEntry()], modernCredential],
+    [[legacyEntry()], credential],
+    [[legacyEntry(credential, { secret_jwt_template: null })], credential],
+    [[legacyEntry(credential, { secret_jwt_template: {} })], credential],
+    [
+      [
+        legacyEntry(credential, {
+          secret_jwt_template: { role: "service_role" },
+        }),
+      ],
+      credential,
+    ],
+    [
+      [
+        legacyEntry(),
+        { type: "publishable", name: "service_role", api_key: "unused-public" },
+      ],
+      credential,
+    ],
+    [
+      [
+        modernEntry("unused-secret", { secret_jwt_template: { role: "anon" } }),
+        legacyEntry(),
+      ],
+      credential,
+    ],
+  ])(
+    "uses the unique modern tier or strictly typed legacy fallback (%#)",
+    async (entries, selected) => {
+      const operation = vi.fn(async (t: SnapshotTransport) =>
+        t.getBucket(SNAPSHOT_BUCKET),
+      );
+      const fetchRequest = vi.fn(async (url: string, init: RequestInit) => {
+        if (url.endsWith("/api-keys?reveal=true")) return json(entries);
+        expect(url).toBe(
+          `https://${SNAPSHOT_PROJECT_REF}.supabase.co/storage/v1/bucket/${SNAPSHOT_BUCKET}`,
+        );
+        const headers = new Headers(init.headers);
+        expect(headers.get("apikey")).toBe(selected);
+        expect(headers.get("authorization")).toBe(
+          selected === modernCredential ? null : `Bearer ${credential}`,
+        );
+        return json(bucket);
+      });
+      await expect(
+        withEphemeralSnapshotTransport(
+          { manifest, managementToken: management, fetchRequest },
+          operation,
+        ),
+      ).resolves.toEqual(bucket);
+      expect(operation).toHaveBeenCalledTimes(1);
+      expect(fetchRequest).toHaveBeenCalledTimes(2);
+      expect(
+        fetchRequest.mock.calls.filter(([url]) =>
+          url.includes("api.supabase.com"),
+        ),
+      ).toHaveLength(1);
+    },
+  );
+  it.each([
+    [[modernEntry(), modernEntry()], "MULTIPLE"],
+    [[modernEntry(), modernEntry(), legacyEntry()], "MULTIPLE"],
+    [[modernEntry(), modernEntry(null), legacyEntry()], "MULTIPLE"],
+    [[legacyEntry(), legacyEntry()], "MULTIPLE"],
+    [[legacyEntry(), legacyEntry(null)], "MULTIPLE"],
+    [[modernEntry(null), legacyEntry()], "TYPE_INVALID"],
+    [[modernEntry(17), legacyEntry()], "TYPE_INVALID"],
+    [[modernEntry(""), legacyEntry()], "INVALID"],
+    [[modernEntry("synthetic-invalid-format"), legacyEntry()], "INVALID"],
+    [[modernEntry(credential), legacyEntry()], "INVALID"],
+    [
+      [modernEntry(modernCredential, { api_key: undefined }), legacyEntry()],
+      "TYPE_INVALID",
+    ],
+    [
+      [
+        modernEntry(modernCredential, { secret_jwt_template: null }),
+        legacyEntry(),
+      ],
+      "METADATA_INVALID",
+    ],
+    [
+      [
+        modernEntry(modernCredential, { secret_jwt_template: undefined }),
+        legacyEntry(),
+      ],
+      "METADATA_INVALID",
+    ],
+    [
+      [
+        modernEntry(modernCredential, { secret_jwt_template: [] }),
+        legacyEntry(),
+      ],
+      "METADATA_INVALID",
+    ],
+    [
+      [
+        modernEntry(modernCredential, { secret_jwt_template: {} }),
+        legacyEntry(),
+      ],
+      "METADATA_INVALID",
+    ],
+    [
+      [
+        modernEntry(modernCredential, { secret_jwt_template: { role: 7 } }),
+        legacyEntry(),
+      ],
+      "METADATA_INVALID",
+    ],
+    [
+      [
+        modernEntry(modernCredential, {
+          name: "service_role",
+          secret_jwt_template: { role: "anon" },
+        }),
+        legacyEntry(),
+      ],
+      "METADATA_INVALID",
+    ],
+    [
+      [
+        modernEntry(modernCredential, {
+          secret_jwt_template: { role: "anon" },
+        }),
+      ],
+      "NOT_FOUND",
+    ],
+    [[legacyEntry(credential, { type: null })], "NOT_FOUND"],
+    [[legacyEntry(credential, { type: undefined })], "NOT_FOUND"],
+    [[legacyEntry(credential, { type: "unknown" })], "NOT_FOUND"],
+    [[legacyEntry(credential, { name: "unknown" })], "NOT_FOUND"],
+    [
+      [legacyEntry(credential, { secret_jwt_template: { role: "anon" } })],
+      "METADATA_INVALID",
+    ],
+    [
+      [legacyEntry(credential, { secret_jwt_template: [] })],
+      "METADATA_INVALID",
+    ],
+  ])(
+    "rejects tier ambiguity, selected-value faults and metadata conflicts without fallback or disclosure (%#)",
+    async (entries, code) => {
+      const operation = vi.fn();
+      const fetchRequest = vi.fn(async (url: string, init: RequestInit) => {
+        expect(url).toBe(
+          `https://api.supabase.com/v1/projects/${SNAPSHOT_PROJECT_REF}/api-keys?reveal=true`,
+        );
+        expect(init.method).toBe("GET");
+        expect(init.redirect).toBe("error");
+        expect(init.credentials).toBe("omit");
+        return json(entries);
+      });
+      await expect(
+        withEphemeralSnapshotTransport(
+          { manifest, managementToken: management, fetchRequest },
+          operation,
+        ),
+      ).rejects.toThrow(`SNAPSHOT_PUBLISHER_KEY_${code}`);
+      expect(operation).not.toHaveBeenCalled();
+      expect(fetchRequest).toHaveBeenCalledTimes(1);
+    },
+  );
+  it("sanitizes modern callback faults and retires its retained capability with no extra HTTP", async () => {
+    const fetchRequest = vi.fn(async () =>
+      json([modernEntry(), legacyEntry()]),
+    );
+    let retained: SnapshotTransport | undefined;
+    await expect(
+      withEphemeralSnapshotTransport(
+        { manifest, managementToken: management, fetchRequest },
+        async (t: SnapshotTransport) => {
+          retained = t;
+          throw new Error(modernCredential);
+        },
+      ),
+    ).rejects.toThrow("SNAPSHOT_PUBLISHER_OPERATION_FAILED");
+    await expect(retained!.getBucket(SNAPSHOT_BUCKET)).rejects.toThrow(
+      "SNAPSHOT_PUBLISHER_CREDENTIAL_RETIRED",
+    );
+    expect(fetchRequest).toHaveBeenCalledTimes(1);
+  });
+  it.each([null, { rows: [] }, [null], [[]], ["synthetic-response-value"]])(
+    "rejects malformed response entries before admission without disclosure (%#)",
+    async (entries) => {
+      const fetchRequest = vi.fn(async () => json(entries));
+      const operation = vi.fn();
+      await expect(
+        withEphemeralSnapshotTransport(
+          { manifest, managementToken: management, fetchRequest },
+          operation,
+        ),
+      ).rejects.toThrow("SNAPSHOT_PUBLISHER_KEY_RESPONSE_INVALID");
+      expect(operation).not.toHaveBeenCalled();
+      expect(fetchRequest).toHaveBeenCalledTimes(1);
+    },
+  );
 });
 describe("bounded Storage permission proof", () => {
   it("permits missing effective grants or actual RLS default deny, never calls old catalog", () => {

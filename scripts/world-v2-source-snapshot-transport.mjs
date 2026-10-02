@@ -75,7 +75,8 @@ async function isMissing(response) {
   return String(value?.statusCode) === "404" && value?.error === "not_found";
 }
 
-// Keep candidate admission unchanged until an independently reviewed diagnosis.
+// Frozen pre-admission predicate for the historical metadata receipt only.
+// Do not reinterpret existing_selector_candidates as the new selection rule.
 function isExistingStorageKeyCandidate(item) {
   return (
     (item?.type === "secret" &&
@@ -155,10 +156,44 @@ export function snapshotPublisherKeyMetadata(entries) {
 }
 
 function existingStorageKey(entries) {
-  if (!Array.isArray(entries)) fail("SNAPSHOT_PUBLISHER_KEY_RESPONSE_INVALID");
-  const candidates = entries.filter(isExistingStorageKeyCandidate);
+  const record = (value) =>
+    value !== null && typeof value === "object" && !Array.isArray(value);
+  if (!Array.isArray(entries) || entries.some((item) => !record(item)))
+    fail("SNAPSHOT_PUBLISHER_KEY_RESPONSE_INVALID");
+  for (const item of entries) {
+    const template = item.secret_jwt_template;
+    if (
+      item.type === "secret" &&
+      (!record(template) ||
+        typeof template.role !== "string" ||
+        template.role.length === 0 ||
+        (item.name === "service_role" && template.role !== "service_role"))
+    )
+      fail("SNAPSHOT_PUBLISHER_KEY_METADATA_INVALID");
+  }
+  // Never choose-first or fall back after finding an eligible modern key.
+  // Candidate counts precede key-value validation; duplicates remain ambiguous.
+  const modern = entries.filter(
+    (item) =>
+      item.type === "secret" &&
+      item.secret_jwt_template.role === "service_role",
+  );
+  const candidates =
+    modern.length > 0
+      ? modern
+      : entries.filter(
+          (item) => item.type === "legacy" && item.name === "service_role",
+        );
   if (candidates.length === 0) fail("SNAPSHOT_PUBLISHER_KEY_NOT_FOUND");
   if (candidates.length > 1) fail("SNAPSHOT_PUBLISHER_KEY_MULTIPLE");
+  const template = candidates[0].secret_jwt_template;
+  if (
+    candidates[0].type === "legacy" &&
+    template != null &&
+    (!record(template) ||
+      (Object.hasOwn(template, "role") && template.role !== "service_role"))
+  )
+    fail("SNAPSHOT_PUBLISHER_KEY_METADATA_INVALID");
   if (typeof candidates[0].api_key !== "string")
     fail("SNAPSHOT_PUBLISHER_KEY_TYPE_INVALID");
   const key = candidates[0].api_key;
