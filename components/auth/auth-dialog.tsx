@@ -251,9 +251,16 @@ export function AuthDialog() {
     setError("");
     setMessage("");
     try {
+      const redirectTo = new URL(googleSignInRedirectUrl(window.location.origin));
+      const current = new URL(window.location.href);
+      const teamCode = current.searchParams.get("join")?.trim().toUpperCase() ?? "";
+      if (current.pathname.replace(/\/$/, "") === `${BASE_PATH}/season1/my-team` && /^EM-T1-[A-Z0-9]{10}$/.test(teamCode)) {
+        redirectTo.pathname = `${BASE_PATH}/season1/my-team/`;
+        redirectTo.searchParams.set("join", teamCode);
+      }
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: googleSignInRedirectUrl(window.location.origin) },
+        options: { redirectTo: redirectTo.toString() },
       });
       if (oauthError) throw oauthError;
     } catch {
