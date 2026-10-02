@@ -99,6 +99,17 @@ jobs:
           node scripts/world-v2-edge-reader-provision.mjs record-control-plane \
             "$RUNNER_TEMP/world-v2-edge-pooler.json" "$RUNNER_TEMP/world-v2-edge-functions.json" \
             "$RUNNER_TEMP/world-v2-edge-secrets.json" artifacts/world-v2-api-reader-audit/control-plane-evidence.json
+          for function_slug in collect-daily-economic-brief process-league-world-round process-continuous-world moderate-account-access send-admin-email ingest-admin-email brevo-mail-events; do
+            curl --fail --silent --show-error \
+              --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+              --header "Accept: multipart/form-data" \
+              "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/functions/$function_slug/body" \
+              --dump-header "$RUNNER_TEMP/world-v2-edge-$function_slug.headers" \
+              --output "$RUNNER_TEMP/world-v2-edge-$function_slug.body"
+            node scripts/audit-world-v2-existing-edge-source.mjs \
+              "$RUNNER_TEMP/world-v2-edge-$function_slug.headers" "$RUNNER_TEMP/world-v2-edge-$function_slug.body" \
+              "$function_slug" "artifacts/world-v2-api-reader-audit/source-$function_slug.json" "$GITHUB_WORKSPACE"
+          done
       - name: Record uncertain or failed audit outcome
         if: steps.request.outcome != 'success' || steps.evidence.outcome != 'success'
         run: |
