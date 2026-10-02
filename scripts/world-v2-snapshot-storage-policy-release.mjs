@@ -169,7 +169,7 @@ const expectedSummary = {
   relations: baseline.relations,
   policies: baseline.policies,
 };
-function summarySql(permission) {
+export function summarySql(permission) {
   return `jsonb_build_object('bucket',${permission}->'bucket','roles',${permission}->'roles','relations',${permission}->'relations',
     'policies',(select coalesce(jsonb_agg(jsonb_build_object('table',p->'table','command',p->'command',
       'permissive',p->'permissive','applies_to',p->'applies_to',
@@ -210,7 +210,7 @@ export function policyObservationSql() {
       from (select migration_id,artifact_sha256,source_repo_commit,release_order from world_v2.schema_release order by release_order limit 23) bounded_ledger),'[]'::jsonb)
   ) as observation`;
 }
-function expectedNewPolicies() {
+export function expectedNewPolicies() {
   const expression = `(bucket_id IS DISTINCT FROM '${BUCKET}'::text)`;
   return [
     {
@@ -283,6 +283,86 @@ select jsonb_build_object('status','SNAPSHOT_POLICY_ATOMIC_SCOPE_VERIFIED',
   'migration_id',${literal(POLICY_MIGRATION_ID)},'migration_sha256',${literal(POLICY_SQL_SHA256)}) as evidence;
 commit;`;
 }
+export function canonicalOid(value) {
+  // PostgreSQL jsonb encodes catalog OID (not an int4) as a decimal string.
+  // Permit only canonical positive uint32, never loose numeric coercion.
+  const text =
+    typeof value === "number" && Number.isInteger(value)
+      ? String(value)
+      : value;
+  return typeof text === "string" &&
+    /^[1-9][0-9]{0,9}$/u.test(text) &&
+    BigInt(text) <= 4294967295n
+    ? text
+    : null;
+}
+export function validatePolicyObservation(observation) {
+  const has = (object, fields) =>
+    object && fields.every((field) => Object.hasOwn(object, field));
+  if (
+    !observation ||
+    !observation.permissions ||
+    !Array.isArray(observation.permissions.policies) ||
+    !Array.isArray(observation.permissions.roles) ||
+    !Array.isArray(observation.permissions.relations) ||
+    !Array.isArray(observation.policy_definitions) ||
+    !Array.isArray(observation.ledger) ||
+    !observation.protected_storage_metadata?.schema ||
+    !Array.isArray(observation.protected_storage_metadata.relations) ||
+    observation.protected_storage_metadata.relations.length !== 2 ||
+    !Array.isArray(observation.protected_storage_metadata.columns) ||
+    observation.protected_storage_metadata.columns.length === 0 ||
+    !Number.isInteger(observation.old_bucket_rows?.count) ||
+    observation.old_bucket_rows.count < 0 ||
+    observation.old_bucket_rows.count > 100 ||
+    !/^[0-9a-f]{64}$/u.test(observation.old_bucket_rows?.sha256 ?? "") ||
+    !Array.isArray(observation.world_roles) ||
+    observation.world_roles.length !== 2 ||
+    !observation.source_state ||
+    !observation.new_scope_rows
+  )
+    fail("SNAPSHOT_POLICY_PUBLICATION_EVIDENCE_INVALID");
+  const metadata = observation.protected_storage_metadata;
+  if (
+    !has(metadata.schema, ["owner", "acl"]) ||
+    canonicalOid(metadata.schema.owner) === null ||
+    metadata.relations.some(
+      (item) =>
+        !has(item, [
+          "name",
+          "owner",
+          "acl",
+          "kind",
+          "rls",
+          "force_rls",
+          "options",
+        ]) ||
+        canonicalOid(item.owner) === null ||
+        typeof item.rls !== "boolean" ||
+        typeof item.force_rls !== "boolean",
+    ) ||
+    metadata.columns.some(
+      (item) =>
+        !has(item, ["table", "name", "type", "acl", "not_null", "default"]) ||
+        canonicalOid(item.type) === null ||
+        typeof item.not_null !== "boolean",
+    )
+  )
+    fail("SNAPSHOT_POLICY_PUBLICATION_EVIDENCE_INVALID");
+  if (
+    observation.permissions.policies.length !==
+      observation.policy_definitions.length ||
+    observation.permissions.policies.some(
+      (policy) =>
+        !observation.policy_definitions.some((definition) =>
+          ["table", "name", "command", "permissive", "qual", "check"].every(
+            (key) => policy[key] === definition[key],
+          ),
+        ),
+    )
+  )
+    fail("SNAPSHOT_POLICY_PUBLICATION_EVIDENCE_INVALID");
+}
 export function verifyPolicyPublication(response, release) {
   const evidence = permissionEvidence(response);
   if (
@@ -293,73 +373,8 @@ export function verifyPolicyPublication(response, release) {
     fail("SNAPSHOT_POLICY_PUBLICATION_EVIDENCE_INVALID");
   const before = evidence.before,
     after = evidence.after;
-  const has = (object, fields) =>
-    object && fields.every((field) => Object.hasOwn(object, field));
-  for (const observation of [before, after]) {
-    if (
-      !observation ||
-      !observation.permissions ||
-      !Array.isArray(observation.permissions.policies) ||
-      !Array.isArray(observation.permissions.roles) ||
-      !Array.isArray(observation.permissions.relations) ||
-      !Array.isArray(observation.policy_definitions) ||
-      !Array.isArray(observation.ledger) ||
-      !observation.protected_storage_metadata?.schema ||
-      !Array.isArray(observation.protected_storage_metadata.relations) ||
-      observation.protected_storage_metadata.relations.length !== 2 ||
-      !Array.isArray(observation.protected_storage_metadata.columns) ||
-      observation.protected_storage_metadata.columns.length === 0 ||
-      !Number.isInteger(observation.old_bucket_rows?.count) ||
-      observation.old_bucket_rows.count < 0 ||
-      observation.old_bucket_rows.count > 100 ||
-      !/^[0-9a-f]{64}$/u.test(observation.old_bucket_rows?.sha256 ?? "") ||
-      !Array.isArray(observation.world_roles) ||
-      observation.world_roles.length !== 2 ||
-      !observation.source_state ||
-      !observation.new_scope_rows
-    )
-      fail("SNAPSHOT_POLICY_PUBLICATION_EVIDENCE_INVALID");
-    const metadata = observation.protected_storage_metadata;
-    if (
-      !has(metadata.schema, ["owner", "acl"]) ||
-      !Number.isInteger(metadata.schema.owner) ||
-      metadata.relations.some(
-        (item) =>
-          !has(item, [
-            "name",
-            "owner",
-            "acl",
-            "kind",
-            "rls",
-            "force_rls",
-            "options",
-          ]) ||
-          !Number.isInteger(item.owner) ||
-          typeof item.rls !== "boolean" ||
-          typeof item.force_rls !== "boolean",
-      ) ||
-      metadata.columns.some(
-        (item) =>
-          !has(item, ["table", "name", "type", "acl", "not_null", "default"]) ||
-          !Number.isInteger(item.type) ||
-          typeof item.not_null !== "boolean",
-      )
-    )
-      fail("SNAPSHOT_POLICY_PUBLICATION_EVIDENCE_INVALID");
-    if (
-      observation.permissions.policies.length !==
-        observation.policy_definitions.length ||
-      observation.permissions.policies.some(
-        (policy) =>
-          !observation.policy_definitions.some((definition) =>
-            ["table", "name", "command", "permissive", "qual", "check"].every(
-              (key) => policy[key] === definition[key],
-            ),
-          ),
-      )
-    )
-      fail("SNAPSHOT_POLICY_PUBLICATION_EVIDENCE_INVALID");
-  }
+  validatePolicyObservation(before);
+  validatePolicyObservation(after);
   if (!validLedgerIntent(release))
     fail("SNAPSHOT_POLICY_RENDER_INTENT_INVALID");
   const stable = (v) =>
@@ -452,7 +467,7 @@ export function verifyPolicyPublication(response, release) {
     economic_activation: false,
   };
 }
-function validLedgerIntent(release) {
+export function validLedgerIntent(release) {
   return (
     Array.isArray(release.beforeLedger) &&
     Array.isArray(release.afterLedger) &&

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile, writeFile, mkdtemp, realpath } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import baseline from "../docs/evidence/world-v2-storage-preflight-37021759785.json" with { type: "json" };
@@ -14,6 +15,7 @@ import {
   POLICY_SQL_SHA256,
 } from "./world-v2-snapshot-storage-policy-release.mjs";
 import { verifyStorageWriteBoundary } from "./world-v2-source-snapshot-transport.mjs";
+import { buildPolicyReadbackQuery } from "./world-v2-snapshot-storage-policy-readback.mjs";
 
 const quote = (v) => `'${v.replaceAll("'", "''")}'`;
 const jsonSql = (v) => `${quote(JSON.stringify(v))}::jsonb`;
@@ -54,6 +56,107 @@ function fixtureQuery(release, observation) {
     marker,
     jsonSql(summarizePolicyPermission(observation.permissions)),
   );
+}
+function readbackFixtureQuery(release, observation) {
+  const query = buildPolicyReadbackQuery(release),
+    marker = jsonSql(historicalSummary);
+  assert.equal(
+    query.split(marker).length,
+    2,
+    "one fixed readback historical baseline",
+  );
+  return query.replace(
+    marker,
+    jsonSql(summarizePolicyPermission(observation.permissions)),
+  );
+}
+async function cliFixture(before, release) {
+  // Test-only copied CLI: only the opaque historical JSON baseline import and
+  // module-path resolution change. Production has NO baseline override option.
+  // Actual PostgreSQL JSON, the entire actual verifier and its CLI run unchanged.
+  const fixtureRoot = await realpath(
+    await mkdtemp(path.join(tmpdir(), "world-policy-cli-fixture-")),
+  );
+  const repoRoot = path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "..",
+  );
+  const expectedFile = path.join(fixtureRoot, "expected.json");
+  await writeFile(
+    expectedFile,
+    JSON.stringify({
+      beforeLedger: release.beforeLedger,
+      afterLedger: release.afterLedger,
+    }),
+    { flag: "wx", mode: 0o600 },
+  );
+  const scripts = {};
+  for (const [kind, name] of [
+    ["publish", "world-v2-snapshot-storage-policy-release.mjs"],
+    ["readback", "world-v2-snapshot-storage-policy-readback.mjs"],
+  ]) {
+    const moduleUrl = new URL(name, import.meta.url);
+    const originalCode = await readFile(moduleUrl, "utf8");
+    const baselineMarker =
+      '"../docs/evidence/world-v2-storage-preflight-37021759785.json"';
+    const rootMarker =
+      'const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");';
+    assert.equal(originalCode.split(baselineMarker).length, 2);
+    assert.equal(originalCode.split(rootMarker).length, 2);
+    const data =
+      "data:application/json;base64," +
+      Buffer.from(
+        JSON.stringify(summarizePolicyPermission(before.permissions)),
+      ).toString("base64");
+    const code = originalCode
+      .replace(baselineMarker, JSON.stringify(data))
+      .replace(rootMarker, `const ROOT = ${JSON.stringify(repoRoot)};`)
+      .replace(
+        /from "(\.{1,2}\/[^"]+)"/gu,
+        (_match, relative) =>
+          `from ${JSON.stringify(new URL(relative, moduleUrl).href)}`,
+      );
+    scripts[kind] = path.join(fixtureRoot, name);
+    await writeFile(scripts[kind], code, { flag: "wx", mode: 0o600 });
+  }
+  let counter = 0;
+  return async (kind, response, expectedStatus, errorCode) => {
+    counter += 1;
+    const input = path.join(fixtureRoot, `response-${counter}.json`),
+      output = path.join(fixtureRoot, `result-${counter}.json`);
+    await writeFile(input, JSON.stringify(response), {
+      flag: "wx",
+      mode: 0o600,
+    });
+    let failure;
+    try {
+      execFileSync(
+        process.execPath,
+        [scripts[kind], "verify", input, expectedFile, output],
+        { env: { PATH: process.env.PATH }, stdio: ["ignore", "pipe", "pipe"] },
+      );
+    } catch (error) {
+      failure = error;
+    }
+    if (errorCode) {
+      assert.ok(failure);
+      assert.ok(String(failure.stderr).includes(errorCode));
+      return;
+    }
+    const result = JSON.parse(await readFile(output, "utf8"));
+    assert.equal(result.status, expectedStatus);
+    if (expectedStatus === "CURRENT_STATE_CONFLICT_STOP") assert.ok(failure);
+    else assert.equal(failure, undefined);
+    if (kind === "readback") {
+      assert.equal(result.original_run_status, "UNKNOWN_STOP_NO_RETRY");
+      assert.equal(result.original_release_success, "NOT_CLAIMED");
+      assert.equal(
+        result.historical_full_acl_and_bucket_preservation,
+        "NOT_EVIDENCED_BY_CURRENT_READBACK",
+      );
+    }
+    return result;
+  };
 }
 
 export async function exercisePolicyProtocol(database, worldRoot) {
@@ -214,9 +317,153 @@ export async function exercisePolicyProtocol(database, worldRoot) {
     results.push(name);
   }
   const before = await fresh();
+  const cli = await cliFixture(before, release);
+  const readBefore = await database.query(
+    `begin read only;${readbackFixtureQuery(release, before)}commit;`,
+  );
+  const absent = await cli(
+    "readback",
+    readBefore.rows,
+    "CURRENT_STATE_RECOVERED",
+  );
+  assert.equal(absent.current_state, "VETO_AND_LEDGER22_ABSENT");
+  assert.deepEqual(
+    await observe(),
+    before,
+    "pure SELECT must not change anything",
+  );
   const query = fixtureQuery(release, before);
   const response = await database.query(query);
   const evidence = response.rows[0].evidence;
+  assert.equal(
+    typeof evidence.before.protected_storage_metadata.schema.owner,
+    "string",
+  );
+  assert.equal(
+    Number.isInteger(evidence.before.protected_storage_metadata.schema.owner),
+    false,
+    "actual87 rejects valid PG OID JSON",
+  );
+  await cli(
+    "publish",
+    response.rows,
+    "WORLD_V2_SNAPSHOT_STORAGE_POLICY_RELEASE_VERIFIED",
+  );
+  for (const mutate of [
+    (e) => {
+      e.after.protected_storage_metadata.schema.owner = "01";
+    },
+    (e) => {
+      e.after.protected_storage_metadata.relations[0].owner = "4294967296";
+    },
+    (e) => {
+      e.after.protected_storage_metadata.columns[0].type = "-1";
+    },
+    (e) => {
+      delete e.after.protected_storage_metadata.columns[0].acl;
+    },
+  ]) {
+    const bad = structuredClone(response.rows);
+    mutate(bad[0].evidence);
+    await cli(
+      "publish",
+      bad,
+      undefined,
+      "SNAPSHOT_POLICY_PUBLICATION_EVIDENCE_INVALID",
+    );
+  }
+  for (const [mutate, code] of [
+    [
+      (e) => {
+        e.after.old_bucket_rows.sha256 = "0".repeat(64);
+      },
+      "SNAPSHOT_POLICY_PROTECTED_PROPERTY_CHANGED",
+    ],
+    [
+      (e) => {
+        e.after.protected_storage_metadata.schema.acl = [];
+      },
+      "SNAPSHOT_POLICY_PROTECTED_PROPERTY_CHANGED",
+    ],
+    [
+      (e) => {
+        e.after.ledger[21].source_repo_commit = "0".repeat(40);
+      },
+      "SNAPSHOT_POLICY_PUBLICATION_DELTA_INVALID",
+    ],
+  ]) {
+    const bad = structuredClone(response.rows);
+    mutate(bad[0].evidence);
+    await cli("publish", bad, undefined, code);
+  }
+  const readAfter = await database.query(
+    `begin read only;${readbackFixtureQuery(release, before)}commit;`,
+  );
+  const present = await cli(
+    "readback",
+    readAfter.rows,
+    "CURRENT_STATE_RECOVERED",
+  );
+  assert.equal(present.current_state, "EXACT_VETO_AND_LEDGER22_PRESENT");
+  await database.exec(
+    "alter policy world_v2_snapshot_objects_insert_deny on storage.objects with check(true)",
+  );
+  const realPolicyDrift = await database.query(
+    `begin read only;${readbackFixtureQuery(release, before)}commit;`,
+  );
+  assert.equal(
+    realPolicyDrift.rows[0].evidence.new_policy_definitions,
+    null,
+    "unexpected expressions must never leave the server",
+  );
+  await cli("readback", realPolicyDrift.rows, "CURRENT_STATE_CONFLICT_STOP");
+  await database.exec(
+    "alter policy world_v2_snapshot_objects_insert_deny on storage.objects with check(bucket_id is distinct from 'world-v2-official-source-v1')",
+  );
+  for (const mutate of [
+    (e) => {
+      e.new_policy_definitions = null;
+    },
+    (e) => {
+      e.historical_ledger21 = null;
+    },
+    (e) => {
+      e.ledger22 = null;
+    },
+    (e) => {
+      e.historical_permission_summary = null;
+    },
+    (e) => {
+      e.world_roles = null;
+    },
+    (e) => {
+      e.source_state = null;
+    },
+    (e) => {
+      e.current_new_scope_rows.objects = 1;
+    },
+  ]) {
+    const bad = structuredClone(readAfter.rows);
+    mutate(bad[0].evidence);
+    await cli("readback", bad, "CURRENT_STATE_CONFLICT_STOP");
+  }
+  const badOid = structuredClone(readAfter.rows);
+  badOid[0].evidence.current_acl.schema_owner_oid = "4294967296";
+  await cli(
+    "readback",
+    badOid,
+    undefined,
+    "SNAPSHOT_POLICY_READBACK_EVIDENCE_INVALID",
+  );
+  results.push(
+    "full_pg_json_cli_publication_positive",
+    "full_cli_oid_and_missing_field_4_negative",
+    "full_cli_old_property_and_ledger_3_negative",
+    "read_only_absent_and_present_cli_2_positive",
+    "readback_drift_7_negative",
+    "readback_oid_negative",
+    "readback_real_sql_policy_drift_negative_no_expression_dump",
+  );
   assert.equal(evidence.status, "SNAPSHOT_POLICY_ATOMIC_SCOPE_VERIFIED");
   const after = await observe();
   assert.deepEqual(after.ledger, release.afterLedger);
@@ -352,7 +599,10 @@ function nativeDatabase() {
       // quiet/tuples-only output excludes the empty COMMIT result.
       if (sql === policyObservationSql())
         return { rows: [{ observation: JSON.parse(text) }] };
-      if (sql.includes("as evidence;"))
+      if (
+        sql.includes("as evidence;") ||
+        sql.includes("as evidence from checked;")
+      )
         return { rows: [{ evidence: JSON.parse(text) }] };
       if (sql.startsWith("select content"))
         return { rows: [{ content: text }] };
