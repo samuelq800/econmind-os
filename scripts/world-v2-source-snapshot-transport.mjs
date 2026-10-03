@@ -478,7 +478,7 @@ export function classifySnapshotBucketDiagnostic(httpStatus, body) {
       const codes = { InvalidJWT: 401, AccessDenied: 403, TenantNotFound: 404,
         NoSuchKey: 404, InvalidRequest: 400, InternalError: 500 };
       const code = body.code;
-      if (Object.hasOwn(codes, code) && (httpStatus === codes[code] || httpStatus === 400) &&
+      if (typeof code === "string" && Object.hasOwn(codes, code) && (httpStatus === codes[code] || httpStatus === 400) &&
         (!Object.hasOwn(body, "statusCode") || semanticStatus(body.statusCode, codes[code])) &&
         (!Object.hasOwn(body, "error") || body.error === code))
         category = `KNOWN_${code}_SHAPE`;
@@ -505,6 +505,8 @@ function bucketDiagnosticCapability(_manifest, lease, fetchRequest) {
       await response.body?.cancel();
       fail("SNAPSHOT_BUCKET_DIAGNOSTIC_REDIRECT_REJECTED");
     }
+    if (!Number.isInteger(response.status) || response.status < 100 || response.status > 599)
+      fail("SNAPSHOT_BUCKET_DIAGNOSTIC_RESPONSE_INVALID");
     let bytes;
     let body;
     try {
