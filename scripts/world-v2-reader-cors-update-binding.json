@@ -1,0 +1,13 @@
+{
+  "status": "BOUND_CODE_CANDIDATE",
+  "world_source_commit": "0ec30a28d19f4ae51d81edad42d0598c356dc127",
+  "world_function_tree": "28d7ba3e102a7b4efb5cbb74088ed2a0f85f5d5b",
+  "world_function_file_count": 25,
+  "allowed_function_changes": [
+    "supabase/functions/world-v2-official-read/index.ts",
+    "supabase/functions/world-v2-official-read/lib/official-dataset-source.d.ts",
+    "supabase/functions/world-v2-official-read/lib/official-dataset-source.js",
+    "supabase/functions/world-v2-official-read/lib/official-source-snapshot-reader.d.ts",
+    "supabase/functions/world-v2-official-read/lib/official-source-snapshot-reader.js"
+  ]
+}
