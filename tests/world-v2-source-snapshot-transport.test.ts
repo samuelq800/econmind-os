@@ -142,6 +142,234 @@ function evidence(privileges = false) {
     policies: [] as StoragePolicy[],
   };
 }
+describe("fixed bucket HTTP400 compatibility, not absence or permission proof", () => {
+  const missing = {
+    statusCode: "404",
+    code: "NoSuchBucket",
+    error: "Bucket not found",
+    message: "Bucket not found",
+  };
+  const createIfMissing = async (t: SnapshotTransport) => {
+    if ((await t.getBucket(SNAPSHOT_BUCKET)) === null)
+      await t.createBucket(bucket);
+  };
+  it.each([
+    ["404", "Bucket not found", 200],
+    ["404", "NoSuchBucket", 201],
+    [404, "Bucket not found", 201],
+    [404, "NoSuchBucket", 200],
+  ])(
+    "permits only the fixed create-only attempt for semantic %s / %s",
+    async (statusCode, error, createdStatus) => {
+      const { run, responses, fetchRequest } = mock();
+      responses.push(
+        json({ ...missing, statusCode, error }, 400),
+        json({}, createdStatus),
+      );
+      await run(createIfMissing);
+      expect(fetchRequest).toHaveBeenCalledTimes(3);
+      expect(fetchRequest.mock.calls[1][0]).toBe(
+        `https://${SNAPSHOT_PROJECT_REF}.supabase.co/storage/v1/bucket/${SNAPSHOT_BUCKET}`,
+      );
+      const [url, init] = fetchRequest.mock.calls[2];
+      expect(url).toBe(
+        `https://${SNAPSHOT_PROJECT_REF}.supabase.co/storage/v1/bucket`,
+      );
+      expect(init.method).toBe("POST");
+      expect(JSON.parse(init.body as string)).toEqual(bucket);
+      expect(new Headers(init.headers).get("x-upsert")).toBeNull();
+      expect(init.signal!.aborted).toBe(true);
+    },
+  );
+  it.each([
+    ...[401, 403, 429, 500, 502, 503].map((status) => [status, missing]),
+    [400, { ...missing, statusCode: "400" }],
+    [400, { ...missing, statusCode: 403 }],
+    [400, { ...missing, statusCode: "404 " }],
+    [400, { ...missing, statusCode: [404] }],
+    [400, { ...missing, code: "NoSuchKey" }],
+    [400, { ...missing, code: "AccessDenied" }],
+    [400, { ...missing, code: null }],
+    [400, { ...missing, code: { toString: "NoSuchBucket" } }],
+    [400, { ...missing, error: "NoSuchBucket private" }],
+    [400, { ...missing, error: "access denied 404" }],
+    [400, { ...missing, error: null }],
+    [400, { ...missing, message: "Bucket not found private" }],
+    [400, { ...missing, message: null }],
+    [400, { ...missing, privateExtra: "synthetic-private-value" }],
+    [400, { ...missing, nested: { private: "synthetic-private-value" } }],
+    [
+      400,
+      {
+        ...missing,
+        ...JSON.parse('{"__proto__":{"private":"synthetic-private-value"}}'),
+      },
+    ],
+    [400, null],
+    [400, [missing]],
+    [400, "Bucket not found"],
+    [400, {}],
+    ...["statusCode", "code", "error", "message"].map((field) => [
+      400,
+      Object.fromEntries(
+        Object.entries(missing).filter(([name]) => name !== field),
+      ),
+    ]),
+  ] as [number, unknown][])(
+    "rejects contradictory/unknown HTTP %s shape before any create",
+    async (status, body) => {
+      const { run, responses, fetchRequest } = mock();
+      responses.push(json(body, status));
+      await expect(run(createIfMissing)).rejects.toThrow(
+        "SNAPSHOT_BUCKET_READ_FAILED",
+      );
+      expect(fetchRequest).toHaveBeenCalledTimes(2);
+      expect(
+        fetchRequest.mock.calls.some(([, init]) => init.method === "POST"),
+      ).toBe(false);
+    },
+  );
+  it.each([
+    "{",
+    "<html>synthetic-private-value</html>",
+    JSON.stringify({ ...missing, extra: "x".repeat(16_384) }),
+  ])(
+    "rejects invalid/oversize body without reflecting details",
+    async (body) => {
+      const { run, responses, fetchRequest } = mock();
+      responses.push(new Response(body, { status: 400 }));
+      await expect(run(createIfMissing)).rejects.toThrow(
+        "SNAPSHOT_TRANSPORT_JSON_INVALID",
+      );
+      expect(fetchRequest).toHaveBeenCalledTimes(2);
+    },
+  );
+  it.each([400, 401, 403, 409, 500, 503])(
+    "create failure %s stays UNKNOWN with no retry or alteration",
+    async (status) => {
+      const { run, responses, fetchRequest } = mock();
+      responses.push(
+        json(missing, 400),
+        json({ message: "synthetic-private-value" }, status),
+      );
+      await expect(run(createIfMissing)).rejects.toThrow(
+        "SNAPSHOT_BUCKET_OUTCOME_UNKNOWN_NO_RETRY",
+      );
+      expect(fetchRequest).toHaveBeenCalledTimes(3);
+      expect(
+        fetchRequest.mock.calls.filter(([, init]) => init.method === "POST"),
+      ).toHaveLength(1);
+      expect(
+        fetchRequest.mock.calls.every(
+          ([, init]) =>
+            !["PUT", "PATCH", "DELETE"].includes(init.method ?? "GET"),
+        ),
+      ).toBe(true);
+    },
+  );
+  it("preserves prior 404 and legacy400 handling and existing200 bucket without creating", async () => {
+    for (const response of [
+      new Response(null, { status: 404 }),
+      json({ statusCode: "404", error: "not_found" }, 400),
+    ]) {
+      const { run, responses } = mock();
+      responses.push(response);
+      expect(await run((t) => t.getBucket(SNAPSHOT_BUCKET))).toBeNull();
+    }
+    const { run, responses, fetchRequest } = mock();
+    responses.push(json(bucket));
+    await run(createIfMissing);
+    expect(fetchRequest).toHaveBeenCalledTimes(2);
+  });
+  it("rejects wrong bucket and properties before Storage and never broadens object missing", async () => {
+    const { run, fetchRequest } = mock();
+    await run(async (t) => {
+      await expect(t.getBucket("old-bucket")).rejects.toThrow("SCOPE_REJECTED");
+      await expect(
+        t.createBucket({ ...bucket, id: "old-bucket" }),
+      ).rejects.toThrow("SCOPE_REJECTED");
+      await expect(t.readObject("old-bucket", key)).rejects.toThrow(
+        "SCOPE_REJECTED",
+      );
+      await expect(
+        t.readObject(SNAPSHOT_BUCKET, `${SNAPSHOT_PREFIX}/unlisted.json`),
+      ).rejects.toThrow("SCOPE_REJECTED");
+    });
+    expect(fetchRequest).toHaveBeenCalledTimes(1);
+    for (const body of [
+      missing,
+      {
+        statusCode: "404",
+        code: "NoSuchKey",
+        error: "NoSuchKey",
+        message: "Object not found",
+      },
+    ]) {
+      const unchanged = mock();
+      unchanged.responses.push(json(body, 400));
+      await expect(
+        unchanged.run((t) => t.readObject(SNAPSHOT_BUCKET, key)),
+      ).rejects.toThrow("SNAPSHOT_OBJECT_PUBLIC_READ_FAILED");
+      expect(unchanged.fetchRequest).toHaveBeenCalledTimes(2);
+    }
+  });
+  it("already accepts the pinned official public-object NoSuchKey/not_found contract", async () => {
+    const { run, responses, fetchRequest } = mock();
+    responses.push(
+      json(
+        {
+          statusCode: "404",
+          code: "NoSuchKey",
+          error: "not_found",
+          message: "Object not found",
+        },
+        400,
+      ),
+    );
+    expect(await run((t) => t.readObject(SNAPSHOT_BUCKET, key))).toBeNull();
+    expect(fetchRequest).toHaveBeenCalledTimes(2);
+    expect(
+      new Headers(fetchRequest.mock.calls[1][1].headers).get("apikey"),
+    ).toBeNull();
+  });
+  it("preserves empty and folder/relative-name list protocol with fixed prefix requests", async () => {
+    const empty = mock();
+    empty.responses.push(json([]));
+    expect(await empty.run((t) => t.listKeys(SNAPSHOT_BUCKET))).toEqual([]);
+    expect(empty.fetchRequest).toHaveBeenCalledTimes(2);
+    const populated = mock();
+    populated.responses.push(
+      json([{ name: SNAPSHOT_PREFIX, id: null, metadata: null }]),
+      json(
+        manifest.map((item, index) => ({
+          name: `${item.sha256}.json`,
+          id: `synthetic-object-${index}`,
+          metadata: { mimetype: "application/json" },
+        })),
+      ),
+    );
+    expect(await populated.run((t) => t.listKeys(SNAPSHOT_BUCKET))).toEqual(
+      manifest.map((item) => `${SNAPSHOT_PREFIX}/${item.sha256}.json`),
+    );
+    expect(populated.fetchRequest).toHaveBeenCalledTimes(3);
+    for (const [index, prefix] of [
+      [1, ""],
+      [2, `${SNAPSHOT_PREFIX}/`],
+    ] as const) {
+      const [url, init] = populated.fetchRequest.mock.calls[index];
+      expect(url).toBe(
+        `https://${SNAPSHOT_PROJECT_REF}.supabase.co/storage/v1/object/list/${SNAPSHOT_BUCKET}`,
+      );
+      expect(init.method).toBe("POST");
+      expect(JSON.parse(init.body as string)).toEqual({
+        prefix,
+        limit: 100,
+        offset: 0,
+        sortBy: { column: "name", order: "asc" },
+      });
+    }
+  });
+});
 describe("scoped real Storage protocol with mock HTTP only", () => {
   it("acquires existing key transiently; permits fixed GET/list/create only; retires on completion", async () => {
     const { run, responses, fetchRequest } = mock();

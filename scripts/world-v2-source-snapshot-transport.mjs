@@ -75,6 +75,28 @@ async function isMissing(response) {
   return String(value?.statusCode) === "404" && value?.error === "not_found";
 }
 
+// Fixed bucket GET compatibility only. This permits the existing create-only
+// attempt; it proves neither absence nor permission. Never reuse for objects.
+async function isMissingBucket(response) {
+  if (response.status !== 400) return isMissing(response);
+  const value = await boundedJson(response, 16_384);
+  // Preserve the previously supported legacy bucket response unchanged.
+  if (String(value?.statusCode) === "404" && value?.error === "not_found")
+    return true;
+  const fields = ["statusCode", "code", "error", "message"];
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    Object.keys(value).length === fields.length &&
+    fields.every((field) => Object.hasOwn(value, field)) &&
+    (value.statusCode === 404 || value.statusCode === "404") &&
+    value.code === "NoSuchBucket" &&
+    ["NoSuchBucket", "Bucket not found"].includes(value.error) &&
+    value.message === "Bucket not found"
+  );
+}
+
 // Frozen pre-admission predicate for the historical metadata receipt only.
 // Do not reinterpret existing_selector_candidates as the new selection rule.
 function isExistingStorageKeyCandidate(item) {
@@ -265,7 +287,7 @@ function transportWithLease(manifest, lease, fetchRequest) {
     async getBucket(bucket) {
       checkBucket(bucket);
       const response = await request(`bucket/${SNAPSHOT_BUCKET}`);
-      if (await isMissing(response)) return null;
+      if (await isMissingBucket(response)) return null;
       if (response.status !== 200) fail("SNAPSHOT_BUCKET_READ_FAILED");
       const value = await boundedJson(response);
       return {
