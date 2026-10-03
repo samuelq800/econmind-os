@@ -1,0 +1,44 @@
+name: Diagnose · World V2 fixed bucket read only
+run-name: World V2 bucket read only · @${{ github.actor }}
+on:
+  workflow_dispatch:
+    inputs:
+      authorization_id:
+        description: CT-SNAPSHOT-BUCKET-DIAGNOSTIC-37044748085-V1
+        type: string
+        required: true
+      confirmation:
+        description: BUCKET_DIAGNOSTIC_GO_WORLD_V2_SOURCE_SNAPSHOT_ONCE
+        type: string
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: supabase-production
+  cancel-in-progress: false
+jobs:
+  bucket-read-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Independent guard then one key lease and exactly one fixed bucket GET
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+          WORLD_V2_SNAPSHOT_BUCKET_DIAGNOSTIC_LOCK: ${{ vars.WORLD_V2_SNAPSHOT_BUCKET_DIAGNOSTIC_LOCK }}
+          WORLD_V2_SNAPSHOT_BUCKET_DIAGNOSTIC_CONFIRMATION: ${{ inputs.confirmation }}
+          WORLD_V2_SNAPSHOT_BUCKET_DIAGNOSTIC_AUTHORIZATION_ID: ${{ inputs.authorization_id }}
+        run: |
+          mkdir -p artifacts/world-v2-snapshot-bucket-diagnostic
+          node scripts/world-v2-snapshot-bucket-diagnostic.mjs diagnose-once artifacts/world-v2-snapshot-bucket-diagnostic/diagnostic.json
+      - name: Preserve classified numeric status and shape-only receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: world-v2-snapshot-bucket-diagnostic-evidence
+          path: artifacts/world-v2-snapshot-bucket-diagnostic/diagnostic.json
+          if-no-files-found: warn

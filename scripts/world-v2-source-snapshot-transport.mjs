@@ -385,8 +385,18 @@ function transportWithLease(manifest, lease, fetchRequest) {
  * storage or returned. JS/fetch strings cannot be guaranteed securely erased:
  * finally drops our references and retires every retained transport method. */
 export async function withEphemeralSnapshotTransport(
+  input,
+  operation,
+) {
+  return withEphemeralSnapshotLease(input, operation, transportWithLease);
+}
+
+// Private factory boundary: no public caller can obtain a lease/key or choose
+// the diagnostic capability. Both paths retain the exact selector and finally.
+async function withEphemeralSnapshotLease(
   { manifest, managementToken, fetchRequest = fetch },
   operation,
+  capabilityFactory,
 ) {
   checkedManifest(manifest);
   if (
@@ -414,7 +424,7 @@ export async function withEphemeralSnapshotTransport(
     for (const entry of entries)
       if (entry && typeof entry === "object") entry.api_key = "";
     entries = undefined;
-    return await operation(transportWithLease(manifest, lease, fetchRequest));
+    return await operation(capabilityFactory(manifest, lease, fetchRequest));
   } catch (error) {
     const code =
       error instanceof Error && /^SNAPSHOT_[A-Z0-9_]+$/u.test(error.message)
@@ -429,6 +439,99 @@ export async function withEphemeralSnapshotTransport(
       for (const entry of entries)
         if (entry && typeof entry === "object") entry.api_key = "";
     entries = undefined;
+  }
+}
+
+const diagnosticFields = ["statusCode", "code", "error", "message"];
+const valueShape = (value) => value === null ? "null" : Array.isArray(value) ? "array"
+  : ["string", "number", "boolean", "object"].includes(typeof value) ? typeof value : "other";
+const semanticStatus = (value, expected) => value === expected || value === String(expected);
+
+/** Observes allowlisted error SHAPES, never proves absence/access or authorizes
+ * creation. Deliberately NOT used by publisher getBucket/isMissing. */
+export function classifySnapshotBucketDiagnostic(httpStatus, body) {
+  if (!Number.isInteger(httpStatus) || httpStatus < 100 || httpStatus > 599)
+    fail("SNAPSHOT_BUCKET_DIAGNOSTIC_RESPONSE_INVALID");
+  const object = body !== null && typeof body === "object" && !Array.isArray(body);
+  const fields = Object.fromEntries(diagnosticFields.map((name) => [name, {
+    present: object && Object.hasOwn(body, name),
+    shape: object && Object.hasOwn(body, name) ? valueShape(body[name]) : "absent",
+  }]));
+  const unknownShapes = { null: 0, string: 0, number: 0, boolean: 0, object: 0, array: 0, other: 0 };
+  let unknownFields = 0;
+  if (object) for (const [name, value] of Object.entries(body)) {
+    if (!diagnosticFields.includes(name)) { unknownFields++; unknownShapes[valueShape(value)]++; }
+  }
+  let category = "UNKNOWN_RESPONSE_SHAPE_STOP";
+  if (httpStatus === 200 && object) category = "HTTP_200_JSON_OBJECT_OBSERVED";
+  else if (object) {
+    const missingStatus = [400, 404].includes(httpStatus) && semanticStatus(body.statusCode, 404);
+    if (missingStatus && body.code === "NoSuchBucket" &&
+      ["NoSuchBucket", "Bucket not found"].includes(body.error) && body.message === "Bucket not found")
+      category = "KNOWN_NO_SUCH_BUCKET_SHAPE_NOT_ABSENCE_PROOF";
+    else if (missingStatus && !Object.hasOwn(body, "code") &&
+      body.error === "Bucket not found" && body.message === "Bucket not found")
+      category = "LEGACY_BUCKET_NOT_FOUND_SHAPE_NOT_ABSENCE_PROOF";
+    else if (missingStatus && !Object.hasOwn(body, "code") && body.error === "not_found")
+      category = "LEGACY_NOT_FOUND_SHAPE_NOT_ABSENCE_PROOF";
+    else {
+      const codes = { InvalidJWT: 401, AccessDenied: 403, TenantNotFound: 404,
+        NoSuchKey: 404, InvalidRequest: 400, InternalError: 500 };
+      const code = body.code;
+      if (Object.hasOwn(codes, code) && (httpStatus === codes[code] || httpStatus === 400) &&
+        (!Object.hasOwn(body, "statusCode") || semanticStatus(body.statusCode, codes[code])) &&
+        (!Object.hasOwn(body, "error") || body.error === code))
+        category = `KNOWN_${code}_SHAPE`;
+    }
+  }
+  return { http_status: httpStatus, error_category: category, body_shape: valueShape(body),
+    known_fields: fields, unknown_field_count: unknownFields, unknown_field_shape_counts: unknownShapes };
+}
+
+function bucketDiagnosticCapability(_manifest, lease, fetchRequest) {
+  // This factory returns only one private read function, not Storage transport.
+  return async () => {
+    if (!lease.active) fail("SNAPSHOT_PUBLISHER_CREDENTIAL_RETIRED");
+    const headers = new Headers({ apikey: lease.key, accept: "application/json" });
+    if (!lease.key.startsWith("sb_secret_")) headers.set("authorization", `Bearer ${lease.key}`);
+    let response;
+    try {
+      response = await fetchRequest(`${PROJECT_URL}/storage/v1/bucket/${SNAPSHOT_BUCKET}`, {
+        method: "GET", headers, redirect: "error", credentials: "omit",
+        signal: AbortSignal.any([AbortSignal.timeout(10_000), lease.controller.signal]),
+      });
+    } catch { fail("SNAPSHOT_BUCKET_DIAGNOSTIC_REQUEST_FAILED"); }
+    if (response.redirected) {
+      await response.body?.cancel();
+      fail("SNAPSHOT_BUCKET_DIAGNOSTIC_REDIRECT_REJECTED");
+    }
+    let bytes;
+    let body;
+    try {
+      bytes = await boundedBytes(response, 16_384);
+      try { body = JSON.parse(bytes.toString("utf8")); }
+      catch { return { http_status: response.status, error_category: "BODY_INVALID_JSON_STOP", body_shape: "unreadable" }; }
+    } catch (error) {
+      return { http_status: response.status, error_category: error?.message === "SNAPSHOT_TRANSPORT_BODY_LIMIT"
+        ? "BODY_LIMIT_STOP" : "BODY_UNREADABLE_STOP", body_shape: "unreadable" };
+    } finally { bytes?.fill(0); }
+    return classifySnapshotBucketDiagnostic(response.status, body);
+  };
+}
+
+const bucketDiagnosticFailures = new Set([
+  "SNAPSHOT_TRANSPORT_MANIFEST_INVALID", "SNAPSHOT_PUBLISHER_CONTEXT_INVALID",
+  "SNAPSHOT_PUBLISHER_KEY_ACQUISITION_FAILED", "SNAPSHOT_PUBLISHER_KEY_RESPONSE_INVALID",
+  "SNAPSHOT_PUBLISHER_KEY_METADATA_INVALID", "SNAPSHOT_PUBLISHER_KEY_NOT_FOUND",
+  "SNAPSHOT_PUBLISHER_KEY_MULTIPLE", "SNAPSHOT_PUBLISHER_KEY_TYPE_INVALID", "SNAPSHOT_PUBLISHER_KEY_INVALID",
+  "SNAPSHOT_TRANSPORT_JSON_INVALID", "SNAPSHOT_BUCKET_DIAGNOSTIC_REQUEST_FAILED",
+  "SNAPSHOT_BUCKET_DIAGNOSTIC_REDIRECT_REJECTED", "SNAPSHOT_BUCKET_DIAGNOSTIC_RESPONSE_INVALID",
+]);
+export async function diagnoseSnapshotBucket(input) {
+  try {
+    return await withEphemeralSnapshotLease(input, (read) => read(), bucketDiagnosticCapability);
+  } catch (error) {
+    fail(bucketDiagnosticFailures.has(error?.message) ? error.message : "SNAPSHOT_BUCKET_DIAGNOSTIC_REQUEST_FAILED");
   }
 }
 
