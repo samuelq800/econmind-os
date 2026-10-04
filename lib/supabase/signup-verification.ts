@@ -97,6 +97,23 @@ export function authEmailRequestErrorMessage(
 
 type SignOutResult = { error: Error | null };
 
+export function authOtpVerificationErrorMessage(caught: unknown) {
+  const { code, name, status } = getAuthErrorDetails(caught);
+  if (code === "otp_expired") {
+    return "This code is invalid, expired, or already used. Enter the code from the latest email, or request a new one. If you already verified your account, sign in instead.";
+  }
+  if (isAuthEmailRateLimitError(caught)) {
+    return "Too many verification attempts. Please wait before trying again.";
+  }
+  if (typeof status === "number" && status >= 500) {
+    return "The authentication service is temporarily unavailable. Please try again later.";
+  }
+  if (name === "AuthRetryableFetchError") {
+    return "We could not reach the authentication service. Check your connection and try again.";
+  }
+  return "Could not verify this code. Please try again or contact support.";
+}
+
 export async function rejectUnexpectedSignupSession(
   session: unknown,
   signOut: () => Promise<SignOutResult>,

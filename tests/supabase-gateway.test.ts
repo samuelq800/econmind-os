@@ -203,6 +203,70 @@ describe("Supabase browser gateway transport", () => {
 });
 
 describe("fixed Supabase gateway", () => {
+  it("allows mail preflight and forwards the request ID through the SDK without retrying", async () => {
+    const requestId = "local-mail-request-id";
+    const upstreamFetch = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        Response.json({ ok: false, request_id: requestId }, { status: 403 }),
+      );
+    const handler = createGatewayHandler(
+      upstreamOrigin,
+      siteOrigin,
+      upstreamFetch,
+    );
+    const preflight = await handler(
+      request("/functions/v1/send-admin-email", {
+        method: "OPTIONS",
+        headers: {
+          "access-control-request-method": "POST",
+          "access-control-request-headers":
+            "apikey,authorization,content-type,x-client-info,x-econmind-request-id",
+        },
+      }),
+    );
+    expect(preflight.status).toBe(204);
+    expect(preflight.headers.get("access-control-allow-headers")).toContain(
+      "x-econmind-request-id",
+    );
+    expect(upstreamFetch).not.toHaveBeenCalled();
+    const fetchImplementation = vi.fn<typeof fetch>(async (input, init) => {
+      const browserRequest = new Request(input, init);
+      const headers = new Headers(browserRequest.headers);
+      headers.set("origin", siteOrigin);
+      return handler(new Request(browserRequest, { headers }));
+    });
+    const client = createClient(upstreamOrigin, publicKey, {
+      global: {
+        fetch: createSupabaseProxyFetch(
+          upstreamOrigin,
+          gatewayOrigin,
+          fetchImplementation,
+        ),
+      },
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+    });
+    const result = await client.functions.invoke("send-admin-email", {
+      headers: { "X-EconMind-Request-Id": requestId },
+      body: { subject: "Local regression test", text: "No email is sent." },
+    });
+    expect(result.error).not.toBeNull();
+    expect(upstreamFetch).toHaveBeenCalledOnce();
+    const forwarded = upstreamFetch.mock.calls[0][0] as Request;
+    expect(forwarded.url).toBe(
+      `${upstreamOrigin}/functions/v1/send-admin-email`,
+    );
+    expect(forwarded.headers.get("x-econmind-request-id")).toBe(requestId);
+    expect(await forwarded.json()).toEqual({
+      subject: "Local regression test",
+      text: "No email is sent.",
+    });
+  });
+
   it("passes caller API key, JWT, body and query only to the configured upstream", async () => {
     const upstreamFetch = vi
       .fn<typeof fetch>()

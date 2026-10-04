@@ -3,6 +3,7 @@ import { AuthRetryableFetchError } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
 import {
   authEmailRequestErrorMessage,
+  authOtpVerificationErrorMessage,
   EMAIL_RESEND_COOLDOWN_SECONDS,
   EMAIL_VERIFICATION_CONFIGURATION_ERROR,
   isAuthEmailRateLimitError,
@@ -204,6 +205,32 @@ describe("Supabase email verification and password recovery", () => {
     ).toBe(
       "We could not reach the authentication service. Check your connection and try again.",
     );
+  });
+
+  it("explains rejected OTPs without exposing backend or account details", () => {
+    expect(
+      authOtpVerificationErrorMessage({ status: 403, code: "otp_expired" }),
+    ).toContain("invalid, expired, or already used");
+    expect(authOtpVerificationErrorMessage({ status: 429 })).toBe(
+      "Too many verification attempts. Please wait before trying again.",
+    );
+    expect(
+      authOtpVerificationErrorMessage(
+        new AuthRetryableFetchError("opaque", 503),
+      ),
+    ).toContain("temporarily unavailable");
+    expect(
+      authOtpVerificationErrorMessage(new AuthRetryableFetchError("opaque", 0)),
+    ).toContain("could not reach");
+    for (const error of [
+      null,
+      { code: "user_banned", message: "private account detail" },
+      { message: "sensitive backend detail" },
+    ]) {
+      expect(authOtpVerificationErrorMessage(error)).toBe(
+        "Could not verify this code. Please try again or contact support.",
+      );
+    }
   });
 
   it("fails closed when Supabase unexpectedly returns a signup session", async () => {
