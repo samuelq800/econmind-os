@@ -14,6 +14,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  supabase-gateway:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: infra/cloudflare/supabase-gateway
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: infra/cloudflare/supabase-gateway/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typegen
+      - run: git diff --exit-code -- worker-configuration.d.ts
+      - run: pnpm typecheck
+      - run: pnpm build:check
+
   world-v2-source-storage:
     runs-on: ubuntu-latest
     timeout-minutes: 10

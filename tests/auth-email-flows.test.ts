@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { AuthRetryableFetchError } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
 import {
   authEmailRequestErrorMessage,
@@ -180,6 +181,29 @@ describe("Supabase email verification and password recovery", () => {
     for (const [caught, expected] of cases) {
       expect(authEmailRequestErrorMessage(caught, fallback)).toBe(expected);
     }
+  });
+
+  it("distinguishes retryable service responses from transport failures", () => {
+    const fallback = "Could not submit the request.";
+
+    for (const status of [503, 504]) {
+      expect(
+        authEmailRequestErrorMessage(
+          new AuthRetryableFetchError("opaque infrastructure failure", status),
+          fallback,
+        ),
+      ).toBe(
+        "The authentication service is temporarily unavailable. Please try again later.",
+      );
+    }
+    expect(
+      authEmailRequestErrorMessage(
+        new AuthRetryableFetchError("opaque transport failure", 0),
+        fallback,
+      ),
+    ).toBe(
+      "We could not reach the authentication service. Check your connection and try again.",
+    );
   });
 
   it("fails closed when Supabase unexpectedly returns a signup session", async () => {

@@ -141,8 +141,16 @@ jobs:
           NEXT_PUBLIC_SITE_URL: "https://econmind.group"
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_PROXY_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_PROXY_URL }}
           NEXT_PUBLIC_ENABLE_CONTINUOUS_WORLD: ${{ vars.NEXT_PUBLIC_ENABLE_CONTINUOUS_WORLD }}
         run: |
+          if [ -n "$NEXT_PUBLIC_SUPABASE_PROXY_URL" ]; then
+            curl --fail --silent --show-error --max-time 20 \
+              --header "apikey: $NEXT_PUBLIC_SUPABASE_ANON_KEY" \
+              --header "Origin: https://econmind.group" \
+              --output /dev/null \
+              "${NEXT_PUBLIC_SUPABASE_PROXY_URL%/}/auth/v1/health"
+          fi
           pnpm league:snapshot
           pnpm build
 

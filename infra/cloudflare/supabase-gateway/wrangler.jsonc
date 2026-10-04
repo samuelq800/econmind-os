@@ -1,0 +1,15 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "econmind-supabase-gateway",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-04",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [{ "pattern": "supabase.econmind.group", "custom_domain": true }],
+  "vars": {
+    "SUPABASE_URL": "https://vimksjrhaxdpnkvgsavz.supabase.co",
+    "SITE_ORIGIN": "https://econmind.group",
+  },
+  "observability": { "enabled": false },
+}

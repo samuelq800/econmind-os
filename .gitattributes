@@ -1,0 +1,6 @@
+# Preserve canonical bytes for hashed receipts/fixtures and workflow formatting
+# on Windows checkouts with core.autocrlf=true.
+docs/evidence/*.json text eol=lf
+tests/fixtures/world-v2-source-snapshot-assumptions.json text eol=lf
+.github/workflows/*.yml text eol=lf
+infra/cloudflare/supabase-gateway/worker-configuration.d.ts text eol=lf
