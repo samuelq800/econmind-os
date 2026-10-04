@@ -1,4 +1,5 @@
 "use client";
+import { supabaseBrowserTransportOptions } from "./browser-transport";
 
 import { createClient, type RealtimeChannel, type SupabaseClient } from "@supabase/supabase-js";
 import { isSupabaseConfigured, requireSupabaseBrowserClient, throwIfSupabaseError } from "./client";
@@ -12,7 +13,7 @@ function roomClient() {
   if (!auctionClient) auctionClient = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { auth: { storageKey: "econmind-live-auction-session", persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } },
+    { ...supabaseBrowserTransportOptions(), auth: { storageKey: "econmind-live-auction-session", persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } },
   );
   return auctionClient;
 }

@@ -72,6 +72,13 @@ export function authEmailRequestErrorMessage(
     return "Email authentication is temporarily unavailable.";
   }
   if (
+    name === "AuthRetryableFetchError" &&
+    typeof status === "number" &&
+    status >= 500
+  ) {
+    return "The authentication service is temporarily unavailable. Please try again later.";
+  }
+  if (
     name === "AuthRetryableFetchError" ||
     /failed to fetch|network request|networkerror/.test(normalisedMessage)
   ) {

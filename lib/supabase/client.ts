@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { supabaseBrowserTransportOptions } from "./browser-transport";
 
 let browserClient: SupabaseClient | null = null;
 
@@ -7,7 +8,7 @@ export type SupabaseOperationError = { message: string } | null | undefined;
 export function isSupabaseConfigured() {
   return Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   );
 }
 
@@ -19,6 +20,7 @@ export function getSupabaseBrowserClient() {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
+        ...supabaseBrowserTransportOptions(),
         auth: {
           persistSession: true,
           autoRefreshToken: true,

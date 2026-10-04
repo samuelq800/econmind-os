@@ -1,4 +1,5 @@
 "use client";
+import { supabaseBrowserTransportOptions } from "./browser-transport";
 
 import {
   createClient,
@@ -34,6 +35,7 @@ function roomClient() {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
+        ...supabaseBrowserTransportOptions(),
         auth: {
           storageKey: "econmind-live-world-session",
           persistSession: true,

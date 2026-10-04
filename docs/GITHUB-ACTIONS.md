@@ -45,6 +45,8 @@ Repository secrets:
 Repository variables:
 
 - `NEXT_PUBLIC_ENABLE_CONTINUOUS_WORLD`
+- `NEXT_PUBLIC_SUPABASE_PROXY_URL` (optional; enable only after the dedicated
+  gateway passes the rollout checks in `docs/AUTH-NETWORK-GATEWAY.md`)
 - `SUPABASE_PROJECT_REF`
 
 Never place secret values in workflow inputs, logs, repository variables, or
