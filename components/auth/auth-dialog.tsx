@@ -25,6 +25,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { googleSignInRedirectUrl } from "@/lib/supabase/google-sign-in";
 import {
   authEmailRequestErrorMessage,
+  authOtpVerificationErrorMessage,
   EMAIL_OTP_LENGTH,
   EMAIL_RESEND_COOLDOWN_SECONDS,
   isAuthEmailRateLimitError,
@@ -216,6 +217,7 @@ export function AuthDialog() {
           });
         if (resendError) throw resendError;
       }
+      setOtp("");
       setResendCooldown(EMAIL_RESEND_COOLDOWN_SECONDS);
       setMessage(
         authMode === "verify-sign-up"
@@ -396,6 +398,8 @@ export function AuthDialog() {
               : "Could not submit the recovery request. Please try again.",
           ),
         );
+      } else if (otpModes.includes(authMode)) {
+        setError(authOtpVerificationErrorMessage(caught));
       } else {
         setError(
           caught instanceof Error ? caught.message : "Authentication failed.",

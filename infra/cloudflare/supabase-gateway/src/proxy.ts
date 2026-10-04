@@ -10,6 +10,7 @@ const requestHeaders = [
   "range",
   "range-unit",
   "x-client-info",
+  "x-econmind-request-id",
   "x-supabase-api-version",
   "x-upsert",
   "x-region",
