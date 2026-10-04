@@ -204,7 +204,7 @@ describe("Supabase browser gateway transport", () => {
 
 describe("fixed Supabase gateway", () => {
   it("allows mail preflight and forwards the request ID through the SDK without retrying", async () => {
-    const requestId = "local-mail-request-id";
+    const requestId = "00000000-0000-4000-8000-000000000001";
     const upstreamFetch = vi
       .fn<typeof fetch>()
       .mockResolvedValue(
@@ -255,6 +255,7 @@ describe("fixed Supabase gateway", () => {
       body: { subject: "Local regression test", text: "No email is sent." },
     });
     expect(result.error).not.toBeNull();
+    expect(result.error?.context.status).toBe(403);
     expect(upstreamFetch).toHaveBeenCalledOnce();
     const forwarded = upstreamFetch.mock.calls[0][0] as Request;
     expect(forwarded.url).toBe(
