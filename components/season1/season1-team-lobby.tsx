@@ -95,7 +95,7 @@ export function Season1TeamLobby({ initialLobby }: { initialLobby?: Season1Lobby
   const visibleTeams = useMemo(
     () =>
       (lobby?.teams ?? []).filter((team) =>
-        `${team.name} ${team.focus}`
+        `${team.name} ${team.focus} ${team.schoolName ?? ""} ${team.schools.join(" ")}`
           .toLowerCase()
           .includes(query.trim().toLowerCase()),
       ),
@@ -294,6 +294,7 @@ export function Season1TeamLobby({ initialLobby }: { initialLobby?: Season1Lobby
             Refresh
           </Button>
         </div>
+        {lobby.viewer?.schoolName && <p className="mt-4 text-sm leading-6 text-[var(--ink-muted)]">Teams from {lobby.viewer.schoolName} appear first. You can also join teams from other schools.</p>}
         <label className="mt-7 flex max-w-md items-center gap-2 rounded-lg border border-[var(--line-strong)] bg-[var(--surface)] px-3">
           <Search size={15} className="text-[var(--ink-faint)]" />
           <span className="sr-only">Search teams</span>
@@ -301,7 +302,7 @@ export function Season1TeamLobby({ initialLobby }: { initialLobby?: Season1Lobby
             className="h-10 min-w-0 flex-1 bg-transparent text-sm outline-none"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search teams or recruitment focus"
+            placeholder="Search teams, schools or recruitment focus"
           />
         </label>
         <div className="season1-team-grid mt-6 grid gap-4 lg:grid-cols-3">
@@ -553,6 +554,7 @@ function TeamCard({
         </Badge>
       </div>
       <h3 className="mt-6 text-xl font-bold tracking-[-.04em]">{team.name}</h3>
+      {team.schoolName && <p className="mt-2 flex flex-wrap items-center gap-2 text-xs text-[var(--ink-muted)]"><span>Home school: {team.schoolName}</span>{team.sameSchool && <Badge>Same school</Badge>}</p>}
       <p className="mt-2 text-sm leading-6 text-[var(--ink-muted)]">
         {team.focus || "Recruitment focus has not been added."}
       </p>
