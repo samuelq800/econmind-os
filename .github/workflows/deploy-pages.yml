@@ -134,6 +134,12 @@ jobs:
             "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query" \
             --data "$payload" --output /dev/null
 
+      - name: Publish and verify reviewed Season 1 team lifecycle
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+        run: node scripts/publish-season1-team-lifecycle.mjs
+
       - name: Export static website
         env:
           GITHUB_PAGES: "true"

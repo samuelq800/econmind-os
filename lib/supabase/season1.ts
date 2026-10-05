@@ -2,10 +2,11 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient, requireSupabaseBrowserClient, throwIfSupabaseError } from "./client";
 
 export type Season1RolePreference = string;
-export type Season1Team = { id: string; name: string; description: string; focus: string; capacity: number; recruiting: boolean; recruitmentMode: "open" | "application_required" | "invite_only"; teamStyle: "competitive" | "balanced" | "learning"; preferredLanguage: string; status: string; memberCount: number; readyCount: number; applicationCount: number; teamType: "SCHOOL TEAM" | "CROSS-SCHOOL TEAM" | "OPEN TEAM"; schools: string[] };
+export type Season1Team = { id: string; name: string; description: string; focus: string; capacity: number; recruiting: boolean; recruitmentMode: "open" | "application_required" | "invite_only"; teamStyle: "competitive" | "balanced" | "learning"; preferredLanguage: string; status: string; memberCount: number; readyCount: number; applicationCount: number; teamType: "SCHOOL TEAM" | "CROSS-SCHOOL TEAM" | "OPEN TEAM"; schools: string[]; schoolId?: string | null; schoolName?: string | null; sameSchool?: boolean };
 export type Season1Message = { id: string; content: string; messageType: "TEXT" | "TEAM_CARD" | "SYSTEM"; metadata: Record<string, unknown>; createdAt: string; deletedAt: string | null; authorName: string; authorId: string };
 export type Season1Opening = { opensAt: string; serverNow: string; isOpen: boolean };
 export type Season1LobbyData = {
+  viewer?: { schoolId: string | null; schoolName: string | null };
   season: { id: string; code: string; displayName: string; registrationOpen: boolean; simulationLocked: boolean; config: { minimumTeamSize: number; maximumTeamSize: number; roles: string[]; languages: string[] } };
   stats: { players: number; teams: number; freeAgents: number; recruitingTeams: number };
   teams: Season1Team[];
@@ -38,6 +39,7 @@ export const applyToSeason1TeamByCode = (code: string) => rpc<string>("world_pre
 export const removeSeason1TeamMember = (teamId: string, userId: string) => rpc<void>("world_preseason_remove_member", { p_team_id: teamId, p_user_id: userId });
 export const setSeason1TeamLock = (teamId: string, locked: boolean) => rpc<void>("world_preseason_set_team_lock", { p_team_id: teamId, p_locked: locked });
 export const leaveSeason1Team = (teamId: string) => rpc<void>("world_preseason_leave_team", { p_team_id: teamId });
+export const dissolveSeason1Team = (teamId: string) => rpc<void>("world_preseason_dissolve_team", { p_team_id: teamId });
 
 type Season1LobbyRpcData = Omit<Season1LobbyData, "currentMembership" | "applicationTeamIds" | "pendingApplications"> & {
   applicationTeamIds?: string[];

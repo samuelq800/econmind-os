@@ -8,7 +8,7 @@ vi.mock("@/lib/supabase/client", () => ({
   getSupabaseBrowserClient: () => null,
   throwIfSupabaseError: (error: { message: string } | null) => { if (error) throw new Error(error.message); },
 }));
-import { applyToSeason1TeamByCode, getSeason1MyTeam, getSeason1TeamWorkspace, leaveSeason1Team, removeSeason1TeamMember } from "../lib/supabase/season1";
+import { applyToSeason1TeamByCode, dissolveSeason1Team, getSeason1MyTeam, getSeason1TeamWorkspace, leaveSeason1Team, removeSeason1TeamMember } from "../lib/supabase/season1";
 
 describe("Season 1 My Team", () => {
   beforeEach(() => { rpc.mockReset(); rpc.mockResolvedValue({ data: null, error: null }); });
@@ -24,12 +24,15 @@ describe("Season 1 My Team", () => {
     expect(rpc).toHaveBeenLastCalledWith("world_preseason_remove_member", { p_team_id: "team-a", p_user_id: "member-b" });
     await leaveSeason1Team("team-a");
     expect(rpc).toHaveBeenLastCalledWith("world_preseason_leave_team", { p_team_id: "team-a" });
+    await dissolveSeason1Team("team-a");
+    expect(rpc).toHaveBeenLastCalledWith("world_preseason_dissolve_team", { p_team_id: "team-a" });
   });
   it("normalizes shareable team codes and propagates server rejection", async () => {
     await applyToSeason1TeamByCode(" em-t1-abc123 ");
     expect(rpc).toHaveBeenLastCalledWith("world_preseason_apply_by_team_code", { p_code: "EM-T1-ABC123" });
     rpc.mockResolvedValue({ data: null, error: { message: "This team roster is locked" } });
     await expect(leaveSeason1Team("team-a")).rejects.toThrow("roster is locked");
+    await expect(dissolveSeason1Team("team-a")).rejects.toThrow("roster is locked");
   });
   it("provides registered-member navigation, confirmations and stale-roster refresh", () => {
     expect(pageAccessForPath("/season1/my-team/")).toEqual({ path: "/season1", match: "prefix", audience: "account" });

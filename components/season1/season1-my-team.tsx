@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Season1WorldArtwork } from "./season1-world-artwork";
 import {
-  applyToSeason1TeamByCode, getSeason1TeamWorkspace, leaveSeason1Team,
+  applyToSeason1TeamByCode, dissolveSeason1Team, getSeason1TeamWorkspace, leaveSeason1Team,
   removeSeason1TeamMember, setSeason1Readiness, setSeason1TeamLock,
   postSeason1TeamMessage, reviewSeason1Application, setSeason1Preferences,
   subscribeToSeason1Lobby, unsubscribeSeason1Lobby, type Season1TeamWorkspaceData,
@@ -259,9 +259,18 @@ export function Season1MyTeam() {
               }}><UserMinus size={14} /> Remove</Button>}
             </article>)}
           </div>
-          {rosterLocked ? <p className="mt-4 text-sm text-[var(--ink-muted)]">This team roster is locked for its current season status.</p> : captain ? <p className="mt-4 text-sm text-[var(--ink-muted)]">As captain, you can remove members. You cannot leave your own team without a leadership handover.</p> : <Button variant="secondary" className="mt-6" disabled={busy} onClick={() => {
-            if (window.confirm(`Leave ${team.name}? You will lose access to its team chat and must apply again to rejoin.`)) void act(() => leaveSeason1Team(team.id), "You have left the team. You can now join or create another team.", true);
-          }}><LogOut size={16} /> Leave team</Button>}
+          {rosterLocked ? <p className="mt-4 text-sm text-[var(--ink-muted)]">This team roster is locked for its current season status.</p> : <>
+            {captain && <p className="mt-4 text-sm leading-6 text-[var(--ink-muted)]">Leaving transfers captaincy to the longest-serving remaining member. If you are the last member, the team is dissolved. Dissolving the team releases every member.</p>}
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Button variant="secondary" disabled={busy} onClick={() => {
+                const handover = captain ? data.members.length > 1 ? " Captaincy will transfer to the longest-serving remaining member." : " You are the last member, so this will dissolve the team." : "";
+                if (window.confirm(`Leave ${team.name}?${handover} You will lose access to its team chat and must apply again to rejoin.`)) void act(() => leaveSeason1Team(team.id), "You have left the team. You can now join or create another team.", true);
+              }}><LogOut size={16} /> Leave team</Button>
+              {captain && <Button variant="secondary" disabled={busy} className="text-red-600 dark:text-red-300" onClick={() => {
+                if (window.confirm(`Dissolve ${team.name}? Every member will be released and lose access to its team chat. Pending applications and invitations will be cancelled. This cannot be undone.`)) void act(() => dissolveSeason1Team(team.id), "Team dissolved. Everyone can now join or create another team.", true);
+              }}><UsersRound size={16} /> Dissolve team</Button>}
+            </div>
+          </>}
           <div className="mt-8 border-t border-[var(--line)] pt-6">
             <h3 className="font-bold">Your role preferences</h3>
             <p className="mt-2 text-sm text-[var(--ink-muted)]">Signal your interests. These preferences do not assign a permanent office.</p>
