@@ -134,7 +134,8 @@ describe("Live World", () => {
     expect(hostPolicy.appRoles).toContain("teacher");
     expect(hostPolicy.roleMatch).toBe("any");
     expect(hostAccessMigration).toContain("participant_count bigint, participant_capacity integer");
-    expect(room).toContain('document.visibilityState === "visible"');
+    expect(room).toContain("useRoomRefresh(roomId,");
+    expect(readFileSync("lib/live-room/use-room-refresh.ts", "utf8")).toContain('document.visibilityState === "visible"');
     expect(admin).toContain("grid items-start gap-6");
     expect(admin).toContain('state === "copied" ? "Copied"');
     expect(admin).toContain("active:scale-[.96]");

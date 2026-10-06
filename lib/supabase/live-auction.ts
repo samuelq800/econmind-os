@@ -1,5 +1,6 @@
 "use client";
 import { supabaseBrowserTransportOptions } from "./browser-transport";
+import type { RoomRealtimeStatus } from "@/lib/live-room/refresh-controller";
 
 import { createClient, type RealtimeChannel, type SupabaseClient } from "@supabase/supabase-js";
 import { isSupabaseConfigured, requireSupabaseBrowserClient, throwIfSupabaseError } from "./client";
@@ -65,8 +66,9 @@ export const submitLiveAuctionSealedBid = (itemId: string, amount: number) => ro
 export const closeLiveAuctionItem = (itemId: string, winnerId: string | null = null) => roomRpc("close_live_auction_item", { p_item_id: itemId, p_winner_id: winnerId });
 export const previewLiveAuctionSettlement = (itemId: string, winnerId: string | null = null) => roomRpc<LiveAuctionSettlementPreview>("preview_live_auction_settlement", { p_item_id: itemId, p_winner_id: winnerId });
 export const enterLiveAuctionDebrief = (itemId: string) => roomRpc("enter_live_auction_debrief", { p_item_id: itemId });
-export async function subscribeToLiveAuctionRoom(roomId: string, onChange: () => void) {
+export async function subscribeToLiveAuctionRoom(roomId: string, onChange: () => void, onStatus?: (status: RoomRealtimeStatus) => void, disposed: () => boolean = () => false) {
   const supabase = await ensureLiveAuctionSession();
-  return supabase.channel(`live-auction:${roomId}`).on("postgres_changes", { event: "*", schema: "public", table: "live_auction_events", filter: `room_id=eq.${roomId}` }, onChange).subscribe();
+  if (disposed()) return null;
+  return supabase.channel(`live-auction:${roomId}`).on("postgres_changes", { event: "*", schema: "public", table: "live_auction_events", filter: `room_id=eq.${roomId}` }, onChange).subscribe(onStatus);
 }
 export async function unsubscribeFromLiveAuctionRoom(channel: RealtimeChannel) { await roomClient().removeChannel(channel); }
