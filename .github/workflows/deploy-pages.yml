@@ -5,6 +5,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      frontend_only:
+        description: "Publish website without applying Season 1 database APIs"
+        type: boolean
+        default: true
   schedule:
     # GitHub Pages serves static HTML. Refresh its public League directory four times a day.
     - cron: "17 */6 * * *"
@@ -122,6 +127,7 @@ jobs:
             --data "$payload" --output /dev/null
 
       - name: Apply Season 1 World Chat read API
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.frontend_only) && !contains(github.event.head_commit.message, '[frontend-only]') }}
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
@@ -135,6 +141,7 @@ jobs:
             --data "$payload" --output /dev/null
 
       - name: Publish and verify reviewed Season 1 team lifecycle
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.frontend_only) && !contains(github.event.head_commit.message, '[frontend-only]') }}
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
