@@ -1,7 +1,8 @@
 "use client";
 
 import { Gavel, LoaderCircle, Sparkles, Users } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRoomRefresh } from "@/lib/live-room/use-room-refresh";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ECONMIND_AUCTION_PRESETS, PRESET_CATEGORIES, YALES_EGG_PRESET_ID, type EconMindAuctionPreset } from "@/lib/live-auction/presets";
@@ -19,9 +20,15 @@ const problem = (caught: unknown, fallback: string) => caught instanceof Error ?
 
 export function LiveAuctionRoom({ roomId }: { roomId: string }) {
   const [view, setView] = useState<LiveAuctionRoomView | null>(null); const [loading, setLoading] = useState(true); const [error, setError] = useState("");
-  const refresh = useCallback(async () => { try { setView(await getLiveAuctionView(roomId)); setError(""); } catch (caught) { setError(problem(caught, "This Live Auction room could not be opened.")); } finally { setLoading(false); } }, [roomId]);
-  useEffect(() => { queueMicrotask(() => { void refresh(); }); }, [refresh]);
-  useEffect(() => { if (!view) return; let active = true; let channel: Awaited<ReturnType<typeof subscribeToLiveAuctionRoom>> | null = null; void subscribeToLiveAuctionRoom(roomId, () => { if (active && document.visibilityState === "visible") void refresh(); }).then((next) => { channel = next; }).catch(() => undefined); const poll = window.setInterval(() => { if (active && document.visibilityState === "visible") void refresh(); }, 1500); return () => { active = false; window.clearInterval(poll); if (channel) void unsubscribeFromLiveAuctionRoom(channel); }; }, [roomId, refresh, view]);
+  const refresh = useRoomRefresh(roomId, {
+    fetch: getLiveAuctionView,
+    subscribe: subscribeToLiveAuctionRoom,
+    unsubscribe: unsubscribeFromLiveAuctionRoom,
+    // A closed item is not a closed room: the host can auction another item.
+    terminal: (next) => ["CLOSED", "FINALIZED"].includes(next.room.status?.toUpperCase() ?? ""),
+    onView: (next) => { setView(next); setError(""); setLoading(false); },
+    onError: (caught) => { setError(problem(caught, "This Live Auction room could not be opened.")); setLoading(false); },
+  });
   if (loading) return <AuctionShell><div className="grid min-h-[72vh] place-items-center text-sm text-[#a7bbb1]"><LoaderCircle className="mr-3 inline animate-spin text-[#62cbb0]" size={18} /> Opening Live Auction…</div></AuctionShell>;
   if (!view) return <AuctionShell><AuctionEntry roomId={roomId} error={error} onJoined={refresh} /></AuctionShell>;
   if (view.access.type === "admin") return <HostRoom view={view} onRefresh={refresh} />;

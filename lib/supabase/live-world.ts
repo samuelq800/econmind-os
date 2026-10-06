@@ -1,5 +1,6 @@
 "use client";
 import { supabaseBrowserTransportOptions } from "./browser-transport";
+import type { RoomRealtimeStatus } from "@/lib/live-room/refresh-controller";
 
 import {
   createClient,
@@ -228,8 +229,9 @@ export async function injectLiveWorldCrisis(roomId: string, crisisKey: string, a
   throwIfSupabaseError(error);
 }
 
-export async function subscribeToLiveWorldRoom(roomId: string, onChange: () => void) {
+export async function subscribeToLiveWorldRoom(roomId: string, onChange: () => void, onStatus?: (status: RoomRealtimeStatus) => void, disposed: () => boolean = () => false) {
   const supabase = await ensureLiveWorldSession();
+  if (disposed()) return null;
   const channel = supabase
     .channel(`live-world:${roomId}`)
     .on(
@@ -237,7 +239,7 @@ export async function subscribeToLiveWorldRoom(roomId: string, onChange: () => v
       { event: "*", schema: "public", table: "live_world_events", filter: `room_id=eq.${roomId}` },
       onChange,
     )
-    .subscribe();
+    .subscribe(onStatus);
   return channel;
 }
 

@@ -65,6 +65,8 @@ export type LiveAuctionItem = {
 
 export type LiveAuctionRoomView = {
   room: {
+    /** Optional server room lifecycle; never infer this from an item's status. */
+    status?: string;
     id: string;
     name: string;
     participantCapacity: number;

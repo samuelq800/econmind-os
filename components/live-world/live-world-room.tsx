@@ -25,7 +25,8 @@ import {
   RadarChart,
   ResponsiveContainer,
 } from "recharts";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRoomRefresh } from "@/lib/live-room/use-room-refresh";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -106,37 +107,18 @@ export function LiveWorldRoom({ roomId }: { roomId: string }) {
   const [view, setView] = useState<LiveWorldRoomView | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const hasView = Boolean(view);
   const knownCrisisEvent = useRef<string | null>(null);
   const [broadcast, setBroadcast] = useState<LiveWorldRoomView["events"][number] | null>(null);
 
-  const refresh = useCallback(async () => {
-    try {
-      const next = await getLiveWorldView(roomId);
-      setView(next);
-      setError("");
-    } catch (caught) {
-      setError(notice(caught, "This Live World room could not be opened."));
-    } finally {
-      setLoading(false);
-    }
-  }, [roomId]);
-
-  useEffect(() => { queueMicrotask(() => { void refresh(); }); }, [refresh]);
-  useEffect(() => {
-    if (!hasView) return;
-    let active = true;
-    let channel: Awaited<ReturnType<typeof subscribeToLiveWorldRoom>> | null = null;
-    void subscribeToLiveWorldRoom(roomId, () => { if (active && document.visibilityState === "visible") void refresh(); })
-      .then((created) => { channel = created; })
-      .catch(() => undefined);
-    const interval = window.setInterval(() => { if (active && document.visibilityState === "visible") void refresh(); }, 1500);
-    return () => {
-      active = false;
-      window.clearInterval(interval);
-      if (channel) void unsubscribeFromLiveWorldRoom(channel);
-    };
-  }, [roomId, refresh, hasView]);
+  const refresh = useRoomRefresh(roomId, {
+    fetch: getLiveWorldView,
+    subscribe: subscribeToLiveWorldRoom,
+    unsubscribe: unsubscribeFromLiveWorldRoom,
+    // Ended Live World rooms can still receive debrief/host updates.
+    terminal: () => false,
+    onView: (next) => { setView(next); setError(""); setLoading(false); },
+    onError: (caught) => { setError(notice(caught, "This Live World room could not be opened.")); setLoading(false); },
+  });
 
   useEffect(() => {
     const newest = view?.events.find((event) => event.type === "crisis_activated");
