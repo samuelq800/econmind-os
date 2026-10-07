@@ -23,6 +23,8 @@ double_confirm_changes = true
 enable_confirmations = true
 max_frequency = "1m0s"
 otp_length = 8
+# Shared lifetime for email OTPs and verification/recovery/invitation links.
+otp_expiry = 1200
 
 [auth.mfa.totp]
 enroll_enabled = true
