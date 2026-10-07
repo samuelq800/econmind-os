@@ -1,10 +1,8 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 // @ts-expect-error Standalone Node deployment script intentionally has no TS declaration.
-import {
-  EMAIL_OTP_EXPIRY_SECONDS,
-  setEmailOtpExpiry,
-} from "../scripts/set-email-otp-expiry.mjs";
+import * as expiry from "../scripts/set-email-otp-expiry.mjs";
+const { EMAIL_OTP_EXPIRY_SECONDS, setEmailOtpExpiry } = expiry;
 
 describe("email verification lifetime", () => {
   it("persists a 20-minute email expiry without changing resend cooldown or OTP length", () => {
