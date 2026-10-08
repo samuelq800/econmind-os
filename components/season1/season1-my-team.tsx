@@ -7,6 +7,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Season1WorldArtwork } from "./season1-world-artwork";
+import { startVisiblePolling } from "@/lib/visible-polling";
 import {
   applyToSeason1TeamByCode, dissolveSeason1Team, getSeason1TeamWorkspace, leaveSeason1Team,
   removeSeason1TeamMember, setSeason1Readiness, setSeason1TeamLock,
@@ -91,16 +92,13 @@ export function Season1MyTeam() {
     if (authLoading || roleLoading || !user) return;
     const initial = window.setTimeout(() => void refresh(), 0);
     // Polling also covers DELETE events not delivered after membership is lost.
-    const interval = window.setInterval(() => void refresh(), 10_000);
+    const stopPolling = startVisiblePolling(() => void refresh(), 10_000);
     const channel = subscribeToSeason1Lobby(() => void refresh());
-    const visible = () => { if (document.visibilityState === "visible") void refresh(); };
-    document.addEventListener("visibilitychange", visible);
     return () => {
       request.current += 1;
       window.clearTimeout(initial);
-      window.clearInterval(interval);
+      stopPolling();
       unsubscribeSeason1Lobby(channel);
-      document.removeEventListener("visibilitychange", visible);
     };
   }, [authLoading, roleLoading, user, refresh]);
 

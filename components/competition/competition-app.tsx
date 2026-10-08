@@ -1,5 +1,7 @@
 "use client";
 
+import { startVisiblePolling } from "@/lib/visible-polling";
+
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -568,10 +570,10 @@ export function CompetitionApp() {
       }
     };
     void load();
-    const timer = window.setInterval(() => void load(), 20_000);
+    const stopPolling = startVisiblePolling(() => void load(), 20_000);
     return () => {
       cancelled = true;
-      window.clearInterval(timer);
+      stopPolling();
     };
   }, [user, activeCompetition, activeDivision, pathname]);
 

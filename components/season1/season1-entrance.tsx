@@ -9,6 +9,7 @@ import { getSeason1Lobby, getSeason1Opening, type Season1LobbyData, type Season1
 import { entranceVisitStorage, hasSeenSeason1Entrance, markSeason1EntranceSeen } from "@/lib/season1/entrance-visit";
 import { requestSeason1NotificationPermission } from "@/lib/season1/notification-permission";
 import { Season1TeamLobby } from "./season1-team-lobby";
+import { startVisiblePolling } from "@/lib/visible-polling";
 import styles from "./season1-entrance.module.css";
 
 function errorMessage(error: unknown) {
@@ -61,7 +62,7 @@ function Season1EntranceScene() {
     if (authLoading || roleLoading || !userId) return;
     const currentUserId = userId;
     let active = true;
-    let interval: number | null = null;
+    let stopPolling: (() => void) | null = null;
     async function initialize() {
       try {
         const next = await getSeason1Opening();
@@ -84,17 +85,14 @@ function Season1EntranceScene() {
       } finally {
         if (active) {
           setRestoring(false);
-          interval = window.setInterval(() => void refreshGate(), 10_000);
+          stopPolling = startVisiblePolling(() => void refreshGate(), 10_000);
         }
       }
     }
     void initialize();
-    const onVisible = () => { if (interval !== null && document.visibilityState === "visible") void refreshGate(); };
-    document.addEventListener("visibilitychange", onVisible);
     return () => {
       active = false;
-      if (interval !== null) window.clearInterval(interval);
-      document.removeEventListener("visibilitychange", onVisible);
+      stopPolling?.();
     };
   }, [authLoading, roleLoading, userId, loginAt, applyGate, refreshGate]);
 
