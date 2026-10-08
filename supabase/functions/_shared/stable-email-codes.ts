@@ -22,6 +22,7 @@ export interface Session {
   refresh_token: string;
 }
 export interface Dependencies {
+  publicActive?: boolean;
   store: CodeStore;
   secret: string;
   verifyNative(
@@ -118,7 +119,7 @@ function cors(request: Request) {
     ...(allowed ? { "Access-Control-Allow-Origin": origin } : {}),
     "Access-Control-Allow-Headers":
       "authorization, apikey, content-type, x-client-info",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     Vary: "Origin",
     "Cache-Control": "no-store",
     "Content-Type": "application/json",
@@ -171,6 +172,8 @@ async function bodyText(request: Request) {
 export function createVerifyCodeHandler(deps: Dependencies) {
   return async (request: Request) => {
     if (request.method === "OPTIONS") return reply(request, {});
+    if (request.method === "GET")
+      return reply(request, { fixedWindowEnabled: deps.publicActive === true });
     if (request.method !== "POST") return reply(request, invalid, 405);
     const origin = request.headers.get("origin");
     if (origin && !cors(request)["Access-Control-Allow-Origin"])
@@ -197,10 +200,11 @@ export function createVerifyCodeHandler(deps: Dependencies) {
       subject = await subjectKey(deps.secret, `${purpose}:${address}`);
       // Supabase's gateway appends the actual remote address; never trust the
       // leftmost, user-provided X-Forwarded-For element. Shared unknown bucket is fail-closed.
-      const peer = (request.headers.get("x-forwarded-for") ?? "unknown")
-        .split(",")
-        .at(-1)!
-        .trim() || "unknown";
+      const peer =
+        (request.headers.get("x-forwarded-for") ?? "unknown")
+          .split(",")
+          .at(-1)!
+          .trim() || "unknown";
       const claim = await deps.store.claim(
         subject,
         await subjectKey(deps.secret, `verify-peer:${peer}`),

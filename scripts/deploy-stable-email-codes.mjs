@@ -46,6 +46,23 @@ export function activationPatch(hookSecret) {
   };
 }
 
+// Native Auth can acknowledge a send before its background hook completes.
+// Poll only protected readback here; never replay mail requests.
+export async function awaitCacheRecord(
+  read,
+  ready,
+  wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+) {
+  for (let attempt = 0; attempt < 16; attempt++) {
+    const record = await read();
+    if (record && ready(record)) return record;
+    if (attempt < 15) await wait(2000);
+  }
+  throw new Error(
+    "Controlled email hook cache did not become ready within 30 seconds.",
+  );
+}
+
 async function main() {
   const [phase, statePath] = process.argv.slice(2);
   const token = process.env.SUPABASE_ACCESS_TOKEN;
@@ -122,6 +139,7 @@ async function main() {
       STABLE_EMAIL_CODE_KEY: key,
       STABLE_EMAIL_HOOK_SECRET: hookSecret,
       STABLE_EMAIL_CODES_ENABLED: "false",
+      STABLE_EMAIL_PUBLIC_ACTIVE: "false",
       STABLE_EMAIL_AUTH_SECRET_KEY: authSecret,
     });
     // Runner-local, mode 0600, never uploaded or printed. Keys are not checked in.
@@ -174,8 +192,16 @@ async function main() {
       throw new Error("Auth activation readback failed.");
     const testEmail = process.env.STABLE_EMAIL_TEST_ADDRESS;
     let testReceipt = { mailTest: "NOT_RUN" };
+    // Management readback confirms persisted configuration, not propagation
+    // to every running Auth instance. Drain the native resend window too.
+    console.log(
+      "Waiting for native Auth configuration propagation before controlled mail testing.",
+    );
+    for (let i = 0; i < 3; i++)
+      await new Promise((resolve) => setTimeout(resolve, 30_000));
     if (testEmail)
       testReceipt = await verifyProduction(testEmail, state, query);
+    await secrets({ STABLE_EMAIL_PUBLIC_ACTIVE: "true" });
     console.log(
       JSON.stringify({
         phase,
@@ -194,7 +220,10 @@ async function main() {
         mailer_otp_exp: state.beforeExpiry,
         security_sb_forwarded_for_enabled: state.beforeForwarding,
       });
-      await secrets({ STABLE_EMAIL_CODES_ENABLED: "false" });
+      await secrets({
+        STABLE_EMAIL_CODES_ENABLED: "false",
+        STABLE_EMAIL_PUBLIC_ACTIVE: "false",
+      });
       const restored = await api("config/auth");
       if (
         restored.hook_send_email_enabled !== false ||
@@ -234,11 +263,9 @@ async function verifyProduction(address, state, query) {
     const result = await query(
       `select code_cipher,hash_ciphers,expires_at,consumed from private.stable_email_codes where subject='${subject}';`,
     );
-    if (result.length !== 1)
-      throw new Error(
-        "Test recovery request did not create exactly one cache record.",
-      );
-    return result[0];
+    if (result.length > 1)
+      throw new Error("Test recovery request created ambiguous cache records.");
+    return result[0] ?? null;
   };
   if (
     !(
@@ -248,7 +275,10 @@ async function verifyProduction(address, state, query) {
     ).ok
   )
     throw new Error("First controlled test mail request failed.");
-  const first = await read();
+  const first = await awaitCacheRecord(
+    read,
+    (record) => record.hash_ciphers.length >= 1,
+  );
   // Native one-minute send limit is deliberately preserved. No request replay.
   await new Promise((resolve) => setTimeout(resolve, 65_000));
   if (
@@ -259,7 +289,10 @@ async function verifyProduction(address, state, query) {
     ).ok
   )
     throw new Error("Second controlled test mail request failed.");
-  const second = await read();
+  const second = await awaitCacheRecord(
+    read,
+    (record) => record.hash_ciphers[0] !== first.hash_ciphers[0],
+  );
   if (
     first.code_cipher !== second.code_cipher ||
     first.expires_at !== second.expires_at ||

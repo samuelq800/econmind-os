@@ -125,6 +125,32 @@ function fixture() {
 }
 
 describe("fixed 60-minute authentication codes", () => {
+  it("advertises fixed-window capability only when explicitly activated", async () => {
+    const f = fixture();
+    const request = () =>
+      new Request("https://local.test/verify", { method: "GET" });
+    const handler = createVerifyCodeHandler(f.deps);
+    expect(await (await handler(request())).json()).toEqual({
+      fixedWindowEnabled: false,
+    });
+    f.deps.publicActive = true;
+    expect(await (await handler(request())).json()).toEqual({
+      fixedWindowEnabled: true,
+    });
+    expect(f.records.size).toBe(0);
+    expect(f.verifyNative).not.toHaveBeenCalled();
+  });
+
+  it("makes fixed-window UI copy conditional on verified public capability", () => {
+    const source = readFileSync("components/auth/auth-dialog.tsx", "utf8");
+    expect(source).toContain(
+      "descriptionForMode(authMode, verificationEmail, fixedCodes)",
+    );
+    expect(source).toContain("data?.fixedWindowEnabled === true");
+    expect(source).toContain("if (!disposed) setFixedCodes");
+    expect(source).toContain("fixedCodes ?");
+  });
+
   it("resends the first code and verifies against the newest native credential", async () => {
     const f = fixture();
     expect((await f.send()).status).toBe(200);
