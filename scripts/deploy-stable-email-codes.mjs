@@ -46,6 +46,23 @@ export function activationPatch(hookSecret) {
   };
 }
 
+// Native Auth can acknowledge a send before its background hook completes.
+// Poll only protected readback here; never replay mail requests.
+export async function awaitCacheRecord(
+  read,
+  ready,
+  wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+) {
+  for (let attempt = 0; attempt < 16; attempt++) {
+    const record = await read();
+    if (record && ready(record)) return record;
+    if (attempt < 15) await wait(2000);
+  }
+  throw new Error(
+    "Controlled email hook cache did not become ready within 30 seconds.",
+  );
+}
+
 async function main() {
   const [phase, statePath] = process.argv.slice(2);
   const token = process.env.SUPABASE_ACCESS_TOKEN;
@@ -246,11 +263,9 @@ async function verifyProduction(address, state, query) {
     const result = await query(
       `select code_cipher,hash_ciphers,expires_at,consumed from private.stable_email_codes where subject='${subject}';`,
     );
-    if (result.length !== 1)
-      throw new Error(
-        "Test recovery request did not create exactly one cache record.",
-      );
-    return result[0];
+    if (result.length > 1)
+      throw new Error("Test recovery request created ambiguous cache records.");
+    return result[0] ?? null;
   };
   if (
     !(
@@ -260,7 +275,10 @@ async function verifyProduction(address, state, query) {
     ).ok
   )
     throw new Error("First controlled test mail request failed.");
-  const first = await read();
+  const first = await awaitCacheRecord(
+    read,
+    (record) => record.hash_ciphers.length >= 1,
+  );
   // Native one-minute send limit is deliberately preserved. No request replay.
   await new Promise((resolve) => setTimeout(resolve, 65_000));
   if (
@@ -271,7 +289,10 @@ async function verifyProduction(address, state, query) {
     ).ok
   )
     throw new Error("Second controlled test mail request failed.");
-  const second = await read();
+  const second = await awaitCacheRecord(
+    read,
+    (record) => record.hash_ciphers[0] !== first.hash_ciphers[0],
+  );
   if (
     first.code_cipher !== second.code_cipher ||
     first.expires_at !== second.expires_at ||

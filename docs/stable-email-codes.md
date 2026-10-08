@@ -61,6 +61,8 @@ fixed-window copy only when this capability is enabled after activation/testing;
 it does not advertise a successful rollout merely because new files are deployed.
 The mailbox diagnostic is read-only and prints only aggregate account status and
 cache count, never email addresses, tokens, code contents or provider secrets.
+Each controlled send allows up to 30 seconds of protected cache readback for
+asynchronous native email processing, without issuing additional mail requests.
 
 ## Tests and boundaries
 

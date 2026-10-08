@@ -1,9 +1,31 @@
 import { readFileSync } from "node:fs";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 // @ts-expect-error Standalone deployment script has no TypeScript declaration.
 import * as deployment from "../scripts/deploy-stable-email-codes.mjs";
 
 describe("scoped authentication deployment", () => {
+  it("waits for background hook readback without requesting extra mail", async () => {
+    const read = vi
+      .fn()
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ hash: "old" })
+      .mockResolvedValueOnce({ hash: "new" });
+    const wait = vi.fn().mockResolvedValue(undefined);
+    expect(
+      await deployment.awaitCacheRecord(
+        read,
+        (row: { hash: string }) => row.hash === "new",
+        wait,
+      ),
+    ).toEqual({ hash: "new" });
+    expect(read).toHaveBeenCalledTimes(3);
+    expect(wait).toHaveBeenCalledTimes(2);
+    const missing = vi.fn().mockResolvedValue(null);
+    await expect(
+      deployment.awaitCacheRecord(missing, () => true, wait),
+    ).rejects.toThrow("30 seconds");
+    expect(missing).toHaveBeenCalledTimes(16);
+  });
   it("patches only expiry, hook and native per-client-IP rate attribution", () => {
     const patch = deployment.activationPatch("test-hook-secret");
     expect(Object.keys(patch).sort()).toEqual([
