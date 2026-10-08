@@ -1,4 +1,4 @@
-name: Auth · Set email verification expiry to 20 minutes
+name: Auth · Set email verification expiry to 60 minutes
 
 on:
   workflow_dispatch:

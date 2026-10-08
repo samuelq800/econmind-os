@@ -23,6 +23,7 @@ import {
 } from "@/lib/platform/contact";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { googleSignInRedirectUrl } from "@/lib/supabase/google-sign-in";
+import { verifyStableEmailCode } from "@/lib/supabase/stable-email-verification";
 import {
   authEmailRequestErrorMessage,
   authOtpVerificationErrorMessage,
@@ -68,11 +69,11 @@ function descriptionForMode(mode: AuthMode, verificationEmail: string) {
     case "sign-up":
       return "Your saved work stays private under Supabase Row Level Security. We verify your email before activating the account.";
     case "verify-sign-up":
-      return `Enter the latest one-time code for ${verificationEmail || "your email"} if this address is eligible for registration.`;
+      return `Enter the code for ${verificationEmail || "your email"} if this address is eligible for registration. Resends use the same code for 60 minutes from the first request.`;
     case "forgot-password":
       return "Enter your account email. If it matches an account, Supabase will send a one-time recovery code.";
     case "verify-recovery":
-      return `Enter the latest recovery code for ${verificationEmail || "your email"} if this address belongs to an account.`;
+      return `Enter the recovery code for ${verificationEmail || "your email"} if this address belongs to an account. Resends use the same code for 60 minutes from the first request.`;
     case "reset-password":
       return "Your email has been verified. Choose a new password to finish the secure recovery session.";
   }
@@ -221,8 +222,8 @@ export function AuthDialog() {
       setResendCooldown(EMAIL_RESEND_COOLDOWN_SECONDS);
       setMessage(
         authMode === "verify-sign-up"
-          ? "If this email is eligible for registration, a new verification code has been requested. Use the latest email if one arrives."
-          : "If this address belongs to an account, a new recovery code has been requested. Use the latest email if one arrives.",
+          ? "If this email is eligible for registration, another email has been requested. Its code stays the same within the original 60-minute window."
+          : "If this address belongs to an account, another email has been requested. Its code stays the same within the original 60-minute window.",
       );
     } catch (caught) {
       if (isAuthEmailRateLimitError(caught)) {
@@ -336,12 +337,7 @@ export function AuthDialog() {
           "If this email is eligible for registration, a verification code has been requested. If you already have an account, sign in or reset your password.",
         );
       } else if (authMode === "verify-sign-up") {
-        const { error: verificationError } = await supabase.auth.verifyOtp({
-          email: verificationEmail,
-          token: otp.trim(),
-          type: "email",
-        });
-        if (verificationError) throw verificationError;
+        await verifyStableEmailCode(supabase, verificationEmail, otp.trim(), "signup");
         setOtp("");
         setPassword("");
         closeAuth();
@@ -366,12 +362,7 @@ export function AuthDialog() {
           "If that address belongs to an account, a recovery code has been requested. Use the email if one arrives.",
         );
       } else if (authMode === "verify-recovery") {
-        const { error: verificationError } = await supabase.auth.verifyOtp({
-          email: verificationEmail,
-          token: otp.trim(),
-          type: "recovery",
-        });
-        if (verificationError) throw verificationError;
+        await verifyStableEmailCode(supabase, verificationEmail, otp.trim(), "recovery");
         setOtp("");
         openAuth("reset-password");
         setMessage("Email verified. Set your new password now.");
@@ -691,8 +682,8 @@ export function AuthDialog() {
                 className="w-full text-center text-xs font-bold text-[var(--accent)] disabled:opacity-45"
               >
                 {resendCooldown > 0
-                  ? `Request a new code in ${resendCooldown}s`
-                  : "Request a new code"}
+                  ? `Resend email in ${resendCooldown}s`
+                  : "Resend code"}
               </button>
             )}
           </form>

@@ -66,7 +66,7 @@ describe("Google sign-in with the existing Supabase account", () => {
   });
 
   it("preserves email flows and keeps anonymous room identities separate", () => {
-    for (const action of ["signInWithPassword", "auth.signUp", "verifyOtp", "resetPasswordForEmail", "PASSWORD_RECOVERY"]) {
+    for (const action of ["signInWithPassword", "auth.signUp", "verifyStableEmailCode", "resetPasswordForEmail", "PASSWORD_RECOVERY"]) {
       expect(dialog + provider).toContain(action);
     }
     expect(shell).toContain("if (isStandaloneLiveWorld(pathname)) return <>{children}</>");
