@@ -35,7 +35,7 @@ describe("Supabase email verification and password recovery", () => {
   it("keeps registration consent metadata and requires an email OTP step", () => {
     expect(dialog).toContain("legal_acceptance");
     expect(dialog).toContain('"verify-sign-up",');
-    expect(dialog).toContain('type: "email"');
+    expect(dialog).toContain("verifyStableEmailCode");
     expect(dialog).toContain('type: "signup"');
     expect(dialog).toContain("Submit registration");
     expect(dialog).not.toContain("if (data.session) closeAuth()");
@@ -106,7 +106,7 @@ describe("Supabase email verification and password recovery", () => {
       /if \(isAuthEmailRateLimitError\(caught\)\) \{\s*setResendCooldown\(EMAIL_RESEND_COOLDOWN_SECONDS\);/,
     );
     expect(resendButton).toContain("disabled={busy || resendCooldown > 0}");
-    expect(resendButton).toContain("Request a new code in ${resendCooldown}s");
+    expect(resendButton).toContain("Resend email in ${resendCooldown}s");
   });
 
   it("recognises each supported email rate-limit signal", () => {
@@ -263,7 +263,7 @@ describe("Supabase email verification and password recovery", () => {
 
   it("verifies recovery email before allowing a matching new password", () => {
     expect(dialog).toContain("resetPasswordForEmail");
-    expect(dialog).toContain('type: "recovery"');
+    expect(dialog).toMatch(/verifyStableEmailCode\([\s\S]*?"recovery"/);
     expect(dialog).toContain('openAuth("reset-password")');
     expect(dialog).toContain("password !== passwordConfirmation");
     expect(dialog).toMatch(/updateUser\(\{\s*password,?\s*\}\)/);

@@ -5,10 +5,10 @@ import * as expiry from "../scripts/set-email-otp-expiry.mjs";
 const { EMAIL_OTP_EXPIRY_SECONDS, setEmailOtpExpiry } = expiry;
 
 describe("email verification lifetime", () => {
-  it("persists a 20-minute email expiry without changing resend cooldown or OTP length", () => {
+  it("persists a 60-minute email expiry without changing resend cooldown or OTP length", () => {
     const config = readFileSync("supabase/config.toml", "utf8");
-    expect(EMAIL_OTP_EXPIRY_SECONDS).toBe(1200);
-    expect(config).toMatch(/\[auth.email\][\s\S]*?otp_expiry = 1200/);
+    expect(EMAIL_OTP_EXPIRY_SECONDS).toBe(3600);
+    expect(config).toMatch(/\[auth.email\][\s\S]*?otp_expiry = 3600/);
     expect(config).toContain('max_frequency = "1m0s"');
     expect(config).toContain("otp_length = 8");
   });
@@ -23,21 +23,21 @@ describe("email verification lifetime", () => {
       .fn()
       .mockResolvedValueOnce(before)
       .mockResolvedValueOnce({})
-      .mockResolvedValueOnce({ ...before, mailer_otp_exp: 1200 });
+      .mockResolvedValueOnce({ ...before, mailer_otp_exp: 3600 });
     await expect(setEmailOtpExpiry(request)).resolves.toEqual({
       beforeSeconds: 60,
-      afterSeconds: 1200,
+      afterSeconds: 3600,
       unrelatedSettingsUnchanged: true,
     });
     expect(request.mock.calls).toEqual([
       ["GET"],
-      ["PATCH", { mailer_otp_exp: 1200 }],
+      ["PATCH", { mailer_otp_exp: 3600 }],
       ["GET"],
     ]);
   });
 
   it("does not write when already configured, but still verifies", async () => {
-    const request = vi.fn().mockResolvedValue({ mailer_otp_exp: 1200 });
+    const request = vi.fn().mockResolvedValue({ mailer_otp_exp: 3600 });
     await setEmailOtpExpiry(request);
     expect(request.mock.calls).toEqual([["GET"], ["GET"]]);
   });
@@ -58,7 +58,7 @@ describe("email verification lifetime", () => {
       .fn()
       .mockResolvedValueOnce({ mailer_otp_exp: 60, smtp_pass: "private" })
       .mockResolvedValueOnce({})
-      .mockResolvedValueOnce({ mailer_otp_exp: 1200, smtp_pass: "changed" });
+      .mockResolvedValueOnce({ mailer_otp_exp: 3600, smtp_pass: "changed" });
     await expect(setEmailOtpExpiry(request)).rejects.toThrow(
       "Unrelated Auth settings changed",
     );

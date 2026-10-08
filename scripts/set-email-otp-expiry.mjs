@@ -1,7 +1,7 @@
 import { isDeepStrictEqual } from "node:util";
 import { pathToFileURL } from "node:url";
 
-export const EMAIL_OTP_EXPIRY_SECONDS = 20 * 60;
+export const EMAIL_OTP_EXPIRY_SECONDS = 60 * 60;
 export const EMAIL_OTP_PROJECT_REF = "vimksjrhaxdpnkvgsavz";
 
 /** Patch one Auth setting only. Never print provider credentials/config bodies. */
@@ -15,7 +15,7 @@ export async function setEmailOtpExpiry(request) {
   }
   const after = await request("GET");
   if (after?.mailer_otp_exp !== EMAIL_OTP_EXPIRY_SECONDS) {
-    throw new Error("Auth expiry readback did not confirm 1200 seconds");
+    throw new Error("Auth expiry readback did not confirm 3600 seconds");
   }
   const unchanged = (config) =>
     Object.fromEntries(

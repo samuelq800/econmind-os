@@ -52,6 +52,16 @@ jobs:
           pnpm lint
           pnpm test
 
+      - name: Verify prepared stable-email backend before publishing its client
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          curl --fail --silent --show-error --retry 18 --retry-delay 10 --retry-all-errors \
+            --request OPTIONS --header 'Origin: https://econmind.group' \
+            --header "apikey: $NEXT_PUBLIC_SUPABASE_ANON_KEY" --output /dev/null \
+            "${NEXT_PUBLIC_SUPABASE_URL%/}/functions/v1/verify-stable-email"
+
       - name: Verify required Supabase schema
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}

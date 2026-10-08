@@ -100,7 +100,7 @@ type SignOutResult = { error: Error | null };
 export function authOtpVerificationErrorMessage(caught: unknown) {
   const { code, name, status } = getAuthErrorDetails(caught);
   if (code === "otp_expired") {
-    return "This code is invalid, expired, or already used. Enter the code from the latest email, or request a new one. If you already verified your account, sign in instead.";
+    return "This code is invalid, expired, or already used. Resends use the same code for 60 minutes from the first request. After expiry, request a new code. If you already verified your account, sign in instead.";
   }
   if (isAuthEmailRateLimitError(caught)) {
     return "Too many verification attempts. Please wait before trying again.";
