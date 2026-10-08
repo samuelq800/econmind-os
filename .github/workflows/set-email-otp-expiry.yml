@@ -2,6 +2,11 @@ name: Auth · Set email verification expiry to 60 minutes
 
 on:
   workflow_dispatch:
+    inputs:
+      diagnostic_email:
+        description: When provided, perform only read-only diagnosis for this owner-authorized test mailbox
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -20,7 +25,15 @@ jobs:
         with:
           node-version: 22
       - name: Set only email OTP expiry and verify hosted Auth readback
+        if: inputs.diagnostic_email == ''
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
         run: node scripts/set-email-otp-expiry.mjs
+      - name: Read-only test-mailbox diagnostic
+        if: inputs.diagnostic_email != ''
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+          OTP_DIAGNOSTIC_EMAIL: ${{ inputs.diagnostic_email }}
+        run: node scripts/diagnose-stable-email-codes.mjs
