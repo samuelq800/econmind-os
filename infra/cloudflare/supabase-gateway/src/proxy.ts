@@ -91,6 +91,9 @@ export function createGatewayHandler(
         "Access-Control-Allow-Headers",
         requestHeaders.join(", "),
       );
+      // Cache only the browser's preflight permission, never user data.
+      // Actual requests still pass the origin/key checks below and upstream JWT/RLS.
+      responseHeaders.set("Access-Control-Max-Age", "300");
       return new Response(null, { status: 204, headers: responseHeaders });
     }
     if (!methods.has(request.method)) return fail(405, "Method not allowed.");

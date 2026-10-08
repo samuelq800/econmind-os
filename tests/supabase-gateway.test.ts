@@ -226,6 +226,7 @@ describe("fixed Supabase gateway", () => {
       }),
     );
     expect(preflight.status).toBe(204);
+    expect(preflight.headers.get("access-control-max-age")).toBe("300");
     expect(preflight.headers.get("access-control-allow-headers")).toContain(
       "x-econmind-request-id",
     );
@@ -266,6 +267,67 @@ describe("fixed Supabase gateway", () => {
       subject: "Local regression test",
       text: "No email is sent.",
     });
+  });
+
+  it("a successful preflight never caches data or bypasses actual request checks", async () => {
+    const upstreamFetch = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        Response.json({ message: "Session expired" }, { status: 401 }),
+      );
+    const handler = createGatewayHandler(
+      upstreamOrigin,
+      siteOrigin,
+      upstreamFetch,
+    );
+    const path = "/rest/v1/profiles";
+    const preflight = await handler(
+      request(path, {
+        method: "OPTIONS",
+        headers: {
+          "access-control-request-method": "GET",
+          "access-control-request-headers": "apikey,authorization",
+        },
+      }),
+    );
+    expect(preflight.status).toBe(204);
+    expect(preflight.headers.get("access-control-max-age")).toBe("300");
+
+    const missingKey = await handler(
+      new Request(`${gatewayOrigin}${path}`, {
+        headers: { origin: siteOrigin },
+      }),
+    );
+    expect(missingKey.status).toBe(401);
+    const foreignOrigin = await handler(
+      request(path, { headers: { origin: "https://other.example" } }),
+    );
+    expect(foreignOrigin.status).toBe(403);
+    const rejectedPreflight = await handler(
+      request(path, {
+        method: "OPTIONS",
+        headers: {
+          "access-control-request-method": "GET",
+          "access-control-request-headers": "x-unapproved",
+        },
+      }),
+    );
+    expect(rejectedPreflight.status).toBe(403);
+    expect(rejectedPreflight.headers.has("access-control-max-age")).toBe(false);
+    expect(upstreamFetch).not.toHaveBeenCalled();
+
+    const expiredSession = await handler(
+      request(path, {
+        headers: { authorization: "Bearer expired-test-session" },
+      }),
+    );
+    expect(expiredSession.status).toBe(401);
+    expect(expiredSession.headers.get("cache-control")).toBe("no-store");
+    expect(expiredSession.headers.has("access-control-max-age")).toBe(false);
+    expect(upstreamFetch).toHaveBeenCalledOnce();
+    expect(
+      (upstreamFetch.mock.calls[0][0] as Request).headers.get("authorization"),
+    ).toBe("Bearer expired-test-session");
   });
 
   it("passes caller API key, JWT, body and query only to the configured upstream", async () => {
