@@ -60,7 +60,7 @@ function titleForMode(mode: AuthMode) {
   }
 }
 
-function descriptionForMode(mode: AuthMode, verificationEmail: string) {
+function descriptionForMode(mode: AuthMode, verificationEmail: string, fixedCodes: boolean) {
   switch (mode) {
     case "invitation":
       return "Invitation access lets you explore every page without an account, school binding, saved work, or permission to make changes.";
@@ -69,11 +69,11 @@ function descriptionForMode(mode: AuthMode, verificationEmail: string) {
     case "sign-up":
       return "Your saved work stays private under Supabase Row Level Security. We verify your email before activating the account.";
     case "verify-sign-up":
-      return `Enter the code for ${verificationEmail || "your email"} if this address is eligible for registration. Resends use the same code for 60 minutes from the first request.`;
+      return `Enter the code for ${verificationEmail || "your email"} if this address is eligible for registration.${fixedCodes ? " Resends use the same code for 60 minutes from the first request." : ""}`;
     case "forgot-password":
       return "Enter your account email. If it matches an account, Supabase will send a one-time recovery code.";
     case "verify-recovery":
-      return `Enter the recovery code for ${verificationEmail || "your email"} if this address belongs to an account. Resends use the same code for 60 minutes from the first request.`;
+      return `Enter the recovery code for ${verificationEmail || "your email"} if this address belongs to an account.${fixedCodes ? " Resends use the same code for 60 minutes from the first request." : ""}`;
     case "reset-password":
       return "Your email has been verified. Choose a new password to finish the secure recovery session.";
   }
@@ -132,6 +132,7 @@ export function AuthDialog() {
   const [resendCooldown, setResendCooldown] = useState(0);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [fixedCodes, setFixedCodes] = useState(false);
   const [legalAcceptance, setLegalAcceptance] = useState({
     terms: false,
     privacy: false,
@@ -144,6 +145,16 @@ export function AuthDialog() {
       setMessage("");
     });
   }, [authOpen]);
+
+  useEffect(() => {
+    if (!authOpen || !otpModes.includes(authMode)) return;
+    let disposed = false;
+    const client = getSupabaseBrowserClient();
+    if (client) void client.functions.invoke("verify-stable-email", { method: "GET" }).then(({ data, error }) => {
+      if (!disposed) setFixedCodes(!error && data?.fixedWindowEnabled === true);
+    }).catch(() => { if (!disposed) setFixedCodes(false); });
+    return () => { disposed = true; };
+  }, [authOpen, authMode]);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -222,8 +233,8 @@ export function AuthDialog() {
       setResendCooldown(EMAIL_RESEND_COOLDOWN_SECONDS);
       setMessage(
         authMode === "verify-sign-up"
-          ? "If this email is eligible for registration, another email has been requested. Its code stays the same within the original 60-minute window."
-          : "If this address belongs to an account, another email has been requested. Its code stays the same within the original 60-minute window.",
+          ? `If this email is eligible for registration, another email has been requested.${fixedCodes ? " Its code stays the same within the original 60-minute window." : " Enter the code from your email."}`
+          : `If this address belongs to an account, another email has been requested.${fixedCodes ? " Its code stays the same within the original 60-minute window." : " Enter the code from your email."}`,
       );
     } catch (caught) {
       if (isAuthEmailRateLimitError(caught)) {
@@ -437,7 +448,7 @@ export function AuthDialog() {
               {titleForMode(authMode)}
             </h2>
             <p className="mt-2 text-sm leading-6 text-[var(--ink-muted)]">
-              {descriptionForMode(authMode, verificationEmail)}
+              {descriptionForMode(authMode, verificationEmail, fixedCodes)}
             </p>
           </div>
           <button

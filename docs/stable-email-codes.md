@@ -54,6 +54,14 @@ does not independently prove inbox delivery. On activation/test failure it
 disables the hook and feature verifier and restores expiry/IP-forwarding, leaving
 native authentication operational. Dormant hook URI/secrets and cache data remain.
 
+After configuration readback, activation waits 90 seconds for Auth propagation
+before requesting test emails. The public verifier's account-independent GET
+capability defaults to false during preparation and rollback. The website shows
+fixed-window copy only when this capability is enabled after activation/testing;
+it does not advertise a successful rollout merely because new files are deployed.
+The mailbox diagnostic is read-only and prints only aggregate account status and
+cache count, never email addresses, tokens, code contents or provider secrets.
+
 ## Tests and boundaries
 
 - `tests/stable-email-codes.test.ts`: clock boundaries, same-code resends,

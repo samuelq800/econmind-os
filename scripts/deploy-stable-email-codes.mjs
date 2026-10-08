@@ -122,6 +122,7 @@ async function main() {
       STABLE_EMAIL_CODE_KEY: key,
       STABLE_EMAIL_HOOK_SECRET: hookSecret,
       STABLE_EMAIL_CODES_ENABLED: "false",
+      STABLE_EMAIL_PUBLIC_ACTIVE: "false",
       STABLE_EMAIL_AUTH_SECRET_KEY: authSecret,
     });
     // Runner-local, mode 0600, never uploaded or printed. Keys are not checked in.
@@ -174,8 +175,16 @@ async function main() {
       throw new Error("Auth activation readback failed.");
     const testEmail = process.env.STABLE_EMAIL_TEST_ADDRESS;
     let testReceipt = { mailTest: "NOT_RUN" };
+    // Management readback confirms persisted configuration, not propagation
+    // to every running Auth instance. Drain the native resend window too.
+    console.log(
+      "Waiting for native Auth configuration propagation before controlled mail testing.",
+    );
+    for (let i = 0; i < 3; i++)
+      await new Promise((resolve) => setTimeout(resolve, 30_000));
     if (testEmail)
       testReceipt = await verifyProduction(testEmail, state, query);
+    await secrets({ STABLE_EMAIL_PUBLIC_ACTIVE: "true" });
     console.log(
       JSON.stringify({
         phase,
@@ -194,7 +203,10 @@ async function main() {
         mailer_otp_exp: state.beforeExpiry,
         security_sb_forwarded_for_enabled: state.beforeForwarding,
       });
-      await secrets({ STABLE_EMAIL_CODES_ENABLED: "false" });
+      await secrets({
+        STABLE_EMAIL_CODES_ENABLED: "false",
+        STABLE_EMAIL_PUBLIC_ACTIVE: "false",
+      });
       const restored = await api("config/auth");
       if (
         restored.hook_send_email_enabled !== false ||

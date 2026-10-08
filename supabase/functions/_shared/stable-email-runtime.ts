@@ -51,6 +51,7 @@ export function stableEmailDependencies(): Dependencies {
     };
   };
   return {
+    publicActive: Deno.env.get("STABLE_EMAIL_PUBLIC_ACTIVE") === "true",
     secret: key,
     store: {
       send: (subject, purpose, code, hash) =>

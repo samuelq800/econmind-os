@@ -80,5 +80,11 @@ describe("scoped authentication deployment", () => {
     expect(source).not.toContain("deleteUser");
     expect(source).toContain("logout?scope=local");
     expect(source).toContain('STABLE_EMAIL_CODES_ENABLED: "false"');
+    expect(source).toContain('STABLE_EMAIL_PUBLIC_ACTIVE: "false"');
+    expect(source).toContain('STABLE_EMAIL_PUBLIC_ACTIVE: "true"');
+    expect(source.indexOf("await verifyProduction(testEmail")).toBeLessThan(
+      source.indexOf('STABLE_EMAIL_PUBLIC_ACTIVE: "true"'),
+    );
+    expect(source).toContain("configuration propagation");
   });
 });
