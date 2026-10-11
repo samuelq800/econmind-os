@@ -139,6 +139,7 @@ export function AuthDialog() {
   const [otp, setOtp] = useState("");
   const [busy, setBusy] = useState(false);
   const oauthStarting = useRef(false);
+  const scrollArea = useRef<HTMLDivElement>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -147,6 +148,10 @@ export function AuthDialog() {
     terms: false,
     privacy: false,
   });
+
+  useEffect(() => {
+    if (authOpen) scrollArea.current?.scrollTo({ top: 0 });
+  }, [authOpen, authMode]);
 
   useEffect(() => {
     if (!authOpen) return;
@@ -183,6 +188,15 @@ export function AuthDialog() {
     );
     return () => window.clearTimeout(timeout);
   }, [resendCooldown]);
+
+  useEffect(() => {
+    if (!authOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [authOpen]);
 
   useEffect(() => {
     if (!authOpen) return;
@@ -487,8 +501,8 @@ export function AuthDialog() {
         if (event.target === event.currentTarget && !busy) void closeSafely();
       }}
     >
-      <div className="w-full max-w-md rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6 shadow-2xl sm:p-7">
-        <div className="flex items-start justify-between gap-4">
+      <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)] shadow-2xl">
+        <div className="flex shrink-0 items-start justify-between gap-4 px-6 pt-6 pb-4 sm:px-7 sm:pt-7">
           <div>
             <p className="text-[10px] font-extrabold uppercase tracking-[.16em] text-[var(--accent)]">
               {isOtpStep
@@ -503,9 +517,6 @@ export function AuthDialog() {
             >
               {titleForMode(authMode)}
             </h2>
-            <p className="mt-2 text-sm leading-6 text-[var(--ink-muted)]">
-              {descriptionForMode(authMode, verificationEmail, fixedCodes)}
-            </p>
           </div>
           <button
             type="button"
@@ -521,411 +532,421 @@ export function AuthDialog() {
             <X size={16} />
           </button>
         </div>
-
-        {!configured ? (
-          <p className="mt-6 rounded-lg bg-[var(--red-soft)] p-3 text-sm text-[var(--red)]">
-            This deployment is missing its public Supabase configuration.
+        <div
+          ref={scrollArea}
+          className="scroll-slim min-h-0 overflow-y-auto overscroll-contain px-6 pb-6 [scrollbar-gutter:stable] sm:px-7 sm:pb-7"
+        >
+          <p className="text-sm leading-6 text-[var(--ink-muted)]">
+            {descriptionForMode(authMode, verificationEmail, fixedCodes)}
           </p>
-        ) : (
-          <>
-            {(authMode === "sign-in" ||
-              authMode === "sign-up" ||
-              authMode === "group-sign-up") && (
-              <div className="mt-6">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="w-full"
-                  disabled={busy}
-                  onClick={() => void continueWithGoogle()}
-                >
-                  {busy ? (
-                    <LoaderCircle className="animate-spin" size={15} />
-                  ) : (
-                    <GoogleMark />
-                  )}
-                  Continue with Google
-                </Button>
-                <div
-                  className="mt-5 flex items-center gap-3 text-[11px] font-bold text-[var(--ink-faint)]"
-                  aria-hidden="true"
-                >
-                  <span className="h-px flex-1 bg-[var(--line)]" />
-                  or
-                  <span className="h-px flex-1 bg-[var(--line)]" />
+          {!configured ? (
+            <p className="mt-6 rounded-lg bg-[var(--red-soft)] p-3 text-sm text-[var(--red)]">
+              This deployment is missing its public Supabase configuration.
+            </p>
+          ) : (
+            <>
+              {(authMode === "sign-in" ||
+                authMode === "sign-up" ||
+                authMode === "group-sign-up") && (
+                <div className="mt-6">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="w-full"
+                    disabled={busy}
+                    onClick={() => void continueWithGoogle()}
+                  >
+                    {busy ? (
+                      <LoaderCircle className="animate-spin" size={15} />
+                    ) : (
+                      <GoogleMark />
+                    )}
+                    Continue with Google
+                  </Button>
+                  <div
+                    className="mt-5 flex items-center gap-3 text-[11px] font-bold text-[var(--ink-faint)]"
+                    aria-hidden="true"
+                  >
+                    <span className="h-px flex-1 bg-[var(--line)]" />
+                    or
+                    <span className="h-px flex-1 bg-[var(--line)]" />
+                  </div>
                 </div>
-              </div>
-            )}
-            <form className="mt-5 space-y-4" onSubmit={submit}>
-              {authMode === "invitation" && (
-                <label className="block text-xs font-bold">
-                  Invitation code
-                  <input
-                    required
-                    value={invitationCode}
-                    onChange={(event) => setInvitationCode(event.target.value)}
-                    autoComplete="one-time-code"
-                    className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 font-mono text-sm tracking-[.08em] uppercase outline-none focus:border-[var(--accent)]"
-                    placeholder="VIEW-XXXXXXXXXXXX"
-                  />
-                </label>
               )}
-
-              {(authMode === "sign-up" || authMode === "group-sign-up") && (
-                <label className="block text-xs font-bold">
-                  Display name
-                  <input
-                    value={displayName}
-                    onChange={(event) => setDisplayName(event.target.value)}
-                    maxLength={80}
-                    autoComplete="name"
-                    className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-sm outline-none focus:border-[var(--accent)]"
-                    placeholder="Optional"
-                  />
-                </label>
-              )}
-
-              {showEmail && (
-                <label className="block text-xs font-bold">
-                  Email
-                  <input
-                    required
-                    type="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    autoComplete="email"
-                    className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-sm outline-none focus:border-[var(--accent)]"
-                    placeholder="you@example.com"
-                  />
-                </label>
-              )}
-
-              {authMode === "group-sign-up" && (
-                <label className="block text-xs font-bold">
-                  Shared group registration code
-                  <input
-                    required
-                    type="password"
-                    value={groupCode}
-                    onChange={(event) => setGroupCode(event.target.value)}
-                    minLength={12}
-                    maxLength={128}
-                    autoComplete="off"
-                    className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 font-mono text-sm outline-none focus:border-[var(--accent)]"
-                    placeholder="Get the registration code from your group"
-                  />
-                  <span className="mt-2 block font-normal leading-5 text-[var(--ink-muted)]">
-                    This shared code activates an individual account. A viewing
-                    invitation only provides view-only access.
-                  </span>
-                </label>
-              )}
-
-              {isOtpStep && (
-                <label className="block text-xs font-bold">
-                  Email verification code
-                  <input
-                    required
-                    autoFocus
-                    value={otp}
-                    onChange={(event) =>
-                      setOtp(normaliseEmailOtp(event.target.value))
-                    }
-                    autoComplete="one-time-code"
-                    inputMode="numeric"
-                    minLength={EMAIL_OTP_LENGTH}
-                    maxLength={EMAIL_OTP_LENGTH}
-                    pattern="[0-9]{8}"
-                    title="Enter the 8-digit code from your email"
-                    className="mt-2 h-12 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-center font-mono text-lg font-bold tracking-[.24em] outline-none focus:border-[var(--accent)]"
-                    placeholder="8-DIGIT CODE"
-                  />
-                </label>
-              )}
-
-              {showPassword && (
-                <label className="block text-xs font-bold">
-                  {isResetStep ? "New password" : "Password"}
-                  <input
-                    required
-                    type="password"
-                    minLength={8}
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    autoComplete={
-                      authMode === "sign-in"
-                        ? "current-password"
-                        : "new-password"
-                    }
-                    className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-sm outline-none focus:border-[var(--accent)]"
-                    placeholder="At least 8 characters"
-                  />
-                </label>
-              )}
-
-              {isResetStep && (
-                <label className="block text-xs font-bold">
-                  Confirm new password
-                  <input
-                    required
-                    type="password"
-                    minLength={8}
-                    value={passwordConfirmation}
-                    onChange={(event) =>
-                      setPasswordConfirmation(event.target.value)
-                    }
-                    autoComplete="new-password"
-                    className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-sm outline-none focus:border-[var(--accent)]"
-                    placeholder="Enter the same password again"
-                  />
-                </label>
-              )}
-
-              {(authMode === "sign-up" || authMode === "group-sign-up") && (
-                <fieldset className="grid gap-3 rounded-xl border border-[var(--line)] bg-[var(--canvas)] p-4">
-                  <legend className="sr-only">Legal acknowledgements</legend>
-                  <label className="flex cursor-pointer items-start gap-3 text-xs leading-5 text-[var(--ink-muted)]">
+              <form className="mt-5 space-y-4" onSubmit={submit}>
+                {authMode === "invitation" && (
+                  <label className="block text-xs font-bold">
+                    Invitation code
                     <input
                       required
-                      type="checkbox"
-                      checked={legalAcceptance.terms}
+                      value={invitationCode}
                       onChange={(event) =>
-                        setLegalAcceptance((current) => ({
-                          ...current,
-                          terms: event.target.checked,
-                        }))
+                        setInvitationCode(event.target.value)
                       }
-                      className="mt-1 size-4 accent-[var(--accent)]"
+                      autoComplete="one-time-code"
+                      className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 font-mono text-sm tracking-[.08em] uppercase outline-none focus:border-[var(--accent)]"
+                      placeholder="VIEW-XXXXXXXXXXXX"
                     />
-                    <span>
-                      I have read and agree to the{" "}
-                      <Link
-                        href="/terms"
-                        target="_blank"
-                        className="font-bold text-[var(--accent)]"
-                      >
-                        Terms of Use
-                      </Link>
-                      .
-                    </span>
                   </label>
-                  <label className="flex cursor-pointer items-start gap-3 text-xs leading-5 text-[var(--ink-muted)]">
-                    <input
-                      required
-                      type="checkbox"
-                      checked={legalAcceptance.privacy}
-                      onChange={(event) =>
-                        setLegalAcceptance((current) => ({
-                          ...current,
-                          privacy: event.target.checked,
-                        }))
-                      }
-                      className="mt-1 size-4 accent-[var(--accent)]"
-                    />
-                    <span>
-                      I have read the{" "}
-                      <Link
-                        href="/privacy"
-                        target="_blank"
-                        className="font-bold text-[var(--accent)]"
-                      >
-                        Privacy Notice
-                      </Link>
-                      .
-                    </span>
-                  </label>
-                </fieldset>
-              )}
-
-              {(error || authNotice) && (
-                <p
-                  role="alert"
-                  className="rounded-lg bg-[var(--red-soft)] p-3 text-xs leading-5 text-[var(--red)]"
-                >
-                  {error || authNotice}
-                </p>
-              )}
-              {message && (
-                <p className="flex gap-2 rounded-lg bg-[var(--accent-soft)] p-3 text-xs leading-5 text-[var(--accent)]">
-                  <CheckCircle2 className="mt-.5 shrink-0" size={15} />
-                  {message}
-                </p>
-              )}
-
-              <Button
-                className="w-full"
-                disabled={
-                  busy ||
-                  ((authMode === "sign-up" || authMode === "group-sign-up") &&
-                    !registrationConsentValid(legalAcceptance))
-                }
-                type="submit"
-              >
-                {busy && <LoaderCircle className="animate-spin" size={15} />}
-                {authMode === "invitation" ? (
-                  <>
-                    <Eye size={15} /> Enter view-only mode
-                  </>
-                ) : authMode === "sign-in" ? (
-                  "Sign in"
-                ) : authMode === "sign-up" ? (
-                  "Submit registration"
-                ) : authMode === "group-sign-up" ? (
-                  "Register with group code"
-                ) : authMode === "forgot-password" ? (
-                  <>
-                    <KeyRound size={15} /> Request recovery code
-                  </>
-                ) : authMode === "reset-password" ? (
-                  "Save new password"
-                ) : (
-                  <>
-                    <MailCheck size={15} /> Verify email
-                  </>
                 )}
-              </Button>
 
-              {isOtpStep && (
-                <button
-                  type="button"
-                  disabled={busy || resendCooldown > 0}
-                  onClick={() => void resendCode()}
-                  className="w-full text-center text-xs font-bold text-[var(--accent)] disabled:opacity-45"
+                {(authMode === "sign-up" || authMode === "group-sign-up") && (
+                  <label className="block text-xs font-bold">
+                    Display name
+                    <input
+                      value={displayName}
+                      onChange={(event) => setDisplayName(event.target.value)}
+                      maxLength={80}
+                      autoComplete="name"
+                      className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-sm outline-none focus:border-[var(--accent)]"
+                      placeholder="Optional"
+                    />
+                  </label>
+                )}
+
+                {showEmail && (
+                  <label className="block text-xs font-bold">
+                    Email
+                    <input
+                      required
+                      type="email"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      autoComplete="email"
+                      className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-sm outline-none focus:border-[var(--accent)]"
+                      placeholder="you@example.com"
+                    />
+                  </label>
+                )}
+
+                {authMode === "group-sign-up" && (
+                  <label className="block text-xs font-bold">
+                    Shared group registration code
+                    <input
+                      required
+                      type="password"
+                      value={groupCode}
+                      onChange={(event) => setGroupCode(event.target.value)}
+                      minLength={12}
+                      maxLength={128}
+                      autoComplete="off"
+                      className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 font-mono text-sm outline-none focus:border-[var(--accent)]"
+                      placeholder="Get the registration code from your group"
+                    />
+                    <span className="mt-2 block font-normal leading-5 text-[var(--ink-muted)]">
+                      This shared code activates an individual account. A
+                      viewing invitation only provides view-only access.
+                    </span>
+                  </label>
+                )}
+
+                {isOtpStep && (
+                  <label className="block text-xs font-bold">
+                    Email verification code
+                    <input
+                      required
+                      autoFocus
+                      value={otp}
+                      onChange={(event) =>
+                        setOtp(normaliseEmailOtp(event.target.value))
+                      }
+                      autoComplete="one-time-code"
+                      inputMode="numeric"
+                      minLength={EMAIL_OTP_LENGTH}
+                      maxLength={EMAIL_OTP_LENGTH}
+                      pattern="[0-9]{8}"
+                      title="Enter the 8-digit code from your email"
+                      className="mt-2 h-12 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-center font-mono text-lg font-bold tracking-[.24em] outline-none focus:border-[var(--accent)]"
+                      placeholder="8-DIGIT CODE"
+                    />
+                  </label>
+                )}
+
+                {showPassword && (
+                  <label className="block text-xs font-bold">
+                    {isResetStep ? "New password" : "Password"}
+                    <input
+                      required
+                      type="password"
+                      minLength={8}
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                      autoComplete={
+                        authMode === "sign-in"
+                          ? "current-password"
+                          : "new-password"
+                      }
+                      className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-sm outline-none focus:border-[var(--accent)]"
+                      placeholder="At least 8 characters"
+                    />
+                  </label>
+                )}
+
+                {isResetStep && (
+                  <label className="block text-xs font-bold">
+                    Confirm new password
+                    <input
+                      required
+                      type="password"
+                      minLength={8}
+                      value={passwordConfirmation}
+                      onChange={(event) =>
+                        setPasswordConfirmation(event.target.value)
+                      }
+                      autoComplete="new-password"
+                      className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-sm outline-none focus:border-[var(--accent)]"
+                      placeholder="Enter the same password again"
+                    />
+                  </label>
+                )}
+
+                {(authMode === "sign-up" || authMode === "group-sign-up") && (
+                  <fieldset className="grid gap-3 rounded-xl border border-[var(--line)] bg-[var(--canvas)] p-4">
+                    <legend className="sr-only">Legal acknowledgements</legend>
+                    <label className="flex cursor-pointer items-start gap-3 text-xs leading-5 text-[var(--ink-muted)]">
+                      <input
+                        required
+                        type="checkbox"
+                        checked={legalAcceptance.terms}
+                        onChange={(event) =>
+                          setLegalAcceptance((current) => ({
+                            ...current,
+                            terms: event.target.checked,
+                          }))
+                        }
+                        className="mt-1 size-4 accent-[var(--accent)]"
+                      />
+                      <span>
+                        I have read and agree to the{" "}
+                        <Link
+                          href="/terms"
+                          target="_blank"
+                          className="font-bold text-[var(--accent)]"
+                        >
+                          Terms of Use
+                        </Link>
+                        .
+                      </span>
+                    </label>
+                    <label className="flex cursor-pointer items-start gap-3 text-xs leading-5 text-[var(--ink-muted)]">
+                      <input
+                        required
+                        type="checkbox"
+                        checked={legalAcceptance.privacy}
+                        onChange={(event) =>
+                          setLegalAcceptance((current) => ({
+                            ...current,
+                            privacy: event.target.checked,
+                          }))
+                        }
+                        className="mt-1 size-4 accent-[var(--accent)]"
+                      />
+                      <span>
+                        I have read the{" "}
+                        <Link
+                          href="/privacy"
+                          target="_blank"
+                          className="font-bold text-[var(--accent)]"
+                        >
+                          Privacy Notice
+                        </Link>
+                        .
+                      </span>
+                    </label>
+                  </fieldset>
+                )}
+
+                {(error || authNotice) && (
+                  <p
+                    role="alert"
+                    className="rounded-lg bg-[var(--red-soft)] p-3 text-xs leading-5 text-[var(--red)]"
+                  >
+                    {error || authNotice}
+                  </p>
+                )}
+                {message && (
+                  <p className="flex gap-2 rounded-lg bg-[var(--accent-soft)] p-3 text-xs leading-5 text-[var(--accent)]">
+                    <CheckCircle2 className="mt-.5 shrink-0" size={15} />
+                    {message}
+                  </p>
+                )}
+
+                <Button
+                  className="w-full"
+                  disabled={
+                    busy ||
+                    ((authMode === "sign-up" || authMode === "group-sign-up") &&
+                      !registrationConsentValid(legalAcceptance))
+                  }
+                  type="submit"
                 >
-                  {resendCooldown > 0
-                    ? `Resend email in ${resendCooldown}s`
-                    : "Resend code"}
-                </button>
-              )}
-            </form>
-          </>
-        )}
+                  {busy && <LoaderCircle className="animate-spin" size={15} />}
+                  {authMode === "invitation" ? (
+                    <>
+                      <Eye size={15} /> Enter view-only mode
+                    </>
+                  ) : authMode === "sign-in" ? (
+                    "Sign in"
+                  ) : authMode === "sign-up" ? (
+                    "Submit registration"
+                  ) : authMode === "group-sign-up" ? (
+                    "Register with group code"
+                  ) : authMode === "forgot-password" ? (
+                    <>
+                      <KeyRound size={15} /> Request recovery code
+                    </>
+                  ) : authMode === "reset-password" ? (
+                    "Save new password"
+                  ) : (
+                    <>
+                      <MailCheck size={15} /> Verify email
+                    </>
+                  )}
+                </Button>
 
-        {authMode === "verify-sign-up" && (
-          <p className="mt-5 text-center text-xs text-[var(--ink-muted)]">
-            Already have access?{" "}
+                {isOtpStep && (
+                  <button
+                    type="button"
+                    disabled={busy || resendCooldown > 0}
+                    onClick={() => void resendCode()}
+                    className="w-full text-center text-xs font-bold text-[var(--accent)] disabled:opacity-45"
+                  >
+                    {resendCooldown > 0
+                      ? `Resend email in ${resendCooldown}s`
+                      : "Resend code"}
+                  </button>
+                )}
+              </form>
+            </>
+          )}
+
+          {authMode === "verify-sign-up" && (
+            <p className="mt-5 text-center text-xs text-[var(--ink-muted)]">
+              Already have access?{" "}
+              <button
+                type="button"
+                disabled={busy}
+                className="font-bold text-[var(--accent)] disabled:opacity-45"
+                onClick={() => {
+                  setError("");
+                  setMessage("");
+                  openAuth("sign-in");
+                }}
+              >
+                Sign in
+              </button>{" "}
+              or{" "}
+              <button
+                type="button"
+                disabled={busy}
+                className="font-bold text-[var(--accent)] disabled:opacity-45"
+                onClick={() => {
+                  setError("");
+                  setMessage("");
+                  openAuth("forgot-password");
+                }}
+              >
+                reset your password
+              </button>
+              .
+            </p>
+          )}
+
+          {authMode === "sign-in" && (
             <button
               type="button"
-              disabled={busy}
-              className="font-bold text-[var(--accent)] disabled:opacity-45"
-              onClick={() => {
-                setError("");
-                setMessage("");
-                openAuth("sign-in");
-              }}
-            >
-              Sign in
-            </button>{" "}
-            or{" "}
-            <button
-              type="button"
-              disabled={busy}
-              className="font-bold text-[var(--accent)] disabled:opacity-45"
+              className="mt-4 w-full text-center text-xs font-bold text-[var(--accent)]"
               onClick={() => {
                 setError("");
                 setMessage("");
                 openAuth("forgot-password");
               }}
             >
-              reset your password
+              Forgot your password?
             </button>
-            .
-          </p>
-        )}
+          )}
 
-        {authMode === "sign-in" && (
-          <button
-            type="button"
-            className="mt-4 w-full text-center text-xs font-bold text-[var(--accent)]"
-            onClick={() => {
-              setError("");
-              setMessage("");
-              openAuth("forgot-password");
-            }}
-          >
-            Forgot your password?
-          </button>
-        )}
+          {!isResetStep && authMode !== "verify-sign-up" && (
+            <p className="mt-5 text-center text-xs text-[var(--ink-muted)]">
+              {authMode === "sign-in"
+                ? "New to EconMind OS?"
+                : authMode === "sign-up" || authMode === "group-sign-up"
+                  ? "Already have an account?"
+                  : "Return to your account?"}{" "}
+              <button
+                type="button"
+                className="font-bold text-[var(--accent)]"
+                onClick={() => {
+                  setError("");
+                  setMessage("");
+                  openAuth(authMode === "sign-in" ? "sign-up" : "sign-in");
+                }}
+              >
+                {authMode === "sign-in" ? "Create one" : "Sign in"}
+              </button>
+            </p>
+          )}
 
-        {!isResetStep && authMode !== "verify-sign-up" && (
-          <p className="mt-5 text-center text-xs text-[var(--ink-muted)]">
-            {authMode === "sign-in"
-              ? "New to EconMind OS?"
-              : authMode === "sign-up" || authMode === "group-sign-up"
-                ? "Already have an account?"
-                : "Return to your account?"}{" "}
-            <button
-              type="button"
-              className="font-bold text-[var(--accent)]"
-              onClick={() => {
-                setError("");
-                setMessage("");
-                openAuth(authMode === "sign-in" ? "sign-up" : "sign-in");
-              }}
-            >
-              {authMode === "sign-in" ? "Create one" : "Sign in"}
-            </button>
-          </p>
-        )}
-
-        {(authMode === "sign-up" ||
-          authMode === "verify-sign-up" ||
-          authMode === "group-sign-up") && (
-          <p className="mt-4 text-center text-xs leading-5 text-[var(--ink-muted)]">
-            {authMode === "group-sign-up"
-              ? "Prefer email verification? "
-              : "In the group but cannot receive email? "}
-            <button
-              type="button"
-              disabled={busy}
-              className="font-bold text-[var(--accent)]"
-              onClick={() => {
-                setError("");
-                setMessage("");
-                setGroupCode("");
-                setPassword("");
-                if (authMode === "verify-sign-up") setEmail(verificationEmail);
-                openAuth(
-                  authMode === "group-sign-up" ? "sign-up" : "group-sign-up",
-                );
-              }}
-            >
+          {(authMode === "sign-up" ||
+            authMode === "verify-sign-up" ||
+            authMode === "group-sign-up") && (
+            <p className="mt-4 text-center text-xs leading-5 text-[var(--ink-muted)]">
               {authMode === "group-sign-up"
-                ? "Use email registration"
-                : "Use your group's registration code"}
-            </button>
-          </p>
-        )}
-        {authMode === "sign-in" && (
-          <p className="mt-3 text-center text-xs leading-5 text-[var(--ink-muted)]">
-            Need account access support?{" "}
-            <a
-              href={OFFICIAL_CONTACT_MAILTO}
-              className="font-bold text-[var(--accent)]"
-            >
-              {OFFICIAL_CONTACT_EMAIL}
-            </a>
-          </p>
-        )}
-        {(authMode === "sign-in" ||
-          authMode === "sign-up" ||
-          authMode === "group-sign-up" ||
-          authMode === "invitation") && (
-          <p className="mt-3 text-center text-xs text-[var(--ink-muted)]">
-            Have a viewing invitation?{" "}
-            <button
-              type="button"
-              className="font-bold text-[var(--accent)]"
-              onClick={() => {
-                setError("");
-                setMessage("");
-                openAuth("invitation");
-              }}
-            >
-              Enter code
-            </button>
-          </p>
-        )}
+                ? "Prefer email verification? "
+                : "In the group but cannot receive email? "}
+              <button
+                type="button"
+                disabled={busy}
+                className="font-bold text-[var(--accent)]"
+                onClick={() => {
+                  setError("");
+                  setMessage("");
+                  setGroupCode("");
+                  setPassword("");
+                  if (authMode === "verify-sign-up")
+                    setEmail(verificationEmail);
+                  openAuth(
+                    authMode === "group-sign-up" ? "sign-up" : "group-sign-up",
+                  );
+                }}
+              >
+                {authMode === "group-sign-up"
+                  ? "Use email registration"
+                  : "Use your group's registration code"}
+              </button>
+            </p>
+          )}
+          {authMode === "sign-in" && (
+            <p className="mt-3 text-center text-xs leading-5 text-[var(--ink-muted)]">
+              Need account access support?{" "}
+              <a
+                href={OFFICIAL_CONTACT_MAILTO}
+                className="font-bold text-[var(--accent)]"
+              >
+                {OFFICIAL_CONTACT_EMAIL}
+              </a>
+            </p>
+          )}
+          {(authMode === "sign-in" ||
+            authMode === "sign-up" ||
+            authMode === "group-sign-up" ||
+            authMode === "invitation") && (
+            <p className="mt-3 text-center text-xs text-[var(--ink-muted)]">
+              Have a viewing invitation?{" "}
+              <button
+                type="button"
+                className="font-bold text-[var(--accent)]"
+                onClick={() => {
+                  setError("");
+                  setMessage("");
+                  openAuth("invitation");
+                }}
+              >
+                Enter code
+              </button>
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );
