@@ -174,13 +174,6 @@ export const COMMUNICATIONS_TEAM: readonly TeamMember[] = [
     contact: { type: "wechat", value: "shellycone" },
   },
   {
-    name: "Sophia Cai",
-    role: "Creative Architect",
-    image: "/images/team/sophia-cai.jpg",
-    imagePosition: "50% 34%",
-    contact: { type: "wechat", value: "Sophialonglive" },
-  },
-  {
     name: "Yale",
     role: "Design Coordinator",
     image: "/images/team/comms-yale.jpg",
@@ -203,13 +196,6 @@ export const TECHNOLOGY_TEAM: readonly TeamMember[] = [
     image: "/images/team/tech-samuel.jpg",
     imagePosition: "50% 38%",
     contact: { type: "phone", value: "13862162460" },
-  },
-  {
-    name: "Sophia Cai",
-    role: "Technology Department",
-    image: "/images/team/sophia-cai.jpg",
-    imagePosition: "50% 34%",
-    contact: { type: "wechat", value: "Sophialonglive" },
   },
 ];
 
