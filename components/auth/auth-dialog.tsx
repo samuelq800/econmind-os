@@ -24,6 +24,7 @@ import {
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { googleSignInRedirectUrl } from "@/lib/supabase/google-sign-in";
 import { verifyStableEmailCode } from "@/lib/supabase/stable-email-verification";
+import { registerWithGroupCode } from "@/lib/supabase/group-registration";
 import {
   authEmailRequestErrorMessage,
   authOtpVerificationErrorMessage,
@@ -49,6 +50,8 @@ function titleForMode(mode: AuthMode) {
       return "Welcome back";
     case "sign-up":
       return "Create your account";
+    case "group-sign-up":
+      return "Register with your group code";
     case "verify-sign-up":
       return "Verify your email";
     case "forgot-password":
@@ -60,7 +63,11 @@ function titleForMode(mode: AuthMode) {
   }
 }
 
-function descriptionForMode(mode: AuthMode, verificationEmail: string, fixedCodes: boolean) {
+function descriptionForMode(
+  mode: AuthMode,
+  verificationEmail: string,
+  fixedCodes: boolean,
+) {
   switch (mode) {
     case "invitation":
       return "Invitation access lets you explore every page without an account, school binding, saved work, or permission to make changes.";
@@ -68,6 +75,8 @@ function descriptionForMode(mode: AuthMode, verificationEmail: string, fixedCode
       return "Sign in to access your cloud scenarios and learning history.";
     case "sign-up":
       return "Your saved work stays private under Supabase Row Level Security. We verify your email before activating the account.";
+    case "group-sign-up":
+      return "Group members who cannot receive email codes can register with the shared code provided in their group. If you already submitted registration, use the same email and original password. Email recovery still requires access to your inbox.";
     case "verify-sign-up":
       return `Enter the code for ${verificationEmail || "your email"} if this address is eligible for registration.${fixedCodes ? " Resends use the same code for 60 minutes from the first request." : ""}`;
     case "forgot-password":
@@ -126,6 +135,7 @@ export function AuthDialog() {
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [invitationCode, setInvitationCode] = useState("");
+  const [groupCode, setGroupCode] = useState("");
   const [otp, setOtp] = useState("");
   const [busy, setBusy] = useState(false);
   const oauthStarting = useRef(false);
@@ -150,10 +160,19 @@ export function AuthDialog() {
     if (!authOpen || !otpModes.includes(authMode)) return;
     let disposed = false;
     const client = getSupabaseBrowserClient();
-    if (client) void client.functions.invoke("verify-stable-email", { method: "GET" }).then(({ data, error }) => {
-      if (!disposed) setFixedCodes(!error && data?.fixedWindowEnabled === true);
-    }).catch(() => { if (!disposed) setFixedCodes(false); });
-    return () => { disposed = true; };
+    if (client)
+      void client.functions
+        .invoke("verify-stable-email", { method: "GET" })
+        .then(({ data, error }) => {
+          if (!disposed)
+            setFixedCodes(!error && data?.fixedWindowEnabled === true);
+        })
+        .catch(() => {
+          if (!disposed) setFixedCodes(false);
+        });
+    return () => {
+      disposed = true;
+    };
   }, [authOpen, authMode]);
 
   useEffect(() => {
@@ -178,6 +197,8 @@ export function AuthDialog() {
 
   async function closeSafely() {
     if (busy) return;
+    setGroupCode("");
+    setPassword("");
     if (authMode === "reset-password") {
       try {
         await signOut();
@@ -265,10 +286,17 @@ export function AuthDialog() {
     setError("");
     setMessage("");
     try {
-      const redirectTo = new URL(googleSignInRedirectUrl(window.location.origin));
+      const redirectTo = new URL(
+        googleSignInRedirectUrl(window.location.origin),
+      );
       const current = new URL(window.location.href);
-      const teamCode = current.searchParams.get("join")?.trim().toUpperCase() ?? "";
-      if (current.pathname.replace(/\/$/, "") === `${BASE_PATH}/season1/my-team` && /^EM-T1-[A-Z0-9]{10}$/.test(teamCode)) {
+      const teamCode =
+        current.searchParams.get("join")?.trim().toUpperCase() ?? "";
+      if (
+        current.pathname.replace(/\/$/, "") ===
+          `${BASE_PATH}/season1/my-team` &&
+        /^EM-T1-[A-Z0-9]{10}$/.test(teamCode)
+      ) {
         redirectTo.pathname = `${BASE_PATH}/season1/my-team/`;
         redirectTo.searchParams.set("join", teamCode);
       }
@@ -294,7 +322,10 @@ export function AuthDialog() {
       setError("Supabase is not configured for this deployment.");
       return;
     }
-    if (authMode === "sign-up" && !registrationConsentValid(legalAcceptance)) {
+    if (
+      (authMode === "sign-up" || authMode === "group-sign-up") &&
+      !registrationConsentValid(legalAcceptance)
+    ) {
       setError(
         "Please read and accept the Terms of Use and Privacy Notice to create an account.",
       );
@@ -312,6 +343,17 @@ export function AuthDialog() {
           password,
         });
         if (signInError) throw signInError;
+        closeAuth();
+      } else if (authMode === "group-sign-up") {
+        await registerWithGroupCode(supabase, {
+          email,
+          password,
+          code: groupCode,
+          displayName,
+          legalAcceptance,
+        });
+        setGroupCode("");
+        setPassword("");
         closeAuth();
       } else if (authMode === "sign-up") {
         const targetEmail = email.trim();
@@ -348,7 +390,12 @@ export function AuthDialog() {
           "If this email is eligible for registration, a verification code has been requested. If you already have an account, sign in or reset your password.",
         );
       } else if (authMode === "verify-sign-up") {
-        await verifyStableEmailCode(supabase, verificationEmail, otp.trim(), "signup");
+        await verifyStableEmailCode(
+          supabase,
+          verificationEmail,
+          otp.trim(),
+          "signup",
+        );
         setOtp("");
         setPassword("");
         closeAuth();
@@ -373,7 +420,12 @@ export function AuthDialog() {
           "If that address belongs to an account, a recovery code has been requested. Use the email if one arrives.",
         );
       } else if (authMode === "verify-recovery") {
-        await verifyStableEmailCode(supabase, verificationEmail, otp.trim(), "recovery");
+        await verifyStableEmailCode(
+          supabase,
+          verificationEmail,
+          otp.trim(),
+          "recovery",
+        );
         setOtp("");
         openAuth("reset-password");
         setMessage("Email verified. Set your new password now.");
@@ -417,9 +469,13 @@ export function AuthDialog() {
   const showEmail =
     authMode === "sign-in" ||
     authMode === "sign-up" ||
+    authMode === "group-sign-up" ||
     authMode === "forgot-password";
   const showPassword =
-    authMode === "sign-in" || authMode === "sign-up" || isResetStep;
+    authMode === "sign-in" ||
+    authMode === "sign-up" ||
+    authMode === "group-sign-up" ||
+    isResetStep;
 
   return (
     <div
@@ -472,232 +528,276 @@ export function AuthDialog() {
           </p>
         ) : (
           <>
-          {(authMode === "sign-in" || authMode === "sign-up") && (
-            <div className="mt-6">
-              <Button type="button" variant="secondary" className="w-full" disabled={busy} onClick={() => void continueWithGoogle()}>
-                {busy ? <LoaderCircle className="animate-spin" size={15} /> : <GoogleMark />}
-                Continue with Google
-              </Button>
-              <div className="mt-5 flex items-center gap-3 text-[11px] font-bold text-[var(--ink-faint)]" aria-hidden="true"><span className="h-px flex-1 bg-[var(--line)]" />or<span className="h-px flex-1 bg-[var(--line)]" /></div>
-            </div>
-          )}
-          <form className="mt-5 space-y-4" onSubmit={submit}>
-            {authMode === "invitation" && (
-              <label className="block text-xs font-bold">
-                Invitation code
-                <input
-                  required
-                  value={invitationCode}
-                  onChange={(event) => setInvitationCode(event.target.value)}
-                  autoComplete="one-time-code"
-                  className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 font-mono text-sm tracking-[.08em] uppercase outline-none focus:border-[var(--accent)]"
-                  placeholder="VIEW-XXXXXXXXXXXX"
-                />
-              </label>
+            {(authMode === "sign-in" ||
+              authMode === "sign-up" ||
+              authMode === "group-sign-up") && (
+              <div className="mt-6">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="w-full"
+                  disabled={busy}
+                  onClick={() => void continueWithGoogle()}
+                >
+                  {busy ? (
+                    <LoaderCircle className="animate-spin" size={15} />
+                  ) : (
+                    <GoogleMark />
+                  )}
+                  Continue with Google
+                </Button>
+                <div
+                  className="mt-5 flex items-center gap-3 text-[11px] font-bold text-[var(--ink-faint)]"
+                  aria-hidden="true"
+                >
+                  <span className="h-px flex-1 bg-[var(--line)]" />
+                  or
+                  <span className="h-px flex-1 bg-[var(--line)]" />
+                </div>
+              </div>
             )}
-
-            {authMode === "sign-up" && (
-              <label className="block text-xs font-bold">
-                Display name
-                <input
-                  value={displayName}
-                  onChange={(event) => setDisplayName(event.target.value)}
-                  maxLength={80}
-                  autoComplete="name"
-                  className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-sm outline-none focus:border-[var(--accent)]"
-                  placeholder="Optional"
-                />
-              </label>
-            )}
-
-            {showEmail && (
-              <label className="block text-xs font-bold">
-                Email
-                <input
-                  required
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  autoComplete="email"
-                  className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-sm outline-none focus:border-[var(--accent)]"
-                  placeholder="you@example.com"
-                />
-              </label>
-            )}
-
-            {isOtpStep && (
-              <label className="block text-xs font-bold">
-                Email verification code
-                <input
-                  required
-                  autoFocus
-                  value={otp}
-                  onChange={(event) =>
-                    setOtp(normaliseEmailOtp(event.target.value))
-                  }
-                  autoComplete="one-time-code"
-                  inputMode="numeric"
-                  minLength={EMAIL_OTP_LENGTH}
-                  maxLength={EMAIL_OTP_LENGTH}
-                  pattern="[0-9]{8}"
-                  title="Enter the 8-digit code from your email"
-                  className="mt-2 h-12 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-center font-mono text-lg font-bold tracking-[.24em] outline-none focus:border-[var(--accent)]"
-                  placeholder="8-DIGIT CODE"
-                />
-              </label>
-            )}
-
-            {showPassword && (
-              <label className="block text-xs font-bold">
-                {isResetStep ? "New password" : "Password"}
-                <input
-                  required
-                  type="password"
-                  minLength={8}
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  autoComplete={
-                    authMode === "sign-in" ? "current-password" : "new-password"
-                  }
-                  className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-sm outline-none focus:border-[var(--accent)]"
-                  placeholder="At least 8 characters"
-                />
-              </label>
-            )}
-
-            {isResetStep && (
-              <label className="block text-xs font-bold">
-                Confirm new password
-                <input
-                  required
-                  type="password"
-                  minLength={8}
-                  value={passwordConfirmation}
-                  onChange={(event) =>
-                    setPasswordConfirmation(event.target.value)
-                  }
-                  autoComplete="new-password"
-                  className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-sm outline-none focus:border-[var(--accent)]"
-                  placeholder="Enter the same password again"
-                />
-              </label>
-            )}
-
-            {authMode === "sign-up" && (
-              <fieldset className="grid gap-3 rounded-xl border border-[var(--line)] bg-[var(--canvas)] p-4">
-                <legend className="sr-only">Legal acknowledgements</legend>
-                <label className="flex cursor-pointer items-start gap-3 text-xs leading-5 text-[var(--ink-muted)]">
+            <form className="mt-5 space-y-4" onSubmit={submit}>
+              {authMode === "invitation" && (
+                <label className="block text-xs font-bold">
+                  Invitation code
                   <input
                     required
-                    type="checkbox"
-                    checked={legalAcceptance.terms}
-                    onChange={(event) =>
-                      setLegalAcceptance((current) => ({
-                        ...current,
-                        terms: event.target.checked,
-                      }))
-                    }
-                    className="mt-1 size-4 accent-[var(--accent)]"
+                    value={invitationCode}
+                    onChange={(event) => setInvitationCode(event.target.value)}
+                    autoComplete="one-time-code"
+                    className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 font-mono text-sm tracking-[.08em] uppercase outline-none focus:border-[var(--accent)]"
+                    placeholder="VIEW-XXXXXXXXXXXX"
                   />
-                  <span>
-                    I have read and agree to the{" "}
-                    <Link
-                      href="/terms"
-                      target="_blank"
-                      className="font-bold text-[var(--accent)]"
-                    >
-                      Terms of Use
-                    </Link>
-                    .
-                  </span>
                 </label>
-                <label className="flex cursor-pointer items-start gap-3 text-xs leading-5 text-[var(--ink-muted)]">
-                  <input
-                    required
-                    type="checkbox"
-                    checked={legalAcceptance.privacy}
-                    onChange={(event) =>
-                      setLegalAcceptance((current) => ({
-                        ...current,
-                        privacy: event.target.checked,
-                      }))
-                    }
-                    className="mt-1 size-4 accent-[var(--accent)]"
-                  />
-                  <span>
-                    I have read the{" "}
-                    <Link
-                      href="/privacy"
-                      target="_blank"
-                      className="font-bold text-[var(--accent)]"
-                    >
-                      Privacy Notice
-                    </Link>
-                    .
-                  </span>
-                </label>
-              </fieldset>
-            )}
-
-            {(error || authNotice) && (
-              <p
-                role="alert"
-                className="rounded-lg bg-[var(--red-soft)] p-3 text-xs leading-5 text-[var(--red)]"
-              >
-                {error || authNotice}
-              </p>
-            )}
-            {message && (
-              <p className="flex gap-2 rounded-lg bg-[var(--accent-soft)] p-3 text-xs leading-5 text-[var(--accent)]">
-                <CheckCircle2 className="mt-.5 shrink-0" size={15} />
-                {message}
-              </p>
-            )}
-
-            <Button
-              className="w-full"
-              disabled={
-                busy ||
-                (authMode === "sign-up" &&
-                  !registrationConsentValid(legalAcceptance))
-              }
-              type="submit"
-            >
-              {busy && <LoaderCircle className="animate-spin" size={15} />}
-              {authMode === "invitation" ? (
-                <>
-                  <Eye size={15} /> Enter view-only mode
-                </>
-              ) : authMode === "sign-in" ? (
-                "Sign in"
-              ) : authMode === "sign-up" ? (
-                "Submit registration"
-              ) : authMode === "forgot-password" ? (
-                <>
-                  <KeyRound size={15} /> Request recovery code
-                </>
-              ) : authMode === "reset-password" ? (
-                "Save new password"
-              ) : (
-                <>
-                  <MailCheck size={15} /> Verify email
-                </>
               )}
-            </Button>
 
-            {isOtpStep && (
-              <button
-                type="button"
-                disabled={busy || resendCooldown > 0}
-                onClick={() => void resendCode()}
-                className="w-full text-center text-xs font-bold text-[var(--accent)] disabled:opacity-45"
+              {(authMode === "sign-up" || authMode === "group-sign-up") && (
+                <label className="block text-xs font-bold">
+                  Display name
+                  <input
+                    value={displayName}
+                    onChange={(event) => setDisplayName(event.target.value)}
+                    maxLength={80}
+                    autoComplete="name"
+                    className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-sm outline-none focus:border-[var(--accent)]"
+                    placeholder="Optional"
+                  />
+                </label>
+              )}
+
+              {showEmail && (
+                <label className="block text-xs font-bold">
+                  Email
+                  <input
+                    required
+                    type="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    autoComplete="email"
+                    className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-sm outline-none focus:border-[var(--accent)]"
+                    placeholder="you@example.com"
+                  />
+                </label>
+              )}
+
+              {authMode === "group-sign-up" && (
+                <label className="block text-xs font-bold">
+                  Shared group registration code
+                  <input
+                    required
+                    type="password"
+                    value={groupCode}
+                    onChange={(event) => setGroupCode(event.target.value)}
+                    minLength={12}
+                    maxLength={128}
+                    autoComplete="off"
+                    className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 font-mono text-sm outline-none focus:border-[var(--accent)]"
+                    placeholder="Get the registration code from your group"
+                  />
+                  <span className="mt-2 block font-normal leading-5 text-[var(--ink-muted)]">
+                    This shared code activates an individual account. A viewing
+                    invitation only provides view-only access.
+                  </span>
+                </label>
+              )}
+
+              {isOtpStep && (
+                <label className="block text-xs font-bold">
+                  Email verification code
+                  <input
+                    required
+                    autoFocus
+                    value={otp}
+                    onChange={(event) =>
+                      setOtp(normaliseEmailOtp(event.target.value))
+                    }
+                    autoComplete="one-time-code"
+                    inputMode="numeric"
+                    minLength={EMAIL_OTP_LENGTH}
+                    maxLength={EMAIL_OTP_LENGTH}
+                    pattern="[0-9]{8}"
+                    title="Enter the 8-digit code from your email"
+                    className="mt-2 h-12 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-center font-mono text-lg font-bold tracking-[.24em] outline-none focus:border-[var(--accent)]"
+                    placeholder="8-DIGIT CODE"
+                  />
+                </label>
+              )}
+
+              {showPassword && (
+                <label className="block text-xs font-bold">
+                  {isResetStep ? "New password" : "Password"}
+                  <input
+                    required
+                    type="password"
+                    minLength={8}
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    autoComplete={
+                      authMode === "sign-in"
+                        ? "current-password"
+                        : "new-password"
+                    }
+                    className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-sm outline-none focus:border-[var(--accent)]"
+                    placeholder="At least 8 characters"
+                  />
+                </label>
+              )}
+
+              {isResetStep && (
+                <label className="block text-xs font-bold">
+                  Confirm new password
+                  <input
+                    required
+                    type="password"
+                    minLength={8}
+                    value={passwordConfirmation}
+                    onChange={(event) =>
+                      setPasswordConfirmation(event.target.value)
+                    }
+                    autoComplete="new-password"
+                    className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-[var(--canvas)] px-3 text-sm outline-none focus:border-[var(--accent)]"
+                    placeholder="Enter the same password again"
+                  />
+                </label>
+              )}
+
+              {(authMode === "sign-up" || authMode === "group-sign-up") && (
+                <fieldset className="grid gap-3 rounded-xl border border-[var(--line)] bg-[var(--canvas)] p-4">
+                  <legend className="sr-only">Legal acknowledgements</legend>
+                  <label className="flex cursor-pointer items-start gap-3 text-xs leading-5 text-[var(--ink-muted)]">
+                    <input
+                      required
+                      type="checkbox"
+                      checked={legalAcceptance.terms}
+                      onChange={(event) =>
+                        setLegalAcceptance((current) => ({
+                          ...current,
+                          terms: event.target.checked,
+                        }))
+                      }
+                      className="mt-1 size-4 accent-[var(--accent)]"
+                    />
+                    <span>
+                      I have read and agree to the{" "}
+                      <Link
+                        href="/terms"
+                        target="_blank"
+                        className="font-bold text-[var(--accent)]"
+                      >
+                        Terms of Use
+                      </Link>
+                      .
+                    </span>
+                  </label>
+                  <label className="flex cursor-pointer items-start gap-3 text-xs leading-5 text-[var(--ink-muted)]">
+                    <input
+                      required
+                      type="checkbox"
+                      checked={legalAcceptance.privacy}
+                      onChange={(event) =>
+                        setLegalAcceptance((current) => ({
+                          ...current,
+                          privacy: event.target.checked,
+                        }))
+                      }
+                      className="mt-1 size-4 accent-[var(--accent)]"
+                    />
+                    <span>
+                      I have read the{" "}
+                      <Link
+                        href="/privacy"
+                        target="_blank"
+                        className="font-bold text-[var(--accent)]"
+                      >
+                        Privacy Notice
+                      </Link>
+                      .
+                    </span>
+                  </label>
+                </fieldset>
+              )}
+
+              {(error || authNotice) && (
+                <p
+                  role="alert"
+                  className="rounded-lg bg-[var(--red-soft)] p-3 text-xs leading-5 text-[var(--red)]"
+                >
+                  {error || authNotice}
+                </p>
+              )}
+              {message && (
+                <p className="flex gap-2 rounded-lg bg-[var(--accent-soft)] p-3 text-xs leading-5 text-[var(--accent)]">
+                  <CheckCircle2 className="mt-.5 shrink-0" size={15} />
+                  {message}
+                </p>
+              )}
+
+              <Button
+                className="w-full"
+                disabled={
+                  busy ||
+                  ((authMode === "sign-up" || authMode === "group-sign-up") &&
+                    !registrationConsentValid(legalAcceptance))
+                }
+                type="submit"
               >
-                {resendCooldown > 0
-                  ? `Resend email in ${resendCooldown}s`
-                  : "Resend code"}
-              </button>
-            )}
-          </form>
+                {busy && <LoaderCircle className="animate-spin" size={15} />}
+                {authMode === "invitation" ? (
+                  <>
+                    <Eye size={15} /> Enter view-only mode
+                  </>
+                ) : authMode === "sign-in" ? (
+                  "Sign in"
+                ) : authMode === "sign-up" ? (
+                  "Submit registration"
+                ) : authMode === "group-sign-up" ? (
+                  "Register with group code"
+                ) : authMode === "forgot-password" ? (
+                  <>
+                    <KeyRound size={15} /> Request recovery code
+                  </>
+                ) : authMode === "reset-password" ? (
+                  "Save new password"
+                ) : (
+                  <>
+                    <MailCheck size={15} /> Verify email
+                  </>
+                )}
+              </Button>
+
+              {isOtpStep && (
+                <button
+                  type="button"
+                  disabled={busy || resendCooldown > 0}
+                  onClick={() => void resendCode()}
+                  className="w-full text-center text-xs font-bold text-[var(--accent)] disabled:opacity-45"
+                >
+                  {resendCooldown > 0
+                    ? `Resend email in ${resendCooldown}s`
+                    : "Resend code"}
+                </button>
+              )}
+            </form>
           </>
         )}
 
@@ -751,7 +851,7 @@ export function AuthDialog() {
           <p className="mt-5 text-center text-xs text-[var(--ink-muted)]">
             {authMode === "sign-in"
               ? "New to EconMind OS?"
-              : authMode === "sign-up"
+              : authMode === "sign-up" || authMode === "group-sign-up"
                 ? "Already have an account?"
                 : "Return to your account?"}{" "}
             <button
@@ -764,6 +864,35 @@ export function AuthDialog() {
               }}
             >
               {authMode === "sign-in" ? "Create one" : "Sign in"}
+            </button>
+          </p>
+        )}
+
+        {(authMode === "sign-up" ||
+          authMode === "verify-sign-up" ||
+          authMode === "group-sign-up") && (
+          <p className="mt-4 text-center text-xs leading-5 text-[var(--ink-muted)]">
+            {authMode === "group-sign-up"
+              ? "Prefer email verification? "
+              : "In the group but cannot receive email? "}
+            <button
+              type="button"
+              disabled={busy}
+              className="font-bold text-[var(--accent)]"
+              onClick={() => {
+                setError("");
+                setMessage("");
+                setGroupCode("");
+                setPassword("");
+                if (authMode === "verify-sign-up") setEmail(verificationEmail);
+                openAuth(
+                  authMode === "group-sign-up" ? "sign-up" : "group-sign-up",
+                );
+              }}
+            >
+              {authMode === "group-sign-up"
+                ? "Use email registration"
+                : "Use your group's registration code"}
             </button>
           </p>
         )}
@@ -780,6 +909,7 @@ export function AuthDialog() {
         )}
         {(authMode === "sign-in" ||
           authMode === "sign-up" ||
+          authMode === "group-sign-up" ||
           authMode === "invitation") && (
           <p className="mt-3 text-center text-xs text-[var(--ink-muted)]">
             Have a viewing invitation?{" "}
