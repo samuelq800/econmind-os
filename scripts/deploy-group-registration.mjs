@@ -20,18 +20,26 @@ export function assertCodeHash(value) {
     throw new Error("Protected group code hash required");
   return value;
 }
-async function main() {
-  const [phase, statePath] = process.argv.slice(2);
-  const token = process.env.SUPABASE_ACCESS_TOKEN;
+export async function runRelease({
+  phase,
+  statePath,
+  token,
+  project,
+  codeHash,
+  fetcher = fetch,
+  read = readFile,
+  write = writeFile,
+  log = console.log,
+}) {
   if (
     !["prepare", "activate"].includes(phase) ||
     !statePath ||
     !token ||
-    process.env.SUPABASE_PROJECT_REF !== PROJECT
+    project !== PROJECT
   )
     throw new Error("Approved project and bounded release phase required");
   const api = async (path, method = "GET", payload) => {
-    const response = await fetch(
+    const response = await fetcher(
       `https://api.supabase.com/v1/projects/${PROJECT}/${path}`,
       {
         method,
@@ -55,10 +63,11 @@ async function main() {
   if (config.mailer_autoconfirm !== false)
     throw new Error("Ordinary email confirmation must remain enabled");
   if (phase === "prepare") {
-    const rawSql = await readFile(
+    const rawSql = await read(
       "supabase/migrations/20261011120000_group_registration.sql",
       "utf8",
     );
+    const sql = rawSql.replace(/\r\n/g, "\n");
     if (createHash("sha256").update(sql).digest("hex") !== MIGRATION_SHA256)
       throw new Error("Migration differs from reviewed candidate");
     const escaped = sql.replaceAll("'", "''");
@@ -80,7 +89,7 @@ async function main() {
         if not has_function_privilege('service_role','public.authorize_group_registration(text,text,text)','execute') then raise exception 'Service authorization missing'; end if;
       end $verify$;
       commit;`);
-    await writeFile(
+    await write(
       statePath,
       JSON.stringify({
         authFingerprint: fingerprint(config),
@@ -88,19 +97,18 @@ async function main() {
       }),
       { mode: 0o600, flag: "wx" },
     );
-    console.log(
+    log(
       "PASS: exact migration installed with ledger and private permissions; Auth settings unchanged",
     );
     return;
   }
-  const state = JSON.parse(await readFile(statePath, "utf8"));
-  const sql = rawSql.replace(/\r\n/g, "\n");
+  const state = JSON.parse(await read(statePath, "utf8"));
   if (
     state.migration !== MIGRATION_SHA256 ||
     state.authFingerprint !== fingerprint(config)
   )
     throw new Error("Auth configuration changed during release");
-  const hash = assertCodeHash(process.env.GROUP_REGISTRATION_CODE_HASH);
+  const hash = assertCodeHash(codeHash);
   // Explicit owner-approved activation of the private singleton only. No auth.users writes.
   // On any uncertain readback, close the feature instead of exposing an unverified policy.
   try {
@@ -116,12 +124,18 @@ async function main() {
     );
     throw error;
   }
-  console.log(
+  log(
     "PASS: reusable group code active; email confirmation, OAuth and recovery configuration unchanged",
   );
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href)
-  main().catch((error) => {
+  runRelease({
+    phase: process.argv[2],
+    statePath: process.argv[3],
+    token: process.env.SUPABASE_ACCESS_TOKEN,
+    project: process.env.SUPABASE_PROJECT_REF,
+    codeHash: process.env.GROUP_REGISTRATION_CODE_HASH,
+  }).catch((error) => {
     console.error(error.message);
     process.exitCode = 1;
   });
