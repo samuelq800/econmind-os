@@ -15,7 +15,7 @@ import {
   validateViewerInvitationCode,
 } from "@/lib/supabase/viewer-invitations";
 
-export type AuthMode = "sign-in" | "sign-up" | "verify-sign-up" | "forgot-password" | "verify-recovery" | "reset-password" | "invitation";
+export type AuthMode = "sign-in" | "sign-up" | "group-sign-up" | "verify-sign-up" | "forgot-password" | "verify-recovery" | "reset-password" | "invitation";
 
 type AuthContextValue = {
   user: User | null;

@@ -48,6 +48,13 @@ the `PASSWORD_RECOVERY` Auth event. The frontend treats a sign-up response that
 already contains a session as a configuration error, signs it out immediately,
 and never bypasses the verification-code screen.
 
+## Shared group registration exception
+
+For the separate reusable group registration exception, see
+[`group-registration.md`](group-registration.md). Ordinary email sign-up continues
+to reject unexpected sessions; only the dedicated server-validated group-code
+path can activate an account without the email OTP. Global confirmations stay on.
+
 ## Reversible account suspension
 
 Apply `supabase/migrations/20260831010000_add_reversible_account_suspension.sql`
