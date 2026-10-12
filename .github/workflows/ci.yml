@@ -244,7 +244,20 @@ jobs:
       - name: Exercise Season 1 lifecycle on latest migrations in disposable PostgreSQL
         env:
           PGPASSWORD: disposable-test-only
-        run: psql -h localhost -U postgres -d season1_test -f scripts/test-season1-admin-overview.sql
+        run: psql -h localhost -U postgres -d season1_test -f scripts/test-season1-reusable-team-names.sql
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.20.0
+      - name: Verify team-name publication rollback and concurrent uniqueness
+        env:
+          PGPASSWORD: disposable-test-only
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: postgres
+          PGDATABASE: team_name_release_test
+        run: |
+          createdb -h localhost -U postgres team_name_release_test
+          node scripts/test-season1-team-name-publication.mjs
 
   world-v2-edge-role:
     runs-on: ubuntu-latest

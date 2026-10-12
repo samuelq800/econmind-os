@@ -1,0 +1,30 @@
+name: Season 1 · Release dissolved team names
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: supabase-production
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.20.0
+      - name: Require matching source verification
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run list --workflow ci.yml --commit "$GITHUB_SHA" --limit 20 --json conclusion > "$RUNNER_TEMP/team-name-ci.json"
+          node --input-type=module -e 'import fs from "node:fs"; if (!JSON.parse(fs.readFileSync(process.argv[1])).some(r => r.conclusion === "success")) throw Error("Matching CI has not passed")' "$RUNNER_TEMP/team-name-ci.json"
+      - name: Publish only the reviewed team-name constraint replacement
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+        run: node scripts/publish-season1-reusable-team-names.mjs
