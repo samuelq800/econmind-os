@@ -4,7 +4,7 @@ on:
     inputs:
       mode:
         type: choice
-        options: [preview, approve]
+        options: [preview, approve, withdraw-conflicts]
         default: preview
         required: true
       fingerprint:

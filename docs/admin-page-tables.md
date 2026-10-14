@@ -48,6 +48,13 @@ operator action, not a human account acting through the UI; the workflow receipt
 records operator identity/time. No applicant details are published in workflow
 logs. Other seasons and requests created outside the inspected batch are untouched.
 
+Only with separate explicit approval, `withdraw-conflicts` withdraws the inspected
+stale applications of people already in another team. It rechecks that every
+target is still pending and still conflicts, and independently verifies the
+withdrawal after commit. A mixed batch containing any legitimate unassigned
+applicant fails before writes. No member is removed or moved, and captain removal
+permissions are not changed.
+
 Tests cover table completeness beyond 1,000 members, export independence from
 search, CSV escaping, administrator visibility, stale-export prevention, and
 disposable PostgreSQL approval rollback/conflicts/scope. This is frontend-only
