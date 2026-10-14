@@ -259,6 +259,14 @@ jobs:
           createdb -h localhost -U postgres team_name_release_test
           node scripts/test-season1-team-name-publication.mjs
 
+      - name: Verify inspected pending approvals and transactional rollback
+        env:
+          PGPASSWORD: disposable-test-only
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: postgres
+        run: node scripts/test-season1-pending-approval.mjs
+
   world-v2-edge-role:
     runs-on: ubuntu-latest
     timeout-minutes: 10

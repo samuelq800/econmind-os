@@ -1,0 +1,35 @@
+name: Maintenance · Approve inspected Season 1 applications
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        type: choice
+        options: [preview, approve]
+        default: preview
+        required: true
+      fingerprint:
+        description: SHA-256 from the preceding read-only preview
+        type: string
+        required: false
+permissions:
+  contents: read
+concurrency:
+  group: supabase-production
+  cancel-in-progress: false
+jobs:
+  apply:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Inspect or approve only the inspected Season 1 pending batch
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+          APPROVAL_MODE: ${{ inputs.mode }}
+          EXPECTED_FINGERPRINT: ${{ inputs.fingerprint }}
+        run: node scripts/approve-season1-pending.mjs
