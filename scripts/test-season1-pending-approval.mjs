@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
-import { approvalSql } from "./approve-season1-pending.mjs";
+import { approvalSql, verificationQuery } from "./approve-season1-pending.mjs";
 const sql = readFileSync("scripts/approve-season1-pending.sql", "utf8");
 const ids = Array.from(
   { length: 8 },
@@ -41,6 +41,13 @@ run(`do $$ begin
  then raise exception 'Approval scope, conflicts, uniqueness or attribution failed'; end if; end $$;`);
 run(approvalSql(sql, ids), true);
 // Recruitment locking must not remove a captain's existing removal authority.
+const verified = run(verificationQuery(ids));
+if (
+  !verified.stdout.includes('"accepted": 2') ||
+  !verified.stdout.includes('"acceptedWithoutMembership": 0') ||
+  !verified.stdout.includes('"pendingInBatch": 6')
+)
+  throw new Error("Independent approval readback failed");
 run(`update public.world_preseason_seasons set lobby_opens_at=now()-interval '1 day' where code='season-1';
  update public.world_preseason_teams set recruitment_locked=true where id='20000000-0000-0000-0000-000000000001';
  select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000032',false);

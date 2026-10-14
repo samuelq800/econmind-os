@@ -39,6 +39,27 @@ export function approvalSql(template, ids) {
     JSON.stringify(batch.ids),
   );
 }
+export function verificationQuery(ids) {
+  const { ids: safe } = inspectBatch(ids.map((id) => ({ id })));
+  return `with batch as (
+    select a.*, case
+      when exists(select 1 from public.world_preseason_team_members m where m.season_id=a.season_id and m.user_id=a.applicant_user_id and m.team_id<>a.team_id) then 'already_in_other_team'
+      when not exists(select 1 from public.profiles p where p.user_id=a.applicant_user_id and p.account_status='active') then 'inactive_account'
+      when t.recruitment_locked or t.status in ('frozen','dissolved','registered','active') then 'locked_team'
+      when (select count(*) from public.world_preseason_team_members m where m.team_id=t.id)>=t.capacity then 'full_team'
+      else 'unresolved' end as reason
+    from public.world_preseason_team_applications a
+    join public.world_preseason_seasons s on s.id=a.season_id and s.code='season-1'
+    join public.world_preseason_teams t on t.id=a.team_id
+    where a.id in (${safe.map((id) => `'${id}'`).join(",")})
+  ) select jsonb_build_object(
+    'inspected', count(*), 'accepted', count(*) filter(where status='accepted'),
+    'pendingInBatch', count(*) filter(where status='pending'),
+    'acceptedWithoutMembership', count(*) filter(where status='accepted' and not exists(select 1 from public.world_preseason_team_members m where m.season_id=batch.season_id and m.team_id=batch.team_id and m.user_id=batch.applicant_user_id)),
+    'blocked',coalesce((select jsonb_object_agg(reason,n) from (select reason,count(*) n from batch where status='pending' group by reason) reasons),'{}'::jsonb),
+    'remainingPending',(select count(*) from public.world_preseason_team_applications a join public.world_preseason_seasons s on s.id=a.season_id where s.code='season-1' and a.status='pending')
+  ) as result from batch`;
+}
 export async function approvePending({
   request,
   mode,
@@ -60,10 +81,20 @@ export async function approvePending({
   if (!batch.count)
     return { mode, pending: 0, accepted: 0, remainingPending: 0 };
   // One write attempt only. Never retry an uncertain result.
-  return {
-    mode,
-    receipt: await request(approvalSql(template, batch.ids), false),
-  };
+  await request(approvalSql(template, batch.ids), false);
+  // An independent post-commit read proves actual membership, not just HTTP success.
+  const rows = await request(verificationQuery(batch.ids), true);
+  const result = rows?.[0]?.result;
+  if (
+    rows?.length !== 1 ||
+    result?.inspected !== batch.count ||
+    result?.acceptedWithoutMembership !== 0 ||
+    result?.accepted + result?.pendingInBatch !== batch.count
+  )
+    throw new Error(
+      "Approval post-commit verification failed; inspect state, do not retry writes",
+    );
+  return { mode, verified: true, result };
 }
 async function main() {
   const token = process.env.SUPABASE_ACCESS_TOKEN;

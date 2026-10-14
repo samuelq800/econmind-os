@@ -6,6 +6,7 @@ export function inspectBatch(rows: unknown): {
   fingerprint: string;
 };
 export function approvalSql(template: string, ids: string[]): string;
+export function verificationQuery(ids: string[]): string;
 export function approvePending(options: {
   request: (query: string, readOnly: boolean) => Promise<unknown>;
   mode: "preview" | "approve";
@@ -18,4 +19,6 @@ export function approvePending(options: {
   accepted?: number;
   remainingPending?: number;
   receipt?: unknown;
+  verified?: boolean;
+  result?: unknown;
 }>;

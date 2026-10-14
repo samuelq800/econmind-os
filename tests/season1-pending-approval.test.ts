@@ -22,7 +22,17 @@ describe("one-time Season 1 pending approval", () => {
     const request = vi
       .fn()
       .mockResolvedValueOnce([{ id }])
-      .mockResolvedValueOnce([{ result: { accepted: 1 } }]);
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          result: {
+            inspected: 1,
+            accepted: 1,
+            acceptedWithoutMembership: 0,
+            pendingInBatch: 0,
+          },
+        },
+      ]);
     await approvePending({
       request,
       mode: "approve",
@@ -59,6 +69,34 @@ describe("one-time Season 1 pending approval", () => {
     expect(() =>
       approvalSql(template, ["'); drop table public.profiles;--"]),
     ).toThrow("Invalid");
+  });
+  it("does not claim success or repeat the write if accepted records lack membership", async () => {
+    const request = vi
+      .fn()
+      .mockResolvedValueOnce([{ id }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          result: {
+            inspected: 1,
+            accepted: 1,
+            pendingInBatch: 0,
+            acceptedWithoutMembership: 1,
+          },
+        },
+      ]);
+    await expect(
+      approvePending({
+        request,
+        mode: "approve",
+        expectedFingerprint: inspectBatch([{ id }]).fingerprint,
+        template,
+      }),
+    ).rejects.toThrow("post-commit verification failed");
+    expect(request).toHaveBeenCalledTimes(3);
+    expect(request.mock.calls.filter((call) => call[1] === false)).toHaveLength(
+      1,
+    );
   });
   it("keeps membership guards, roster locks, capacity, other seasons, and user attribution intact", () => {
     expect(template).toContain("s.code='season-1'");
