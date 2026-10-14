@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, MessageCircleMore, Network, Phone } from "lucide-react";
 import { withBasePath } from "@/lib/base-path";
+import { LeadershipDataTables } from "./leadership-data-tables";
 import {
   COMMUNICATIONS_TEAM,
   FOUNDING_TEAM,
@@ -25,6 +26,7 @@ export function TeamPage() {
             <div className="mt-12 flex max-w-2xl flex-wrap gap-x-8 gap-y-4 border-t border-[var(--line)] pt-5 text-[10px] font-extrabold uppercase tracking-[.14em] text-[var(--ink-faint)]">
               <span>Student-led</span><span>Cross-regional</span><span>Built for the League</span>
             </div>
+            <LeadershipDataTables />
           </div>
         </section>
 

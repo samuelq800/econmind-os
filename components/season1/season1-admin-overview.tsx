@@ -21,6 +21,8 @@ import {
 } from "@/lib/supabase/season1-admin";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { AdminPageDataTables } from "@/components/admin/page-data-tables";
+import { season1Tables } from "@/lib/admin/season1-tables";
 
 export function Season1AdminOverviewPanel({
   seasonId,
@@ -128,6 +130,12 @@ export function Season1AdminOverviewPanel({
             </time>
             .
           </p>
+          <AdminPageDataTables
+            title="Season 1 teams & members"
+            tables={season1Tables(view)}
+            snapshotAt={view.snapshotAt}
+            stale={Boolean(error)}
+          />
           <label className="mt-7 flex max-w-xl items-center gap-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3">
             <Search size={17} className="shrink-0 text-[var(--ink-muted)]" />
             <span className="sr-only">Search administrator team rosters</span>
