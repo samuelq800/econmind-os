@@ -9,7 +9,7 @@ export function approvalSql(template: string, ids: string[]): string;
 export function verificationQuery(ids: string[]): string;
 export function approvePending(options: {
   request: (query: string, readOnly: boolean) => Promise<unknown>;
-  mode: "preview" | "approve";
+  mode: "preview" | "approve" | "withdraw-conflicts";
   expectedFingerprint?: string;
   template: string;
 }): Promise<{

@@ -40,12 +40,29 @@ run(`do $$ begin
  or exists(select 1 from public.world_preseason_team_applications where id in (${ids.map((id) => `'${id}'`).join(",")}) and reviewed_by is not null)
  then raise exception 'Approval scope, conflicts, uniqueness or attribution failed'; end if; end $$;`);
 run(approvalSql(sql, ids), true);
+// Withdrawal requires separate explicit authorization and only conflicting IDs.
+const withdrawal = readFileSync(
+  "scripts/withdraw-season1-conflicting-pending.sql",
+  "utf8",
+);
+run(approvalSql(withdrawal, [ids[3], ids[1]]), true);
+run(approvalSql(withdrawal, [ids[3], ids[6]]));
+const withdrawn = run(verificationQuery([ids[3], ids[6]]));
+if (
+  !withdrawn.stdout.includes('"withdrawn": 2') ||
+  !withdrawn.stdout.includes('"pendingInBatch": 0')
+)
+  throw new Error("Withdrawal readback failed");
+run(`do $$ begin if not exists(select 1 from public.world_preseason_team_members where user_id='00000000-0000-0000-0000-000000000032' and team_id='20000000-0000-0000-0000-000000000001')
+ or not exists(select 1 from public.world_preseason_team_members where user_id='00000000-0000-0000-0000-000000000038' and team_id='20000000-0000-0000-0000-000000000004')
+ or not exists(select 1 from public.world_preseason_team_applications where id='10000000-0000-0000-0000-000000000002' and status='pending')
+ then raise exception 'Withdrawal altered membership or unrelated application'; end if; end $$;`);
 // Recruitment locking must not remove a captain's existing removal authority.
 const verified = run(verificationQuery(ids));
 if (
   !verified.stdout.includes('"accepted": 2') ||
   !verified.stdout.includes('"acceptedWithoutMembership": 0') ||
-  !verified.stdout.includes('"pendingInBatch": 6')
+  !verified.stdout.includes('"pendingInBatch": 4')
 )
   throw new Error("Independent approval readback failed");
 run(`update public.world_preseason_seasons set lobby_opens_at=now()-interval '1 day' where code='season-1';

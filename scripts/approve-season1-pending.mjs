@@ -55,6 +55,7 @@ export function verificationQuery(ids) {
   ) select jsonb_build_object(
     'inspected', count(*), 'accepted', count(*) filter(where status='accepted'),
     'pendingInBatch', count(*) filter(where status='pending'),
+    'withdrawn', count(*) filter(where status='withdrawn'),
     'acceptedWithoutMembership', count(*) filter(where status='accepted' and not exists(select 1 from public.world_preseason_team_members m where m.season_id=batch.season_id and m.team_id=batch.team_id and m.user_id=batch.applicant_user_id)),
     'blocked',coalesce((select jsonb_object_agg(reason,n) from (select reason,count(*) n from batch where status='pending' group by reason) reasons),'{}'::jsonb),
     'remainingPending',(select count(*) from public.world_preseason_team_applications a join public.world_preseason_seasons s on s.id=a.season_id where s.code='season-1' and a.status='pending')
@@ -66,8 +67,10 @@ export async function approvePending({
   expectedFingerprint,
   template,
 }) {
-  if (!["preview", "approve"].includes(mode))
-    throw new Error("Use preview or approve");
+  if (!["preview", "approve", "withdraw-conflicts"].includes(mode))
+    throw new Error(
+      "Use preview, approve or explicitly authorized withdraw-conflicts",
+    );
   const batch = inspectBatch(await request(pendingQuery, true));
   if (mode === "preview")
     return { mode, pending: batch.count, fingerprint: batch.fingerprint };
@@ -89,7 +92,9 @@ export async function approvePending({
     rows?.length !== 1 ||
     result?.inspected !== batch.count ||
     result?.acceptedWithoutMembership !== 0 ||
-    result?.accepted + result?.pendingInBatch !== batch.count
+    (mode === "withdraw-conflicts"
+      ? result?.withdrawn !== batch.count
+      : result?.accepted + result?.pendingInBatch !== batch.count)
   )
     throw new Error(
       "Approval post-commit verification failed; inspect state, do not retry writes",
@@ -134,7 +139,12 @@ async function main() {
   const result = await approvePending({
     mode: process.env.APPROVAL_MODE,
     expectedFingerprint: process.env.EXPECTED_FINGERPRINT,
-    template: readFileSync("scripts/approve-season1-pending.sql", "utf8"),
+    template: readFileSync(
+      process.env.APPROVAL_MODE === "withdraw-conflicts"
+        ? "scripts/withdraw-season1-conflicting-pending.sql"
+        : "scripts/approve-season1-pending.sql",
+      "utf8",
+    ),
     request,
   });
   console.log(

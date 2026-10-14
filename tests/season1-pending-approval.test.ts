@@ -109,4 +109,37 @@ describe("one-time Season 1 pending approval", () => {
       /disable trigger|alter policy|set_config|auth\.users|update public\.profiles|delete from public\.world_preseason_team_members/i,
     );
   });
+  it("withdraws only an explicitly inspected conflicting batch and verifies it separately", async () => {
+    const withdrawal = readFileSync(
+      "scripts/withdraw-season1-conflicting-pending.sql",
+      "utf8",
+    );
+    const request = vi
+      .fn()
+      .mockResolvedValueOnce([{ id }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          result: {
+            inspected: 1,
+            accepted: 0,
+            pendingInBatch: 0,
+            withdrawn: 1,
+            acceptedWithoutMembership: 0,
+          },
+        },
+      ]);
+    const result = await approvePending({
+      request,
+      mode: "withdraw-conflicts",
+      expectedFingerprint: inspectBatch([{ id }]).fingerprint,
+      template: withdrawal,
+    });
+    expect(result.verified).toBe(true);
+    expect(request.mock.calls[1][0]).toContain("m.team_id<>a.team_id");
+    expect(request.mock.calls[1][0]).toContain("set status='withdrawn'");
+    expect(withdrawal).not.toMatch(
+      /delete from|insert into|update public\.world_preseason_team_members|set_config|alter table/i,
+    );
+  });
 });
