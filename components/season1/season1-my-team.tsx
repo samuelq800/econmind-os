@@ -7,6 +7,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Season1WorldArtwork } from "./season1-world-artwork";
+import { Season1WorkspaceNav } from "./season1-workspace-nav";
 import { startVisiblePolling } from "@/lib/visible-polling";
 import {
   applyToSeason1TeamByCode, dissolveSeason1Team, getSeason1TeamWorkspace, leaveSeason1Team,
@@ -158,10 +159,7 @@ export function Season1MyTeam() {
 
   return (
     <main className="season1-lobby min-h-screen px-5 py-8 sm:px-8 lg:px-12" onPointerMove={moveSpotlight}>
-      <nav aria-label="Season 1" className="mb-8 flex flex-wrap items-center gap-3 text-sm font-bold">
-        <Link href="/season1" className="rounded-lg border border-[var(--line)] px-4 py-2 hover:bg-[var(--surface-subtle)]">Season 1 Lobby</Link>
-        <Link href="/season1/my-team" aria-current="page" className="rounded-lg bg-[var(--accent-soft)] px-4 py-2 text-[var(--accent)]">My Team</Link>
-      </nav>
+      <Season1WorkspaceNav active="team" />
       {joinCode && <Card className="season1-room-card mb-8 p-6 sm:p-8">
         <p className="text-xs font-bold uppercase tracking-widest text-[var(--accent)]">Season 1 / Team invitation</p>
         <h2 className="mt-3 text-2xl font-bold">Join a team in one click</h2>

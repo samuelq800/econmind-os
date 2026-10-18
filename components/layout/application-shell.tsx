@@ -24,5 +24,9 @@ export function ApplicationShell({ children }: { children: React.ReactNode }) {
   // not initialise, read, or link the visitor's EconMind account session.
   if (isStandaloneLiveWorld(pathname)) return <>{children}</>;
 
+  // Exact, development-only fixture route. The actual /season1/countries page
+  // keeps normal account, onboarding and backend authorization boundaries.
+  if (process.env.NODE_ENV === "development" && pathname.replace(/\/+$/, "") === "/season1/countries/preview") return <>{children}</>;
+
   return <ThemeProvider><PwaRegistration /><AuthProvider><VisualPilot><AccountDeletionProvider><RegisteredAppGate><Navbar />{children}<Footer /></RegisteredAppGate><AuthDialog /><AccountOnboarding /><LegalConsentGate /></AccountDeletionProvider></VisualPilot></AuthProvider></ThemeProvider>;
 }

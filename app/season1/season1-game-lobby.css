@@ -435,6 +435,10 @@ body:has(.season1-lobby) footer {
 
 /* The world channel stays available without interrupting the team workspace. */
 .season1-lobby > .season1-portals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.season1-lobby > .season1-portals.season1-portals-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 900px) {
+  .season1-lobby > .season1-portals.season1-portals-three { grid-template-columns: 1fr; }
+}
 .season1-world-chat {
   position: fixed; z-index: 45; top: 6rem; right: 1.25rem; bottom: 1.25rem;
   display: flex; flex-direction: column; width: 22rem; min-height: 0;
