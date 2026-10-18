@@ -4,6 +4,7 @@ import { Season1WorldChat } from "./season1-world-chat";
 import { Season1WorldArtwork } from "./season1-world-artwork";
 import { Season1NotificationPrompt } from "./season1-notification-prompt";
 import { Season1AdminOverviewPanel } from "./season1-admin-overview";
+import { Season1WorkspaceNav } from "./season1-workspace-nav";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -197,11 +198,9 @@ export function Season1TeamLobby({ initialLobby }: { initialLobby?: Season1Lobby
 
   return (
     <main className="season1-lobby min-h-screen px-5 py-8 sm:px-8 lg:px-12" onPointerMove={moveSpotlight}>
-      <nav aria-label="Season 1" className="mb-5 flex flex-wrap gap-3 text-sm font-bold">
-        <Link href="/season1" aria-current="page" className="rounded-lg bg-[var(--accent-soft)] px-4 py-2 text-[var(--accent)]">Season 1 Lobby</Link>
-        <Link href="/season1/my-team" className="rounded-lg border border-[var(--line)] px-4 py-2 hover:bg-[var(--surface-subtle)]">My Team</Link>
+      <Season1WorkspaceNav active="lobby">
         {worldSupervisor && <a href="#admin-overview" className="rounded-lg border border-[var(--line)] px-4 py-2 hover:bg-[var(--surface-subtle)]">Admin overview</a>}
-      </nav>
+      </Season1WorkspaceNav>
       <Season1NotificationPrompt />
       <section className="season1-world-hero relative isolate overflow-hidden rounded-2xl border border-[#2b6f68] px-6 py-10 text-white shadow-2xl sm:px-10 sm:py-14">
         <Season1WorldArtwork />
@@ -262,9 +261,10 @@ export function Season1TeamLobby({ initialLobby }: { initialLobby?: Season1Lobby
         </div>
       </section>
 
-      <nav className="season1-portals" aria-label="Explore the Season 1 lobby">
+      <nav className="season1-portals season1-portals-three" aria-label="Explore the Season 1 lobby">
         <a href="#discover"><span className="season1-portal-icon"><Compass size={22} /></span><span><small>01 / FIND YOUR PEOPLE</small><strong>Discover Teams</strong><span>Explore real teams and join the story.</span></span><ArrowRight size={18} /></a>
         <Link href="/season1/my-team"><span className="season1-portal-icon"><Crown size={22} /></span><span><small>02 / YOUR HOME BASE</small><strong>My Team</strong><span>Team code, members and readiness.</span></span><ArrowRight size={18} /></Link>
+        <Link href="/season1/countries"><span className="season1-portal-icon"><Compass size={22} /></span><span><small>03 / YOUR NEXT CHAPTER</small><strong>Country Selection</strong><span>World map, country scenes and team preference.</span></span><ArrowRight size={18} /></Link>
       </nav>
 
       {worldSupervisor && <Season1AdminOverviewPanel key={`${lobby.season.id}:${user.id}`} seasonId={lobby.season.id} userId={user.id} />}

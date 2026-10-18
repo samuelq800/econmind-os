@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { withBasePath } from "@/lib/base-path";
 
-/** Shared, unmodified visual layers for the Lobby and My Team. */
+/** Shared, unmodified visual layers for all Season 1 workspaces. */
 export function Season1WorldArtwork() {
   return <>
         <div className="season1-world-grid" aria-hidden="true" />

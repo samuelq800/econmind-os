@@ -136,6 +136,12 @@ jobs:
             "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/database/query" \
             --data "$payload" --output /dev/null
 
+      - name: Verify Season 1 country selection prerequisites (read-only)
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+        run: node scripts/check-season1-country-backend.mjs
+
       - name: Apply Season 1 World Chat read API
         if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.frontend_only) && !contains(github.event.head_commit.message, '[frontend-only]') }}
         env:
