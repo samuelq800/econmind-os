@@ -14,6 +14,31 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  mail-recipient-groups:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: disposable-test-only
+          POSTGRES_DB: mail_recipient_groups_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify recipient groups and admin-only access in disposable PostgreSQL
+        env:
+          PGPASSWORD: disposable-test-only
+        run: |
+          psql -h localhost -U postgres -d mail_recipient_groups_test -f scripts/test-mail-recipient-groups.sql
+          test "$(psql -XqAt -v ON_ERROR_STOP=1 -h localhost -U postgres -d mail_recipient_groups_test -f scripts/verify-mail-recipient-groups.sql)" = t
+
   group-registration:
     runs-on: ubuntu-latest
     timeout-minutes: 20

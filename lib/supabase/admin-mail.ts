@@ -5,9 +5,17 @@ export async function listMailRecipients(): Promise<MailRecipient[]> {
   const rows: MailRecipient[] = [];
   let after: string | null = null;
   for (;;) {
-    const { data, error } = await client().rpc("admin_mail_recipients", { p_after: after });
+    const { data, error } = await client().rpc("admin_mail_recipient_directory", { p_after: after });
     fail(error);
     const next = (data ?? []) as MailRecipient[];
+    // Do not expose a partial/stale directory as a complete category selection.
+    let previous = after;
+    for (const row of next) {
+      if (!row.user_id || !row.email || !Array.isArray(row.groups) || (previous && row.user_id <= previous)) {
+        throw new Error("Recipient directory pagination failed. Reload the directory.");
+      }
+      previous = row.user_id;
+    }
     rows.push(...next);
     if (next.length < 200) return rows;
     const cursor = next[next.length - 1].user_id;
