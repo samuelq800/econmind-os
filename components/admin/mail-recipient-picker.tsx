@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { listMailRecipients } from "@/lib/supabase/admin-mail";
-import { MAIL_RECIPIENT_GROUPS, filterMailRecipients, recipientEmails, type MailRecipient, type MailRecipientGroup } from "@/lib/mail/admin-mail";
+import { MAIL_RECIPIENT_GROUPS, filterMailRecipients, partitionMailRecipientDirectory, recipientEmails, type MailRecipient, type MailRecipientGroup } from "@/lib/mail/admin-mail";
 
 export function MailRecipientPicker({ value, disabled, onChange }: { value: string; disabled: boolean; onChange: (value: string) => void }) {
   const [directory, setDirectory] = useState<MailRecipient[]>([]);
@@ -20,13 +20,14 @@ export function MailRecipientPicker({ value, disabled, onChange }: { value: stri
 }
 
 /** Presentational picker is independently testable without authentication or mail delivery. */
-export function MailRecipientSelection({ value, disabled, onChange, directory, loading = false, loadError = "" }: {
+export function MailRecipientSelection({ value, disabled, onChange, directory: allRows, loading = false, loadError = "" }: {
   value: string; disabled: boolean; onChange: (value: string) => void; directory: MailRecipient[]; loading?: boolean; loadError?: string;
 }) {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [school, setSchool] = useState("");
   const [groups, setGroups] = useState<MailRecipientGroup[]>([]);
+  const { eligible: directory, unavailable } = partitionMailRecipientDirectory(allRows);
   const schools = [...new Map(directory.filter((row) => row.school_id).map((row) => [row.school_id!, row.school_name || "Unnamed school"])).entries()].sort((a, b) => a[1].localeCompare(b[1]));
   const selected = new Set(value.split(/[,;\n]+/).map((email) => email.trim().toLowerCase()).filter(Boolean));
   const schoolMembers = directory.filter((row) => row.school_id === school);
@@ -40,6 +41,11 @@ export function MailRecipientSelection({ value, disabled, onChange, directory, l
     <legend className="text-xs font-bold">To</legend>
     <label className="block text-xs" htmlFor="mail-to">Email addresses<textarea id="mail-to" required rows={2} value={value} onChange={(event) => onChange(event.target.value)} placeholder="recipient@example.com, another@example.com" className={`mt-2 ${inputClass}`} /></label>
     <p className="text-xs text-[var(--ink-muted)]">Separate addresses with commas. Up to 500 recipients. Each receives a separate email; other addresses stay private.</p>
+    {unavailable.length > 0 && <details className="rounded-lg border border-[var(--line)] bg-[var(--amber-soft)] p-3 text-xs text-[var(--ink)]">
+      <summary className="cursor-pointer font-semibold">{unavailable.length} users excluded: invalid email addresses</summary>
+      <p className="mt-2 leading-5">All category counts and bulk selections include valid email addresses only. These accounts remain unchanged; their addresses must be corrected before receiving mail.</p>
+      <ul className="mt-2 max-h-32 space-y-1 overflow-y-auto">{unavailable.map((row) => <li key={row.user_id} className="break-all">{row.display_name || "Unnamed user"} — {row.email}</li>)}</ul>
+    </details>}
     <div className="space-y-3 rounded-lg border border-[var(--line)] bg-[var(--canvas)] p-3">
       <div className="flex flex-wrap items-center gap-2">
         <Button type="button" size="sm" variant="secondary" disabled={disabled || loading || !!loadError || !directory.length} onClick={() => add(directory.map((row) => row.email))}>Select all users ({directory.length})</Button>
