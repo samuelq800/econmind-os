@@ -3,6 +3,10 @@
 The Mail composer retains manual addresses, per-user selection, school filtering,
 the confirmation screen, private one-recipient delivery and the 500-address cap.
 Selection never sends mail. Oversized selections fail without silently truncating.
+Malformed legacy directory addresses are explicitly listed as unavailable; they
+are excluded from displayed eligible counts and all bulk-selection paths. No
+account record is changed. Invalid manually entered addresses block review with
+an address-specific error. The same address predicate guards each send payload.
 
 `admin_mail_recipient_directory(p_after uuid)` adds category metadata to the
 existing keyset-paginated directory, at 200 users per page. The browser loads all

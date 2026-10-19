@@ -72,8 +72,30 @@ export function recipientEmails(value: string): string[] {
   if (!addresses.length) throw new Error("Select at least one recipient.");
   const unique = [...new Map(addresses.map((email) => [email.toLowerCase(), email])).values()];
   if (unique.length > 500) throw new Error("Select at most 500 recipients per send.");
-  for (const to of unique) validatedMailDraft({ to, subject: "Validation", message: "Validation" });
+  for (const to of unique) {
+    if (!isMailRecipientAddress(to)) throw new Error(`Invalid recipient email address: ${to.slice(0, 254)}. Correct or remove this address before continuing.`);
+  }
   return unique;
+}
+
+/** Keep directory eligibility and the one-recipient transport validator in sync. */
+export function isMailRecipientAddress(value: string): boolean {
+  const to = value.trim();
+  return to.length <= 254 && /^[^\s@<>,;:]+@[^\s@<>,;:]+\.[^\s@<>,;:]+$/.test(to);
+}
+
+export function partitionMailRecipientDirectory(rows: MailRecipient[]) {
+  return {
+    eligible: rows.filter((row) => isMailRecipientAddress(row.email)),
+    unavailable: rows.filter((row) => !isMailRecipientAddress(row.email)),
+  };
+}
+
+/** Composer review accepts a batch; transport still validates and sends one address per call. */
+export function validatedMailBatchDraft(input: MailDraft): MailDraft {
+  const recipients = recipientEmails(input.to);
+  const checked = validatedMailDraft({ ...input, to: recipients[0] });
+  return { ...checked, to: recipients.join(", ") };
 }
 
 export function forwardDraft(mail: MailMessage): MailDraft {
@@ -109,7 +131,7 @@ export function validatedMailDraft(input: MailDraft): MailDraft {
   const to = input.to.trim();
   const subject = input.subject.trim();
   const message = input.message.trim();
-  if (to.length > 254 || !/^[^\s@<>,;:]+@[^\s@<>,;:]+\.[^\s@<>,;:]+$/.test(to)) {
+  if (!isMailRecipientAddress(to)) {
     throw new Error("Enter one recipient email address. CC, BCC, and multiple recipients are not supported.");
   }
   if (!subject || subject.length > 200 || /[\r\n\u0000]/.test(subject)) throw new Error("Subject must contain 1–200 characters on a single line.");

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { filterMailRecipients, MAIL_RECIPIENT_GROUPS, recipientEmails, type MailRecipient } from "@/lib/mail/admin-mail";
+import { filterMailRecipients, isMailRecipientAddress, partitionMailRecipientDirectory, MAIL_RECIPIENT_GROUPS, recipientEmails, validatedMailBatchDraft, validatedMailDraft, type MailRecipient } from "@/lib/mail/admin-mail";
 
 const { rpc } = vi.hoisted(() => ({ rpc: vi.fn() }));
 vi.mock("@/lib/supabase/client", () => ({
@@ -36,6 +36,38 @@ describe("Mail recipient category selection", () => {
   });
   it("never silently truncates bulk selections above 500", () => {
     expect(() => recipientEmails(Array.from({ length: 501 }, (_, i) => row(i + 1).email).join(","))).toThrow("at most 500");
+  });
+  it("excludes malformed legacy directory emails without blocking a valid group", () => {
+    const rows = [row(1, ["season1_team_founders"]), { ...row(2, ["season1_team_founders"]), email: "legacy@local" }, { ...row(3), email: "x@y" }];
+    const before = structuredClone(rows);
+    const { eligible, unavailable } = partitionMailRecipientDirectory(rows);
+    expect(eligible).toEqual([rows[0]]);
+    expect(unavailable).toEqual(rows.slice(1));
+    expect(recipientEmails(filterMailRecipients(eligible, ["season1_team_founders"]).map((r) => r.email).join(","))).toEqual([row(1).email]);
+    expect(rows).toEqual(before);
+    const markup = renderToStaticMarkup(createElement(MailRecipientSelection, { directory: rows, value: "", disabled: false, onChange: () => {} }));
+    expect(markup).toContain("Select all users (1)");
+    expect(markup).toContain("Season 1 team founders (1)");
+    expect(markup).toContain("2 users excluded: invalid email addresses");
+    expect(markup).toContain("legacy@local");
+  });
+  it("gives an address-specific batch error while retaining one-recipient server payloads", () => {
+    expect(() => recipientEmails("good@example.com,legacy@local")).toThrow("Invalid recipient email address: legacy@local");
+    expect(() => recipientEmails("good@example.com,legacy@local")).not.toThrow("multiple recipients are not supported");
+    expect(() => validatedMailDraft({ to: "a@example.com,b@example.com", subject: "Subject", message: "Message" })).toThrow("one recipient");
+    for (const address of ["a@example.com", "x@y", "legacy@local", "a@example.com\r\nBcc:x@y.com", "Name <a@example.com>"]) {
+      let accepted = true;
+      try { validatedMailDraft({ to: address, subject: "Validation", message: "Validation" }); } catch { accepted = false; }
+      expect(isMailRecipientAddress(address)).toBe(accepted);
+    }
+  });
+  it("reviews the selected valid category as a batch without invoking the one-recipient validator on the whole list", () => {
+    const { eligible } = partitionMailRecipientDirectory([row(1), row(2), { ...row(3), email: "invalid@local" }]);
+    const reviewed = validatedMailBatchDraft({ to: eligible.map((r) => r.email).join(", "), subject: "  Announcement  ", message: "  Hello everyone  " });
+    expect(reviewed).toEqual({ to: "person1@example.com, person2@example.com", subject: "Announcement", message: "Hello everyone" });
+    for (const to of recipientEmails(reviewed.to)) expect(validatedMailDraft({ ...reviewed, to }).to).toBe(to);
+    expect(() => validatedMailBatchDraft({ ...reviewed, to: reviewed.to + ",invalid@local" })).toThrow("Invalid recipient email address: invalid@local");
+    expect(() => validatedMailBatchDraft({ ...reviewed, subject: "Heading\r\nHeader" })).toThrow("Subject");
   });
   it("renders all category counts and disables selection during sending or directory failure", () => {
     const markup = renderToStaticMarkup(createElement(MailRecipientSelection, { directory, value: "manual@example.com", disabled: true, onChange: () => {} }));

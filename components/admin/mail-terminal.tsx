@@ -6,7 +6,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { forwardDraft, recipientEmails, formatAttachmentSize, MAIL_PAGE_SIZE, mailSenderName, mailStatusLabel, OFFICIAL_MAIL_ADDRESS, replySubject, validatedMailDraft, type MailDeliveryStatus, type MailDraft, type MailMessage, type MailThread } from "@/lib/mail/admin-mail";
+import { forwardDraft, recipientEmails, formatAttachmentSize, MAIL_PAGE_SIZE, mailSenderName, mailStatusLabel, OFFICIAL_MAIL_ADDRESS, replySubject, validatedMailBatchDraft, type MailDeliveryStatus, type MailDraft, type MailMessage, type MailThread } from "@/lib/mail/admin-mail";
 import { getProfile } from "@/lib/supabase/data";
 import { getLatestInboundMessage, getMailThread, listMailInbox, listSentMail, listThreadMessages, MailSendError, sendAdminMail, type SendMailResult } from "@/lib/supabase/admin-mail";
 
@@ -227,7 +227,7 @@ function Composer({ initialDraft, senderName, onBusy, onCheckSent }: { initialDr
   function review(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (locked || !senderName) return;
-    try { const emails = recipientEmails(draft.to); const checked = validatedMailDraft({ ...draft, to: emails[0] }); setConfirmation({ ...checked, to: emails.join(", ") }); setError(""); }
+    try { setConfirmation(validatedMailBatchDraft(draft)); setError(""); }
     catch (caught) { setError(errorText(caught, "Review the message fields.")); }
   }
 
