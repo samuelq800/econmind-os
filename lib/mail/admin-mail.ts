@@ -46,7 +46,26 @@ export type MailMessage = {
 export type MailDraft = { to: string; subject: string; message: string; threadId?: string };
 export type MailPage<T> = { rows: T[]; hasMore: boolean };
 
-export type MailRecipient = { user_id: string; display_name: string | null; email: string; school_id: string | null; school_name: string | null };
+export const MAIL_RECIPIENT_GROUPS = [
+  { id: "season1_team_founders", label: "Season 1 team founders" },
+  { id: "season1_participants", label: "Season 1 participants" },
+  { id: "season1_team_members", label: "Season 1 team members" },
+  { id: "season1_free_agents", label: "Season 1 free agents" },
+  { id: "school_participants", label: "School participants" },
+  { id: "individual_participants", label: "Individual participants" },
+  { id: "school_leaders", label: "School leaders" },
+  { id: "teachers_professors", label: "Teachers & professors" },
+] as const;
+export type MailRecipientGroup = typeof MAIL_RECIPIENT_GROUPS[number]["id"];
+export type MailRecipient = { user_id: string; display_name: string | null; email: string; school_id: string | null; school_name: string | null; groups: MailRecipientGroup[] };
+
+/** Categories combine as a union; school and search further narrow that union. */
+export function filterMailRecipients(rows: MailRecipient[], groups: MailRecipientGroup[], school = "", search = ""): MailRecipient[] {
+  const query = search.trim().toLowerCase();
+  return rows.filter((row) => (!groups.length || groups.some((group) => row.groups.includes(group)))
+    && (!school || row.school_id === school)
+    && (!query || `${row.display_name || ""} ${row.email} ${row.school_name || ""}`.toLowerCase().includes(query)));
+}
 
 export function recipientEmails(value: string): string[] {
   const addresses = value.split(/[,;\n]+/).map((item) => item.trim()).filter(Boolean);
