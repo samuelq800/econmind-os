@@ -32,7 +32,9 @@ jobs:
       - name: Test eight-document confirmation and receipt isolation
         env:
           PGPASSWORD: disposable-test-only
-        run: psql -X -h localhost -U postgres -d policy_acknowledgements_test -f scripts/test-policy-acknowledgements.sql
+        run: |
+          psql -X -h localhost -U postgres -d policy_acknowledgements_test -f scripts/test-policy-acknowledgements.sql
+          test "$(psql -XqAt -v ON_ERROR_STOP=1 -h localhost -U postgres -d policy_acknowledgements_test -c 'set role supabase_read_only_user;' -f scripts/verify-policy-acknowledgements.sql)" = t
 
   mail-recipient-groups:
     runs-on: ubuntu-latest

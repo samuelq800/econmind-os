@@ -13,6 +13,11 @@ const verification = readFileSync(
 );
 const hash = createHash("sha256").update(migration).digest("hex");
 describe("bounded policy receipt activation", () => {
+  it("uses catalog-only readiness without requiring private function execution", () => {
+    expect(verification).not.toContain("from private.current_policy_release_documents()");
+    expect(verification).toContain("from pg_catalog.pg_proc");
+    expect(verification).toContain("regexp_count(prosrc");
+  });
   it("installs only the exact migration with an atomic ledger, never accepts for any user", async () => {
     const request = vi
       .fn()
