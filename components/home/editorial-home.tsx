@@ -14,6 +14,7 @@ import {
 import { HomeDailyBriefPreview } from "@/components/home/home-daily-brief-preview";
 import { HomeLeagueSchoolDirectory } from "@/components/home/home-league-school-directory";
 import { Season1HomePromo } from "@/components/home/season1-home-promo";
+import { HomeCinematicSky } from "@/components/home/home-cinematic-sky";
 import { LEAGUE_CHALLENGE_CATALOG } from "@/lib/economics/league-arena";
 import { withBasePath } from "@/lib/base-path";
 
@@ -49,7 +50,8 @@ export function EditorialHome() {
   return (
     <main className="editorial-home">
       <Season1HomePromo />
-      <section className="home-hero">
+      <section className="home-hero home-hero-cinematic">
+        <HomeCinematicSky />
         <div className="home-hero-grid" aria-hidden="true" />
         <div className="home-sky-motion" aria-hidden="true">
           <span className="home-meteor home-meteor-one" />
@@ -57,7 +59,7 @@ export function EditorialHome() {
           <span className="home-meteor home-meteor-three" />
         </div>
         <div className="mx-auto grid max-w-[1560px] gap-12 px-5 pb-20 pt-16 sm:px-8 lg:grid-cols-[1.03fr_.97fr] lg:px-12 lg:pb-28 lg:pt-24">
-          <div className="relative z-10 max-w-4xl">
+          <div className="home-hero-copy relative z-10 max-w-4xl">
             <Eyebrow>Interactive economics laboratory</Eyebrow>
             <h1 className="home-hero-title">EconMind OS.</h1>
             <p className="home-hero-line">From the real world<br />to economic reasoning.</p>
