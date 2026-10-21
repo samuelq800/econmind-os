@@ -55,6 +55,12 @@ function fixture() {
 }
 
 describe("shared group registration", () => {
+  it("preserves the versions actually checked by a cached pre-update client", async () => {
+    const {deps,send}=fixture();
+    expect((await send({legalAcceptance:{terms:true,privacy:true,termsVersion:"1.2",privacyVersion:"1.1"}})).status).toBe(200);
+    expect(deps.createAccount).toHaveBeenCalledWith(expect.anything(),expect.anything(),expect.objectContaining({legal_acceptance:{terms_version:"1.2",privacy_version:"1.1"}}),expect.anything());
+    expect((await send({legalAcceptance:{terms:true,privacy:true,termsVersion:"2.0",privacyVersion:"1.1"}})).status).toBe(400);
+  });
   it("uses the same global limit bucket despite different forwarded IPs", async () => {
     const { handler, input, deps } = fixture();
     for (const ip of ["192.0.2.1", "198.51.100.2"]) {

@@ -22,12 +22,13 @@ describe("governance, privacy, and legal foundation", () => {
     expect(authDialog).toContain("Privacy Notice");
   });
 
-  it("does not interrupt existing accounts while reconsent is disabled", () => {
+  it("requires the owner-authorised v2 update once, not the previous versions", () => {
     expect(needsLegalReconsent({
       terms: LEGAL_DOCUMENTS.terms.version,
       privacy: LEGAL_DOCUMENTS.privacy.version,
     })).toBe(false);
-    expect(needsLegalReconsent({})).toBe(false);
+    expect(needsLegalReconsent({})).toBe(true);
+    expect(needsLegalReconsent({terms:"1.2",privacy:"1.1"})).toBe(true);
   });
 
   it("registers the exact current legal versions required by first-time setup", () => {

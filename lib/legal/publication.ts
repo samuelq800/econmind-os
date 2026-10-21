@@ -10,7 +10,7 @@ export const POLICY_SCOPE =
   "Main-platform policies cover the core education platform and shared services within their stated scope. World-specific documents cover EconMind World and Season 1. Linking them here does not automatically incorporate World rules into the main-platform Terms.";
 
 export const CONSENT_PUBLICATION_NOTICE =
-  "The current published documents are available below. Existing account acknowledgement records remain Terms v1.2 and Privacy v1.1; this release does not create a v2.0 consent record or change existing permissions. Version-specific acknowledgement activation remains pending.";
+  "Current platform documents are version 2.0. Earlier acknowledgement records are preserved as history and are not upgraded automatically. Signed-in accounts confirm the current platform and World documents individually; reading policies alone does not record agreement or grant permissions.";
 
 export const LEGACY_POLICY_ROUTES = {
   "/terms": "/legal/terms/",

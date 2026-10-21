@@ -170,8 +170,8 @@ function PublicationRegister() {
       </div>
       <p>
         New publication does not retroactively change permissions or historic
-        consent records. Version-specific acknowledgement activation is pending;
-        existing account records are not represented as v2.0 acceptance.
+        consent records. Signed-in accounts confirm current platform and World
+        documents individually; earlier records are not upgraded to v2.0 acceptance.
       </p>
       <div className="policy-register-links">
         <Link href="/legal/previous/terms/">Prior Terms v1.2</Link>

@@ -56,9 +56,9 @@ describe("Google sign-in with the existing Supabase account", () => {
     expect(hasInitialLegalConsent([])).toBe(false);
     expect(hasInitialLegalConsent(current.slice(0, 1))).toBe(false);
     expect(hasInitialLegalConsent(current)).toBe(true);
-    expect(LEGAL_RECONSENT.terms).toBe(false);
-    expect(LEGAL_RECONSENT.privacy).toBe(false);
-    expect(needsLegalReconsent({})).toBe(false);
+    expect(LEGAL_RECONSENT.terms).toBe(true);
+    expect(LEGAL_RECONSENT.privacy).toBe(true);
+    expect(needsLegalReconsent({})).toBe(true);
     expect(onboarding).toContain("registrationConsentValid(legalAcceptance)");
     expect(onboarding).toContain("acceptCurrentLegalDocuments(LEGAL_DOCUMENTS.terms.version, LEGAL_DOCUMENTS.privacy.version)");
     expect(onboarding).toContain("if (profile.onboarding_path)");

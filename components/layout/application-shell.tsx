@@ -7,6 +7,7 @@ import { AuthProvider } from "@/components/auth/auth-provider";
 import { RegisteredAppGate } from "@/components/auth/registered-app-gate";
 import { AccountDeletionProvider } from "@/components/governance/account-deletion-provider";
 import { LegalConsentGate } from "@/components/legal/legal-consent-gate";
+import { PolicyAcknowledgementProvider } from "@/components/legal/policy-acknowledgement-provider";
 import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
 import { PwaRegistration } from "@/components/pwa/pwa-registration";
@@ -28,5 +29,5 @@ export function ApplicationShell({ children }: { children: React.ReactNode }) {
   // keeps normal account, onboarding and backend authorization boundaries.
   if (process.env.NODE_ENV === "development" && pathname.replace(/\/+$/, "") === "/season1/countries/preview") return <>{children}</>;
 
-  return <ThemeProvider><PwaRegistration /><AuthProvider><VisualPilot><AccountDeletionProvider><RegisteredAppGate><Navbar />{children}<Footer /></RegisteredAppGate><AuthDialog /><AccountOnboarding /><LegalConsentGate /></AccountDeletionProvider></VisualPilot></AuthProvider></ThemeProvider>;
+  return <ThemeProvider><PwaRegistration /><AuthProvider><PolicyAcknowledgementProvider><VisualPilot><AccountDeletionProvider><RegisteredAppGate><Navbar />{children}<Footer /></RegisteredAppGate><AuthDialog /><AccountOnboarding /><LegalConsentGate /></AccountDeletionProvider></VisualPilot></PolicyAcknowledgementProvider></AuthProvider></ThemeProvider>;
 }

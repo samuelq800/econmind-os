@@ -148,14 +148,13 @@ describe("approved Legal Center publication", () => {
     );
     expect(readFileSync("components/layout/navbar.tsx", "utf8")).not.toContain('onMouseEnter={() => setOpenSection("desktop-more")}');
   });
-  it("keeps receipt versions and reconsent untouched, disclosing the publication boundary", () => {
-    expect(LEGAL_DOCUMENTS.terms.version).toBe("1.2");
-    expect(LEGAL_DOCUMENTS.privacy.version).toBe("1.1");
-    expect(LEGAL_RECONSENT).toEqual({ terms: false, privacy: false });
+  it("activates the separately authorised v2 confirmation without upgrading old records", () => {
+    expect(LEGAL_DOCUMENTS.terms.version).toBe("2.0");
+    expect(LEGAL_DOCUMENTS.privacy.version).toBe("2.0");
+    expect(LEGAL_RECONSENT).toEqual({ terms: true, privacy: true });
     for (const file of [
       "components/auth/auth-dialog.tsx",
       "components/auth/account-onboarding.tsx",
-      "components/legal/legal-consent-gate.tsx",
     ])
       expect(readFileSync(file, "utf8")).toContain(
         "<ConsentPublicationNote />",

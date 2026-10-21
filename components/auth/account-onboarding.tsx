@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ConsentPublicationNote } from "@/components/legal/consent-publication-note";
+import { usePolicyAcknowledgement } from "@/components/legal/policy-acknowledgement-provider";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Building2, CheckCircle2, GraduationCap, LoaderCircle, MapPin, School2, UserRound } from "lucide-react";
@@ -43,6 +44,8 @@ export function AccountOnboarding() {
   const pathname = usePathname() ?? "/";
   const { user, roleLoading, profileError, viewerAccess, authOpen } = useAuth();
   const userId = user?.id ?? null;
+  const { state: policyConfirmation } = usePolicyAcknowledgement();
+  const policiesConfirmed = policyConfirmation.userId === userId && policyConfirmation.status === "accepted";
   const [checkedUserId, setCheckedUserId] = useState<string | null>(null);
   const [completedUserId, setCompletedUserId] = useState<string | null>(null);
   const [needsInitialConsent, setNeedsInitialConsent] = useState(false);
@@ -61,7 +64,7 @@ export function AccountOnboarding() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    if (!userId || roleLoading || profileError) return;
+    if (!policiesConfirmed || !userId || roleLoading || profileError) return;
     let active = true;
     void getAccountOnboarding().then(async (profile) => {
       if (!active) return;
@@ -91,7 +94,7 @@ export function AccountOnboarding() {
       setCheckedUserId(userId);
     });
     return () => { active = false; };
-  }, [userId, roleLoading, profileError, checkAttempt]);
+  }, [userId, roleLoading, profileError, checkAttempt, policiesConfirmed]);
 
   useEffect(() => {
     if (step !== "school") return;
@@ -107,6 +110,7 @@ export function AccountOnboarding() {
   // Public policies must remain readable even before account setup is complete.
   if (pathname === "/legal" || pathname.startsWith("/legal/")) return null;
   if (authOpen || viewerAccess || !user || roleLoading || profileError || completedUserId === userId || (userId !== null && checkedUserId !== userId && hasCachedOnboardingChoice(userId)) || pathname === "/live-world" || pathname.startsWith("/live-world/")) return null;
+  if (!policiesConfirmed) return null;
 
   async function acknowledgeInitialDocuments() {
     if (!registrationConsentValid(legalAcceptance)) return;
