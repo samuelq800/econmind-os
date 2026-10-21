@@ -42,11 +42,11 @@ export async function publishPolicyAcknowledgements({
     );
   }
   const ledger = await request(
-    `select statements[1]='${migration.replaceAll("'", "''")}' as matches from supabase_migrations.schema_migrations where version='${VERSION}'`,
+    `select encode(sha256(convert_to(statements[1],'UTF8')),'hex') as migration_sha256 from supabase_migrations.schema_migrations where version='${VERSION}'`,
     true,
   );
   if (
-    ledger?.[0]?.matches !== true ||
+    ledger?.[0]?.migration_sha256 !== hash ||
     (await request(verification, true))?.[0]?.verified !== true
   )
     throw Error("Policy release readback failed; no automatic write retry");

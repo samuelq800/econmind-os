@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 // @ts-expect-error Local release script is intentionally standalone JavaScript.
 import { publishPolicyAcknowledgements } from "../scripts/publish-policy-acknowledgements.mjs";
@@ -10,13 +11,14 @@ const verification = readFileSync(
   "scripts/verify-policy-acknowledgements.sql",
   "utf8",
 );
+const hash = createHash("sha256").update(migration).digest("hex");
 describe("bounded policy receipt activation", () => {
   it("installs only the exact migration with an atomic ledger, never accepts for any user", async () => {
     const request = vi
       .fn()
       .mockResolvedValueOnce([{ installed: false, table_exists: false }])
       .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([{ matches: true }])
+      .mockResolvedValueOnce([{ migration_sha256: hash }])
       .mockResolvedValueOnce([{ verified: true }]);
     const result = await publishPolicyAcknowledgements({
       request,
@@ -29,6 +31,11 @@ describe("bounded policy receipt activation", () => {
     expect(sql).toContain("pg_advisory_xact_lock");
     expect(sql).toContain("supabase_migrations.schema_migrations");
     expect(sql).not.toMatch(/select\s+public\.acknowledge_policy_release\(/);
+    for (const [query, readOnly] of request.mock.calls)
+      if (readOnly) {
+        expect(query).not.toContain("create table");
+        expect(query).not.toContain("create or replace function");
+      }
   });
   it("read-only readiness cannot install or mutate", async () => {
     const request = vi
@@ -57,7 +64,7 @@ describe("bounded policy receipt activation", () => {
     const request = vi
       .fn()
       .mockResolvedValueOnce([{ installed: true, table_exists: true }])
-      .mockResolvedValueOnce([{ matches: true }])
+      .mockResolvedValueOnce([{ migration_sha256: hash }])
       .mockResolvedValueOnce([{ verified: true }]);
     expect(
       (
@@ -72,7 +79,7 @@ describe("bounded policy receipt activation", () => {
     request
       .mockReset()
       .mockResolvedValueOnce([{ installed: true, table_exists: true }])
-      .mockResolvedValueOnce([{ matches: false }]);
+      .mockResolvedValueOnce([{ migration_sha256: "0".repeat(64) }]);
     await expect(
       publishPolicyAcknowledgements({ request, migration, verification }),
     ).rejects.toThrow("readback failed");

@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - "supabase/migrations/20261021020000_policy_acknowledgement_release.sql"
+      - "scripts/publish-policy-acknowledgements.mjs"
   workflow_dispatch:
 permissions:
   contents: read
