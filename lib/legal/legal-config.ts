@@ -1,16 +1,16 @@
-export const LEGAL_EFFECTIVE_DATE = "2026-08-27";
+export const LEGAL_EFFECTIVE_DATE = "2026-10-21";
 
 export const LEGAL_DOCUMENTS = {
   terms: {
     key: "terms",
     title: "Terms of Use",
-    version: "1.2",
+    version: "2.0",
     effectiveDate: LEGAL_EFFECTIVE_DATE,
   },
   privacy: {
     key: "privacy",
     title: "Privacy Notice",
-    version: "1.1",
+    version: "2.0",
     effectiveDate: LEGAL_EFFECTIVE_DATE,
   },
 } as const;
@@ -18,19 +18,23 @@ export const LEGAL_DOCUMENTS = {
 export type LegalDocumentKey = keyof typeof LEGAL_DOCUMENTS;
 
 /**
- * This switch is intentionally off for the first public release. Existing
- * account holders remain uninterrupted; it can be enabled alongside a new
- * version when a material policy change genuinely requires reconfirmation.
+ * Owner-authorised confirmation of the published October update. The complete
+ * eight-document receipt is coordinated separately by release identity.
  */
 export const LEGAL_RECONSENT = {
-  terms: false,
-  privacy: false,
+  terms: true,
+  privacy: true,
 } as const;
 
 export type LegalAcceptance = {
   terms: boolean;
   privacy: boolean;
 };
+
+/** Cached pre-update registration clients remain usable but never count as v2 confirmation. */
+export function acceptedRegistrationLegalPair(terms: unknown, privacy: unknown) {
+  return (terms === "2.0" && privacy === "2.0") || (terms === "1.2" && privacy === "1.1");
+}
 
 export function registrationConsentValid(acceptance: LegalAcceptance) {
   return acceptance.terms && acceptance.privacy;

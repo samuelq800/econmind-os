@@ -1,4 +1,4 @@
-import { LEGAL_DOCUMENTS } from "../../../lib/legal/legal-config.ts";
+import { acceptedRegistrationLegalPair } from "../../../lib/legal/legal-config.ts";
 
 type Authorization = {
   status: "new" | "pending" | "invalid" | "limited" | "unavailable";
@@ -137,8 +137,7 @@ export function createGroupRegistrationHandler(
           (typeof displayName !== "string" || displayName.length > 80)) ||
         legalAcceptance?.terms !== true ||
         legalAcceptance?.privacy !== true ||
-        legalAcceptance?.termsVersion !== LEGAL_DOCUMENTS.terms.version ||
-        legalAcceptance?.privacyVersion !== LEGAL_DOCUMENTS.privacy.version
+        !acceptedRegistrationLegalPair(legalAcceptance?.termsVersion, legalAcceptance?.privacyVersion)
       ) {
         return reply(
           {
@@ -192,8 +191,8 @@ export function createGroupRegistrationHandler(
           {
             display_name: displayName?.trim() || null,
             legal_acceptance: {
-              terms_version: LEGAL_DOCUMENTS.terms.version,
-              privacy_version: LEGAL_DOCUMENTS.privacy.version,
+              terms_version: legalAcceptance.termsVersion,
+              privacy_version: legalAcceptance.privacyVersion,
             },
           },
           { group_registration: audit },

@@ -1,5 +1,32 @@
 # Legal Center publication · 21 October 2026
 
+## Subsequent owner-authorised confirmation release
+
+The document-only release below was published in PR #114 on 21 October 2026.
+The owner subsequently requested one-time confirmation by all signed-in users,
+explicitly including World. That later scope supersedes only the pending-consent
+notes below: the new additive release records all eight individually checked
+documents, activates Terms/Privacy v2.0, and preserves earlier receipts unchanged.
+World About and both Privacy notices are acknowledgements of reading, not blanket
+consent to optional processing. Other documents use explicit agreement wording.
+No document wording or scope is amended, no guardian consent is inferred, and
+confirmation does not enrol a participant or grant any role or World access.
+
+The release is one account-level confirmation, persisted by server receipt, not
+one per page, tab, login or device. A stable app-shell coordinator performs one
+status read per account identity, deduplicates submission and rejects stale
+responses after account switches. Public policy reading remains accessible.
+Read/save failures never create acceptance. Cached pre-update registration
+clients retain their actual old receipt versions and must still complete the
+new eight-document confirmation; no old receipt is silently relabelled v2.0.
+
+Only migration `20261021020000_policy_acknowledgement_release.sql` and the
+group-registration function's matching version validation are activated by the
+dedicated, reviewed workflow. Pages performs read-only backend readiness checks
+before publishing the client. No other migration directory or Auth setting is
+applied. Disposable PostgreSQL tests cover permissions, all eight documents,
+idempotence, account identity, anonymous exclusion and preservation of history.
+
 ## Scope and source mapping
 
 This is a main-website content publication and front-end integration, not a

@@ -16,6 +16,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
   pages: write
   id-token: write
 
@@ -164,6 +165,19 @@ jobs:
           SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
         run: node scripts/publish-season1-team-lifecycle.mjs
 
+      - name: Wait for matching scoped policy activation
+        if: ${{ contains(github.event.head_commit.message, '[policy-ack]') }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for attempt in $(seq 1 30); do
+            result="$(gh run list --workflow deploy-policy-acknowledgements.yml --commit "$GITHUB_SHA" --limit 5 --json conclusion --jq '.[0].conclusion // "pending"')"
+            if [ "$result" = success ]; then exit 0; fi
+            if [ "$result" = failure ] || [ "$result" = cancelled ]; then exit 1; fi
+            sleep 15
+          done
+          exit 1
+
       - name: Export static website
         env:
           GITHUB_PAGES: "true"
@@ -173,7 +187,15 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_SUPABASE_PROXY_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_PROXY_URL }}
           NEXT_PUBLIC_ENABLE_CONTINUOUS_WORLD: ${{ vars.NEXT_PUBLIC_ENABLE_CONTINUOUS_WORLD }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
         run: |
+          # Read-only readiness check: never publish a client before its receipt API.
+          for attempt in $(seq 1 12); do
+            if node scripts/publish-policy-acknowledgements.mjs --check-only; then break; fi
+            if [ "$attempt" = 12 ]; then exit 1; fi
+            sleep 15
+          done
           if [ -n "$NEXT_PUBLIC_SUPABASE_PROXY_URL" ]; then
             curl --fail --silent --show-error --max-time 20 \
               --header "apikey: $NEXT_PUBLIC_SUPABASE_ANON_KEY" \
