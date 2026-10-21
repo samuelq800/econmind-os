@@ -58,7 +58,7 @@ export const PAGE_ACCESS_RULES: readonly PageAccessRule[] = [
   { path: "/", audience: "public" },
   { path: "/about", audience: "public" },
   { path: "/community", audience: "public" },
-  { path: "/legal", audience: "public" },
+  { path: "/legal", match: "prefix", audience: "public" },
   { path: "/privacy", audience: "public" },
   { path: "/terms", audience: "public" },
   { path: "/community-guidelines", audience: "public" },

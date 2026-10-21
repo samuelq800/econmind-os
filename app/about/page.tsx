@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { compiledPolicy, policyMetadata } from "@/lib/legal/documents";
+import "@/app/legal/legal-center.css";
 import {
   ArrowRight,
   BookOpenCheck,
@@ -48,17 +50,22 @@ const values = [
 ] as const;
 
 const policyLinks = [
-  { href: "/privacy", title: "Privacy Notice", text: "How personal information and platform data are handled." },
-  { href: "/terms", title: "Terms of Use", text: "Conditions, responsibilities, and limitations for using the platform." },
-  { href: "/community-guidelines", title: "Community Guidelines", text: "Standards for discussion, participation, safety, and submitted content." },
-  { href: "/integrity", title: "Academic & League Integrity", text: "Standards for fair academic and competitive participation." },
+  { href: "/legal/privacy/", title: "Privacy Notice", text: "How personal information and platform data are handled." },
+  { href: "/legal/terms/", title: "Terms of Use", text: "Conditions, responsibilities, and limitations for using the platform." },
+  { href: "/legal/community-guidelines/", title: "Community Guidelines", text: "Standards for discussion, participation, safety, and submitted content." },
+  { href: "/legal/integrity/", title: "Academic and Research Integrity", text: "Standards for honest reasoning and research participation." },
+  { href: "/legal/intellectual-property/", title: "Intellectual Property Policy", text: "Creator ownership, permissions and licensing boundaries." },
+  { href: "/legal/", title: "Legal & Policies", text: "All official policies and the separate World document collection." },
 ] as const;
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <p className="text-[10px] font-extrabold uppercase tracking-[.2em] text-[var(--accent)]">{children}</p>;
 }
 
+export const metadata = policyMetadata("About EconMind League", "/about", "The independently operated economics education and academic exchange initiative, its coordination and participation principles.");
+
 export default function AboutPage() {
+  const alignment = compiledPolicy("about-alignment.md");
   return (
     <main>
       <section className="border-b border-[var(--line)] bg-[var(--surface)]">
@@ -77,6 +84,13 @@ export default function AboutPage() {
             ))}
           </div>
         </div>
+      </section>
+
+      <section className="policy-about-alignment mx-auto max-w-6xl border-b border-[var(--line)] px-5 py-16 sm:px-8 lg:py-20" aria-label="Official EconMind League introduction" lang="en">
+        <SectionLabel>Official initiative / EconMind League</SectionLabel>
+        <p className="mt-4 max-w-3xl text-sm leading-7 text-[var(--ink-muted)]">EconMind League is the official initiative name. EconMind OS remains the core website’s legacy display label.</p>
+        <article className="policy-prose mt-8 max-w-4xl" dangerouslySetInnerHTML={{ __html: alignment.html }} />
+        <Link href="/legal/" className="mt-8 inline-flex items-center gap-3 text-sm font-bold text-[var(--accent)]">Read Legal & Policies <ArrowRight size={16} /></Link>
       </section>
 
       <section className="mx-auto grid max-w-6xl gap-10 px-5 py-16 sm:px-8 lg:grid-cols-[.8fr_1.2fr] lg:py-24">

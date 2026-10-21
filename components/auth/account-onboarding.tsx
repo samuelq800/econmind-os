@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ConsentPublicationNote } from "@/components/legal/consent-publication-note";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Building2, CheckCircle2, GraduationCap, LoaderCircle, MapPin, School2, UserRound } from "lucide-react";
@@ -103,6 +104,8 @@ export function AccountOnboarding() {
     return () => { active = false; };
   }, [step]);
 
+  // Public policies must remain readable even before account setup is complete.
+  if (pathname === "/legal" || pathname.startsWith("/legal/")) return null;
   if (authOpen || viewerAccess || !user || roleLoading || profileError || completedUserId === userId || (userId !== null && checkedUserId !== userId && hasCachedOnboardingChoice(userId)) || pathname === "/live-world" || pathname.startsWith("/live-world/")) return null;
 
   async function acknowledgeInitialDocuments() {
@@ -154,11 +157,12 @@ export function AccountOnboarding() {
       {checkedUserId !== userId ? <div className="flex items-center gap-3 text-sm text-[var(--ink-muted)]" aria-live="polite"><h2 id="account-setup-title" className="sr-only">Checking account setup</h2><LoaderCircle className="animate-spin" size={18} />Checking account setup…</div> : checkError ? <><h2 id="account-setup-title" className="text-2xl font-bold">Account setup unavailable</h2><p role="alert" className="mt-3 text-sm text-[var(--red)]">{checkError}</p><Button className="mt-5" onClick={() => { setCheckedUserId(null); setCheckAttempt((attempt) => attempt + 1); }}>Retry</Button></> : needsInitialConsent ? <>
         <p className="text-[10px] font-extrabold uppercase tracking-[.16em] text-[var(--accent)]">First-time account setup</p>
         <h2 id="account-setup-title" className="mt-2 text-2xl font-bold tracking-[-.04em]">Review the Terms and Privacy Notice</h2>
-        <p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">Please acknowledge both current documents before choosing your school path.</p>
+        <p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">Review the published policies and the acknowledgement-version information before choosing your school path.</p>
         <div className="mt-6 grid gap-4 rounded-xl border border-[var(--line)] bg-[var(--canvas)] p-5 text-sm">
-          <label className="flex items-start gap-3"><input type="checkbox" checked={legalAcceptance.terms} onChange={(event) => setLegalAcceptance((current) => ({ ...current, terms: event.target.checked }))} className="mt-1 size-4 accent-[var(--accent)]" /><span>I have read and agree to the <Link href="/terms" target="_blank" className="font-bold text-[var(--accent)]">Terms of Use v{LEGAL_DOCUMENTS.terms.version}</Link>.</span></label>
-          <label className="flex items-start gap-3"><input type="checkbox" checked={legalAcceptance.privacy} onChange={(event) => setLegalAcceptance((current) => ({ ...current, privacy: event.target.checked }))} className="mt-1 size-4 accent-[var(--accent)]" /><span>I have read the <Link href="/privacy" target="_blank" className="font-bold text-[var(--accent)]">Privacy Notice v{LEGAL_DOCUMENTS.privacy.version}</Link>.</span></label>
+          <label className="flex items-start gap-3"><input type="checkbox" checked={legalAcceptance.terms} onChange={(event) => setLegalAcceptance((current) => ({ ...current, terms: event.target.checked }))} className="mt-1 size-4 accent-[var(--accent)]" /><span>I have read and agree to the <Link href="/legal/terms/" target="_blank" className="font-bold text-[var(--accent)]">Terms of Use</Link>.</span></label>
+          <label className="flex items-start gap-3"><input type="checkbox" checked={legalAcceptance.privacy} onChange={(event) => setLegalAcceptance((current) => ({ ...current, privacy: event.target.checked }))} className="mt-1 size-4 accent-[var(--accent)]" /><span>I have read the <Link href="/legal/privacy/" target="_blank" className="font-bold text-[var(--accent)]">Privacy Notice</Link>.</span></label>
         </div>
+        <ConsentPublicationNote />
         {error && <p role="alert" className="mt-4 rounded-lg bg-[var(--red-soft)] p-3 text-xs text-[var(--red)]">{error}</p>}
         <Button className="mt-5 w-full" disabled={busy || !registrationConsentValid(legalAcceptance)} onClick={() => void acknowledgeInitialDocuments()}>{busy && <LoaderCircle className="animate-spin" size={15} />}Acknowledge and continue</Button>
       </> : <>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ConsentPublicationNote } from "@/components/legal/consent-publication-note";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   CheckCircle2,
@@ -719,7 +720,7 @@ export function AuthDialog() {
                       <span>
                         I have read and agree to the{" "}
                         <Link
-                          href="/terms"
+                          href="/legal/terms/"
                           target="_blank"
                           className="font-bold text-[var(--accent)]"
                         >
@@ -744,7 +745,7 @@ export function AuthDialog() {
                       <span>
                         I have read the{" "}
                         <Link
-                          href="/privacy"
+                          href="/legal/privacy/"
                           target="_blank"
                           className="font-bold text-[var(--accent)]"
                         >
@@ -753,6 +754,7 @@ export function AuthDialog() {
                         .
                       </span>
                     </label>
+                  <ConsentPublicationNote />
                   </fieldset>
                 )}
 

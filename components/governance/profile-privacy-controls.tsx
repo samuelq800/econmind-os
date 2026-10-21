@@ -79,7 +79,7 @@ export function ProfilePrivacyControls({ email }: { email: string | undefined })
     <div className="mt-8 grid gap-6">
       <Card className="p-6">
         <div className="flex gap-4"><span className="grid size-10 shrink-0 place-items-center rounded-lg bg-[var(--accent-soft)] text-[var(--accent)]"><ShieldCheck size={18} /></span><div><p className="text-sm font-bold">Privacy and account controls</p><p className="mt-2 text-sm leading-6 text-[var(--ink-muted)]">Your sign-in email ({email ?? "not available"}) is private and is not shown in public profiles or League directories. Your ordinary profile displays only the information you intentionally save for that purpose.</p></div></div>
-        <div className="mt-5 flex flex-wrap gap-3"><Link href="/privacy" className="inline-flex h-10 items-center rounded-lg border border-[var(--line)] px-4 text-sm font-semibold hover:bg-[var(--surface-subtle)]">Read Privacy Notice</Link><Link href="/contact" className="inline-flex h-10 items-center rounded-lg bg-[var(--accent)] px-4 text-sm font-semibold text-white hover:bg-[var(--accent-strong)]">Request data help</Link></div>
+        <div className="mt-5 flex flex-wrap gap-3"><Link href="/legal/privacy/" className="inline-flex h-10 items-center rounded-lg border border-[var(--line)] px-4 text-sm font-semibold hover:bg-[var(--surface-subtle)]">Read Privacy Notice</Link><Link href="/contact" className="inline-flex h-10 items-center rounded-lg bg-[var(--accent)] px-4 text-sm font-semibold text-white hover:bg-[var(--accent-strong)]">Request data help</Link></div>
       </Card>
 
       <Card className="p-6">

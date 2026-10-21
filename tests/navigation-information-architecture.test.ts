@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 import { MOBILE_NAVIGATION_GROUPS, NAVIGATION_SECTIONS, availableNavigationSections, isNavigationSectionActive } from "@/lib/platform/feature-flags";
+import { policyByKey } from "@/lib/legal/document-registry";
 
 const navbar = readFileSync("components/layout/navbar.tsx", "utf8");
 const footer = readFileSync("components/layout/footer.tsx", "utf8");
@@ -25,7 +26,8 @@ const expectedTopLevelLabels = [
 ];
 
 function routeHasPage(route: string) {
-  return existsSync(`app${route}/page.tsx`);
+  const path = route.replace(/\/+$/, "");
+  return existsSync(`app${path}/page.tsx`) || (Boolean(policyByKey(path.replace(/^\/legal\//, ""))) && existsSync("app/legal/[...slug]/page.tsx"));
 }
 
 describe("Phase 2 information architecture", () => {
@@ -50,7 +52,7 @@ describe("Phase 2 information architecture", () => {
     expect(navbar).toContain("isNavigationSectionActive");
     expect(navbar).toContain("compactDesktopSectionIds");
     expect(navbar).toContain('"season1"');
-    expect(navbar).toContain("xl:flex 2xl:hidden");
+    expect(navbar).toContain("xl:flex 2xl:flex");
     expect(navbar).toContain("xl:hidden");
     expect(navbar).toContain("2xl:flex");
     expect(footer).toContain("availableNavigationSections");

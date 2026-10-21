@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { Season1PolicyLinks } from "@/components/legal/season1-policy-links";
 
 export function Season1WorkspaceNav({
   active,
@@ -11,7 +12,7 @@ export function Season1WorkspaceNav({
   preview?: boolean;
 }) {
   return (
-    <nav
+    <><nav
       aria-label="Season 1"
       className="mb-8 flex flex-wrap items-center gap-3 text-sm font-bold"
     >
@@ -38,6 +39,6 @@ export function Season1WorkspaceNav({
         </Link>
       ))}
       {children}
-    </nav>
+    </nav><Season1PolicyLinks /></>
   );
 }

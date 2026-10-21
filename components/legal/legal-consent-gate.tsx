@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ConsentPublicationNote } from "@/components/legal/consent-publication-note";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CheckCircle2, LoaderCircle } from "lucide-react";
@@ -35,7 +36,7 @@ export function LegalConsentGate() {
     return () => { active = false; window.removeEventListener("econmind:legal-consent-updated", refresh); };
   }, [loading, user]);
 
-  if (pathname === "/live-world" || pathname.startsWith("/live-world/") || !user || !open) return null;
+  if (pathname === "/legal" || pathname.startsWith("/legal/") || pathname === "/live-world" || pathname.startsWith("/live-world/") || !user || !open) return null;
 
   async function acknowledge() {
     setBusy(true);
@@ -57,9 +58,10 @@ export function LegalConsentGate() {
         <h2 id="legal-consent-title" className="mt-3 text-2xl font-bold tracking-[-.035em]">Please review the updated documents</h2>
         <p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">A material update requires acknowledgement before you continue using this signed-in workspace.</p>
         <div className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--canvas)] p-4 text-sm leading-6 text-[var(--ink-muted)]">
-          <p><Link className="font-bold text-[var(--accent)]" href="/terms" target="_blank">Terms of Use v{LEGAL_DOCUMENTS.terms.version}</Link></p>
-          <p className="mt-2"><Link className="font-bold text-[var(--accent)]" href="/privacy" target="_blank">Privacy Notice v{LEGAL_DOCUMENTS.privacy.version}</Link></p>
+          <p><Link className="font-bold text-[var(--accent)]" href="/legal/terms/" target="_blank">Terms of Use</Link></p>
+          <p className="mt-2"><Link className="font-bold text-[var(--accent)]" href="/legal/privacy/" target="_blank">Privacy Notice</Link></p>
         </div>
+        <ConsentPublicationNote />
         {error && <p role="alert" className="mt-4 rounded-lg bg-[var(--red-soft)] p-3 text-xs leading-5 text-[var(--red)]">{error}</p>}
         <Button className="mt-6 w-full" onClick={() => void acknowledge()} disabled={busy}>{busy ? <LoaderCircle size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}Acknowledge and continue</Button>
       </section>

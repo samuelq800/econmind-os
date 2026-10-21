@@ -1,0 +1,82 @@
+[
+  {
+    "sourceName": "01_Terms_of_Use.md",
+    "file": "terms.md",
+    "route": "/legal/terms/",
+    "sha256": "54df00663f3cfd547bf10101a17ee6b52398773e969f4fef60299cd02de45e64",
+    "sourceEdition": "League review R2 2026-10-21",
+    "bytes": 18539
+  },
+  {
+    "sourceName": "02_Privacy_Notice.md",
+    "file": "privacy.md",
+    "route": "/legal/privacy/",
+    "sha256": "714bf97a31fce78e85863a962d2623e897177f6c9c07a8dbe1b0dc2d925a2dd9",
+    "sourceEdition": "League review R2 2026-10-21",
+    "bytes": 14383
+  },
+  {
+    "sourceName": "03_Community_Guidelines.md",
+    "file": "community-guidelines.md",
+    "route": "/legal/community-guidelines/",
+    "sha256": "f6ca6a40f8d92ad358b80df1cd3bd3b47b942abe67e541edbcc86486da1710b2",
+    "sourceEdition": "League review R2 2026-10-21",
+    "bytes": 6815
+  },
+  {
+    "sourceName": "04_Academic_and_Research_Integrity.md",
+    "file": "integrity.md",
+    "route": "/legal/integrity/",
+    "sha256": "4460c4da668961c86188de1ddaae73a9bee53c0d16efd609646d06ced00cf9f4",
+    "sourceEdition": "League review R2 2026-10-21",
+    "bytes": 8164
+  },
+  {
+    "sourceName": "05_Intellectual_Property_Policy.md",
+    "file": "intellectual-property.md",
+    "route": "/legal/intellectual-property/",
+    "sha256": "aae80a14a1e585f37bd8b6755be86f482c4ef5b4d5b87d3dbce5d015a9b98909",
+    "sourceEdition": "League review R2 2026-10-21",
+    "bytes": 12424
+  },
+  {
+    "sourceName": "06_Legal_Homepage.md",
+    "file": "legal-index.md",
+    "route": "/legal/",
+    "sha256": "a45ffd86f9d3fbcb7aaac9bb4b1deb73fa329c3d97e266e82e0ad00e18e98ba5",
+    "sourceEdition": "League review R2 2026-10-21",
+    "bytes": 4201
+  },
+  {
+    "sourceName": "07_About_Alignment_Copy.md",
+    "file": "about-alignment.md",
+    "route": "/about/",
+    "sha256": "487a29ec1d7c538122454a077c4a360e7c88fb77e022ad751dffdca8f9dccde5",
+    "sourceEdition": "League review R2 2026-10-21",
+    "bytes": 3676
+  },
+  {
+    "sourceName": "EconMind_World_About.md",
+    "file": "world-about.md",
+    "route": "/legal/world/about/",
+    "sha256": "78b02521e95a2f52ecb5b19b481c5f78667b73d40895dba6c5f427c8332b36f9",
+    "sourceEdition": "World official documents 2026-10-21",
+    "bytes": 52444
+  },
+  {
+    "sourceName": "EconMind_World_Terms_of_Use.md",
+    "file": "world-terms.md",
+    "route": "/legal/world/terms/",
+    "sha256": "e85ad7a811ba09b6a4d06d120e0b8c0f228ec505ee2842ccdbb32592ae8352bc",
+    "sourceEdition": "World official documents 2026-10-21",
+    "bytes": 20541
+  },
+  {
+    "sourceName": "EconMind_World_Privacy_Notice.md",
+    "file": "world-privacy.md",
+    "route": "/legal/world/privacy/",
+    "sha256": "18507ccb4d724fe9811aaa10d425d4f5833c1de0cd60e37c20139a9e3e2a81d7",
+    "sourceEdition": "World official documents 2026-10-21",
+    "bytes": 22672
+  }
+]

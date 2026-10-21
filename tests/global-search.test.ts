@@ -28,7 +28,8 @@ describe("global feature search", () => {
       GLOBAL_SEARCH_INDEX.map((entry) => entry.href),
     );
 
-    expect([...indexedHrefs].sort()).toEqual([...expectedHrefs].sort());
+    // Search canonicalises optional trailing slashes when deduplicating routes.
+    expect([...indexedHrefs].sort()).toEqual([...new Set([...expectedHrefs].map(href => href.replace(/\/+$/, "") || "/"))].sort());
     expect(GLOBAL_SEARCH_INDEX).toHaveLength(indexedHrefs.size);
     expect(
       GLOBAL_SEARCH_INDEX.every((entry) => !entry.href.includes("[")),
