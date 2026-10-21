@@ -1,13 +1,10 @@
-import type { Metadata } from "next";
-import { LegalHub } from "@/components/legal/legal-hub";
-
-export const metadata: Metadata = { title: "Legal", description: "Privacy, terms, and account-support information for EconMind OS." };
-
+import { PolicyCenter } from "@/components/legal/policy-center";
+import { policyMetadata } from "@/lib/legal/documents";
+export const metadata = policyMetadata(
+  "Legal & Policies",
+  "/legal",
+  "Official policies, rights, responsibilities and participation information for EconMind League and its related services.",
+);
 export default function LegalPage() {
-  return <LegalHub eyebrow="EconMind OS legal" title="Legal" summary="The documents that explain how EconMind OS is used, how account and learning information is handled, and how to request help." items={[
-    { href: "/terms", label: "Terms of Use", description: "The rules for using EconMind OS learning tools, school and team features, challenges, shared work, and the official EconMind badge." },
-    { href: "/terms#brand", label: "Brand and badge use", description: "The EconMind badge is protected brand artwork and may not be copied, altered, or used to imply unauthorised affiliation." },
-    { href: "/privacy", label: "Privacy Notice", description: "What information the platform handles, why it is used, visibility controls, and account requests." },
-    { href: "/contact", label: "Privacy or account request", description: "Use the signed-in Contact form for data access, correction, deletion, privacy, or security requests.", note: "Signed-in account required" },
-  ]} />;
+  return <PolicyCenter />;
 }

@@ -132,11 +132,13 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
     description: "Existing community spaces and governance information.",
     children: [
       { href: "/community", label: "Community", system: "shared", description: "Network participation, updates and shared spaces." },
-      { href: "/community-guidelines", label: "Community Guidelines", system: "shared", description: "Participation and conduct expectations." },
-      { href: "/integrity", label: "Integrity", system: "shared", description: "Academic integrity and platform standards." },
-      { href: "/legal", label: "Legal", system: "shared", description: "Legal notices and rights information." },
-      { href: "/privacy", label: "Privacy Notice", system: "shared", description: "How EconMind handles personal information." },
-      { href: "/terms", label: "Terms of Use", system: "shared", description: "Terms governing the platform." },
+      { href: "/legal/community-guidelines/", label: "Community Guidelines", system: "shared", description: "Participation and conduct expectations." },
+      { href: "/legal/integrity/", label: "Academic & Research Integrity", system: "shared", description: "Academic integrity and platform standards." },
+      { href: "/legal/", label: "Legal & Policies", system: "shared", description: "Official policies and their distinct scopes." },
+      { href: "/legal/privacy/", label: "Privacy Notice", system: "shared", description: "How EconMind handles personal information." },
+      { href: "/legal/terms/", label: "Terms of Use", system: "shared", description: "Terms governing the platform." },
+      { href: "/legal/intellectual-property/", label: "Intellectual Property", system: "shared", description: "Creator rights and licensing boundaries." },
+      { href: "/legal/world/", label: "EconMind World Legal", system: "shared", description: "Independently scoped World documents." },
       { href: "/collaboration", label: "Collaboration Network", system: "shared", description: "Academic and organizational collaboration ecosystem." },
     ],
   },
@@ -163,6 +165,9 @@ export function availableNavigationSections() {
 }
 
 export function isNavigationSectionActive(section: Pick<NavigationSection, "href" | "children">, pathname: string) {
+  const clean = (path: string) => path.replace(/\/+$/, "") || "/";
+  pathname = clean(pathname);
+  section = { ...section, href: clean(section.href), children: section.children.map(item => ({ ...item, href: clean(item.href) })) };
   if (pathname === section.href) return true;
 
   const matchesAChild = section.children.some((item) => pathname === item.href || (item.href !== section.href && pathname.startsWith(`${item.href}/`)));

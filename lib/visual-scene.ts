@@ -4,7 +4,7 @@ export function visualScene(pathname: string) {
   if (path === "/") return "showcase";
   if (path.startsWith("/season1")) return "season";
   if (path === "/profile" || path === "/dev/visual-pilot/profile") return "identity";
-  if (["/privacy", "/terms", "/legal", "/integrity", "/community-guidelines"].includes(path) || path.startsWith("/daily-brief/") || path === "/learn/research/paper") return "reading";
+  if (path.startsWith("/legal/") || ["/privacy", "/terms", "/legal", "/integrity", "/community-guidelines"].includes(path) || path.startsWith("/daily-brief/") || path === "/learn/research/paper") return "reading";
   if (["/about", "/contact", "/community", "/collaboration", "/explore", "/activities", "/models", "/cases", "/simulation", "/league", "/league/about", "/learn/research"].includes(path)) return "showroom";
   return "workspace";
 }

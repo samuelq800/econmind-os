@@ -19,13 +19,16 @@ const toolLinks = [
 ];
 const governanceLinks = [
   { href: "/about", label: "About" },
-  { href: "/community-guidelines", label: "Community Guidelines" },
-  { href: "/integrity", label: "Integrity" },
   { href: "/contact", label: "Contact" },
 ];
 const legalLinks = [
-  { href: "/privacy", label: "Privacy Notice" },
-  { href: "/terms", label: "Terms of Use" },
+  { href: "/legal/", label: "Legal & Policies" },
+  { href: "/legal/terms/", label: "Terms of Use" },
+  { href: "/legal/privacy/", label: "Privacy Notice" },
+  { href: "/legal/community-guidelines/", label: "Community Guidelines" },
+  { href: "/legal/integrity/", label: "Academic and Research Integrity" },
+  { href: "/legal/intellectual-property/", label: "Intellectual Property" },
+  { href: "/legal/world/", label: "EconMind World Legal" },
 ];
 const partnerLinks = [
   { href: "http://www.uhhc.com.cn/", label: "UHHC · 简体中文" },
