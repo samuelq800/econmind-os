@@ -3,6 +3,8 @@
 do $$ begin if current_database()<>'policy_acknowledgements_test' then raise exception 'Disposable fixture required'; end if; end $$;
 create role anon;
 create role authenticated;
+create role supabase_read_only_user bypassrls;
+grant pg_read_all_data to supabase_read_only_user;
 create schema auth;
 create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
 create function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claims',true),'')::jsonb,'{}'::jsonb) $$;
@@ -43,6 +45,13 @@ end $$;
 select set_config('request.jwt.claims','{"is_anonymous":true}',false);
 do $$ begin
  begin perform public.acknowledge_policy_release('00000000-0000-0000-0000-000000000002','2026-10-21-v2',(select payload from checks)); raise exception 'Anonymous room account accepted'; exception when insufficient_privilege then null; end;
+end $$;
+reset role;
+-- Reproduce the provider's restricted read-only role. Do not grant it private EXECUTE.
+set role supabase_read_only_user;
+\ir verify-policy-acknowledgements.sql
+do $$ begin
+ if has_function_privilege(current_user,'private.current_policy_release_documents()','execute') then raise exception 'Readiness role gained private EXECUTE'; end if;
 end $$;
 reset role;
 do $$ begin

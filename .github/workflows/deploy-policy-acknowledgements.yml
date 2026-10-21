@@ -5,6 +5,7 @@ on:
     paths:
       - "supabase/migrations/20261021020000_policy_acknowledgement_release.sql"
       - "scripts/publish-policy-acknowledgements.mjs"
+      - "scripts/verify-policy-acknowledgements.sql"
   workflow_dispatch:
 permissions:
   contents: read
