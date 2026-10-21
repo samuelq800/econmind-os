@@ -218,3 +218,41 @@ html:not(.dark) .visual-pilot:not([data-scene=showcase]) .pilot-backdrop::before
 .pilot-directory nav {display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;}
 .pilot-directory nav a {background:var(--surface);padding:16px;border:1px solid var(--line);border-radius:6px;}
 .pilot-directory nav a:hover {border-color:var(--accent);}
+
+/* Image-generated sky and architectural matte are composited into a continuous
+   120-second loop. Only the sky rotates; content, architecture and badge stay fixed. */
+.visual-pilot .home-hero.home-hero-cinematic::before {display:none;animation:none;}
+.home-cinematic-sky {position:absolute;inset:0;z-index:-2;margin:0;overflow:hidden;pointer-events:none;background-size:cover;background-position:center;}
+.home-cinematic-sky video {position:absolute;width:100%;height:100%;inset:0;object-fit:cover;object-position:center;opacity:0;transition:opacity 800ms ease;}
+.home-cinematic-sky[data-ready=true] video {opacity:1;}
+.visual-pilot .home-hero.home-hero-cinematic::after {background:linear-gradient(90deg,#03121b99,transparent 75%),linear-gradient(0deg,#06182066,transparent 28%);}
+html:not(.dark) .visual-pilot .home-hero.home-hero-cinematic::after {background:linear-gradient(90deg,#cddad8f2,#cddad8e6 44%,#cddad844 80%),linear-gradient(0deg,#cddad880,transparent 35%);}
+@media(min-width:1024px) {
+  .visual-pilot .home-hero.home-hero-cinematic .home-hero-copy {padding-top:clamp(32px,3.3vw,64px);}
+}
+
+/* Occasional short-lived meteors: finer white-gold cores, tapered ion trails,
+   staggered intervals and zero opacity at BOTH ends of every animation cycle. */
+.visual-pilot .home-hero-cinematic .home-sky-motion {animation:none;background-image:none;}
+.visual-pilot .home-hero-cinematic .home-meteor {width:clamp(96px,10vw,180px);height:1px;border-radius:100% 0 0 100%;background:linear-gradient(90deg,#fffdf2 0%,#d5f4f2b3 9%,#8dbfc657 32%,#77abc51a 62%,transparent 100%);filter:drop-shadow(0 0 2px #d0eeff99);transform:translate3d(180px,-80px,0) rotate(-27deg) scaleX(.65);animation:home-meteor-cinematic 42s cubic-bezier(.25,.1,.75,1) infinite;}
+.visual-pilot .home-hero-cinematic .home-meteor::before {top:-.5px;left:0;width:2px;height:2px;background:#fffcec;box-shadow:0 0 5px 1px #d7eeff99;}
+.visual-pilot .home-hero-cinematic .home-meteor::after {content:'';position:absolute;left:12%;right:8%;top:2px;height:1px;background:linear-gradient(90deg,#b8d5e13d,transparent);opacity:.5;}
+.visual-pilot .home-hero-cinematic .home-meteor-one {left:68%;top:11%;animation-delay:4s;}
+.visual-pilot .home-hero-cinematic .home-meteor-two {left:91%;top:38%;width:110px;animation-delay:18s;}
+.visual-pilot .home-hero-cinematic .home-meteor-three {left:56%;top:4%;width:85px;animation-delay:32s;}
+@keyframes home-meteor-cinematic {
+  0% {opacity:0;transform:translate3d(180px,-80px,0) rotate(-27deg) scaleX(.65);}
+  .6% {opacity:0;}
+  1.4% {opacity:.78;}
+  3% {opacity:.85;}
+  5%,100% {opacity:0;transform:translate3d(-480px,260px,0) rotate(-27deg) scaleX(1.1);}
+}
+@media(max-width:767px) {
+  .home-cinematic-sky,.home-cinematic-sky video {background-position:60% center;object-position:60% center;}
+  html:not(.dark) .visual-pilot .home-hero.home-hero-cinematic::after {background:linear-gradient(180deg,#cddad8f2,#cddad8ed 50%,#bdccc980 100%);}
+  .visual-pilot .home-hero-cinematic .home-meteor-two {left:94%;top:20%;}
+}
+@media(prefers-reduced-motion:reduce) {
+  .home-cinematic-sky video {display:none;transition:none;}
+  .visual-pilot .home-hero-cinematic .home-meteor {display:none;animation:none!important;}
+}
