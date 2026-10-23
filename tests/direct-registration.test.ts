@@ -61,6 +61,9 @@ describe("isolated direct registration", () => {
     });
   });
   it("keeps a real address usable by existing verified-email recovery", async () => {
+    expect(
+      await directAccountAddress("Ｍｅｍｂｅｒ＠Ｅｘａｍｐｌｅ．ｃｏｍ"),
+    ).toBe("member@example.com");
     const { deps, send } = fixture();
     expect((await send({ identifier: "Member@Example.com" })).status).toBe(200);
     expect(deps.createAccount.mock.calls[0][0]).toBe("member@example.com");

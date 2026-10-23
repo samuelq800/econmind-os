@@ -15,7 +15,7 @@ export function validRegistrationId(value: unknown): value is string {
   );
 }
 export const isRecoveryEmail = (value: string) =>
-  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizeRegistrationId(value));
 export async function directAccountAddress(identifier: string) {
   if (!validRegistrationId(identifier))
     throw new Error(
