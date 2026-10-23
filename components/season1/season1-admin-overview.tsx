@@ -100,11 +100,14 @@ export function Season1AdminOverviewPanel({
         </p>
       ) : (
         <>
-          <dl className="mt-7 grid grid-cols-2 gap-4 xl:grid-cols-6">
+          <dl className="mt-7 grid grid-cols-2 gap-4 md:grid-cols-3">
             {(
               [
                 ["Season 1 participants", view.stats.participants],
                 ["Teams", view.stats.teams],
+                ["Locked teams", view.stats.lockedTeams],
+                ["Teams with 4+ members", view.stats.teamsOverThree],
+                ["Teams with a country", view.stats.selectedCountryTeams],
                 ["In teams", view.stats.teamMembers],
                 ["Free agents", view.stats.freeAgents],
                 ["Ready members", view.stats.readyMembers],
@@ -127,6 +130,12 @@ export function Season1AdminOverviewPanel({
             not concurrent visitors. Dissolved teams are excluded. Last updated:{" "}
             <time dateTime={view.snapshotAt}>
               {new Date(view.snapshotAt).toLocaleTimeString()}
+            </time>
+            . Locked teams are counted independently; 4+ means more than 3
+            members. Country totals count active reservations, not released
+            selections. Country data updated:{" "}
+            <time dateTime={view.countrySnapshotAt}>
+              {new Date(view.countrySnapshotAt).toLocaleTimeString()}
             </time>
             .
           </p>

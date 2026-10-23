@@ -2,6 +2,8 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 import type { RoomRealtimeStatus } from "@/lib/live-room/refresh-controller";
 import type { Season1LobbyData, Season1Team } from "./season1";
 import { requireSupabaseBrowserClient, throwIfSupabaseError } from "./client";
+import { getCountryPreferences } from "./season1-countries";
+import { season1TeamMetrics } from "@/lib/admin/season1-metrics";
 
 export type Season1AdminTeam = {
   id: string;
@@ -26,6 +28,7 @@ export type Season1AdminTeam = {
 export type Season1AdminOverview = {
   seasonId: string;
   snapshotAt: string;
+  countrySnapshotAt: string;
   stats: {
     registeredPlayers: number;
     participants: number;
@@ -33,6 +36,9 @@ export type Season1AdminOverview = {
     teams: number;
     freeAgents: number;
     readyMembers: number;
+    lockedTeams: number;
+    teamsOverThree: number;
+    selectedCountryTeams: number;
   };
   teams: Season1AdminTeam[];
 };
@@ -51,7 +57,22 @@ export async function getSeason1AdminOverview(): Promise<Season1AdminOverview> {
   ) {
     throw new Error("The administrator overview is unavailable. Please retry.");
   }
-  return data as Season1AdminOverview;
+  // Only read country availability after admin authority has been verified.
+  // Unique active reservations are one-to-one with teams; released choices
+  // are already excluded by this existing, read-only participant RPC.
+  const countries = await getCountryPreferences();
+  if (countries.seasonId !== data.seasonId || !countries.serverNow)
+    throw new Error(
+      "Country statistics do not match the administrator season.",
+    );
+  return {
+    ...data,
+    countrySnapshotAt: countries.serverNow,
+    stats: {
+      ...data.stats,
+      ...season1TeamMetrics(data.teams, countries.countries),
+    },
+  } as Season1AdminOverview;
 }
 
 export async function subscribeToSeason1AdminOverview(
