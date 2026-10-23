@@ -34,6 +34,8 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           pnpm audit
+          pnpm typegen
+          git diff --exit-code -- worker-configuration.d.ts
           pnpm typecheck
       - name: Test Email Worker
         if: matrix.workspace == 'admin-mail-worker'
