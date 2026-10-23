@@ -17,3 +17,4 @@ backup/
 .dev.vars.*
 .env.*.local
 .wrangler/
+.security-patch/

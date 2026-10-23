@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": "24.22.1"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -10,6 +13,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "security:check": "node scripts/check-dependency-security.mjs",
     "league:snapshot": "node scripts/snapshot-public-league-directory.mjs",
     "calibration:validate": "node scripts/validate-economic-calibration.mjs",
     "calibration:check": "node scripts/validate-economic-calibration.mjs --strict && vitest run tests/calibration-package.test.ts",
@@ -21,15 +25,15 @@
   "dependencies": {
     "@supabase/supabase-js": "2.110.7",
     "country-region-data": "4.1.0",
-    "katex": "^0.18.1",
+    "katex": "0.18.2",
     "lucide-react": "0.545.0",
     "marked": "18.1.1",
-    "next": "16.2.10",
+    "next": "16.4.2",
     "pdfjs-dist": "6.3.289",
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "recharts": "3.10.0",
-    "sanitize-html": "^2.17.7"
+    "sanitize-html": "2.18.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.3.3",
@@ -38,11 +42,12 @@
     "@types/react-dom": "19.2.3",
     "@types/sanitize-html": "^2.16.1",
     "eslint": "9.39.5",
-    "eslint-config-next": "16.2.10",
+    "eslint-config-next": "16.4.2",
     "prettier": "3.9.5",
     "supabase": "^2.115.0",
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3",
-    "vitest": "3.2.7"
+    "vite": "7.3.7",
+    "vitest": "4.1.12"
   }
 }

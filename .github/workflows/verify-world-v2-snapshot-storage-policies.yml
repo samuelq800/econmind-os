@@ -39,7 +39,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24.22.1
       - run: |
           test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
           git rev-parse HEAD

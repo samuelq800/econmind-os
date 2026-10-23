@@ -1,0 +1,15 @@
+diff --git a/lib/parse.js b/lib/parse.js
+--- a/lib/parse.js
++++ b/lib/parse.js
+@@ -145,2 +145,5 @@
+     if (value === CHAR_LEFT_PARENTHESES) {
++      if (stack.length > 128) {
++        throw new SyntaxError('Pattern nesting exceeds maximum depth (128)');
++      }
+       block = push({ type: 'paren', nodes: [] });
+@@ -197,2 +200,5 @@
+     if (value === CHAR_LEFT_CURLY_BRACE) {
++      if (stack.length > 128) {
++        throw new SyntaxError('Pattern nesting exceeds maximum depth (128)');
++      }
+       depth++;

@@ -5,3 +5,6 @@ allowBuilds:
   esbuild: true
   sharp: true
   unrs-resolver: true
+
+patchedDependencies:
+  braces@3.0.3: patches/braces@3.0.3.patch
