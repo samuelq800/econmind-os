@@ -23,6 +23,7 @@ const ACCOUNT_OR_VIEWER: PageAccessPolicy = { audience: "account-or-viewer" };
  * This is a UI boundary; backend authorization remains a separate concern.
  */
 export const PAGE_ACCESS_RULES: readonly PageAccessRule[] = [
+  { path: "/register/direct", audience: "public" },
   // The reading archive is public, while authoring and review stay tied to an
   // individual account and the established platform administrator role.
   { path: "/learn/research/admin", match: "prefix", audience: "account", platformRoles: ["platform_admin"] },

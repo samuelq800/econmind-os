@@ -37,6 +37,9 @@ verify_jwt = false
 [functions.register-with-group-code]
 verify_jwt = false
 
+[functions.register-direct]
+verify_jwt = false
+
 [auth.mfa.totp]
 enroll_enabled = true
 verify_enabled = true

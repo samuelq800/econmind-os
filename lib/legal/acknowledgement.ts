@@ -1,4 +1,4 @@
-import { LEGAL_POLICY_DOCUMENTS } from "./document-registry";
+import { LEGAL_POLICY_DOCUMENTS } from "./document-registry.ts";
 export const POLICY_ACKNOWLEDGEMENT_RELEASE = "2026-10-21-v2";
 export const ACKNOWLEDGEMENT_DOCUMENTS = LEGAL_POLICY_DOCUMENTS.map(
   (document) => ({

@@ -22,7 +22,7 @@ describe("Google sign-in with the existing Supabase account", () => {
     expect(dialog).toContain('aria-hidden="true"');
     expect(dialog).toContain('fill="#4285F4"');
     expect(provider).toContain('currentUrl.searchParams.delete("auth")');
-    expect(provider).toContain('for (const key of ["code", "error", "error_code", "error_description"])');
+    expect(provider).toMatch(/for \(const key of \[\s*"code",\s*"error",\s*"error_code",\s*"error_description",?\s*\]\)/);
     expect(provider).toContain('fragment.has("access_token")');
   });
 
@@ -41,7 +41,7 @@ describe("Google sign-in with the existing Supabase account", () => {
   });
 
   it("shows the registered profile name in the account card instead of the email", () => {
-    expect(provider).toContain("setProfileDisplayName(data.display_name?.trim() || missing.displayName || null)");
+    expect(provider.replace(/\s/g, "")).toContain("setProfileDisplayName(data.display_name?.trim()||missing.displayName||null,)");
     expect(navbar).toContain('const accountName = profileDisplayName || "My account"');
     expect(navbar).toContain('<span className="truncate">{accountName}</span>');
     expect(navbar).not.toContain("user.email");
@@ -60,13 +60,13 @@ describe("Google sign-in with the existing Supabase account", () => {
     expect(LEGAL_RECONSENT.privacy).toBe(true);
     expect(needsLegalReconsent({})).toBe(true);
     expect(onboarding).toContain("registrationConsentValid(legalAcceptance)");
-    expect(onboarding).toContain("acceptCurrentLegalDocuments(LEGAL_DOCUMENTS.terms.version, LEGAL_DOCUMENTS.privacy.version)");
+    expect(onboarding).toContain("policyAcknowledgementApi.save(userId, legalAcceptance.policies!)");
     expect(onboarding).toContain("if (profile.onboarding_path)");
     expect(onboarding).toContain("Checking account setup…");
   });
 
   it("preserves email flows and keeps anonymous room identities separate", () => {
-    for (const action of ["signInWithPassword", "auth.signUp", "verifyStableEmailCode", "resetPasswordForEmail", "PASSWORD_RECOVERY"]) {
+    for (const action of ["signInWithAccountIdentifier", "auth.signUp", "verifyStableEmailCode", "resetPasswordForEmail", "PASSWORD_RECOVERY"]) {
       expect(dialog + provider).toContain(action);
     }
     expect(shell).toContain("if (isStandaloneLiveWorld(pathname)) return <>{children}</>");

@@ -157,7 +157,7 @@ describe("approved Legal Center publication", () => {
       "components/auth/account-onboarding.tsx",
     ])
       expect(readFileSync(file, "utf8")).toContain(
-        "<ConsentPublicationNote />",
+        "<RegistrationPolicyFields",
       );
   });
   it("retains World fictional-universe and copyright declarations without enlarging their scope", () => {

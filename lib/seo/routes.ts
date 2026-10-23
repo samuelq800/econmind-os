@@ -38,6 +38,7 @@ export const INDEXABLE_STATIC_ROUTES = [
  * responsible for protecting every restricted page and its data.
  */
 export const NON_PUBLIC_ROUTE_PREFIXES = [
+  "/register",
   "/activities",
   "/admin",
   "/cases/history",

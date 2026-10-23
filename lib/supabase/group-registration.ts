@@ -1,4 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { registrationConsentComplete } from "@/lib/legal/registration-consent";
+import { policyAcknowledgementApi } from "./policy-acknowledgement";
 import {
   LEGAL_DOCUMENTS,
   type LegalAcceptance,
@@ -48,14 +50,21 @@ export async function registerWithGroupCode(
           : rejected,
     );
   }
-  const { error: signInError } = await supabase.auth.signInWithPassword({
-    email: input.email.trim(),
-    password: input.password,
-  });
+  const { data: signedIn, error: signInError } =
+    await supabase.auth.signInWithPassword({
+      email: input.email.trim(),
+      password: input.password,
+    });
   if (signInError)
     throw new Error(
       "Your registration was accepted. Sign in with your original password, or use email recovery.",
     );
+  if (registrationConsentComplete(input.legalAcceptance) && signedIn?.user) {
+    await policyAcknowledgementApi.save(
+      signedIn.user.id,
+      input.legalAcceptance.policies!,
+    );
+  }
   const { error: consentError } = await supabase.rpc(
     "accept_current_legal_documents",
     {

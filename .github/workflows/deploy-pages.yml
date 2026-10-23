@@ -181,6 +181,19 @@ jobs:
           done
           exit 1
 
+      - name: Wait for matching direct-registration backend
+        if: ${{ contains(github.event.head_commit.message, '[direct-registration]') }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for attempt in $(seq 1 40); do
+            result="$(gh run list --workflow deploy-direct-registration.yml --commit "$GITHUB_SHA" --limit 5 --json conclusion --jq '.[0].conclusion // "pending"')"
+            if [ "$result" = success ]; then exit 0; fi
+            if [ "$result" = failure ] || [ "$result" = cancelled ]; then exit 1; fi
+            sleep 15
+          done
+          exit 1
+
       - name: Export static website
         env:
           GITHUB_PAGES: "true"
