@@ -28,7 +28,7 @@ jobs:
           version: 11.9.0
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24.22.1
           cache: pnpm
       - uses: supabase/setup-cli@v1
         with:

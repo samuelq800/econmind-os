@@ -4,3 +4,4 @@ docs/evidence/*.json text eol=lf
 tests/fixtures/world-v2-source-snapshot-assumptions.json text eol=lf
 .github/workflows/*.yml text eol=lf
 infra/cloudflare/supabase-gateway/worker-configuration.d.ts text eol=lf
+content/legal/*.md text eol=lf
