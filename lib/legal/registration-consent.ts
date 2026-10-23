@@ -2,7 +2,7 @@ import {
   allPoliciesChecked,
   POLICY_ACKNOWLEDGEMENT_RELEASE,
   type PolicyChecks,
-} from "./acknowledgement.ts";
+} from "./policy-release.ts";
 import type { LegalAcceptance } from "./legal-config.ts";
 
 export function registrationPolicyMetadata(acceptance: LegalAcceptance) {

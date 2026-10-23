@@ -2,7 +2,7 @@ import {
   allPoliciesChecked,
   emptyPolicyChecks,
   type PolicyChecks,
-} from "./acknowledgement.ts";
+} from "./policy-release.ts";
 
 export const LEGAL_EFFECTIVE_DATE = "2026-10-21";
 

@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import * as React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterAll, describe, expect, it, vi } from "vitest";
+import { execFileSync } from "node:child_process";
 import { RegistrationPolicyFields } from "@/components/legal/registration-policy-fields";
 import { ACKNOWLEDGEMENT_DOCUMENTS } from "@/lib/legal/acknowledgement";
 import { emptyRegistrationConsent } from "@/lib/legal/legal-config";
@@ -18,6 +19,20 @@ const policies = Object.fromEntries(
   ACKNOWLEDGEMENT_DOCUMENTS.map(({ key }) => [key, true]),
 );
 describe("all current registration policy receipts", () => {
+  it("loads the actual Edge handler dependency graph in native Node strip-only mode", () => {
+    expect(
+      execFileSync(
+        process.execPath,
+        [
+          "--experimental-strip-types",
+          "--input-type=module",
+          "-e",
+          "await import('./supabase/functions/_shared/group-registration.ts'); await import('./supabase/functions/_shared/direct-registration.ts'); console.log('REGISTRATION_MODULES_OK')",
+        ],
+        { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+      ),
+    ).toContain("REGISTRATION_MODULES_OK");
+  });
   it("renders eight individually required and unchecked versioned documents, including World", () => {
     const html = renderToStaticMarkup(
       React.createElement(RegistrationPolicyFields, {
