@@ -1,7 +1,12 @@
 "use client";
 
-import Link from "next/link";
-import { ConsentPublicationNote } from "@/components/legal/consent-publication-note";
+import { RegistrationPolicyFields } from "@/components/legal/registration-policy-fields";
+import {
+  registrationPolicyMetadata,
+  rememberOAuthRegistrationConsent,
+  clearOAuthRegistrationConsent,
+} from "@/lib/legal/registration-consent";
+import { signInWithAccountIdentifier } from "@/lib/supabase/account-sign-in";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   CheckCircle2,
@@ -17,6 +22,7 @@ import { BASE_PATH } from "@/lib/base-path";
 import {
   LEGAL_DOCUMENTS,
   registrationConsentValid,
+  emptyRegistrationConsent,
 } from "@/lib/legal/legal-config";
 import {
   OFFICIAL_CONTACT_EMAIL,
@@ -145,10 +151,17 @@ export function AuthDialog() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [fixedCodes, setFixedCodes] = useState(false);
-  const [legalAcceptance, setLegalAcceptance] = useState({
-    terms: false,
-    privacy: false,
-  });
+  const [legalAcceptance, setLegalAcceptance] = useState(
+    emptyRegistrationConsent,
+  );
+  const consentScope = `${authOpen}:${authMode}`;
+  const [previousConsentScope, setPreviousConsentScope] =
+    useState(consentScope);
+  if (previousConsentScope !== consentScope) {
+    setPreviousConsentScope(consentScope);
+    if (authOpen && (authMode === "sign-up" || authMode === "group-sign-up"))
+      setLegalAcceptance(emptyRegistrationConsent());
+  }
 
   useEffect(() => {
     if (authOpen) scrollArea.current?.scrollTo({ top: 0 });
@@ -291,6 +304,13 @@ export function AuthDialog() {
 
   async function continueWithGoogle() {
     if (busy || oauthStarting.current) return;
+    const registering = authMode === "sign-up" || authMode === "group-sign-up";
+    if (registering && !registrationConsentValid(legalAcceptance)) {
+      setError(
+        "Confirm all current platform and World policies before registering.",
+      );
+      return;
+    }
     const supabase = getSupabaseBrowserClient();
     if (!supabase) {
       setError("Supabase is not configured for this deployment.");
@@ -301,26 +321,18 @@ export function AuthDialog() {
     setError("");
     setMessage("");
     try {
+      if (registering) rememberOAuthRegistrationConsent(legalAcceptance);
+      else clearOAuthRegistrationConsent();
       const redirectTo = new URL(
         googleSignInRedirectUrl(window.location.origin),
       );
-      const current = new URL(window.location.href);
-      const teamCode =
-        current.searchParams.get("join")?.trim().toUpperCase() ?? "";
-      if (
-        current.pathname.replace(/\/$/, "") ===
-          `${BASE_PATH}/season1/my-team` &&
-        /^EM-T1-[A-Z0-9]{10}$/.test(teamCode)
-      ) {
-        redirectTo.pathname = `${BASE_PATH}/season1/my-team/`;
-        redirectTo.searchParams.set("join", teamCode);
-      }
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo: redirectTo.toString() },
       });
       if (oauthError) throw oauthError;
     } catch {
+      clearOAuthRegistrationConsent();
       setError("Google sign-in could not start. Please try again.");
     } finally {
       oauthStarting.current = false;
@@ -353,10 +365,11 @@ export function AuthDialog() {
         await startViewerSession(invitationCode);
         closeAuth();
       } else if (authMode === "sign-in") {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
+        const { error: signInError } = await signInWithAccountIdentifier(
+          supabase,
+          email,
           password,
-        });
+        );
         if (signInError) throw signInError;
         closeAuth();
       } else if (authMode === "group-sign-up") {
@@ -382,6 +395,8 @@ export function AuthDialog() {
                 terms_version: LEGAL_DOCUMENTS.terms.version,
                 privacy_version: LEGAL_DOCUMENTS.privacy.version,
               },
+              policy_acknowledgement:
+                registrationPolicyMetadata(legalAcceptance),
             },
             emailRedirectTo: emailRedirectUrl("confirmed"),
           },
@@ -554,7 +569,12 @@ export function AuthDialog() {
                     type="button"
                     variant="secondary"
                     className="w-full"
-                    disabled={busy}
+                    disabled={
+                      busy ||
+                      ((authMode === "sign-up" ||
+                        authMode === "group-sign-up") &&
+                        !registrationConsentValid(legalAcceptance))
+                    }
                     onClick={() => void continueWithGoogle()}
                   >
                     {busy ? (
@@ -607,10 +627,10 @@ export function AuthDialog() {
 
                 {showEmail && (
                   <label className="block text-xs font-bold">
-                    Email
+                    {authMode === "sign-in" ? "Email or login ID" : "Email"}
                     <input
                       required
-                      type="email"
+                      type={authMode === "sign-in" ? "text" : "email"}
                       value={email}
                       onChange={(event) => setEmail(event.target.value)}
                       autoComplete="email"
@@ -702,60 +722,10 @@ export function AuthDialog() {
                 )}
 
                 {(authMode === "sign-up" || authMode === "group-sign-up") && (
-                  <fieldset className="grid gap-3 rounded-xl border border-[var(--line)] bg-[var(--canvas)] p-4">
-                    <legend className="sr-only">Legal acknowledgements</legend>
-                    <label className="flex cursor-pointer items-start gap-3 text-xs leading-5 text-[var(--ink-muted)]">
-                      <input
-                        required
-                        type="checkbox"
-                        checked={legalAcceptance.terms}
-                        onChange={(event) =>
-                          setLegalAcceptance((current) => ({
-                            ...current,
-                            terms: event.target.checked,
-                          }))
-                        }
-                        className="mt-1 size-4 accent-[var(--accent)]"
-                      />
-                      <span>
-                        I have read and agree to the{" "}
-                        <Link
-                          href="/legal/terms/"
-                          target="_blank"
-                          className="font-bold text-[var(--accent)]"
-                        >
-                          Terms of Use
-                        </Link>
-                        .
-                      </span>
-                    </label>
-                    <label className="flex cursor-pointer items-start gap-3 text-xs leading-5 text-[var(--ink-muted)]">
-                      <input
-                        required
-                        type="checkbox"
-                        checked={legalAcceptance.privacy}
-                        onChange={(event) =>
-                          setLegalAcceptance((current) => ({
-                            ...current,
-                            privacy: event.target.checked,
-                          }))
-                        }
-                        className="mt-1 size-4 accent-[var(--accent)]"
-                      />
-                      <span>
-                        I have read the{" "}
-                        <Link
-                          href="/legal/privacy/"
-                          target="_blank"
-                          className="font-bold text-[var(--accent)]"
-                        >
-                          Privacy Notice
-                        </Link>
-                        .
-                      </span>
-                    </label>
-                  <ConsentPublicationNote />
-                  </fieldset>
+                  <RegistrationPolicyFields
+                    value={legalAcceptance}
+                    onChange={setLegalAcceptance}
+                  />
                 )}
 
                 {(error || authNotice) && (

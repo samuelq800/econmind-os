@@ -1,3 +1,9 @@
+import {
+  allPoliciesChecked,
+  emptyPolicyChecks,
+  type PolicyChecks,
+} from "./policy-release.ts";
+
 export const LEGAL_EFFECTIVE_DATE = "2026-10-21";
 
 export const LEGAL_DOCUMENTS = {
@@ -29,15 +35,33 @@ export const LEGAL_RECONSENT = {
 export type LegalAcceptance = {
   terms: boolean;
   privacy: boolean;
+  policies?: PolicyChecks;
 };
 
+export const emptyRegistrationConsent = (): LegalAcceptance => ({
+  terms: false,
+  privacy: false,
+  policies: emptyPolicyChecks(),
+});
+
 /** Cached pre-update registration clients remain usable but never count as v2 confirmation. */
-export function acceptedRegistrationLegalPair(terms: unknown, privacy: unknown) {
-  return (terms === "2.0" && privacy === "2.0") || (terms === "1.2" && privacy === "1.1");
+export function acceptedRegistrationLegalPair(
+  terms: unknown,
+  privacy: unknown,
+) {
+  return (
+    (terms === "2.0" && privacy === "2.0") ||
+    (terms === "1.2" && privacy === "1.1")
+  );
 }
 
 export function registrationConsentValid(acceptance: LegalAcceptance) {
-  return acceptance.terms && acceptance.privacy;
+  return (
+    acceptance.terms &&
+    acceptance.privacy &&
+    (acceptance.policies === undefined ||
+      allPoliciesChecked(acceptance.policies))
+  );
 }
 
 export function requiredConsentVersions() {
@@ -51,13 +75,27 @@ export function requiredConsentVersions() {
 export function hasInitialLegalConsent(
   consents: ReadonlyArray<{ document_type: string; document_version: string }>,
 ) {
-  return consents.some((entry) => entry.document_type === "terms" && entry.document_version === LEGAL_DOCUMENTS.terms.version)
-    && consents.some((entry) => entry.document_type === "privacy" && entry.document_version === LEGAL_DOCUMENTS.privacy.version);
+  return (
+    consents.some(
+      (entry) =>
+        entry.document_type === "terms" &&
+        entry.document_version === LEGAL_DOCUMENTS.terms.version,
+    ) &&
+    consents.some(
+      (entry) =>
+        entry.document_type === "privacy" &&
+        entry.document_version === LEGAL_DOCUMENTS.privacy.version,
+    )
+  );
 }
 
 export function needsLegalReconsent(
   accepted: Partial<Record<LegalDocumentKey, string>>,
 ) {
-  return (LEGAL_RECONSENT.terms && accepted.terms !== LEGAL_DOCUMENTS.terms.version)
-    || (LEGAL_RECONSENT.privacy && accepted.privacy !== LEGAL_DOCUMENTS.privacy.version);
+  return (
+    (LEGAL_RECONSENT.terms &&
+      accepted.terms !== LEGAL_DOCUMENTS.terms.version) ||
+    (LEGAL_RECONSENT.privacy &&
+      accepted.privacy !== LEGAL_DOCUMENTS.privacy.version)
+  );
 }

@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { ConsentPublicationNote } from "@/components/legal/consent-publication-note";
+import { RegistrationPolicyFields } from "@/components/legal/registration-policy-fields";
 import { usePolicyAcknowledgement } from "@/components/legal/policy-acknowledgement-provider";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
@@ -11,9 +10,10 @@ import { EMPTY_SCHOOL_LOCATION, SchoolLocationFields } from "@/components/league
 import { Button } from "@/components/ui/button";
 import { CURRICULUM_SYSTEM_LABELS, CURRICULUM_SYSTEMS, type CurriculumSystem } from "@/lib/league/curriculum";
 import { isCompleteSchoolLocation } from "@/lib/league/geographic-areas";
-import { hasInitialLegalConsent, LEGAL_DOCUMENTS, registrationConsentValid } from "@/lib/legal/legal-config";
+import { hasInitialLegalConsent, emptyRegistrationConsent, registrationConsentValid } from "@/lib/legal/legal-config";
+import { policyAcknowledgementApi } from "@/lib/supabase/policy-acknowledgement";
 import { completeAccountOnboarding, getAccountOnboarding, listApprovedSchoolChoices, type ApprovedSchoolChoice, type OnboardingPath } from "@/lib/supabase/account-onboarding";
-import { acceptCurrentLegalDocuments, legalAcknowledgementErrorMessage, listMyLegalConsents } from "@/lib/supabase/governance";
+import { legalAcknowledgementErrorMessage, listMyLegalConsents } from "@/lib/supabase/governance";
 
 type SetupStep = "choose" | OnboardingPath;
 
@@ -49,7 +49,7 @@ export function AccountOnboarding() {
   const [checkedUserId, setCheckedUserId] = useState<string | null>(null);
   const [completedUserId, setCompletedUserId] = useState<string | null>(null);
   const [needsInitialConsent, setNeedsInitialConsent] = useState(false);
-  const [legalAcceptance, setLegalAcceptance] = useState({ terms: false, privacy: false });
+  const [legalAcceptance, setLegalAcceptance] = useState(emptyRegistrationConsent);
   const [checkError, setCheckError] = useState("");
   const [checkAttempt, setCheckAttempt] = useState(0);
   const [step, setStep] = useState<SetupStep>("choose");
@@ -113,11 +113,11 @@ export function AccountOnboarding() {
   if (!policiesConfirmed) return null;
 
   async function acknowledgeInitialDocuments() {
-    if (!registrationConsentValid(legalAcceptance)) return;
+    if (!userId || !registrationConsentValid(legalAcceptance)) return;
     setBusy(true);
     setError("");
     try {
-      await acceptCurrentLegalDocuments(LEGAL_DOCUMENTS.terms.version, LEGAL_DOCUMENTS.privacy.version);
+      await policyAcknowledgementApi.save(userId, legalAcceptance.policies!);
       setNeedsInitialConsent(false);
       window.dispatchEvent(new Event("econmind:legal-consent-updated"));
     } catch (caught) {
@@ -162,11 +162,7 @@ export function AccountOnboarding() {
         <p className="text-[10px] font-extrabold uppercase tracking-[.16em] text-[var(--accent)]">First-time account setup</p>
         <h2 id="account-setup-title" className="mt-2 text-2xl font-bold tracking-[-.04em]">Review the Terms and Privacy Notice</h2>
         <p className="mt-3 text-sm leading-6 text-[var(--ink-muted)]">Review the published policies and the acknowledgement-version information before choosing your school path.</p>
-        <div className="mt-6 grid gap-4 rounded-xl border border-[var(--line)] bg-[var(--canvas)] p-5 text-sm">
-          <label className="flex items-start gap-3"><input type="checkbox" checked={legalAcceptance.terms} onChange={(event) => setLegalAcceptance((current) => ({ ...current, terms: event.target.checked }))} className="mt-1 size-4 accent-[var(--accent)]" /><span>I have read and agree to the <Link href="/legal/terms/" target="_blank" className="font-bold text-[var(--accent)]">Terms of Use</Link>.</span></label>
-          <label className="flex items-start gap-3"><input type="checkbox" checked={legalAcceptance.privacy} onChange={(event) => setLegalAcceptance((current) => ({ ...current, privacy: event.target.checked }))} className="mt-1 size-4 accent-[var(--accent)]" /><span>I have read the <Link href="/legal/privacy/" target="_blank" className="font-bold text-[var(--accent)]">Privacy Notice</Link>.</span></label>
-        </div>
-        <ConsentPublicationNote />
+        <div className="mt-6"><RegistrationPolicyFields value={legalAcceptance} onChange={setLegalAcceptance} /></div>
         {error && <p role="alert" className="mt-4 rounded-lg bg-[var(--red-soft)] p-3 text-xs text-[var(--red)]">{error}</p>}
         <Button className="mt-5 w-full" disabled={busy || !registrationConsentValid(legalAcceptance)} onClick={() => void acknowledgeInitialDocuments()}>{busy && <LoaderCircle className="animate-spin" size={15} />}Acknowledge and continue</Button>
       </> : <>
