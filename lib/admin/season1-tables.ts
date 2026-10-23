@@ -87,12 +87,13 @@ export function season1Tables(view: Season1AdminOverview): PageTable[] {
       title: "Summary",
       filename: "econmind-season1-summary.csv",
       description:
-        "Counts from the same server snapshot as the full team and member tables. Platform accounts are not concurrent visitors.",
+        "Team counts share the roster snapshot. Country reservations have a separate server timestamp. Platform accounts are not concurrent visitors.",
       columns: [
         { key: "metric", label: "Metric" },
         { key: "value", label: "Value" },
         { key: "definition", label: "Definition" },
         ...sourceColumns,
+        { key: "countrySnapshotAt", label: "Country snapshot (UTC)" },
       ],
       rows: [
         [
@@ -106,6 +107,21 @@ export function season1Tables(view: Season1AdminOverview): PageTable[] {
           "Current Season 1 teams, excluding dissolved teams",
         ],
         ["In teams", view.stats.teamMembers, "Current team membership rows"],
+        [
+          "Locked teams",
+          view.stats.lockedTeams,
+          "Current teams with recruitment locked",
+        ],
+        [
+          "Teams with 4+ members",
+          view.stats.teamsOverThree,
+          "Current teams with more than 3 members, regardless of lock status",
+        ],
+        [
+          "Teams with a country",
+          view.stats.selectedCountryTeams,
+          "Active country reservations; released selections excluded",
+        ],
         [
           "Free agents",
           view.stats.freeAgents,
@@ -126,6 +142,7 @@ export function season1Tables(view: Season1AdminOverview): PageTable[] {
         value,
         definition,
         ...identity,
+        countrySnapshotAt: view.countrySnapshotAt,
       })),
     },
   ];

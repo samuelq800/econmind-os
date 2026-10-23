@@ -10,6 +10,7 @@ import {
   getSeason1AdminOverview,
   subscribeToSeason1AdminOverview,
 } from "@/lib/supabase/season1-admin";
+import { season1TeamMetrics } from "@/lib/admin/season1-metrics";
 // @ts-expect-error Scoped standalone publisher has no TypeScript declaration.
 import { publishAdminOverview } from "../scripts/publish-season1-admin-overview.mjs";
 
@@ -54,11 +55,26 @@ describe("Season 1 admin overview", () => {
       stats: {},
       teams: [],
     };
-    mocks.rpc.mockResolvedValue({ data, error: null });
-    expect(await getSeason1AdminOverview()).toEqual(data);
-    expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith(
+    mocks.rpc
+      .mockResolvedValueOnce({ data, error: null })
+      .mockResolvedValueOnce({
+        data: { seasonId: "season", serverNow: data.snapshotAt, countries: [] },
+        error: null,
+      });
+    expect(await getSeason1AdminOverview()).toEqual({
+      ...data,
+      countrySnapshotAt: data.snapshotAt,
+      stats: { lockedTeams: 0, teamsOverThree: 0, selectedCountryTeams: 0 },
+    });
+    expect(mocks.rpc).toHaveBeenNthCalledWith(
+      1,
       "get_world_preseason_admin_overview",
     );
+    expect(mocks.rpc).toHaveBeenNthCalledWith(
+      2,
+      "get_world_preseason_country_preferences",
+    );
+    mocks.rpc.mockClear();
     mocks.rpc.mockResolvedValue({
       data: null,
       error: new Error("Permission denied"),
@@ -66,8 +82,54 @@ describe("Season 1 admin overview", () => {
     await expect(getSeason1AdminOverview()).rejects.toThrow(
       "Permission denied",
     );
+    expect(mocks.rpc).toHaveBeenCalledTimes(1);
     mocks.rpc.mockResolvedValue({ data: null, error: null });
     await expect(getSeason1AdminOverview()).rejects.toThrow("unavailable");
+  });
+
+  it("counts locked teams, strictly more than three members, and active unique reservations", () => {
+    expect(
+      season1TeamMetrics(
+        [
+          { status: "recruiting", recruitmentLocked: true, memberCount: 3 },
+          { status: "recruiting", recruitmentLocked: false, memberCount: 4 },
+          { status: "full", recruitmentLocked: true, memberCount: 6 },
+          { status: "recruiting", recruitmentLocked: false, memberCount: 2 },
+          { status: "dissolved", recruitmentLocked: true, memberCount: 5 },
+        ],
+        [
+          { code: "01", reserved: true, selectedByMyTeam: false },
+          { code: "02", reserved: false, selectedByMyTeam: false },
+          { code: "03", reserved: true, selectedByMyTeam: false },
+          { code: "03", reserved: true, selectedByMyTeam: false },
+        ],
+      ),
+    ).toEqual({ lockedTeams: 2, teamsOverThree: 2, selectedCountryTeams: 2 });
+    expect(season1TeamMetrics([], [])).toEqual({
+      lockedTeams: 0,
+      teamsOverThree: 0,
+      selectedCountryTeams: 0,
+    });
+  });
+
+  it("fails closed on unavailable or mismatched country statistics", async () => {
+    const data = {
+      seasonId: "season",
+      snapshotAt: "now",
+      stats: {},
+      teams: [],
+    };
+    mocks.rpc
+      .mockResolvedValueOnce({ data, error: null })
+      .mockResolvedValueOnce({
+        data: { seasonId: "other-season", serverNow: "now", countries: [] },
+        error: null,
+      });
+    await expect(getSeason1AdminOverview()).rejects.toThrow("do not match");
+    mocks.rpc
+      .mockResolvedValueOnce({ data, error: null })
+      .mockResolvedValueOnce({ data: null, error: new Error("Offline") });
+    await expect(getSeason1AdminOverview()).rejects.toThrow("Offline");
   });
 
   it("does not create a channel after asynchronous session loading is disposed", async () => {
@@ -143,6 +205,9 @@ describe("Season 1 admin overview", () => {
     for (const label of [
       "Platform accounts",
       "Season 1 participants",
+      "Locked teams",
+      "Teams with 4+ members",
+      "Teams with a country",
       "View team details",
       "Team members",
       "Role preferences:",
@@ -152,6 +217,8 @@ describe("Season 1 admin overview", () => {
       'event.key !== "Tab"',
     ])
       expect(panel).toContain(label);
+    expect(panel).toContain("view.stats.teamsOverThree");
+    expect(panel).toContain("view.stats.selectedCountryTeams");
   });
 
   it("keeps the new database change read-only, scoped and admin-authorized", () => {

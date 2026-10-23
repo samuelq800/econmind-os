@@ -110,6 +110,7 @@ describe("complete admin page tables", () => {
     const view: Season1AdminOverview = {
       seasonId: "season",
       snapshotAt: "2026-10-14T01:00:00Z",
+      countrySnapshotAt: "2026-10-14T01:00:01Z",
       stats: {
         registeredPlayers: 1200,
         participants: 1003,
@@ -117,6 +118,9 @@ describe("complete admin page tables", () => {
         teams: 167,
         freeAgents: 1,
         readyMembers: 501,
+        lockedTeams: 167,
+        teamsOverThree: 167,
+        selectedCountryTeams: 20,
       },
       teams: Array.from({ length: 167 }, (_, i) => ({
         id: `team-${i}`,
@@ -150,7 +154,16 @@ describe("complete admin page tables", () => {
     const [teams, members, summary] = season1Tables(view);
     expect(teams.rows).toHaveLength(167);
     expect(members.rows).toHaveLength(1002);
-    expect(summary.rows).toHaveLength(6);
+    expect(summary.rows).toHaveLength(9);
+    expect(
+      summary.rows.find((row) => row.metric === "Locked teams")?.value,
+    ).toBe(167);
+    expect(
+      summary.rows.find((row) => row.metric === "Teams with 4+ members")?.value,
+    ).toBe(167);
+    expect(
+      summary.rows.find((row) => row.metric === "Teams with a country"),
+    ).toMatchObject({ value: 20, countrySnapshotAt: view.countrySnapshotAt });
     expect(members.rows.at(-1)?.userId).toBe("user-166-5");
     expect(teams.rows[0].captainUserId).toBe("user-0-0");
     expect(teams.rows[0].memberSchools).toBe("学校");
