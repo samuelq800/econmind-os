@@ -72,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     null,
   );
   const currentAuthUserId = useRef<string | null>(null);
+  const initialSessionReady = useRef(false);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<AppRole>("guest");
   const [platformRole, setPlatformRole] = useState<LeaguePlatformRole | null>(
@@ -100,6 +101,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let active = true;
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
       if (!active) return;
+      const sessionWasInitialized = initialSessionReady.current;
+      if (event === "INITIAL_SESSION") initialSessionReady.current = true;
       const nextUser = session?.user ?? null;
       const previousUserId = currentAuthUserId.current;
       if (nextUser && nextUser.id !== currentAuthUserId.current)
@@ -176,6 +179,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           previousUserId,
           nextUser,
           authMarker === "recovery",
+          sessionWasInitialized,
         )
       ) {
         setAuthOpen(false);
