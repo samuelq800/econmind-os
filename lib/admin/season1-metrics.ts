@@ -12,7 +12,8 @@ export function season1TeamMetrics(
   const currentTeams = teams.filter((team) => team.status !== "dissolved");
   return {
     lockedTeams: currentTeams.filter((team) => team.recruitmentLocked).length,
-    teamsOverThree: currentTeams.filter((team) => team.memberCount > 3).length,
+    teamsAtLeastThree: currentTeams.filter((team) => team.memberCount >= 3)
+      .length,
     selectedCountryTeams: new Set(
       countries
         .filter((country) => country.reserved)

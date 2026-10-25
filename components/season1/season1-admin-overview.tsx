@@ -106,7 +106,7 @@ export function Season1AdminOverviewPanel({
                 ["Season 1 participants", view.stats.participants],
                 ["Teams", view.stats.teams],
                 ["Locked teams", view.stats.lockedTeams],
-                ["Teams with 4+ members", view.stats.teamsOverThree],
+                ["Teams with 3+ members", view.stats.teamsAtLeastThree],
                 ["Teams with a country", view.stats.selectedCountryTeams],
                 ["In teams", view.stats.teamMembers],
                 ["Free agents", view.stats.freeAgents],
@@ -131,9 +131,9 @@ export function Season1AdminOverviewPanel({
             <time dateTime={view.snapshotAt}>
               {new Date(view.snapshotAt).toLocaleTimeString()}
             </time>
-            . Locked teams are counted independently; 4+ means more than 3
-            members. Country totals count active reservations, not released
-            selections. Country data updated:{" "}
+            . Locked teams are counted independently; 3+ includes teams with
+            exactly 3 members. Country totals count active reservations, not
+            released selections. Country data updated:{" "}
             <time dateTime={view.countrySnapshotAt}>
               {new Date(view.countrySnapshotAt).toLocaleTimeString()}
             </time>

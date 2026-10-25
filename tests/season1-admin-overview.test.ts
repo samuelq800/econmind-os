@@ -64,7 +64,7 @@ describe("Season 1 admin overview", () => {
     expect(await getSeason1AdminOverview()).toEqual({
       ...data,
       countrySnapshotAt: data.snapshotAt,
-      stats: { lockedTeams: 0, teamsOverThree: 0, selectedCountryTeams: 0 },
+      stats: { lockedTeams: 0, teamsAtLeastThree: 0, selectedCountryTeams: 0 },
     });
     expect(mocks.rpc).toHaveBeenNthCalledWith(
       1,
@@ -87,7 +87,7 @@ describe("Season 1 admin overview", () => {
     await expect(getSeason1AdminOverview()).rejects.toThrow("unavailable");
   });
 
-  it("counts locked teams, strictly more than three members, and active unique reservations", () => {
+  it("counts locked teams, at least three members, and active unique reservations", () => {
     expect(
       season1TeamMetrics(
         [
@@ -104,10 +104,34 @@ describe("Season 1 admin overview", () => {
           { code: "03", reserved: true, selectedByMyTeam: false },
         ],
       ),
-    ).toEqual({ lockedTeams: 2, teamsOverThree: 2, selectedCountryTeams: 2 });
+    ).toEqual({
+      lockedTeams: 2,
+      teamsAtLeastThree: 3,
+      selectedCountryTeams: 2,
+    });
     expect(season1TeamMetrics([], [])).toEqual({
       lockedTeams: 0,
-      teamsOverThree: 0,
+      teamsAtLeastThree: 0,
+      selectedCountryTeams: 0,
+    });
+  });
+
+  it("includes exactly three members whether locked or unlocked, but excludes smaller or dissolved teams", () => {
+    expect(
+      season1TeamMetrics(
+        [
+          { status: "recruiting", recruitmentLocked: true, memberCount: 3 },
+          { status: "recruiting", recruitmentLocked: false, memberCount: 3 },
+          { status: "full", recruitmentLocked: true, memberCount: 6 },
+          { status: "recruiting", recruitmentLocked: true, memberCount: 2 },
+          { status: "recruiting", recruitmentLocked: false, memberCount: 0 },
+          { status: "dissolved", recruitmentLocked: true, memberCount: 3 },
+        ],
+        [],
+      ),
+    ).toEqual({
+      lockedTeams: 3,
+      teamsAtLeastThree: 3,
       selectedCountryTeams: 0,
     });
   });
@@ -206,7 +230,7 @@ describe("Season 1 admin overview", () => {
       "Platform accounts",
       "Season 1 participants",
       "Locked teams",
-      "Teams with 4+ members",
+      "Teams with 3+ members",
       "Teams with a country",
       "View team details",
       "Team members",
@@ -217,7 +241,7 @@ describe("Season 1 admin overview", () => {
       'event.key !== "Tab"',
     ])
       expect(panel).toContain(label);
-    expect(panel).toContain("view.stats.teamsOverThree");
+    expect(panel).toContain("view.stats.teamsAtLeastThree");
     expect(panel).toContain("view.stats.selectedCountryTeams");
   });
 
