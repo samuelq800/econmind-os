@@ -1,6 +1,10 @@
 packages:
   - "."
 
+# Keep Wrangler/workerd stable while replacing Miniflare's vulnerable HTTP client.
+overrides:
+  "miniflare>undici": "7.30.1"
+
 allowBuilds:
   esbuild: true
   workerd: true

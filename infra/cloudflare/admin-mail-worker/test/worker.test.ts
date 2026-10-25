@@ -280,6 +280,35 @@ describe("copy failure isolation", () => {
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining("copy_mime_parse_failed"));
   });
 
+  it("counts many short header lines against the parser budget without disrupting original forwarding", async () => {
+    const headers = ["From: sender@example.com", ...Array.from({ length: 600 }, () => "X-A: b")].join("\r\n");
+    expect(new TextEncoder().encode(headers).length).toBeLessThan(32 * 1024);
+    const example = fixture(headers + "\r\n\r\nBody");
+    await handleEmail(example.message, env, example.ctx);
+    await example.finish();
+    expect(example.forward).toHaveBeenCalledTimes(2);
+    expect(example.reject).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(console.log).toHaveBeenCalledWith(expect.stringContaining("copy_mime_parse_failed"));
+  });
+
+  it.each(["Subject", "From"])("preserves dense RFC 2047 words in %s within the header budget", async (header) => {
+    const words = Array.from({ length: 1000 }, () => "=?UTF-8?B?QUJD?=").join(" ");
+    const raw = header === "Subject"
+      ? `From: sender@example.com\r\nSubject: ${words}\r\n\r\nBody`
+      : `From: ${words} <sender@example.com>\r\nSubject: Dense sender\r\n\r\nBody`;
+    expect(new TextEncoder().encode(raw).length).toBeLessThan(32 * 1024);
+    const example = fixture(raw);
+    await handleEmail(example.message, env, example.ctx);
+    await example.finish();
+    expect(example.forward).toHaveBeenCalledTimes(2);
+    expect(example.reject).not.toHaveBeenCalled();
+    expect(ingested().payload.sender_email).toBe("sender@example.com");
+    expect(header === "Subject" ? ingested().payload.subject : ingested().payload.sender_name)
+      .toBe("ABC".repeat(1000).slice(0, header === "Subject" ? 998 : 200));
+    expect(ingested().payload.body_text).toContain("Body");
+  });
+
   it.each(["https://project.example.com/other-function", "http://project.example.com/functions/v1/ingest-admin-email", "https://user:password@example.com/functions/v1/ingest-admin-email"])("rejects unsafe ingestion configuration only after forwarding: %s", async (url) => {
     const example = fixture();
     await handleEmail(example.message, { ...env, INBOUND_MAIL_INGEST_URL: url }, example.ctx);

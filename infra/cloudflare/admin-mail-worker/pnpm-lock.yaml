@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  miniflare>undici: 7.30.1
+
 importers:
   .:
     dependencies:
@@ -11,8 +14,8 @@ importers:
         specifier: 10.0.1
         version: 10.0.1
       postal-mime:
-        specifier: 3.0.0
-        version: 3.0.0
+        specifier: 4.0.8
+        version: 4.0.8
     devDependencies:
       "@cloudflare/workers-types":
         specifier: 5.20261019.1
@@ -1194,11 +1197,12 @@ packages:
       }
     engines: { node: ">=12" }
 
-  postal-mime@3.0.0:
+  postal-mime@4.0.8:
     resolution:
       {
-        integrity: sha512-Z4a9ar2Bv3YpK3IXag+Yda30k7bMZfpRuUGyqtHnZ2pjHG8Bl62EhZIk4n1dzv00gfzP9g+94e9kd8+XmjVWLA==,
+        integrity: sha512-nnAgc4a9hn7zYuQmX4C7LU+fN47kR5S8cE8zvB/vZ2NimNDbaj+ISZJ9qe3CKIfn2uOTwwz4nQeIyljvdFNgOA==,
       }
+    engines: { node: ">=20" }
 
   postcss@8.5.31:
     resolution:
@@ -1320,10 +1324,10 @@ packages:
         integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==,
       }
 
-  undici@7.29.1:
+  undici@7.30.1:
     resolution:
       {
-        integrity: sha512-RYONW2MeafgYlkVOKYKkA/Ag7BmXqgIWCa8t1m0JcxrQg9pI9lEqRhAOruOBCbAohOa/gkCF+iPi9hrgvTzu6Q==,
+        integrity: sha512-03KrMbjIFDWQR5RNPrSw3bd1r12JpyFQl9/yxjUbJtqkjmllqC5lFjZh6ujeuJCKr8EOQvRW872Oy/az+nLYxg==,
       }
     engines: { node: ">=20.18.1" }
 
@@ -1971,7 +1975,7 @@ snapshots:
     dependencies:
       "@cspotcode/source-map-support": 0.8.1
       sharp: 0.35.5(@types/node@22.20.1)
-      undici: 7.29.1
+      undici: 7.30.1
       workerd: 1.20261012.1
       ws: 8.21.0
       youch: 4.1.0-beta.10
@@ -1999,7 +2003,7 @@ snapshots:
 
   picomatch@4.0.7: {}
 
-  postal-mime@3.0.0: {}
+  postal-mime@4.0.8: {}
 
   postcss@8.5.31:
     dependencies:
@@ -2106,7 +2110,7 @@ snapshots:
 
   undici-types@6.21.0: {}
 
-  undici@7.29.1: {}
+  undici@7.30.1: {}
 
   unenv@2.0.0-rc.24:
     dependencies:
