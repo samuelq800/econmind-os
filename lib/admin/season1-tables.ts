@@ -113,9 +113,9 @@ export function season1Tables(view: Season1AdminOverview): PageTable[] {
           "Current teams with recruitment locked",
         ],
         [
-          "Teams with 4+ members",
-          view.stats.teamsOverThree,
-          "Current teams with more than 3 members, regardless of lock status",
+          "Teams with 3+ members",
+          view.stats.teamsAtLeastThree,
+          "Current teams with at least 3 members, regardless of lock status",
         ],
         [
           "Teams with a country",

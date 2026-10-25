@@ -119,7 +119,7 @@ describe("complete admin page tables", () => {
         freeAgents: 1,
         readyMembers: 501,
         lockedTeams: 167,
-        teamsOverThree: 167,
+        teamsAtLeastThree: 167,
         selectedCountryTeams: 20,
       },
       teams: Array.from({ length: 167 }, (_, i) => ({
@@ -159,7 +159,7 @@ describe("complete admin page tables", () => {
       summary.rows.find((row) => row.metric === "Locked teams")?.value,
     ).toBe(167);
     expect(
-      summary.rows.find((row) => row.metric === "Teams with 4+ members")?.value,
+      summary.rows.find((row) => row.metric === "Teams with 3+ members")?.value,
     ).toBe(167);
     expect(
       summary.rows.find((row) => row.metric === "Teams with a country"),

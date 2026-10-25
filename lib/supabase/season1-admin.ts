@@ -37,7 +37,7 @@ export type Season1AdminOverview = {
     freeAgents: number;
     readyMembers: number;
     lockedTeams: number;
-    teamsOverThree: number;
+    teamsAtLeastThree: number;
     selectedCountryTeams: number;
   };
   teams: Season1AdminTeam[];
