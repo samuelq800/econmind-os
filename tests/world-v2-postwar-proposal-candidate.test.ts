@@ -23,12 +23,12 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       "EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED",
     );
   });
-  it("has an explicit eighteen-file dependency order and no pretend final SHA", async () => {
+  it("has an explicit nineteen-file dependency order and no pretend final SHA", async () => {
     const { policy } = await loadPostwarExpandedProposalPolicy();
     expect(policy.sourceCommit).toBeNull();
     expect(policy.installationAllowed).toBe(false);
     expect(policy.migrationApproval).toBe("NOT_GRANTED");
-    expect(policy.proposals).toHaveLength(18);
+    expect(policy.proposals).toHaveLength(19);
     const seen = new Set<string>();
     for (const p of policy.proposals) {
       expect(p.path).toBe(`database/proposals/${p.id}.sql`);
@@ -97,9 +97,10 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
     const mixed = policy.proposals.find(
       (p) => p.id === "finance-budget-mixed-source",
     );
-    expect(mixed.sourceRoleDeps.world_v2_postwar_projection_owner).toBe(
-      "postwar-office-derived-read",
+    expect(mixed.sourceRoleDeps).not.toHaveProperty(
+      "world_v2_postwar_projection_owner",
     );
+    expect(mixed.dependencies).toEqual(["finance-budget-capacity-source"]);
     const changed = structuredClone(policy);
     changed.proposals.find(
       (p) => p.id === "finance-budget-mixed-source",
@@ -111,7 +112,7 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
     const skipped = structuredClone(policy);
     skipped.proposals.find(
       (p) => p.id === "finance-budget-mixed-source",
-    ).dependencies = ["finance-budget-capacity-source"];
+    ).dependencies = [];
     expect(() => validateExpandedProposalRoleDependencies(skipped)).toThrow(
       "SOURCE_ROLE_PROVIDER_DEPENDENCY_REQUIRED",
     );
@@ -133,6 +134,39 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       ),
     ).toThrow("SOURCE_ROLE_DEPENDENCY_ALLOWLIST_CHANGED");
   });
+  it("separates immutable inventory V2 attestation from legacy data and pins declared policy names", async () => {
+    const { policy } = await loadPostwarExpandedProposalPolicy();
+    const inventory = policy.proposals.find(
+      (p) => p.id === "postwar-physical-inventory-provenance",
+    );
+    expect(inventory.dependencies).toEqual([
+      "postwar-office-derived-read",
+      "postwar-physical-opening-facts-read",
+    ]);
+    expect(inventory.versionSemantics).toContain(
+      "LEGACY_DOCUMENT_AND_VERSION_UNCHANGED",
+    );
+    expect(inventory.createdRoles).toEqual([]);
+    expect(inventory.productionReviewVerified).toBe(false);
+    const item = {
+      createdRoles: [],
+      createdRelations: [],
+      definedFunctions: [],
+      renamedFunctions: [],
+      sourceRoleDeps: {},
+      deniedRoleNames: [],
+      roleNamePrefixContext: [],
+      literalCreatedPolicies: ["fixture_policy"],
+    };
+    expect(() =>
+      inspectExpandedProposalBytes(
+        item,
+        Buffer.from(
+          "create policy changed_policy on world_v2.fixture using(false);",
+        ),
+      ),
+    ).toThrow("PROPOSAL_LITERAL_POLICY_ALLOWLIST_CHANGED");
+  });
   it("cannot use companion or a dirty branch as the selected World candidate", async () => {
     await expect(
       loadPostwarExpandedProposalCandidate(process.cwd(), "a".repeat(40)),
@@ -148,7 +182,7 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
     );
   });
   (process.env.POSTWAR_PROPOSAL_METADATA_SOURCE ? it : it.skip)(
-    "compares all eighteen actual proposal object/role inventories without selecting a final candidate",
+    "compares all nineteen actual proposal object/role inventories without selecting a final candidate",
     async () => {
       const { policy } = await loadPostwarExpandedProposalPolicy();
       for (const item of policy.proposals) {

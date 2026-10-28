@@ -396,21 +396,18 @@
       "path": "database/proposals/finance-budget-mixed-source.sql",
       "reviewOrder": 11,
       "disposition": "CANDIDATE_FINANCE_MIXED_SOURCE",
-      "dependencies": [
-        "finance-budget-capacity-source",
-        "postwar-social-current-prefix-read"
-      ],
+      "dependencies": ["finance-budget-capacity-source"],
       "baselineDependencies": ["0009_world_v2_posting_payload_integrity"],
       "createdRoles": [],
       "reusedRoles": [
         "world_v2_finance_budget_source_owner",
         "world_v2_finance_budget_source_publisher",
-        "world_v2_finance_budget_source_reader",
-        "world_v2_postwar_projection_owner"
+        "world_v2_finance_budget_source_reader"
       ],
       "createdRelations": ["finance_budget_mixed_social_original"],
       "definedFunctions": [
         "assert_finance_budget_mixed_social_scope",
+        "finance_budget_mixed_social_effect_scoped",
         "publish_finance_budget_mixed_social_originals",
         "read_finance_budget_mixed_social_original"
       ],
@@ -423,9 +420,15 @@
       "sourceRoleDeps": {
         "world_v2_finance_budget_source_owner": "finance-budget-custody",
         "world_v2_finance_budget_source_publisher": "finance-budget-custody",
-        "world_v2_finance_budget_source_reader": "finance-budget-custody",
-        "world_v2_postwar_projection_owner": "postwar-office-derived-read"
-      }
+        "world_v2_finance_budget_source_reader": "finance-budget-custody"
+      },
+      "literalCreatedPolicies": [
+        "budget_mixed_owner_command",
+        "budget_mixed_owner_command_world",
+        "budget_mixed_owner_event",
+        "budget_mixed_owner_event_world"
+      ],
+      "sourceBasis": "DIRECT_ADMITTED_STORED_SEED_WITH_PRIVATE_ALL_COUNTRY_SCOPE_INDEX_NOT_H0_READ_AUTHORITY"
     },
     {
       "id": "postwar-financial-current-derived-read",
@@ -567,9 +570,47 @@
       }
     },
     {
+      "id": "postwar-physical-inventory-provenance",
+      "path": "database/proposals/postwar-physical-inventory-provenance.sql",
+      "reviewOrder": 16,
+      "disposition": "CANDIDATE_IMMUTABLE_INVENTORY_PROVENANCE_V2",
+      "dependencies": [
+        "postwar-office-derived-read",
+        "postwar-physical-opening-facts-read"
+      ],
+      "baselineDependencies": ["0016_world_v2_opening_seed"],
+      "createdRoles": [],
+      "reusedRoles": [
+        "world_v2_postwar_projection_owner",
+        "world_v2_postwar_projection_publisher",
+        "world_v2_postwar_projection_reader"
+      ],
+      "createdRelations": ["postwar_inventory_provenance_v2"],
+      "definedFunctions": [
+        "publish_postwar_inventory_provenance_v2",
+        "read_postwar_inventory_provenance_v2_page"
+      ],
+      "renamedFunctions": [],
+      "literalCreatedPolicies": [
+        "postwar_inventory_provenance_owner",
+        "postwar_inventory_provenance_world"
+      ],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_postwar_projection_owner": "postwar-office-derived-read",
+        "world_v2_postwar_projection_publisher": "postwar-office-derived-read",
+        "world_v2_postwar_projection_reader": "postwar-office-derived-read"
+      },
+      "versionSemantics": "NEW_DIRECT_ROW_SOURCE_ATTESTATION_AND_VERSION;LEGACY_DOCUMENT_AND_VERSION_UNCHANGED"
+    },
+    {
       "id": "current-authorization-writer-preparation",
       "path": "database/proposals/current-authorization-writer-preparation.sql",
-      "reviewOrder": 16,
+      "reviewOrder": 17,
       "disposition": "OPTIONAL_DEFAULT_DENY_CONTEXT",
       "dependencies": [],
       "baselineDependencies": [],
@@ -588,7 +629,7 @@
     {
       "id": "postwar-runtime-source-read-policy",
       "path": "database/proposals/postwar-runtime-source-read-policy.sql",
-      "reviewOrder": 17,
+      "reviewOrder": 18,
       "disposition": "OPTIONAL_OFFLINE_ONLY",
       "dependencies": ["runtime-read-binding-storage"],
       "baselineDependencies": [],
@@ -609,7 +650,7 @@
     {
       "id": "isolated-world-clock",
       "path": "database/proposals/isolated-world-clock.sql",
-      "reviewOrder": 18,
+      "reviewOrder": 19,
       "disposition": "EXCLUDED_NOT_A_READ_DEPENDENCY",
       "dependencies": [],
       "baselineDependencies": [],

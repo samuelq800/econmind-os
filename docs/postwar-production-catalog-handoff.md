@@ -60,7 +60,7 @@ request and reviews its result. No production check was run to prepare this code
 
 For the next, expanded batch, append `--candidate-sha FULL_40_HEX_SHA`.
 That mode requires a clean checkout at exactly that SHA and inventories the
-explicit eighteen-proposal policy, including Captain, Finance, Social custody,
+explicit nineteen-proposal policy, including Captain, Finance, Social custody,
 MATCH/current-read, Industry and Trade. The policy itself deliberately has
 `sourceCommit: null`: the final World candidate has not been selected here.
 Observed SHA/byte counts bind a selected immutable candidate and never approve
@@ -82,7 +82,7 @@ physical opening-history reads. `sourceRoleDeps` maps every required role to its
 actual source proposal, including transitive dependencies; denied-role names and
 the controlled admission session-name prefix are separate context, not enrollment.
 The fixed extractor rejects a new role reference even when no object name changed.
-All eighteen entries remain source proposals; production review is `false`.
+All nineteen entries remain source proposals; production review is `false`.
 No new final SHA is selected by this policy. Use the final clean immutable World
 checkout with `--candidate-sha` only after it is supplied; do not reuse an older
 checkpoint as evidence for this batch.
@@ -105,3 +105,12 @@ not published by these scripts. `api.cloudflare.com:443` additionally needs
 explicit network access for provider version/settings/binding reads and, only
 through the reviewed release channel, a later publication/rollback. No provider
 request, network-policy change, credential request or deployment occurs here.
+
+The nineteenth proposal adds a direct inventory-source V2 attestation and new
+read version over the existing immutable inventory documents/pages. It does not
+rewrite their legacy version or imply current stock. Its dependencies are the H0
+bounded-reader and physical opening-history proposals. The latest Finance mixed
+source proposal derives its private all-country index directly from the admitted
+stored seed; it depends on Finance capacity/custody, not Social projection roles
+or H0 read data as economic authority. Both additions remain unregistered and
+production review is `false`.

@@ -9,7 +9,7 @@ const policyPath = fileURLToPath(
 );
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const POLICY_SHA256 =
-  "3ed0d24998ad68b05d770b9486d8e28b87e23b1892553043cde5a251b9458d16";
+  "c11d6826f0de27a762f97f90bbb6176471ec6f7972c2f1d618a0f69546bac266";
 export function requireImmutableProposalCandidateSha(candidateSha) {
   if (!/^[a-f0-9]{40}$/u.test(candidateSha ?? "") || /^0+$/u.test(candidateSha))
     throw Error("EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED");
@@ -27,7 +27,7 @@ export async function loadPostwarExpandedProposalPolicy() {
     policy.installationAllowed !== false ||
     policy.productionReviewVerified !== false ||
     policy.finalCandidateSelected !== false ||
-    policy.proposals.length !== 18
+    policy.proposals.length !== 19
   )
     throw Error("UNAPPROVED_EXPLICIT_CANDIDATE_POLICY_REQUIRED");
   const prior = new Set();
@@ -101,6 +101,12 @@ export function inspectExpandedProposalBytes(item, bytes) {
   const renamed = names(
     /alter\s+function\s+world_v2\.[a-z_0-9]+\([^;]*?\)\s*rename\s+to\s+([a-z_0-9]+)/giu,
   );
+  const literalPolicies = names(/create\s+policy\s+([a-z_0-9]+)/giu);
+  if (
+    item.literalCreatedPolicies !== undefined &&
+    !equal(literalPolicies, item.literalCreatedPolicies)
+  )
+    throw Error("PROPOSAL_LITERAL_POLICY_ALLOWLIST_CHANGED");
   const declaredRoles = names(/create\s+role\s+("?[a-z_][a-z_0-9]*"?)/giu).map(
     (role) => role.replaceAll('"', ""),
   );
