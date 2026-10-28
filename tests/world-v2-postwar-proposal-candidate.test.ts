@@ -5,6 +5,7 @@ import {
   loadPostwarExpandedProposalPolicy,
   inspectExpandedProposalBytes,
   loadPostwarExpandedProposalCandidate,
+  validateExpandedProposalRoleDependencies,
   // @ts-expect-error Node render-only helper has no declarations.
 } from "../scripts/world-v2-postwar-proposal-candidate.mjs";
 
@@ -22,12 +23,12 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       "EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED",
     );
   });
-  it("has an explicit thirteen-file dependency order and no pretend final SHA", async () => {
+  it("has an explicit eighteen-file dependency order and no pretend final SHA", async () => {
     const { policy } = await loadPostwarExpandedProposalPolicy();
     expect(policy.sourceCommit).toBeNull();
     expect(policy.installationAllowed).toBe(false);
     expect(policy.migrationApproval).toBe("NOT_GRANTED");
-    expect(policy.proposals).toHaveLength(13);
+    expect(policy.proposals).toHaveLength(18);
     const seen = new Set<string>();
     for (const p of policy.proposals) {
       expect(p.path).toBe(`database/proposals/${p.id}.sql`);
@@ -56,6 +57,9 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       renamedFunctions: [],
       registration: "UNREGISTERED_SOURCE_PROPOSAL",
       productionApproval: "NOT_GRANTED",
+      sourceRoleDeps: { world_v2_fixture_reader: "fixture" },
+      deniedRoleNames: [],
+      roleNamePrefixContext: [],
     };
     const bytes = Buffer.from(
       "create role world_v2_fixture_reader nologin nosuperuser nobypassrls nocreatedb nocreaterole noreplication; create table world_v2.fixture(id text);",
@@ -88,6 +92,47 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       ),
     ).toThrow("PROPOSAL_ROLE_ALLOWLIST_CHANGED");
   });
+  it("requires every reused source role to name its actual dependency provider and rejects unlisted grants", async () => {
+    const { policy } = await loadPostwarExpandedProposalPolicy();
+    const mixed = policy.proposals.find(
+      (p) => p.id === "finance-budget-mixed-source",
+    );
+    expect(mixed.sourceRoleDeps.world_v2_postwar_projection_owner).toBe(
+      "postwar-office-derived-read",
+    );
+    const changed = structuredClone(policy);
+    changed.proposals.find(
+      (p) => p.id === "finance-budget-mixed-source",
+    ).sourceRoleDeps.world_v2_postwar_projection_owner =
+      "finance-budget-custody";
+    expect(() => validateExpandedProposalRoleDependencies(changed)).toThrow(
+      "SOURCE_ROLE_PROVIDER_DEPENDENCY_REQUIRED",
+    );
+    const skipped = structuredClone(policy);
+    skipped.proposals.find(
+      (p) => p.id === "finance-budget-mixed-source",
+    ).dependencies = ["finance-budget-capacity-source"];
+    expect(() => validateExpandedProposalRoleDependencies(skipped)).toThrow(
+      "SOURCE_ROLE_PROVIDER_DEPENDENCY_REQUIRED",
+    );
+    const item = {
+      createdRoles: [],
+      createdRelations: [],
+      definedFunctions: [],
+      renamedFunctions: [],
+      sourceRoleDeps: {},
+      deniedRoleNames: [],
+      roleNamePrefixContext: [],
+    };
+    expect(() =>
+      inspectExpandedProposalBytes(
+        item,
+        Buffer.from(
+          "grant usage on schema world_v2 to world_v2_unlisted_reader;",
+        ),
+      ),
+    ).toThrow("SOURCE_ROLE_DEPENDENCY_ALLOWLIST_CHANGED");
+  });
   it("cannot use companion or a dirty branch as the selected World candidate", async () => {
     await expect(
       loadPostwarExpandedProposalCandidate(process.cwd(), "a".repeat(40)),
@@ -103,7 +148,7 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
     );
   });
   (process.env.POSTWAR_PROPOSAL_METADATA_SOURCE ? it : it.skip)(
-    "compares all thirteen actual proposal object/role inventories without selecting a final candidate",
+    "compares all eighteen actual proposal object/role inventories without selecting a final candidate",
     async () => {
       const { policy } = await loadPostwarExpandedProposalPolicy();
       for (const item of policy.proposals) {

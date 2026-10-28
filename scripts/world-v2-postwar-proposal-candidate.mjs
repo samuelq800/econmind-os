@@ -9,7 +9,7 @@ const policyPath = fileURLToPath(
 );
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const POLICY_SHA256 =
-  "239588c49deea50cb4aff02ccabd5515b0d7afb78fbd6303853e7b1ec0b6c5e2";
+  "3ed0d24998ad68b05d770b9486d8e28b87e23b1892553043cde5a251b9458d16";
 export function requireImmutableProposalCandidateSha(candidateSha) {
   if (!/^[a-f0-9]{40}$/u.test(candidateSha ?? "") || /^0+$/u.test(candidateSha))
     throw Error("EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED");
@@ -25,20 +25,66 @@ export async function loadPostwarExpandedProposalPolicy() {
     policy.sourceRemote !==
       "https://github.com/samuelq800/econmind-os-world-simulation.git" ||
     policy.installationAllowed !== false ||
-    policy.proposals.length !== 13
+    policy.productionReviewVerified !== false ||
+    policy.finalCandidateSelected !== false ||
+    policy.proposals.length !== 18
   )
     throw Error("UNAPPROVED_EXPLICIT_CANDIDATE_POLICY_REQUIRED");
   const prior = new Set();
   for (const item of policy.proposals) {
     if (
       item.path !== `database/proposals/${item.id}.sql` ||
+      item.registration !== "UNREGISTERED_SOURCE_PROPOSAL" ||
+      item.productionApproval !== "NOT_GRANTED" ||
       prior.has(item.id) ||
       item.dependencies.some((d) => !prior.has(d))
     )
       throw Error("FIXED_PROPOSAL_DEPENDENCY_ORDER_INVALID");
     prior.add(item.id);
   }
+  validateExpandedProposalRoleDependencies(policy);
   return { policy, policySha256: sha(bytes) };
+}
+/** Provider identity and dependency closure are fixed review metadata only.
+ * A valid mapping does not enroll roles or approve the candidate SQL. */
+export function validateExpandedProposalRoleDependencies(policy) {
+  const providers = new Map();
+  for (const item of policy.proposals)
+    for (const role of item.createdRoles) {
+      if (providers.has(role)) throw Error("AMBIGUOUS_SOURCE_ROLE_PROVIDER");
+      providers.set(role, item.id);
+    }
+  const seen = new Map();
+  for (const item of policy.proposals) {
+    const closure = new Set(item.dependencies);
+    for (const dependency of item.dependencies) {
+      const parent = seen.get(dependency);
+      if (!parent) throw Error("SOURCE_ROLE_DEPENDENCY_ORDER_INVALID");
+      for (const ancestor of parent) closure.add(ancestor);
+    }
+    for (const [role, provider] of Object.entries(item.sourceRoleDeps ?? {})) {
+      if (provider === "EXTERNAL_REVIEWED_NOLOGIN_GROUP_NOT_PROVISIONED") {
+        if (
+          item.id !== "postwar-runtime-source-read-policy" ||
+          role !== policy.offlineRawGroup.name
+        )
+          throw Error("UNREVIEWED_EXTERNAL_SOURCE_ROLE");
+      } else if (
+        providers.get(role) !== provider ||
+        (provider !== item.id && !closure.has(provider))
+      )
+        throw Error("SOURCE_ROLE_PROVIDER_DEPENDENCY_REQUIRED");
+    }
+    const required = [...item.createdRoles, ...item.reusedRoles];
+    if (
+      required.some(
+        (role) => !Object.hasOwn(item.sourceRoleDeps ?? {}, role),
+      ) ||
+      item.productionReviewVerified !== false
+    )
+      throw Error("EXPLICIT_SOURCE_ROLE_DEPENDENCIES_REQUIRED");
+    seen.set(item.id, closure);
+  }
 }
 /** Extract catalog names only, never interpret proposal SQL as executable input.
  * Metadata extraction is not approval or an exhaustive SQL/security parser. */
@@ -66,6 +112,14 @@ export function inspectExpandedProposalBytes(item, bytes) {
         ...[...loop[1].matchAll(/'([a-z_][a-z_0-9]*)'/giu)].map((m) => m[1]),
       );
   }
+  const referencedRoles = names(/\b(world_v2_[a-z_0-9]+)\b/giu);
+  const roleAllowlist = [
+    ...Object.keys(item.sourceRoleDeps ?? {}),
+    ...(item.deniedRoleNames ?? []),
+    ...(item.roleNamePrefixContext ?? []),
+  ];
+  if (!equal(referencedRoles, roleAllowlist))
+    throw Error("PROPOSAL_SOURCE_ROLE_DEPENDENCY_ALLOWLIST_CHANGED");
   if (
     !equal(relations, item.createdRelations) ||
     !equal(functions, item.definedFunctions) ||
@@ -84,6 +138,7 @@ export function inspectExpandedProposalBytes(item, bytes) {
     throw Error("DECLARED_FIXED_NOLOGIN_ROLE_REQUIREMENTS_MISSING");
   return {
     ...item,
+    referencedRoleNames: referencedRoles,
     sha256: sha(bytes),
     bytes: bytes.length,
     sha256Meaning: "OBSERVED_IMMUTABLE_CANDIDATE_BYTES_NOT_APPROVAL",

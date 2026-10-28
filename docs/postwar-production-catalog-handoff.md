@@ -60,7 +60,7 @@ request and reviews its result. No production check was run to prepare this code
 
 For the next, expanded batch, append `--candidate-sha FULL_40_HEX_SHA`.
 That mode requires a clean checkout at exactly that SHA and inventories the
-explicit thirteen-proposal policy, including Captain, Finance, Social custody,
+explicit eighteen-proposal policy, including Captain, Finance, Social custody,
 MATCH/current-read, Industry and Trade. The policy itself deliberately has
 `sourceCommit: null`: the final World candidate has not been selected here.
 Observed SHA/byte counts bind a selected immutable candidate and never approve
@@ -75,3 +75,33 @@ production/canonical helper migrations. Operational writer lease/queue/commit
 lock privileges and source-issuer enrollment remain separately reviewed; they
 are not inferred from inaccessible definer-owner privileges. All proposals
 remain unregistered and production NOT_VERIFIED in both modes.
+
+The expanded inventory now includes Finance capacity and mixed-source originals,
+complete Social prefix reads, complete no-posting financial current reads, and
+physical opening-history reads. `sourceRoleDeps` maps every required role to its
+actual source proposal, including transitive dependencies; denied-role names and
+the controlled admission session-name prefix are separate context, not enrollment.
+The fixed extractor rejects a new role reference even when no object name changed.
+All eighteen entries remain source proposals; production review is `false`.
+No new final SHA is selected by this policy. Use the final clean immutable World
+checkout with `--candidate-sha` only after it is supplied; do not reuse an older
+checkpoint as evidence for this batch.
+
+The minimal release gaps are: finish the exact candidate check/review; review and
+register an exact companion migration delta through `supabase-production`; verify
+the existing bounded reader/Hyperdrive binding and actual signed admission; then
+prepare the existing Cloudflare release with its previous Worker version retained.
+Required configuration names are `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`,
+`SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `RUNTIME_MODE`,
+`POSTWAR_READ_CONFIGURATION_JSON`, and `POSTWAR_READER`. Names do not prove secret
+presence, binding approval, disabled query caching or connection-role privileges.
+The current source config still declares `RUNTIME_MODE=HOLD` and no
+`POSTWAR_READER`/admitted-read configuration.
+
+Network approval and environment publication are separate: approved GitHub access
+still has unapplied cloud environment draft revision 6 and observed CONNECT 403
+at `api.github.com:443`, before token permissions can be evaluated. The draft is
+not published by these scripts. `api.cloudflare.com:443` additionally needs
+explicit network access for provider version/settings/binding reads and, only
+through the reviewed release channel, a later publication/rollback. No provider
+request, network-policy change, credential request or deployment occurs here.

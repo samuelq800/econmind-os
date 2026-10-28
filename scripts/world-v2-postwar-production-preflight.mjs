@@ -66,6 +66,9 @@ function catalogQueryForPins(pins) {
   const roleNames = [
     ...new Set([
       ...relevant.flatMap((proposal) => proposal.createdRoles),
+      ...relevant.flatMap((proposal) =>
+        Object.keys(proposal.sourceRoleDeps ?? {}),
+      ),
       pins.externalRolePrerequisite.name,
       "world_v2_api_reader",
       "world_v2_api_login",
@@ -232,6 +235,14 @@ export async function preparePostwarProductionPreflight({
       releaseOrder: m.release_order,
     })),
     minimumRoleHandoff: {
+      sourceRoleDeps: pins.proposals
+        .filter((p) => !p.disposition.startsWith("EXCLUDED_"))
+        .map((p) => ({
+          proposalId: p.id,
+          dependencies: p.dependencies,
+          sourceRoleDeps: p.sourceRoleDeps ?? {},
+          productionReviewVerified: false,
+        })),
       inaccessibleDefiners: [
         "world_v2_admission_owner",
         "world_v2_postwar_projection_owner",
