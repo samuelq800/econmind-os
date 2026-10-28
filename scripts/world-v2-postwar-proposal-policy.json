@@ -1,0 +1,395 @@
+{
+  "schemaVersion": "WORLD_V2_POSTWAR_EXPANDED_PROPOSAL_POLICY_V1",
+  "sourceCommit": null,
+  "candidateSelection": "EXPLICIT_IMMUTABLE_SHA_REQUIRED; no latest or branch default",
+  "sourceRemote": "https://github.com/samuelq800/econmind-os-world-simulation.git",
+  "projectRef": "vimksjrhaxdpnkvgsavz",
+  "registeredManifestSha256": "e675bd8bd18ba6c51aeffa674320dba3ac79299b7e12eeef834fe28547f9025e",
+  "registeredMigrationCount": 23,
+  "proposalPolicy": "Fixed inventory and dependency order only; no installation order has been approved",
+  "proposals": [
+    {
+      "id": "runtime-read-binding-storage",
+      "path": "database/proposals/runtime-read-binding-storage.sql",
+      "reviewOrder": 1,
+      "disposition": "REQUIRED_READ_BOUNDARY",
+      "dependencies": [],
+      "baselineDependencies": [
+        "0002_world_v2_command_event_ledger",
+        "0011_world_v2_current_commit_authorization",
+        "0016_world_v2_opening_seed"
+      ],
+      "createdRoles": [],
+      "reusedRoles": [],
+      "createdRelations": ["runtime_read_seat", "runtime_opening_admission"],
+      "definedFunctions": [
+        "guard_runtime_opening_admission_publication",
+        "validate_runtime_read_seat_insert"
+      ],
+      "renamedFunctions": [],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED"
+    },
+    {
+      "id": "runtime-admission-publication",
+      "path": "database/proposals/runtime-admission-publication.sql",
+      "reviewOrder": 2,
+      "disposition": "REQUIRED_CONTROLLED_ADMISSION",
+      "dependencies": ["runtime-read-binding-storage"],
+      "baselineDependencies": ["0002_world_v2_command_event_ledger"],
+      "createdRoles": [
+        "world_v2_admission_owner",
+        "world_v2_admission_release"
+      ],
+      "reusedRoles": [],
+      "createdRelations": [
+        "runtime_admission_publication_permit",
+        "runtime_admission_publication_revocation"
+      ],
+      "definedFunctions": [
+        "guard_runtime_opening_admission_publication",
+        "lock_runtime_admission_publication",
+        "publish_runtime_admission_publication",
+        "read_runtime_admission_publication",
+        "read_runtime_admission_publication_authorization",
+        "runtime_admission_permit_for_caller",
+        "validate_runtime_admission_permit",
+        "validate_runtime_admission_revocation"
+      ],
+      "renamedFunctions": [],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED"
+    },
+    {
+      "id": "postwar-office-derived-read",
+      "path": "database/proposals/postwar-office-derived-read.sql",
+      "reviewOrder": 3,
+      "disposition": "REQUIRED_BOUNDED_READ",
+      "dependencies": [
+        "runtime-read-binding-storage",
+        "runtime-admission-publication"
+      ],
+      "baselineDependencies": [
+        "0011_world_v2_current_commit_authorization",
+        "0013_world_v2_read_projection_boundary"
+      ],
+      "createdRoles": [
+        "world_v2_postwar_projection_owner",
+        "world_v2_postwar_projection_publisher",
+        "world_v2_postwar_projection_reader"
+      ],
+      "reusedRoles": [],
+      "createdRelations": [
+        "postwar_office_projection_document",
+        "postwar_office_projection_page",
+        "postwar_office_projection_revocation"
+      ],
+      "definedFunctions": [
+        "postwar_projection_admission_header",
+        "postwar_projection_document_readable",
+        "postwar_projection_reader_allowed",
+        "publish_postwar_office_projection",
+        "read_postwar_office_projection_page",
+        "read_postwar_office_projection_seats",
+        "revoke_postwar_office_projection"
+      ],
+      "renamedFunctions": [],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED"
+    },
+    {
+      "id": "captain-operating-custody",
+      "path": "database/proposals/captain-operating-custody.sql",
+      "reviewOrder": 4,
+      "disposition": "CANDIDATE_CAPTAIN_CUSTODY",
+      "dependencies": [],
+      "baselineDependencies": [
+        "0005_world_v2_writer_lease_fencing",
+        "0011_world_v2_current_commit_authorization",
+        "0016_world_v2_opening_seed"
+      ],
+      "createdRoles": [
+        "world_v2_captain_source_owner",
+        "world_v2_captain_source_reader"
+      ],
+      "reusedRoles": [],
+      "createdRelations": [
+        "captain_operating_source_adoption",
+        "captain_operating_original",
+        "captain_operating_source_revocation"
+      ],
+      "definedFunctions": [
+        "lock_captain_operating_originals",
+        "lock_captain_original_parent"
+      ],
+      "renamedFunctions": [],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED"
+    },
+    {
+      "id": "finance-budget-custody",
+      "path": "database/proposals/finance-budget-custody.sql",
+      "reviewOrder": 5,
+      "disposition": "CANDIDATE_FINANCE_CUSTODY",
+      "dependencies": [
+        "runtime-read-binding-storage",
+        "runtime-admission-publication"
+      ],
+      "baselineDependencies": [
+        "0005_world_v2_writer_lease_fencing",
+        "0011_world_v2_current_commit_authorization",
+        "0013_world_v2_read_projection_boundary"
+      ],
+      "createdRoles": [
+        "world_v2_finance_budget_source_owner",
+        "world_v2_finance_budget_source_publisher",
+        "world_v2_finance_budget_source_reader"
+      ],
+      "reusedRoles": [],
+      "createdRelations": [
+        "finance_budget_policy_original",
+        "finance_budget_policy_revocation"
+      ],
+      "definedFunctions": [
+        "finance_budget_original_immutable",
+        "lock_finance_budget_current_authorization",
+        "lock_finance_budget_intake_binding",
+        "lock_finance_budget_policy",
+        "lock_finance_budget_revoked_authorization",
+        "publish_finance_budget_policy",
+        "revoke_finance_budget_policy"
+      ],
+      "renamedFunctions": [],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED"
+    },
+    {
+      "id": "social-operating-custody",
+      "path": "database/proposals/social-operating-custody.sql",
+      "reviewOrder": 6,
+      "disposition": "CANDIDATE_SOCIAL_CUSTODY",
+      "dependencies": [
+        "runtime-read-binding-storage",
+        "runtime-admission-publication"
+      ],
+      "baselineDependencies": ["0011_world_v2_current_commit_authorization"],
+      "createdRoles": [
+        "world_v2_social_source_owner",
+        "world_v2_social_source_publisher",
+        "world_v2_social_source_reader"
+      ],
+      "reusedRoles": [],
+      "createdRelations": [
+        "social_operating_source_registration",
+        "social_operating_source_revocation"
+      ],
+      "definedFunctions": [
+        "lock_social_operating_active_office",
+        "lock_social_operating_current_authorization",
+        "lock_social_operating_lineage_head",
+        "lock_social_operating_source",
+        "register_social_operating_source",
+        "register_social_operating_source_world",
+        "revoke_social_operating_source",
+        "social_source_admission"
+      ],
+      "renamedFunctions": [],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED"
+    },
+    {
+      "id": "social-operating-match-publisher",
+      "path": "database/proposals/social-operating-match-publisher.sql",
+      "reviewOrder": 7,
+      "disposition": "CANDIDATE_SOCIAL_MATCH",
+      "dependencies": ["social-operating-custody"],
+      "baselineDependencies": [
+        "0003_world_v2_command_receipts_outbox",
+        "0009_world_v2_posting_payload_integrity"
+      ],
+      "createdRoles": [],
+      "reusedRoles": [
+        "world_v2_social_source_owner",
+        "world_v2_social_source_publisher",
+        "world_v2_social_source_reader"
+      ],
+      "createdRelations": [
+        "social_operating_match_publisher",
+        "social_operating_match_publisher_revocation",
+        "social_operating_match_publication"
+      ],
+      "definedFunctions": [
+        "lock_social_operating_match_publication",
+        "lock_social_operating_match_publisher",
+        "publish_social_operating_match_due",
+        "register_social_operating_match_publisher",
+        "revoke_social_operating_match_publisher"
+      ],
+      "renamedFunctions": [],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED"
+    },
+    {
+      "id": "postwar-social-current-derived-read",
+      "path": "database/proposals/postwar-social-current-derived-read.sql",
+      "reviewOrder": 8,
+      "disposition": "CANDIDATE_SOCIAL_CURRENT_READ",
+      "dependencies": ["postwar-office-derived-read"],
+      "baselineDependencies": [
+        "0008_world_v2_materialization_recovery",
+        "0009_world_v2_posting_payload_integrity"
+      ],
+      "createdRoles": [],
+      "reusedRoles": [
+        "world_v2_postwar_projection_owner",
+        "world_v2_postwar_projection_publisher",
+        "world_v2_postwar_projection_reader"
+      ],
+      "createdRelations": [
+        "postwar_social_current_document",
+        "postwar_social_current_page"
+      ],
+      "definedFunctions": [
+        "postwar_current_social_witness",
+        "publish_postwar_social_current_projection",
+        "read_postwar_office_projection_page"
+      ],
+      "renamedFunctions": ["read_postwar_office_projection_h0_page"],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED"
+    },
+    {
+      "id": "postwar-industry-production-source",
+      "path": "database/proposals/postwar-industry-production-source.sql",
+      "reviewOrder": 9,
+      "disposition": "CANDIDATE_INDUSTRY_CUSTODY",
+      "dependencies": [
+        "runtime-read-binding-storage",
+        "runtime-admission-publication"
+      ],
+      "baselineDependencies": [
+        "0009_world_v2_posting_payload_integrity",
+        "0023_world_v2_production_consumption_posting"
+      ],
+      "createdRoles": [
+        "world_v2_industry_source_owner",
+        "world_v2_industry_source_publisher",
+        "world_v2_industry_source_reader"
+      ],
+      "reusedRoles": [],
+      "createdRelations": [
+        "postwar_industry_original",
+        "postwar_industry_deposit_original",
+        "postwar_industry_original_revocation"
+      ],
+      "definedFunctions": [
+        "industry_source_admission",
+        "industry_source_deposit_balance",
+        "industry_source_paid_deposit",
+        "lock_postwar_industry_original",
+        "register_postwar_industry_originals",
+        "revoke_postwar_industry_original",
+        "validate_production_final_receipt_and_funding"
+      ],
+      "renamedFunctions": [],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED"
+    },
+    {
+      "id": "postwar-narrow-trade-source",
+      "path": "database/proposals/postwar-narrow-trade-source.sql",
+      "reviewOrder": 10,
+      "disposition": "CANDIDATE_TRADE_SOURCE",
+      "dependencies": ["postwar-office-derived-read"],
+      "baselineDependencies": [
+        "0011_world_v2_current_commit_authorization",
+        "0013_world_v2_read_projection_boundary"
+      ],
+      "createdRoles": ["world_v2_postwar_narrow_trade_source"],
+      "reusedRoles": ["world_v2_postwar_projection_owner"],
+      "createdRelations": [
+        "postwar_narrow_trade_rights_admission",
+        "postwar_narrow_trade_rights_revocation"
+      ],
+      "definedFunctions": [
+        "lock_postwar_narrow_rights_admission_parent",
+        "lock_postwar_narrow_rights_revocation_parent",
+        "read_postwar_narrow_trade_source"
+      ],
+      "renamedFunctions": [],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED"
+    },
+    {
+      "id": "current-authorization-writer-preparation",
+      "path": "database/proposals/current-authorization-writer-preparation.sql",
+      "reviewOrder": 11,
+      "disposition": "OPTIONAL_DEFAULT_DENY_CONTEXT",
+      "dependencies": [],
+      "baselineDependencies": [],
+      "createdRoles": [],
+      "reusedRoles": [],
+      "createdRelations": ["current_authorization_publication_checkpoint"],
+      "definedFunctions": ["apply_current_authorization_change"],
+      "renamedFunctions": [],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED"
+    },
+    {
+      "id": "postwar-runtime-source-read-policy",
+      "path": "database/proposals/postwar-runtime-source-read-policy.sql",
+      "reviewOrder": 12,
+      "disposition": "OPTIONAL_OFFLINE_ONLY",
+      "dependencies": ["runtime-read-binding-storage"],
+      "baselineDependencies": [],
+      "createdRoles": [],
+      "reusedRoles": [],
+      "createdRelations": [],
+      "definedFunctions": [],
+      "renamedFunctions": [],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED"
+    },
+    {
+      "id": "isolated-world-clock",
+      "path": "database/proposals/isolated-world-clock.sql",
+      "reviewOrder": 13,
+      "disposition": "EXCLUDED_NOT_A_READ_DEPENDENCY",
+      "dependencies": [],
+      "baselineDependencies": [],
+      "createdRoles": [],
+      "reusedRoles": [],
+      "createdRelations": ["isolated_clock_input", "isolated_clock_head"],
+      "definedFunctions": ["reject_isolated_clock_input_mutation"],
+      "renamedFunctions": [],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED"
+    }
+  ],
+  "requiredRoleAttributes": [
+    "NOLOGIN",
+    "NOSUPERUSER",
+    "NOBYPASSRLS",
+    "NOCREATEDB",
+    "NOCREATEROLE",
+    "NOREPLICATION"
+  ],
+  "roleEnrollment": "NOT_PERFORMED; no LOGINs, memberships, credentials or operational writer privileges generated",
+  "offlineRawGroup": {
+    "name": "world_v2_postwar_offline_seed_reader",
+    "requiredOnlyFor": "postwar-runtime-source-read-policy",
+    "attributes": [
+      "NOLOGIN",
+      "NOSUPERUSER",
+      "NOBYPASSRLS",
+      "NOCREATEDB",
+      "NOCREATEROLE",
+      "NOREPLICATION"
+    ],
+    "status": "NOT_PROVISIONED_BY_ANY_CANDIDATE_SQL"
+  },
+  "writerPrivilegeReview": "Existing lease/queue/commit guards require separately reviewed exact-World lock privileges and authoritative source publisher enrollment; no runtime grants inferred from definer owner grants.",
+  "productionVerified": false,
+  "migrationApproval": "NOT_GRANTED",
+  "installationAllowed": false
+}

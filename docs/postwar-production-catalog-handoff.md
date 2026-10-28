@@ -57,3 +57,21 @@ has no fetch, database driver, token lookup, production execution, dispatch,
 rollback execution or deployment switch. Production observation and acceptance
 remain NOT_VERIFIED until the owning approved channel actually runs the catalog
 request and reviews its result. No production check was run to prepare this code.
+
+For the next, expanded batch, append `--candidate-sha FULL_40_HEX_SHA`.
+That mode requires a clean checkout at exactly that SHA and inventories the
+explicit thirteen-proposal policy, including Captain, Finance, Social custody,
+MATCH/current-read, Industry and Trade. The policy itself deliberately has
+`sourceCommit: null`: the final World candidate has not been selected here.
+Observed SHA/byte counts bind a selected immutable candidate and never approve
+its SQL. The original no-SHA mode remains the historical six-proposal 8cbe
+handoff; it cannot establish completeness for the expanded batch.
+
+The policy records a dependency review order, renamed H0 reader function and
+fixed NOLOGIN owner/publisher/reader requirements. It grants nothing. MATCH
+requires Social custody and existing canonical command helpers; current Social
+pages require the H0 derived-reader proposal; Industry requires the original
+production/canonical helper migrations. Operational writer lease/queue/commit
+lock privileges and source-issuer enrollment remain separately reviewed; they
+are not inferred from inaccessible definer-owner privileges. All proposals
+remain unregistered and production NOT_VERIFIED in both modes.

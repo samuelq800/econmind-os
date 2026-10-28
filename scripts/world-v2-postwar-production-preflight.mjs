@@ -5,6 +5,7 @@ import { readFile, writeFile, mkdir, lstat, realpath } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { WORLD_V2_RELEASE_PROJECT_REF } from "./render-world-v2-release-query.mjs";
+import { loadPostwarExpandedProposalCandidate } from "./world-v2-postwar-proposal-candidate.mjs";
 
 const bindingPath = fileURLToPath(
   new URL(
@@ -44,6 +45,9 @@ async function binding() {
  * role settings/passwords and policy expressions are never returned. */
 export async function renderPostwarCatalogQuery() {
   const pins = await binding();
+  return catalogQueryForPins(pins);
+}
+function catalogQueryForPins(pins) {
   const relevant = pins.proposals.filter(
     (proposal) => !proposal.disposition.startsWith("EXCLUDED_"),
   );
@@ -67,6 +71,16 @@ export async function renderPostwarCatalogQuery() {
       "world_v2_api_login",
     ]),
   ].sort();
+  const incompatibleOnlineReaderRoles = [
+    ...new Set([
+      ...roleNames.filter(
+        (name) => name !== "world_v2_postwar_projection_reader",
+      ),
+      "anon",
+      "authenticated",
+      "service_role",
+    ]),
+  ].sort();
   const array = (values) =>
     "array[" + values.map(literal).join(",") + "]::text[]";
   const query = `begin isolation level repeatable read read only;
@@ -84,12 +98,12 @@ relations as (
 roles as (
  select r.oid,r.rolname,r.rolcanlogin,r.rolsuper,r.rolbypassrls,r.rolcreatedb,r.rolcreaterole,r.rolreplication
  from pg_catalog.pg_roles r where r.rolname=any(${array(roleNames)}) or exists(
-  select 1 from pg_catalog.pg_roles g where g.rolname='world_v2_postwar_projection_reader' and pg_catalog.pg_has_role(r.oid,g.oid,'MEMBER'))
+  select 1 from pg_catalog.pg_roles g where g.rolname=any(${array(roleNames)}) and pg_catalog.pg_has_role(r.oid,g.oid,'MEMBER'))
 ),
 reader_shape as (
  select r.*,not(r.rolsuper or r.rolbypassrls or r.rolcreatedb or r.rolcreaterole or r.rolreplication)
  and exists(select 1 from pg_catalog.pg_roles g where g.rolname='world_v2_postwar_projection_reader' and pg_catalog.pg_has_role(r.oid,g.oid,'MEMBER'))
- and not exists(select 1 from pg_catalog.pg_roles g where g.rolname in('world_v2_postwar_projection_owner','world_v2_postwar_projection_publisher','world_v2_admission_owner','world_v2_admission_release','world_v2_postwar_offline_seed_reader','anon','authenticated','service_role','world_v2_api_reader','world_v2_api_login')and pg_catalog.pg_has_role(r.oid,g.oid,'MEMBER'))
+ and not exists(select 1 from pg_catalog.pg_roles g where g.rolname=any(${array(incompatibleOnlineReaderRoles)})and pg_catalog.pg_has_role(r.oid,g.oid,'MEMBER'))
  and exists(select 1 from namespace n where pg_catalog.has_schema_privilege(r.oid,n.oid,'USAGE'))
  and not exists(select 1 from namespace n where pg_catalog.has_schema_privilege(r.oid,n.oid,'CREATE'))
  and (select count(distinct p.proname)=2 and coalesce(bool_and(pg_catalog.has_function_privilege(r.oid,p.oid,'EXECUTE')),false)from pg_catalog.pg_proc p join namespace n on n.oid=p.pronamespace where (p.proname='read_postwar_office_projection_seats' and p.proargtypes='25'::pg_catalog.oidvector)or(p.proname='read_postwar_office_projection_page'and p.proargtypes='25 25 25 23 23 25'::pg_catalog.oidvector))
@@ -126,7 +140,9 @@ rollback;
 `;
   return query;
 }
-async function verifySource(sourceRoot) {
+async function verifySource(sourceRoot, candidateSha) {
+  if (candidateSha !== undefined)
+    return loadPostwarExpandedProposalCandidate(sourceRoot, candidateSha);
   const pins = await binding();
   if (!path.isAbsolute(sourceRoot))
     throw Error("ABSOLUTE_WORLD_SOURCE_REQUIRED");
@@ -174,8 +190,9 @@ async function verifySource(sourceRoot) {
 export async function preparePostwarProductionPreflight({
   sourceRoot,
   outputDirectory,
+  candidateSha,
 }) {
-  const { pins, manifest } = await verifySource(sourceRoot);
+  const { pins, manifest } = await verifySource(sourceRoot, candidateSha);
   if (!path.isAbsolute(outputDirectory))
     throw Error("ABSOLUTE_FRESH_OUTPUT_REQUIRED");
   outputDirectory = path.join(
@@ -189,11 +206,19 @@ export async function preparePostwarProductionPreflight({
   )
     throw Error("OUTPUT_OUTSIDE_WORLD_SOURCE_REQUIRED");
   await mkdir(outputDirectory); // exclusive fresh directory; never overwrite a handoff
-  const query = await renderPostwarCatalogQuery();
+  const query = catalogQueryForPins(pins);
   const expectation = {
     ...pins,
     catalogQuerySha256: digest(query),
     bindingSha256: BINDING_SHA256,
+    bindingSha256Meaning:
+      candidateSha === undefined
+        ? "HISTORICAL_8CBE_BASELINE_BINDING_ONLY"
+        : "HISTORICAL_BASELINE_REFERENCE; expandedPolicySha256 selects proposal policy",
+    candidateCompleteness:
+      candidateSha === undefined
+        ? "HISTORICAL_SIX_PROPOSALS_NOT_CURRENT_BATCH"
+        : "ALLOWLISTED_CANDIDATE_BYTES_OBSERVED_NOT_APPROVED_OR_INSTALLED",
     status: "RENDERED_ONLY_PRODUCTION_NOT_VERIFIED",
     productionExecution: "NOT_AVAILABLE",
     databaseOperations: 0,
@@ -216,6 +241,29 @@ export async function preparePostwarProductionPreflight({
         "world_v2_postwar_projection_publisher",
         "world_v2_postwar_projection_reader",
       ],
+      candidateNoLoginRoles: [
+        ...new Set(
+          pins.proposals
+            .filter((p) => !p.disposition.startsWith("EXCLUDED_"))
+            .flatMap((p) => p.createdRoles),
+        ),
+      ].sort(),
+      candidateRoleAttributes:
+        "NOLOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE NOREPLICATION",
+      candidateDefinerOwners: [
+        ...new Set(pins.proposals.flatMap((p) => p.createdRoles)),
+      ]
+        .filter((role) => role.endsWith("_owner"))
+        .sort(),
+      candidateSourcePublisherGroups: [
+        ...new Set(pins.proposals.flatMap((p) => p.createdRoles)),
+      ]
+        .filter(
+          (role) => role.endsWith("_publisher") || role.endsWith("_release"),
+        )
+        .sort(),
+      runtimeRoleEnrollment:
+        "NOT_PERFORMED; existing logins/memberships and writer lock rights require separate owner review",
       existingReaderReuse:
         "NOT_VERIFIED; catalog privilege shape is necessary but not sufficient",
       readerPermissions:
@@ -254,14 +302,16 @@ export async function preparePostwarProductionPreflight({
 async function main() {
   const args = process.argv.slice(2);
   if (
-    args.length !== 4 ||
+    ![4, 6].includes(args.length) ||
     args[0] !== "--source-root" ||
-    args[2] !== "--output-directory"
+    args[2] !== "--output-directory" ||
+    (args.length === 6 && args[4] !== "--candidate-sha")
   )
     throw Error("ONLY_FIXED_SOURCE_RENDER_ARGUMENTS_ACCEPTED");
   const result = await preparePostwarProductionPreflight({
     sourceRoot: args[1],
     outputDirectory: args[3],
+    candidateSha: args.length === 6 ? args[5] : undefined,
   });
   process.stdout.write(
     JSON.stringify({
