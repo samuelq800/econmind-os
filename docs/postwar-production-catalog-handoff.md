@@ -60,7 +60,7 @@ request and reviews its result. No production check was run to prepare this code
 
 For the next, expanded batch, append `--candidate-sha FULL_40_HEX_SHA`.
 That mode requires a clean checkout at exactly that SHA and inventories the
-explicit twenty-one-proposal policy, including Captain, Finance, Social custody,
+explicit twenty-two-proposal policy, including Captain, Finance, Social custody,
 MATCH/current-read, Industry and Trade. The policy itself deliberately has
 `sourceCommit: null`: the final World candidate has not been selected here.
 Observed SHA/byte counts bind a selected immutable candidate and never approve
@@ -82,7 +82,7 @@ physical opening-history reads. `sourceRoleDeps` maps every required role to its
 actual source proposal, including transitive dependencies; denied-role names and
 the controlled admission session-name prefix are separate context, not enrollment.
 The fixed extractor rejects a new role reference even when no object name changed.
-All twenty-one entries remain source proposals; production review is `false`.
+All twenty-two entries remain source proposals; production review is `false`.
 No new final SHA is selected by this policy. Use the final clean immutable World
 checkout with `--candidate-sha` only after it is supplied; do not reuse an older
 checkpoint as evidence for this batch.
@@ -181,3 +181,43 @@ this companion policy to render a separate 20-transaction review package; it
 also executes no SQL, excludes Clock, and records transaction/failure recovery
 boundaries rather than promising an automatic global rollback. Actual schema
 installation and any production release remain separate, unapproved actions.
+
+## Decimal validator forward-fix: 45 source files, 21 non-Clock transactions
+
+The next candidate adds `financial-posting-decimal-validation` before FX custody:
+**23 unchanged registered baseline + 22 unregistered proposals = 45 source SQL
+files**, with **21 non-Clock transactions**. The prior 44/21/20 FX review package
+remains immutable historical evidence. Clock is still excluded.
+
+This is an explicit collision with the already installed
+`world_v2.validate_financial_posting_payload(jsonb,world_v2.financial_posting_batch)`
+from `0009_world_v2_posting_payload_integrity`, not a new function slot. The 0009
+artifact remains byte-identical, SHA-256
+`88d54a0abccc91e23a1384c5cff4fe2918671169db6e2c67fc9a6440a6cdfa11`.
+The new proposal has no tables or roles. It uses CREATE OR REPLACE to correct
+only the double-backslash decimal separator to `[.]`; the amount precision,
+positive-value, exact balance, account, currency, counterparty and canonical
+shape checks remain byte-identical. Its immutable source SHA-256 is
+`dde9725df3ad327f52ffb85686c4eae2a3d21cfbf08e65eed6a1047da363ff82`.
+
+`namedFunctionReplacements` records the exact qualified signature, 0009 dependency,
+and predecessor/successor raw SQL declaration hashes. The loader verifies the
+registered baseline and that the replacement changes exactly that one literal.
+These are raw source hashes, **not** `pg_get_functiondef` catalog hashes; do not
+compare the two representations as though their bytes were equivalent. The
+catalog request includes this function name and its actual identity, owner,
+definition hash and PUBLIC EXECUTE observation. Before any approved installation,
+require the expected existing signature and review the actual predecessor;
+missing or unexpected definitions stop the release. CREATE OR REPLACE preserves
+its existing owner and EXECUTE ACL; read back both after the reviewed change.
+The ordinary function-conflict stop rule remains in force, and no grant or
+function-owner change is implied.
+
+FX custody now explicitly depends on this forward-fix. The function declaration
+receives its own single transaction in the review delta. A failure before known
+COMMIT may roll back only that transaction; prior commits remain. An uncertain
+COMMIT stops without retry, and committed outcomes require a separately reviewed
+forward-fix. Neither the old migration checksum nor existing sealed evidence is
+rewritten. Isolated native evidence is tracked separately: actual posting or
+quote observations do not convert a whole-test failure, or a source-only package,
+into a native or production PASS.

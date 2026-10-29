@@ -9,7 +9,7 @@ const policyPath = fileURLToPath(
 );
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const POLICY_SHA256 =
-  "2ab5bfe87861893a15a98f99a746551488ecbaf0d87b60a031474dc8c9036bff";
+  "648c5412591d909783ad03748415cd018c254e0095f01b1402311247b2c735b5";
 export function requireImmutableProposalCandidateSha(candidateSha) {
   if (!/^[a-f0-9]{40}$/u.test(candidateSha ?? "") || /^0+$/u.test(candidateSha))
     throw Error("EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED");
@@ -27,7 +27,7 @@ export async function loadPostwarExpandedProposalPolicy() {
     policy.installationAllowed !== false ||
     policy.productionReviewVerified !== false ||
     policy.finalCandidateSelected !== false ||
-    policy.proposals.length !== 21
+    policy.proposals.length !== 22
   )
     throw Error("UNAPPROVED_EXPLICIT_CANDIDATE_POLICY_REQUIRED");
   const prior = new Set();
@@ -86,9 +86,62 @@ export function validateExpandedProposalRoleDependencies(policy) {
     seen.set(item.id, closure);
   }
 }
+// This is a fixed declaration comparison for the reviewed 0009 forward-fix,
+// not a PostgreSQL parser or a pg_get_functiondef hash normalizer.
+function financialPostingDeclaration(bytes) {
+  const sql = bytes.toString("utf8");
+  const header =
+    "create or replace function world_v2.validate_financial_posting_payload(payload jsonb, row_value world_v2.financial_posting_batch)";
+  const start = sql.indexOf(header);
+  const end = sql.indexOf("\n$$;", start);
+  if (start < 0 || end < start || sql.lastIndexOf(header) !== start)
+    throw Error("FIXED_FINANCIAL_POSTING_DECLARATION_REQUIRED");
+  return sql.slice(start, end + 4);
+}
+function financialPostingReplacement(item, bytes) {
+  const entries = item.namedFunctionReplacements;
+  if (
+    item.id !== "financial-posting-decimal-validation" ||
+    entries?.length !== 1 ||
+    entries[0].qualifiedSignature !==
+      "world_v2.validate_financial_posting_payload(jsonb,world_v2.financial_posting_batch)" ||
+    entries[0].baselineMigrationId !== "0009_world_v2_posting_payload_integrity"
+  )
+    throw Error("FIXED_BASELINE_FUNCTION_REPLACEMENT_REQUIRED");
+  const replacement = entries[0];
+  if (
+    sha(bytes) !== replacement.successorSqlSha256 ||
+    sha(financialPostingDeclaration(bytes)) !==
+      replacement.successorDeclarationSourceSha256
+  )
+    throw Error("NAMED_FUNCTION_REPLACEMENT_SOURCE_BYTES_CHANGED");
+  return replacement;
+}
+export function validatePostwarFinancialPostingReplacement(
+  item,
+  bytes,
+  baselineBytes,
+) {
+  const replacement = financialPostingReplacement(item, bytes);
+  const before = financialPostingDeclaration(baselineBytes);
+  const after = financialPostingDeclaration(bytes);
+  const previousSeparator = String.fromCharCode(92, 92, 46);
+  if (
+    sha(baselineBytes) !== replacement.baselineArtifactSha256 ||
+    sha(before) !== replacement.predecessorDeclarationSourceSha256
+  )
+    throw Error("NAMED_FUNCTION_BASELINE_PREDECESSOR_CHANGED");
+  if (
+    before.split(previousSeparator).length !== 2 ||
+    before.replace(previousSeparator, "[.]") !== after
+  )
+    throw Error("EXACT_DECIMAL_REGEX_FORWARD_FIX_REQUIRED");
+}
 /** Extract catalog names only, never interpret proposal SQL as executable input.
  * Metadata extraction is not approval or an exhaustive SQL/security parser. */
 export function inspectExpandedProposalBytes(item, bytes) {
+  if (item.namedFunctionReplacements !== undefined)
+    financialPostingReplacement(item, bytes);
   const sql = bytes.toString("utf8");
   const names = (pattern) =>
     [...new Set([...sql.matchAll(pattern)].map((m) => m[1]))].sort();
@@ -196,7 +249,27 @@ export async function loadPostwarExpandedProposalCandidate(
       )
     )
       throw Error("UNREGISTERED_PROPOSAL_OR_BASELINE_DEPENDENCY_INVALID");
-    proposals.push(inspectExpandedProposalBytes(item, await read(item.path)));
+    const bytes = await read(item.path);
+    if (item.namedFunctionReplacements !== undefined) {
+      const replacement = financialPostingReplacement(item, bytes);
+      const predecessor = manifest.migrations.find(
+        (m) => m.migration_id === replacement.baselineMigrationId,
+      );
+      if (
+        !item.baselineDependencies.includes(replacement.baselineMigrationId) ||
+        predecessor?.path !== replacement.baselinePath ||
+        predecessor?.sha256 !== replacement.baselineArtifactSha256
+      )
+        throw Error(
+          "EXACT_REGISTERED_BASELINE_REPLACEMENT_DEPENDENCY_REQUIRED",
+        );
+      validatePostwarFinancialPostingReplacement(
+        item,
+        bytes,
+        await read(predecessor.path),
+      );
+    }
+    proposals.push(inspectExpandedProposalBytes(item, bytes));
   }
   // Recheck identity/cleanliness after every byte was observed.
   if (

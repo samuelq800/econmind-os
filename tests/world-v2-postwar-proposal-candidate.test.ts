@@ -6,6 +6,7 @@ import {
   inspectExpandedProposalBytes,
   loadPostwarExpandedProposalCandidate,
   validateExpandedProposalRoleDependencies,
+  validatePostwarFinancialPostingReplacement,
   // @ts-expect-error Node render-only helper has no declarations.
 } from "../scripts/world-v2-postwar-proposal-candidate.mjs";
 
@@ -23,12 +24,12 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       "EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED",
     );
   });
-  it("has an explicit twenty-one-file dependency order and no pretend final SHA", async () => {
+  it("has an explicit twenty-two-file dependency order and no pretend final SHA", async () => {
     const { policy } = await loadPostwarExpandedProposalPolicy();
     expect(policy.sourceCommit).toBeNull();
     expect(policy.installationAllowed).toBe(false);
     expect(policy.migrationApproval).toBe("NOT_GRANTED");
-    expect(policy.proposals).toHaveLength(21);
+    expect(policy.proposals).toHaveLength(22);
     const seen = new Set<string>();
     for (const p of policy.proposals) {
       expect(p.path).toBe(`database/proposals/${p.id}.sql`);
@@ -36,15 +37,15 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       expect(p.registration).toBe("UNREGISTERED_SOURCE_PROPOSAL");
       seen.add(p.id);
     }
-    expect(policy.registeredMigrationCount + policy.proposals.length).toBe(44);
+    expect(policy.registeredMigrationCount + policy.proposals.length).toBe(45);
     expect(
       policy.proposals.filter(
         (p: { disposition: string }) => !p.disposition.startsWith("EXCLUDED_"),
       ).length,
-    ).toBe(20);
+    ).toBe(21);
     expect(
       policy.proposals.map((p: { reviewOrder: number }) => p.reviewOrder),
-    ).toEqual(Array.from({ length: 21 }, (_, i) => i + 1));
+    ).toEqual(Array.from({ length: 22 }, (_, i) => i + 1));
     expect([...seen]).toContain("social-operating-match-publisher");
     expect([...seen]).toContain("postwar-social-current-derived-read");
     expect(
@@ -201,6 +202,7 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
     expect(fx.dependencies).toEqual([
       "runtime-read-binding-storage",
       "runtime-admission-publication",
+      "financial-posting-decimal-validation",
     ]);
     expect(fx.baselineDependencies).toEqual([
       "0002_world_v2_command_event_ledger",
@@ -244,6 +246,37 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       "SOURCE_ROLE_PROVIDER_DEPENDENCY_REQUIRED",
     );
   });
+  it("records the existing 0009 signature collision and requires the decimal fix before FX", async () => {
+    const { policy } = await loadPostwarExpandedProposalPolicy();
+    const fix = policy.proposals.find(
+      (p: { id: string }) => p.id === "financial-posting-decimal-validation",
+    );
+    const fx = policy.proposals.find(
+      (p: { id: string }) => p.id === "postwar-day-one-fx-custody",
+    );
+    expect(fix.baselineDependencies).toEqual([
+      "0009_world_v2_posting_payload_integrity",
+    ]);
+    expect(fix.createdRoles).toEqual([]);
+    expect(fix.createdRelations).toEqual([]);
+    expect(fix.definedFunctions).toEqual([
+      "validate_financial_posting_payload",
+    ]);
+    expect(fx.dependencies).toContain(fix.id);
+    expect(fix.reviewOrder).toBeLessThan(fx.reviewOrder);
+    expect(fix.namedFunctionReplacements).toHaveLength(1);
+    expect(fix.namedFunctionReplacements[0]).toMatchObject({
+      qualifiedSignature:
+        "world_v2.validate_financial_posting_payload(jsonb,world_v2.financial_posting_batch)",
+      baselineMigrationId: "0009_world_v2_posting_payload_integrity",
+      existingObjectRequirement:
+        "EXACT_EXISTING_BASELINE_SIGNATURE_REQUIRED;ABSENCE_OR_UNEXPECTED_PREDECESSOR_STOP",
+      sourceHashMeaning:
+        "RAW_FIXED_SQL_DECLARATION_BYTES_NOT_PG_GET_FUNCTIONDEF_HASH",
+      ownerAndExecuteAcl: "PRESERVE_EXISTING;ACTUAL_CATALOG_READBACK_REQUIRED",
+      productionApproval: "NOT_GRANTED",
+    });
+  });
   it("cannot use companion or a dirty branch as the selected World candidate", async () => {
     await expect(
       loadPostwarExpandedProposalCandidate(process.cwd(), "a".repeat(40)),
@@ -259,7 +292,7 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
     );
   });
   (process.env.POSTWAR_PROPOSAL_METADATA_SOURCE ? it : it.skip)(
-    "compares all twenty-one actual proposal object/role inventories without selecting a final candidate",
+    "compares all twenty-two actual proposal object/role inventories without selecting a final candidate",
     async () => {
       const { policy } = await loadPostwarExpandedProposalPolicy();
       for (const item of policy.proposals) {
@@ -269,6 +302,55 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
         expect(inspectExpandedProposalBytes(item, bytes).sha256Meaning).toBe(
           "OBSERVED_IMMUTABLE_CANDIDATE_BYTES_NOT_APPROVAL",
         );
+        if (item.id === "financial-posting-decimal-validation") {
+          const predecessor = item.namedFunctionReplacements[0];
+          const baseline = await readFile(
+            process.env.POSTWAR_PROPOSAL_METADATA_SOURCE +
+              "/" +
+              predecessor.baselinePath,
+          );
+          expect(() =>
+            validatePostwarFinancialPostingReplacement(item, bytes, baseline),
+          ).not.toThrow();
+          expect(() =>
+            inspectExpandedProposalBytes(
+              item,
+              Buffer.concat([
+                bytes,
+                Buffer.from(
+                  "\ngrant execute on function world_v2.validate_financial_posting_payload(jsonb,world_v2.financial_posting_batch) to public;",
+                ),
+              ]),
+            ),
+          ).toThrow("NAMED_FUNCTION_REPLACEMENT_SOURCE_BYTES_CHANGED");
+          const { createHash } = await import("node:crypto");
+          const hash = (value: string | Buffer) =>
+            createHash("sha256").update(value).digest("hex");
+          const widened = Buffer.from(
+            bytes.toString().replace("> 120", "> 121"),
+          );
+          const changed = structuredClone(item);
+          const text = widened.toString(),
+            start = text.indexOf("create or replace function");
+          changed.namedFunctionReplacements[0].successorSqlSha256 =
+            hash(widened);
+          changed.namedFunctionReplacements[0].successorDeclarationSourceSha256 =
+            hash(text.slice(start, text.indexOf("\n$$;", start) + 4));
+          expect(() =>
+            validatePostwarFinancialPostingReplacement(
+              changed,
+              widened,
+              baseline,
+            ),
+          ).toThrow("EXACT_DECIMAL_REGEX_FORWARD_FIX_REQUIRED");
+          expect(() =>
+            validatePostwarFinancialPostingReplacement(
+              item,
+              bytes,
+              Buffer.concat([baseline, Buffer.from("\n")]),
+            ),
+          ).toThrow("NAMED_FUNCTION_BASELINE_PREDECESSOR_CHANGED");
+        }
       }
     },
   );

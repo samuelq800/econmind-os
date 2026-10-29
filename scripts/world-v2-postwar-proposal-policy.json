@@ -686,13 +686,50 @@
       }
     },
     {
+      "id": "financial-posting-decimal-validation",
+      "path": "database/proposals/financial-posting-decimal-validation.sql",
+      "reviewOrder": 20,
+      "disposition": "CANDIDATE_FINANCIAL_POSTING_DECIMAL_FORWARD_FIX",
+      "dependencies": [],
+      "baselineDependencies": ["0009_world_v2_posting_payload_integrity"],
+      "createdRoles": [],
+      "reusedRoles": [],
+      "createdRelations": [],
+      "definedFunctions": ["validate_financial_posting_payload"],
+      "renamedFunctions": [],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {},
+      "namedFunctionReplacements": [
+        {
+          "qualifiedSignature": "world_v2.validate_financial_posting_payload(jsonb,world_v2.financial_posting_batch)",
+          "name": "validate_financial_posting_payload",
+          "baselineMigrationId": "0009_world_v2_posting_payload_integrity",
+          "baselinePath": "database/migrations/artifacts/0009_world_v2_posting_payload_integrity.sql",
+          "baselineArtifactSha256": "88d54a0abccc91e23a1384c5cff4fe2918671169db6e2c67fc9a6440a6cdfa11",
+          "predecessorDeclarationSourceSha256": "f5d6ee19a0df66fd81360bfb1a4a88c634be7598b35c442a61ab442740cb95b3",
+          "successorDeclarationSourceSha256": "1578c9e9a0a5095703e855c7e40e31df8832d33d4aa1a4daffe57599dfc8f948",
+          "successorSqlSha256": "dde9725df3ad327f52ffb85686c4eae2a3d21cfbf08e65eed6a1047da363ff82",
+          "sourceHashMeaning": "RAW_FIXED_SQL_DECLARATION_BYTES_NOT_PG_GET_FUNCTIONDEF_HASH",
+          "change": "EXACT_SINGLE_DECIMAL_SEPARATOR_LITERAL_ONLY",
+          "existingObjectRequirement": "EXACT_EXISTING_BASELINE_SIGNATURE_REQUIRED;ABSENCE_OR_UNEXPECTED_PREDECESSOR_STOP",
+          "ownerAndExecuteAcl": "PRESERVE_EXISTING;ACTUAL_CATALOG_READBACK_REQUIRED",
+          "productionApproval": "NOT_GRANTED"
+        }
+      ]
+    },
+    {
       "id": "postwar-day-one-fx-custody",
       "path": "database/proposals/postwar-day-one-fx-custody.sql",
-      "reviewOrder": 20,
+      "reviewOrder": 21,
       "disposition": "CANDIDATE_FINANCE_TREASURY_FX_CUSTODY",
       "dependencies": [
         "runtime-read-binding-storage",
-        "runtime-admission-publication"
+        "runtime-admission-publication",
+        "financial-posting-decimal-validation"
       ],
       "baselineDependencies": [
         "0002_world_v2_command_event_ledger",
@@ -747,7 +784,7 @@
     {
       "id": "isolated-world-clock",
       "path": "database/proposals/isolated-world-clock.sql",
-      "reviewOrder": 21,
+      "reviewOrder": 22,
       "disposition": "EXCLUDED_NOT_A_READ_DEPENDENCY",
       "dependencies": [],
       "baselineDependencies": [],
