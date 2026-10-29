@@ -686,9 +686,68 @@
       }
     },
     {
+      "id": "postwar-day-one-fx-custody",
+      "path": "database/proposals/postwar-day-one-fx-custody.sql",
+      "reviewOrder": 20,
+      "disposition": "CANDIDATE_FINANCE_TREASURY_FX_CUSTODY",
+      "dependencies": [
+        "runtime-read-binding-storage",
+        "runtime-admission-publication"
+      ],
+      "baselineDependencies": [
+        "0002_world_v2_command_event_ledger",
+        "0011_world_v2_current_commit_authorization",
+        "0013_world_v2_read_projection_boundary",
+        "0016_world_v2_opening_seed"
+      ],
+      "createdRoles": [
+        "world_v2_day_one_fx_source_owner",
+        "world_v2_day_one_fx_source_publisher",
+        "world_v2_day_one_fx_source_reader"
+      ],
+      "reusedRoles": [],
+      "createdRelations": [
+        "postwar_day_one_fx_source_original",
+        "postwar_day_one_fx_quote_original",
+        "postwar_day_one_fx_source_revocation",
+        "postwar_day_one_fx_quote_revocation"
+      ],
+      "definedFunctions": [
+        "postwar_day_one_fx_require_role",
+        "postwar_day_one_fx_admission",
+        "postwar_day_one_fx_quote_canonical",
+        "publish_postwar_day_one_fx_originals",
+        "lock_postwar_day_one_fx_original",
+        "revoke_postwar_day_one_fx_source",
+        "revoke_postwar_day_one_fx_quote",
+        "lock_postwar_day_one_fx_current_authorization",
+        "lock_postwar_day_one_fx_revoked_authorization",
+        "lock_postwar_day_one_fx_intake_binding"
+      ],
+      "renamedFunctions": [],
+      "literalCreatedPolicies": [
+        "fx_owner_exact",
+        "fx_owner_read",
+        "fx_owner_world_fence",
+        "fx_owner_lock",
+        "fx_owner_lock_fence"
+      ],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_day_one_fx_source_owner": "postwar-day-one-fx-custody",
+        "world_v2_day_one_fx_source_publisher": "postwar-day-one-fx-custody",
+        "world_v2_day_one_fx_source_reader": "postwar-day-one-fx-custody"
+      },
+      "versionSemantics": "FIXED_ADOPTED_GCU_WORLD_AND_70_DAY_ONE_QUOTES;H0_INITIAL_REGISTRATION;IMMUTABLE_PUBLICATION;NO_RUNTIME_ENROLLMENT"
+    },
+    {
       "id": "isolated-world-clock",
       "path": "database/proposals/isolated-world-clock.sql",
-      "reviewOrder": 20,
+      "reviewOrder": 21,
       "disposition": "EXCLUDED_NOT_A_READ_DEPENDENCY",
       "dependencies": [],
       "baselineDependencies": [],
