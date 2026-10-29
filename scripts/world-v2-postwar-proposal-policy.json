@@ -274,9 +274,46 @@
       }
     },
     {
+      "id": "social-intake-authorization",
+      "path": "database/proposals/social-intake-authorization.sql",
+      "reviewOrder": 8,
+      "disposition": "CANDIDATE_SOCIAL_INTAKE_AUTHORIZATION",
+      "dependencies": ["social-operating-custody"],
+      "baselineDependencies": ["0013_world_v2_read_projection_boundary"],
+      "createdRoles": ["world_v2_social_intake_lock_reader"],
+      "reusedRoles": [
+        "world_v2_social_source_owner",
+        "world_v2_social_source_publisher",
+        "world_v2_social_source_reader"
+      ],
+      "createdRelations": [],
+      "definedFunctions": ["lock_social_intake_binding"],
+      "renamedFunctions": [],
+      "literalCreatedPolicies": [
+        "social_intake_owner_entitlement",
+        "social_intake_owner_entitlement_lock",
+        "social_intake_owner_entitlement_lock_world_fence",
+        "social_intake_owner_entitlement_world_fence",
+        "social_intake_owner_seat",
+        "social_intake_owner_seat_world_fence"
+      ],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_social_intake_lock_reader": "social-intake-authorization",
+        "world_v2_social_source_owner": "social-operating-custody",
+        "world_v2_social_source_publisher": "social-operating-custody",
+        "world_v2_social_source_reader": "social-operating-custody"
+      },
+      "permissionSemantics": "SEPARATE_NOLOGIN_EXEC_ONLY_GROUP;PRIVATE_OWNER_ROW_LOCKS;NO_RUNTIME_AUTHORITY_OR_ENTITLEMENT_UPDATE;NO_MEMBERSHIP_ENROLLMENT"
+    },
+    {
       "id": "social-operating-match-publisher",
       "path": "database/proposals/social-operating-match-publisher.sql",
-      "reviewOrder": 8,
+      "reviewOrder": 9,
       "disposition": "CANDIDATE_SOCIAL_MATCH",
       "dependencies": ["social-operating-custody"],
       "baselineDependencies": [
@@ -316,7 +353,7 @@
     {
       "id": "postwar-social-current-derived-read",
       "path": "database/proposals/postwar-social-current-derived-read.sql",
-      "reviewOrder": 9,
+      "reviewOrder": 10,
       "disposition": "CANDIDATE_SOCIAL_CURRENT_READ",
       "dependencies": ["postwar-office-derived-read"],
       "baselineDependencies": [
@@ -353,7 +390,7 @@
     {
       "id": "postwar-social-current-prefix-read",
       "path": "database/proposals/postwar-social-current-prefix-read.sql",
-      "reviewOrder": 10,
+      "reviewOrder": 11,
       "disposition": "CANDIDATE_COMPLETE_SOCIAL_CURRENT_PREFIX",
       "dependencies": ["postwar-social-current-derived-read"],
       "baselineDependencies": ["0009_world_v2_posting_payload_integrity"],
@@ -394,7 +431,7 @@
     {
       "id": "finance-budget-mixed-source",
       "path": "database/proposals/finance-budget-mixed-source.sql",
-      "reviewOrder": 11,
+      "reviewOrder": 12,
       "disposition": "CANDIDATE_FINANCE_MIXED_SOURCE",
       "dependencies": ["finance-budget-capacity-source"],
       "baselineDependencies": ["0009_world_v2_posting_payload_integrity"],
@@ -433,7 +470,7 @@
     {
       "id": "postwar-financial-current-derived-read",
       "path": "database/proposals/postwar-financial-current-derived-read.sql",
-      "reviewOrder": 12,
+      "reviewOrder": 13,
       "disposition": "CANDIDATE_COMPLETE_FINANCIAL_CURRENT_PREFIX",
       "dependencies": ["postwar-social-current-prefix-read"],
       "baselineDependencies": ["0009_world_v2_posting_payload_integrity"],
@@ -471,7 +508,7 @@
     {
       "id": "postwar-industry-production-source",
       "path": "database/proposals/postwar-industry-production-source.sql",
-      "reviewOrder": 13,
+      "reviewOrder": 14,
       "disposition": "CANDIDATE_INDUSTRY_CUSTODY",
       "dependencies": [
         "runtime-read-binding-storage",
@@ -516,7 +553,7 @@
     {
       "id": "postwar-narrow-trade-source",
       "path": "database/proposals/postwar-narrow-trade-source.sql",
-      "reviewOrder": 14,
+      "reviewOrder": 15,
       "disposition": "CANDIDATE_TRADE_SOURCE",
       "dependencies": ["postwar-office-derived-read"],
       "baselineDependencies": [
@@ -548,7 +585,7 @@
     {
       "id": "postwar-physical-opening-facts-read",
       "path": "database/proposals/postwar-physical-opening-facts-read.sql",
-      "reviewOrder": 15,
+      "reviewOrder": 16,
       "disposition": "CANDIDATE_HISTORICAL_PHYSICAL_READ",
       "dependencies": ["postwar-office-derived-read"],
       "baselineDependencies": ["0009_world_v2_posting_payload_integrity"],
@@ -573,7 +610,7 @@
     {
       "id": "postwar-physical-inventory-provenance",
       "path": "database/proposals/postwar-physical-inventory-provenance.sql",
-      "reviewOrder": 16,
+      "reviewOrder": 17,
       "disposition": "CANDIDATE_IMMUTABLE_INVENTORY_PROVENANCE_V2",
       "dependencies": [
         "postwar-office-derived-read",
@@ -611,7 +648,7 @@
     {
       "id": "current-authorization-writer-preparation",
       "path": "database/proposals/current-authorization-writer-preparation.sql",
-      "reviewOrder": 17,
+      "reviewOrder": 18,
       "disposition": "OPTIONAL_DEFAULT_DENY_CONTEXT",
       "dependencies": [],
       "baselineDependencies": [],
@@ -630,7 +667,7 @@
     {
       "id": "postwar-runtime-source-read-policy",
       "path": "database/proposals/postwar-runtime-source-read-policy.sql",
-      "reviewOrder": 18,
+      "reviewOrder": 19,
       "disposition": "OPTIONAL_OFFLINE_ONLY",
       "dependencies": ["runtime-read-binding-storage"],
       "baselineDependencies": [],
@@ -651,7 +688,7 @@
     {
       "id": "isolated-world-clock",
       "path": "database/proposals/isolated-world-clock.sql",
-      "reviewOrder": 19,
+      "reviewOrder": 20,
       "disposition": "EXCLUDED_NOT_A_READ_DEPENDENCY",
       "dependencies": [],
       "baselineDependencies": [],

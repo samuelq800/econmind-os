@@ -60,7 +60,7 @@ request and reviews its result. No production check was run to prepare this code
 
 For the next, expanded batch, append `--candidate-sha FULL_40_HEX_SHA`.
 That mode requires a clean checkout at exactly that SHA and inventories the
-explicit nineteen-proposal policy, including Captain, Finance, Social custody,
+explicit twenty-proposal policy, including Captain, Finance, Social custody,
 MATCH/current-read, Industry and Trade. The policy itself deliberately has
 `sourceCommit: null`: the final World candidate has not been selected here.
 Observed SHA/byte counts bind a selected immutable candidate and never approve
@@ -82,7 +82,7 @@ physical opening-history reads. `sourceRoleDeps` maps every required role to its
 actual source proposal, including transitive dependencies; denied-role names and
 the controlled admission session-name prefix are separate context, not enrollment.
 The fixed extractor rejects a new role reference even when no object name changed.
-All nineteen entries remain source proposals; production review is `false`.
+All twenty entries remain source proposals; production review is `false`.
 No new final SHA is selected by this policy. Use the final clean immutable World
 checkout with `--candidate-sha` only after it is supplied; do not reuse an older
 checkpoint as evidence for this batch.
@@ -114,3 +114,13 @@ source proposal derives its private all-country index directly from the admitted
 stored seed; it depends on Finance capacity/custody, not Social projection roles
 or H0 read data as economic authority. Both additions remain unregistered and
 production review is `false`.
+
+This second candidate adds `social-intake-authorization` after Social custody,
+with the separate `world_v2_social_intake_lock_reader` NOLOGIN privilege group.
+Its fixed lock function uses the existing private Social owner and bounded
+metadata only; the group receives function EXECUTE, with no membership enrollment
+or authority/entitlement UPDATE grant to online readers. The new inventory is
+23 baseline + 20 source proposals (43 files), and the delta selects 19 non-Clock
+proposals. These counts belong to the second candidate, not the sealed
+62261b5c/1118bd3 package or its independent evidence. No uncommitted source is
+rendered or approved here.

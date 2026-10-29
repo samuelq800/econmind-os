@@ -23,12 +23,12 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       "EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED",
     );
   });
-  it("has an explicit nineteen-file dependency order and no pretend final SHA", async () => {
+  it("has an explicit twenty-file dependency order and no pretend final SHA", async () => {
     const { policy } = await loadPostwarExpandedProposalPolicy();
     expect(policy.sourceCommit).toBeNull();
     expect(policy.installationAllowed).toBe(false);
     expect(policy.migrationApproval).toBe("NOT_GRANTED");
-    expect(policy.proposals).toHaveLength(19);
+    expect(policy.proposals).toHaveLength(20);
     const seen = new Set<string>();
     for (const p of policy.proposals) {
       expect(p.path).toBe(`database/proposals/${p.id}.sql`);
@@ -167,6 +167,23 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       ),
     ).toThrow("PROPOSAL_LITERAL_POLICY_ALLOWLIST_CHANGED");
   });
+  it("records the separate Social intake lock group without enrolling it or altering the sealed predecessor", async () => {
+    const { policy } = await loadPostwarExpandedProposalPolicy();
+    const intake = policy.proposals.find(
+      (p) => p.id === "social-intake-authorization",
+    );
+    expect(intake.dependencies).toContain("social-operating-custody");
+    expect(intake.createdRelations).toEqual([]);
+    expect(intake.createdRoles).toEqual(["world_v2_social_intake_lock_reader"]);
+    expect(intake.sourceRoleDeps.world_v2_social_intake_lock_reader).toBe(
+      "social-intake-authorization",
+    );
+    expect(intake.sourceRoleDeps.world_v2_social_source_owner).toBe(
+      "social-operating-custody",
+    );
+    expect(intake.productionReviewVerified).toBe(false);
+    expect(policy.roleEnrollment).toContain("NOT_PERFORMED");
+  });
   it("cannot use companion or a dirty branch as the selected World candidate", async () => {
     await expect(
       loadPostwarExpandedProposalCandidate(process.cwd(), "a".repeat(40)),
@@ -182,7 +199,7 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
     );
   });
   (process.env.POSTWAR_PROPOSAL_METADATA_SOURCE ? it : it.skip)(
-    "compares all nineteen actual proposal object/role inventories without selecting a final candidate",
+    "compares all twenty actual proposal object/role inventories without selecting a final candidate",
     async () => {
       const { policy } = await loadPostwarExpandedProposalPolicy();
       for (const item of policy.proposals) {
