@@ -453,7 +453,8 @@
         "postwar_financial_complete_prefix",
         "postwar_financial_h0_ledger_rows",
         "publish_postwar_financial_current_projection",
-        "read_postwar_financial_current_page"
+        "read_postwar_financial_current_page",
+        "read_postwar_financial_current_publication_originals"
       ],
       "renamedFunctions": [],
       "registration": "UNREGISTERED_SOURCE_PROPOSAL",
