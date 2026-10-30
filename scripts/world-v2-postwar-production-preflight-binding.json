@@ -1,0 +1,153 @@
+{
+  "schemaVersion": "WORLD_V2_POSTWAR_CATALOG_HANDOFF_BINDING_V1",
+  "projectRef": "vimksjrhaxdpnkvgsavz",
+  "sourceRemote": "https://github.com/samuelq800/econmind-os-world-simulation.git",
+  "sourceCommit": "8cbe03cc125a0e59d380cd9198110f7e438c70ab",
+  "sourceTree": "d0db94d5e7aadb85a1dbe1a006bea44562e94533",
+  "manifestPath": "database/migrations/manifest.json",
+  "manifestSha256": "e675bd8bd18ba6c51aeffa674320dba3ac79299b7e12eeef834fe28547f9025e",
+  "registeredMigrationCount": 23,
+  "proposals": [
+    {
+      "id": "runtime-read-binding-storage",
+      "path": "database/proposals/runtime-read-binding-storage.sql",
+      "sha256": "8bb715881ebbe78336d11460306421b136f215f451c0253817b14d3916e7c0fe",
+      "bytes": 9097,
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "disposition": "REQUIRED_READ_BOUNDARY",
+      "dependencies": [
+        "0002_world_v2_command_event_ledger",
+        "0011_world_v2_current_commit_authorization",
+        "0016_world_v2_opening_seed"
+      ],
+      "createdRoles": [],
+      "createdRelations": ["runtime_read_seat", "runtime_opening_admission"],
+      "definedFunctions": [
+        "guard_runtime_opening_admission_publication",
+        "validate_runtime_read_seat_insert"
+      ]
+    },
+    {
+      "id": "current-authorization-writer-preparation",
+      "path": "database/proposals/current-authorization-writer-preparation.sql",
+      "sha256": "8959061ecf497fac86d78f07ca9db571c5a0388edf13a8635ea7e291746c0233",
+      "bytes": 3439,
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "disposition": "OPTIONAL_DEFAULT_DENY_CONTEXT",
+      "dependencies": ["0002_world_v2_command_event_ledger"],
+      "createdRoles": [],
+      "createdRelations": ["current_authorization_publication_checkpoint"],
+      "definedFunctions": ["apply_current_authorization_change"]
+    },
+    {
+      "id": "runtime-admission-publication",
+      "path": "database/proposals/runtime-admission-publication.sql",
+      "sha256": "d4b927c8562175a625c9548cc519608a1038c4d08377d95debb95d1906cf0ced",
+      "bytes": 16682,
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "disposition": "REQUIRED_CONTROLLED_ADMISSION",
+      "dependencies": [
+        "runtime-read-binding-storage",
+        "0002_world_v2_command_event_ledger"
+      ],
+      "createdRoles": [
+        "world_v2_admission_owner",
+        "world_v2_admission_release"
+      ],
+      "createdRelations": [
+        "runtime_admission_publication_permit",
+        "runtime_admission_publication_revocation"
+      ],
+      "definedFunctions": [
+        "guard_runtime_opening_admission_publication",
+        "lock_runtime_admission_publication",
+        "publish_runtime_admission_publication",
+        "read_runtime_admission_publication",
+        "read_runtime_admission_publication_authorization",
+        "runtime_admission_permit_for_caller",
+        "validate_runtime_admission_permit",
+        "validate_runtime_admission_revocation"
+      ]
+    },
+    {
+      "id": "postwar-runtime-source-read-policy",
+      "path": "database/proposals/postwar-runtime-source-read-policy.sql",
+      "sha256": "b371a287fcc434dfe57be0dde0f7584d3abc452990530dfc4e60293563a7a38e",
+      "bytes": 3301,
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "disposition": "OPTIONAL_OFFLINE_ONLY",
+      "dependencies": [
+        "runtime-read-binding-storage",
+        "0011_world_v2_current_commit_authorization",
+        "0013_world_v2_read_projection_boundary",
+        "EXISTING_REVIEWED_OFFLINE_NOLOGIN_GROUP"
+      ],
+      "createdRoles": [],
+      "createdRelations": [],
+      "definedFunctions": []
+    },
+    {
+      "id": "postwar-office-derived-read",
+      "path": "database/proposals/postwar-office-derived-read.sql",
+      "sha256": "2b95de2a7c1dc6627874b6827f47233c2398e68baf8df4d77cb1d4e1b80382b4",
+      "bytes": 36125,
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "disposition": "REQUIRED_BOUNDED_READ",
+      "dependencies": [
+        "runtime-read-binding-storage",
+        "runtime-admission-publication",
+        "0011_world_v2_current_commit_authorization",
+        "0013_world_v2_read_projection_boundary"
+      ],
+      "createdRoles": [
+        "world_v2_postwar_projection_owner",
+        "world_v2_postwar_projection_publisher",
+        "world_v2_postwar_projection_reader"
+      ],
+      "createdRelations": [
+        "postwar_office_projection_document",
+        "postwar_office_projection_page",
+        "postwar_office_projection_revocation"
+      ],
+      "definedFunctions": [
+        "postwar_projection_admission_header",
+        "postwar_projection_document_readable",
+        "postwar_projection_reader_allowed",
+        "publish_postwar_office_projection",
+        "read_postwar_office_projection_page",
+        "read_postwar_office_projection_seats",
+        "revoke_postwar_office_projection"
+      ]
+    },
+    {
+      "id": "isolated-world-clock",
+      "path": "database/proposals/isolated-world-clock.sql",
+      "sha256": "429dcd968db1b6d9f6e0d001972c32d77430a7e94692f51a310da8dcbc445fa3",
+      "bytes": 2374,
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "disposition": "EXCLUDED_NOT_A_READ_DEPENDENCY",
+      "dependencies": [],
+      "createdRoles": [],
+      "createdRelations": ["isolated_clock_input", "isolated_clock_head"],
+      "definedFunctions": ["reject_isolated_clock_input_mutation"]
+    }
+  ],
+  "externalRolePrerequisite": {
+    "name": "world_v2_postwar_offline_seed_reader",
+    "requiredOnlyFor": "postwar-runtime-source-read-policy",
+    "attributes": [
+      "NOLOGIN",
+      "NOSUPERUSER",
+      "NOBYPASSRLS",
+      "NOCREATEDB",
+      "NOCREATEROLE",
+      "NOREPLICATION"
+    ],
+    "status": "NOT_PROVISIONED_BY_ANY_CANDIDATE_SQL"
+  },
+  "publicationOwner": "main-site-release-chain",
+  "concurrencyGroup": "supabase-production",
+  "productionVerified": false,
+  "migrationApproval": "NOT_GRANTED",
+  "installationAllowed": false
+}
