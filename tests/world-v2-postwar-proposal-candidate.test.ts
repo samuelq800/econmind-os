@@ -7,6 +7,7 @@ import {
   loadPostwarExpandedProposalCandidate,
   validateExpandedProposalRoleDependencies,
   validatePostwarFinancialPostingReplacement,
+  inspectPostwarFunctionContracts,
   // @ts-expect-error Node render-only helper has no declarations.
 } from "../scripts/world-v2-postwar-proposal-candidate.mjs";
 
@@ -24,12 +25,12 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       "EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED",
     );
   });
-  it("has an explicit twenty-two-file dependency order and no pretend final SHA", async () => {
+  it("has an explicit twenty-nine-file dependency order and no pretend final SHA", async () => {
     const { policy } = await loadPostwarExpandedProposalPolicy();
     expect(policy.sourceCommit).toBeNull();
     expect(policy.installationAllowed).toBe(false);
     expect(policy.migrationApproval).toBe("NOT_GRANTED");
-    expect(policy.proposals).toHaveLength(22);
+    expect(policy.proposals).toHaveLength(29);
     const seen = new Set<string>();
     for (const p of policy.proposals) {
       expect(p.path).toBe(`database/proposals/${p.id}.sql`);
@@ -37,15 +38,15 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       expect(p.registration).toBe("UNREGISTERED_SOURCE_PROPOSAL");
       seen.add(p.id);
     }
-    expect(policy.registeredMigrationCount + policy.proposals.length).toBe(45);
+    expect(policy.registeredMigrationCount + policy.proposals.length).toBe(52);
     expect(
       policy.proposals.filter(
         (p: { disposition: string }) => !p.disposition.startsWith("EXCLUDED_"),
       ).length,
-    ).toBe(21);
+    ).toBe(28);
     expect(
       policy.proposals.map((p: { reviewOrder: number }) => p.reviewOrder),
-    ).toEqual(Array.from({ length: 22 }, (_, i) => i + 1));
+    ).toEqual(Array.from({ length: 29 }, (_, i) => i + 1));
     expect([...seen]).toContain("social-operating-match-publisher");
     expect([...seen]).toContain("postwar-social-current-derived-read");
     expect(
@@ -277,6 +278,148 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       productionApproval: "NOT_GRANTED",
     });
   });
+  it("includes all seven mixed extensions with exact contracts, source roles and rollback boundaries, never a final candidate", async () => {
+    const { policy } = await loadPostwarExpandedProposalPolicy();
+    const ids = [
+      "postwar-social-startup-seed-header",
+      "postwar-finance-social-source-publication",
+      "postwar-day-one-fx-history-read",
+      "postwar-mixed-current-projection-read",
+      "postwar-mixed-financial-current-publication",
+      "postwar-social-mixed-match-publisher",
+      "postwar-bounded-journal-read",
+    ];
+    for (const id of ids) {
+      const entry = policy.proposals.find((p: { id: string }) => p.id === id);
+      expect(entry).toBeDefined();
+      expect(entry.definedFunctionSignatures).toHaveLength(
+        entry.functionContracts.length,
+      );
+      expect(
+        entry.functionContracts.every(
+          (c: {
+            qualifiedSignature: string;
+            publicExecute: boolean;
+            owner: string;
+            executeRoles: string[];
+          }) =>
+            c.qualifiedSignature.startsWith("world_v2.") &&
+            c.publicExecute === false &&
+            c.owner.endsWith("_owner") &&
+            c.executeRoles.every((r) => entry.sourceRoleDeps[r]),
+        ),
+      ).toBe(true);
+      expect(entry.rollbackChecks).toContain("NO_AUTOMATIC_SQL_DOWNGRADE");
+      expect(entry.rollbackChecks).toContain(
+        "UNCERTAIN_COMMIT_STOP_AND_READBACK_NOT_BLIND_RETRY",
+      );
+      expect(entry.permissionDelta.newLoginRoles).toBe(false);
+      expect(entry.permissionDelta.membershipEnrollment).toBe(false);
+      expect(entry.permissionDelta.boundedRuntimeRawSeedSelect).toBe(false);
+    }
+    const history = policy.proposals.find(
+      (p: { id: string }) => p.id === "postwar-day-one-fx-history-read",
+    );
+    expect(history.createdRoles).toEqual(["world_v2_day_one_fx_history_owner"]);
+    expect(history.versionSemantics).toContain(
+      "LATER_QUOTE_REVOCATION_DOES_NOT_ERASE_HISTORY",
+    );
+    const finance = policy.proposals.find(
+      (p: { id: string }) =>
+        p.id === "postwar-mixed-financial-current-publication",
+    );
+    expect(finance.dependencies).toContain(
+      "postwar-mixed-current-projection-read",
+    );
+    expect(finance.dependencies).toContain(
+      "postwar-financial-current-derived-read",
+    );
+    expect(policy.sourceCommit).toBeNull();
+    expect(policy.finalCandidateSelected).toBe(false);
+    expect(policy.installationAllowed).toBe(false);
+  });
+  it("keeps bounded journal access on its real non-RLS baseline boundary, fixed owner and EXECUTE-only readers", async () => {
+    const { policy } = await loadPostwarExpandedProposalPolicy();
+    const p = policy.proposals.find(
+      (p: { id: string }) => p.id === "postwar-bounded-journal-read",
+    );
+    expect(p.dependencies).toEqual(["postwar-day-one-fx-history-read"]);
+    expect(p.createdRoles).toEqual([]);
+    expect(p.createdRelations).toEqual([]);
+    expect(p.functionContracts).toEqual([
+      {
+        qualifiedSignature:
+          "world_v2.read_postwar_bounded_journal(text,text,text)",
+        owner: "world_v2_day_one_fx_history_owner",
+        securityDefiner: true,
+        searchPath: "pg_catalog",
+        publicExecute: false,
+        executeRoles: [
+          "world_v2_social_source_reader",
+          "world_v2_finance_budget_source_reader",
+        ],
+      },
+    ]);
+    expect(p.replayReadBounds).toMatchObject({
+      financialBatchMaximum: 512,
+      rawBatchMaximumBytes: 65536,
+      rawBatchSetMaximumBytes: 1048576,
+      worldVersionMaximum: "256",
+      inventoryEffects: "REJECT_NONZERO",
+    });
+    expect(p.permissionDelta.baselineRlsBoundary).toContain(
+      "BASELINE_FINANCIAL_AND_INVENTORY_LEDGER_TABLES_HAVE_NO_RLS",
+    );
+    expect(p.permissionDelta.baselineRlsBoundary).toContain(
+      "DOES_NOT_GLOBALLY_ENABLE_RLS",
+    );
+    expect(p.sourceRoleDeps.world_v2_day_one_fx_history_owner).toBe(
+      "postwar-day-one-fx-history-read",
+    );
+  });
+  it("rejects changed scalar signatures, function owner and execution mode before immutable rendering", () => {
+    const bytes = Buffer.from(
+      "create function world_v2.fixture(p_value text)returns jsonb language plpgsql security definer set search_path=pg_catalog as $$begin return null;end;$$;alter function world_v2.fixture(text)owner to world_v2_fixture_owner;",
+    );
+    const item = {
+      definedFunctionSignatures: ["world_v2.fixture(text)"],
+      functionContracts: [
+        {
+          qualifiedSignature: "world_v2.fixture(text)",
+          owner: "world_v2_fixture_owner",
+          securityDefiner: true,
+          searchPath: "pg_catalog",
+          publicExecute: false,
+          executeRoles: [],
+        },
+      ],
+    };
+    expect(() => inspectPostwarFunctionContracts(item, bytes)).not.toThrow();
+    expect(() =>
+      inspectPostwarFunctionContracts(
+        item,
+        Buffer.from(bytes.toString().replace("p_value text", "p_value uuid")),
+      ),
+    ).toThrow("PROPOSAL_FUNCTION_SIGNATURE_CHANGED");
+    expect(() =>
+      inspectPostwarFunctionContracts(
+        item,
+        Buffer.from(
+          bytes
+            .toString()
+            .replace("owner to world_v2_fixture_owner", "owner to public"),
+        ),
+      ),
+    ).toThrow("PROPOSAL_FUNCTION_OWNER_OR_EXECUTION_MODE_CHANGED");
+    expect(() =>
+      inspectPostwarFunctionContracts(
+        item,
+        Buffer.from(
+          bytes.toString().replace("security definer", "security invoker"),
+        ),
+      ),
+    ).toThrow("PROPOSAL_FUNCTION_OWNER_OR_EXECUTION_MODE_CHANGED");
+  });
   it("cannot use companion or a dirty branch as the selected World candidate", async () => {
     await expect(
       loadPostwarExpandedProposalCandidate(process.cwd(), "a".repeat(40)),
@@ -292,7 +435,7 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
     );
   });
   (process.env.POSTWAR_PROPOSAL_METADATA_SOURCE ? it : it.skip)(
-    "compares all twenty-two actual proposal object/role inventories without selecting a final candidate",
+    "compares all twenty-nine actual proposal object/role inventories without selecting a final candidate",
     async () => {
       const { policy } = await loadPostwarExpandedProposalPolicy();
       for (const item of policy.proposals) {

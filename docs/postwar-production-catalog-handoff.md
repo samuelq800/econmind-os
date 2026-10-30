@@ -221,3 +221,62 @@ forward-fix. Neither the old migration checksum nor existing sealed evidence is
 rewritten. Isolated native evidence is tracked separately: actual posting or
 quote observations do not convert a whole-test failure, or a source-only package,
 into a native or production PASS.
+
+## Mixed FX current-read companion policy (final World SHA pending)
+
+This revision inventories **23 registered baseline + 29 unregistered source
+proposals = 52 SQL files**, with **28 non-Clock proposal transactions**. It
+selects no final World commit (`sourceCommit: null`, `finalCandidateSelected:
+false`) and does not render or replace a sealed candidate package. In particular,
+the previous 078/checkpoint package remains predecessor evidence. The immutable
+World SHA and exact source bytes must still be supplied to the existing renderer
+from a clean checkout before any new review package exists.
+
+The seven additions are separate from the older H0/no-posting paths:
+
+| Proposal | Required predecessor proposals | Fixed function / permission difference |
+| --- | --- | --- |
+| `postwar-social-startup-seed-header` | Social custody | `lock_social_startup_seed_header(text,text)`; existing Social owner computes the actual stored seed SHA at startup, source reader gets metadata EXECUTE, never raw payload SELECT. |
+| `postwar-finance-social-source-publication` | Finance mixed source + Social custody | Three exact publication/verification signatures; existing Finance/Social publishers and owners only. The fixed cfc country derivation manifest is data provenance, not a signature or role enrollment. |
+| `postwar-day-one-fx-history-read` | FX custody + Social custody + Finance custody | One eleven-text-argument committed-quote reader under a new inaccessible NOLOGIN history owner. Existing three source-reader groups receive EXECUTE only; private exact-World SHARE locks use owner column grants with `WITH CHECK(false)`, not runtime UPDATE. |
+| `postwar-mixed-current-projection-read` | Complete Social prefix, FX custody/history and startup header | Six exact signatures and two append-only derived page tables. Bounded reader gets only the six-argument page function; publisher gets fixed Social publication. Complete Budget/Social/FX frames and actual posting hashes distinguish current global head from the last Social state origin. |
+| `postwar-mixed-financial-current-publication` | New mixed-current store + existing financial bounded originals | One three-text-argument publisher. Finance/CB derived balances, TGA/GCU and reservation capacity use the same genuine replay snapshot and independently checked SQL originals; no reader financial-table SELECT or old no-posting fallback. |
+| `postwar-social-mixed-match-publisher` | Existing MATCH, FX custody/history and startup header | `publish_social_operating_mixed_match_due(text,text,text,text)` uses the existing fixed Social publisher and canonical queue path, complete prefix and pending-plan binding. It does not authorize an actor or depend on a UI cache. |
+| `postwar-bounded-journal-read` | Committed FX history reader | `read_postwar_bounded_journal(text,text,text)` reuses the inaccessible history owner; only Social/Finance source readers get EXECUTE. Exact held head/admission/host/permit, maximum H256, 512 batches, 64KiB each/1MiB total and nonzero-inventory refusal; no raw reader table grants. |
+
+The JSON policy contains each full qualified signature, owner, SECURITY DEFINER
+mode, fixed `pg_catalog` search path, PUBLIC EXECUTE expectation and named
+EXECUTE groups. The source extractor rejects signature, owner and execution-mode
+drift. The render-only catalog query adds exact-signature OID observations,
+missing roles, actual named-role EXECUTE, unexpected direct EXECUTE grantees and
+owner/mode/search-path observations. These observations do not prove approval,
+cryptographic admission, credentials, connection bindings or successful runtime
+execution. Inherited memberships still require the separate role observations
+and owner review. No source function body or application row is returned.
+
+Historical committed FX is deliberately different from new settlement: later
+quote expiry/revocation does not erase an already COMMITTED event/receipt/quote
+binding. A new FX command must still pass the unchanged current custody gate.
+The old no-posting current paths remain closed when their assumptions fail;
+new current publication is absent/unsupported rather than a fabricated EMPTY or
+an H0 balance relabeled as current.
+
+Rollback review is metadata only. Each addition records pre/post signature,
+owner/ACL, policy and trigger hash checks, and a separate operational prerequisite:
+stop new publication, drain the one consumer/borrowers as applicable, inventory
+queued/FINAL outcomes, and preserve all immutable originals, publications and
+economic history. A known uncommitted transaction can roll back only itself.
+An uncertain COMMIT stops for readback, without blind retry. After committed FX
+or MATCH, do not delete events, restore pre-FX balances, drop required history
+readers, or start another consumer to bypass a queue head. Release reversal or
+forward repair requires its own reviewed companion channel. This tool emits no
+rollback DDL and grants no approval to execute one.
+
+The journal baseline tables `financial_posting_batch` and `inventory_posting`
+do **not** have RLS enabled. This additive proposal does not globally enable it.
+Its exact-World/host/permit checks run inside the fixed definer; the reused owner
+remains NOLOGIN with no members, and operational readers lack raw table grants.
+The new policy declarations alone are not an RLS isolation claim. Catalog and
+rollback review must check actual relrowsecurity flags, function identity/ACL,
+owner flags/memberships and direct reader privileges together. A role enrollment
+or raw SELECT workaround would change that boundary and is not authorized here.

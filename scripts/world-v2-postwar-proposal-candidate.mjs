@@ -9,7 +9,7 @@ const policyPath = fileURLToPath(
 );
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const POLICY_SHA256 =
-  "648c5412591d909783ad03748415cd018c254e0095f01b1402311247b2c735b5";
+  "a23da0893afaa41759dc3da48839361925888ed38032fcfad917585737f378f3";
 export function requireImmutableProposalCandidateSha(candidateSha) {
   if (!/^[a-f0-9]{40}$/u.test(candidateSha ?? "") || /^0+$/u.test(candidateSha))
     throw Error("EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED");
@@ -27,7 +27,7 @@ export async function loadPostwarExpandedProposalPolicy() {
     policy.installationAllowed !== false ||
     policy.productionReviewVerified !== false ||
     policy.finalCandidateSelected !== false ||
-    policy.proposals.length !== 22
+    policy.proposals.length !== 29
   )
     throw Error("UNAPPROVED_EXPLICIT_CANDIDATE_POLICY_REQUIRED");
   const prior = new Set();
@@ -86,6 +86,55 @@ export function validateExpandedProposalRoleDependencies(policy) {
     seen.set(item.id, closure);
   }
 }
+/** Fixed scalar signatures for the seven added proposals. This is declaration
+ * comparison, not a general SQL parser or a substitute for catalog readback. */
+export function inspectPostwarFunctionContracts(item, bytes) {
+  if (item.definedFunctionSignatures === undefined) return;
+  const sql = bytes.toString("utf8");
+  const actual = [];
+  for (const match of sql.matchAll(
+    /create\s+(?:or\s+replace\s+)?function\s+world_v2\.([a-z_0-9]+)\s*\((.*?)\)\s*returns/gisu,
+  )) {
+    const [, name, argumentsText] = match;
+    const types =
+      argumentsText.trim() === ""
+        ? []
+        : argumentsText.split(",").map((argument) => {
+            const fields = argument.trim().split(/\s+/u);
+            if (!/^(?:text|jsonb|bigint|integer|uuid)$/u.test(fields[1] ?? ""))
+              throw Error("FIXED_SCALAR_FUNCTION_SIGNATURE_REQUIRED");
+            return fields[1];
+          });
+    const signature = `world_v2.${name}(${types.join(",")})`;
+    actual.push(signature);
+    const expected = item.functionContracts?.find(
+      (entry) => entry.qualifiedSignature === signature,
+    );
+    if (!expected) throw Error("PROPOSAL_FUNCTION_SIGNATURE_CHANGED");
+    const identity = signature.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+    const owner = sql.match(
+      new RegExp(
+        `alter\\s+function\\s+${identity}\\s*owner\\s+to\\s+([a-z_0-9]+)`,
+        "iu",
+      ),
+    );
+    const headerEnd = sql.indexOf("$$", match.index + match[0].length);
+    if (headerEnd < 0) throw Error("FIXED_FUNCTION_DECLARATION_REQUIRED");
+    const header = sql.slice(match.index, headerEnd);
+    if (
+      owner?.[1] !== expected.owner ||
+      /\bsecurity\s+definer\b/iu.test(header) !== expected.securityDefiner ||
+      !/set\s+search_path\s*=\s*pg_catalog\b/iu.test(header)
+    )
+      throw Error("PROPOSAL_FUNCTION_OWNER_OR_EXECUTION_MODE_CHANGED");
+  }
+  if (
+    JSON.stringify(actual.sort()) !==
+      JSON.stringify([...item.definedFunctionSignatures].sort()) ||
+    actual.length !== item.functionContracts?.length
+  )
+    throw Error("PROPOSAL_FUNCTION_SIGNATURE_CHANGED");
+}
 // This is a fixed declaration comparison for the reviewed 0009 forward-fix,
 // not a PostgreSQL parser or a pg_get_functiondef hash normalizer.
 function financialPostingDeclaration(bytes) {
@@ -142,6 +191,7 @@ export function validatePostwarFinancialPostingReplacement(
 export function inspectExpandedProposalBytes(item, bytes) {
   if (item.namedFunctionReplacements !== undefined)
     financialPostingReplacement(item, bytes);
+  inspectPostwarFunctionContracts(item, bytes);
   const sql = bytes.toString("utf8");
   const names = (pattern) =>
     [...new Set([...sql.matchAll(pattern)].map((m) => m[1]))].sort();

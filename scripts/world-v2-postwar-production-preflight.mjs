@@ -47,10 +47,30 @@ export async function renderPostwarCatalogQuery() {
   const pins = await binding();
   return catalogQueryForPins(pins);
 }
+/** Expected function ACLs are review metadata, never GRANT instructions. */
+export function postwarCatalogFunctionContracts(proposals) {
+  const contracts = new Map();
+  for (const proposal of proposals.filter(
+    (p) => !p.disposition.startsWith("EXCLUDED_"),
+  )) {
+    for (const contract of proposal.functionContracts ?? []) {
+      if (contracts.has(contract.qualifiedSignature))
+        throw Error("DUPLICATE_EXACT_FUNCTION_CATALOG_CONTRACT");
+      contracts.set(contract.qualifiedSignature, {
+        ...contract,
+        proposalId: proposal.id,
+      });
+    }
+  }
+  return [...contracts.values()].sort((a, b) =>
+    a.qualifiedSignature.localeCompare(b.qualifiedSignature),
+  );
+}
 function catalogQueryForPins(pins) {
   const relevant = pins.proposals.filter(
     (proposal) => !proposal.disposition.startsWith("EXCLUDED_"),
   );
+  const exactFunctionContracts = postwarCatalogFunctionContracts(relevant);
   const relationNames = [
     ...new Set([
       ...baselineRelations,
@@ -92,6 +112,11 @@ expected_relations(name) as (select unnest(${array(relationNames)})),
 expected_functions(name) as (select unnest(${array(functionNames)})),
 expected_roles(name) as (select unnest(${array(roleNames)})),
 namespace as (select oid from pg_catalog.pg_namespace where nspname='world_v2'),
+exact_function_contracts as (
+ select contract,p.oid,p.proowner,p.prosecdef,p.proconfig,p.proacl
+ from pg_catalog.jsonb_array_elements(${literal(JSON.stringify(exactFunctionContracts))}::jsonb)contract
+ left join pg_catalog.pg_proc p on p.oid=case when exists(select 1 from namespace)then pg_catalog.to_regprocedure(contract->>'qualifiedSignature')else null end
+),
 relations as (
  select e.name,c.oid,c.relkind,c.relrowsecurity,c.relforcerowsecurity,c.relowner,
  pg_catalog.pg_get_userbyid(c.relowner) as owner
@@ -134,6 +159,16 @@ select pg_catalog.jsonb_build_object(
  'roles',coalesce((select pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object('name',r.rolname,'login',r.rolcanlogin,'superuser',r.rolsuper,'bypassRls',r.rolbypassrls,'createDb',r.rolcreatedb,'createRole',r.rolcreaterole,'replication',r.rolreplication,'boundedPrivilegeShapeCompatible',r.bounded_privilege_shape_compatible,'connectionAndBindingVerified',false)order by r.rolname)from reader_shape r),'[]'::jsonb),
  'missingNamedRoles',coalesce((select pg_catalog.jsonb_agg(e.name order by e.name)from expected_roles e where not exists(select 1 from roles r where r.rolname=e.name)),'[]'::jsonb),
  'memberships',coalesce((select pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object('group',g.rolname,'member',m.rolname,'adminOption',a.admin_option)order by g.rolname,m.rolname)from pg_catalog.pg_auth_members a join roles g on g.oid=a.roleid join pg_catalog.pg_roles m on m.oid=a.member),'[]'::jsonb),
+ 'exactFunctionContracts',coalesce((select pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object(
+ 'qualifiedSignature',c.contract->>'qualifiedSignature','proposalId',c.contract->>'proposalId','exists',c.oid is not null,
+ 'expectedOwner',c.contract->>'owner','observedOwner',pg_catalog.pg_get_userbyid(c.proowner),'ownerMatches',coalesce(pg_catalog.pg_get_userbyid(c.proowner)=c.contract->>'owner',false),
+ 'securityDefinerMatches',coalesce(c.prosecdef=(c.contract->>'securityDefiner')::boolean,false),
+ 'searchPathMatches',coalesce(exists(select 1 from unnest(c.proconfig)v where v='search_path='||(c.contract->>'searchPath')),false),
+ 'publicExecute',case when c.oid is not null then exists(select 1 from pg_catalog.aclexplode(coalesce(c.proacl,pg_catalog.acldefault('f',c.proowner)))a where a.grantee=0 and a.privilege_type='EXECUTE')else null end,
+ 'expectedPublicExecute',(c.contract->>'publicExecute')::boolean,
+ 'namedExecutePrivileges',coalesce((select pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object('role',name,'exists',r.oid is not null,'execute',case when r.oid is not null and c.oid is not null then pg_catalog.has_function_privilege(r.oid,c.oid,'EXECUTE')else false end)order by name)from pg_catalog.jsonb_array_elements_text(c.contract->'executeRoles')name left join pg_catalog.pg_roles r on r.rolname=name),'[]'::jsonb),
+ 'unexpectedDirectExecuteGrantees',coalesce((select pg_catalog.jsonb_agg(pg_catalog.pg_get_userbyid(a.grantee)order by a.grantee)from pg_catalog.aclexplode(coalesce(c.proacl,pg_catalog.acldefault('f',c.proowner)))a where a.privilege_type='EXECUTE'and a.grantee<>0 and a.grantee<>c.proowner and not exists(select 1 from pg_catalog.jsonb_array_elements_text(c.contract->'executeRoles')x where x=pg_catalog.pg_get_userbyid(a.grantee))),'[]'::jsonb)
+ )order by c.contract->>'qualifiedSignature')from exact_function_contracts c),'[]'::jsonb),
  'functions',coalesce((select pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object('name',e.name,'exists',p.oid is not null,'identityArguments',case when p.oid is not null then pg_catalog.pg_get_function_identity_arguments(p.oid)else null end,'owner',pg_catalog.pg_get_userbyid(p.proowner),'securityDefiner',p.prosecdef,
  'searchPath',(select split_part(v,'=',2)from unnest(p.proconfig)v where v like 'search_path=%'limit 1),
  'publicExecute',case when p.oid is not null then exists(select 1 from pg_catalog.aclexplode(coalesce(p.proacl,pg_catalog.acldefault('f',p.proowner)))a where a.grantee=0 and a.privilege_type='EXECUTE')else null end,
@@ -284,6 +319,24 @@ export async function preparePostwarProductionPreflight({
       offlineRawReader:
         "optional separate existing NOLOGIN group; never inherited by online reader",
       enrollmentAndGrants: "NOT_PERFORMED_NOT_APPROVED_BY_THIS_HANDOFF",
+    },
+    rollbackReview: {
+      executionAllowed: false,
+      automaticDowngrade: false,
+      policy:
+        pins.rollbackPolicy ??
+        "Separate approved release reversal required; never mutate committed history",
+      proposalChecks: pins.proposals
+        .filter(
+          (p) => !p.disposition.startsWith("EXCLUDED_") && p.rollbackChecks,
+        )
+        .map((p) => ({
+          id: p.id,
+          checks: p.rollbackChecks,
+          permissionDelta: p.permissionDelta,
+          functionContracts: p.functionContracts,
+        })),
+      finalWorldShaStillRequired: candidateSha === undefined,
     },
     controlledOwnerChain: {
       repository: "samuelq800/econmind-os",

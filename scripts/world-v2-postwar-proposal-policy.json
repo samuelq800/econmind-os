@@ -6,7 +6,7 @@
   "projectRef": "vimksjrhaxdpnkvgsavz",
   "registeredManifestSha256": "e675bd8bd18ba6c51aeffa674320dba3ac79299b7e12eeef834fe28547f9025e",
   "registeredMigrationCount": 23,
-  "proposalPolicy": "Fixed inventory and dependency order only; no installation order has been approved",
+  "proposalPolicy": "Fixed 29-proposal inventory, exact new function contracts and dependency review order only; no installation order, migration approval or final World SHA selected",
   "proposals": [
     {
       "id": "runtime-read-binding-storage",
@@ -782,9 +782,600 @@
       "versionSemantics": "FIXED_ADOPTED_GCU_WORLD_AND_70_DAY_ONE_QUOTES;H0_INITIAL_REGISTRATION;IMMUTABLE_PUBLICATION;NO_RUNTIME_ENROLLMENT"
     },
     {
+      "id": "postwar-social-startup-seed-header",
+      "path": "database/proposals/postwar-social-startup-seed-header.sql",
+      "reviewOrder": 22,
+      "disposition": "CANDIDATE_FIXED_SOCIAL_STARTUP_HEADER",
+      "dependencies": ["social-operating-custody"],
+      "baselineDependencies": ["0016_world_v2_opening_seed"],
+      "createdRoles": [],
+      "reusedRoles": [
+        "world_v2_social_source_owner",
+        "world_v2_social_source_reader"
+      ],
+      "createdRelations": [],
+      "definedFunctions": ["lock_social_startup_seed_header"],
+      "definedFunctionSignatures": [
+        "world_v2.lock_social_startup_seed_header(text,text)"
+      ],
+      "functionContracts": [
+        {
+          "qualifiedSignature": "world_v2.lock_social_startup_seed_header(text,text)",
+          "owner": "world_v2_social_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": ["world_v2_social_source_reader"]
+        }
+      ],
+      "renamedFunctions": [],
+      "literalCreatedPolicies": [],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_social_source_owner": "social-operating-custody",
+        "world_v2_social_source_reader": "social-operating-custody"
+      },
+      "versionSemantics": "HEADER_ONLY_COLD_START;PRIVATE_OWNER_HASHES_ACTUAL_STORED_SEED_ONCE;NO_READER_RAW_PAYLOAD_OR_AUTHORITY",
+      "permissionDelta": {
+        "reviewStatus": "SOURCE_DECLARATIONS_ONLY_ACTUAL_CATALOG_AND_APPROVED_ENROLLMENT_REQUIRED",
+        "newLoginRoles": false,
+        "membershipEnrollment": false,
+        "newRuntimeTableDml": false,
+        "boundedRuntimeRawSeedSelect": false,
+        "ownerOnlyDifference": "Existing inaccessible Social owner adds one startup metadata/hash function; reader only EXECUTE."
+      },
+      "rollbackChecks": [
+        "NO_AUTOMATIC_SQL_DOWNGRADE",
+        "UNCERTAIN_COMMIT_STOP_AND_READBACK_NOT_BLIND_RETRY",
+        "PRESERVE_AUTHORITATIVE_HISTORY_IMMUTABLE_ORIGINALS_AND_EXISTING_SOURCE_PINS",
+        "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
+        "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE",
+        "Stop the prepared Social owner and drain requests before retiring this startup entry; preserve all admitted seed/source rows and existing custody functions."
+      ]
+    },
+    {
+      "id": "postwar-finance-social-source-publication",
+      "path": "database/proposals/postwar-finance-social-source-publication.sql",
+      "reviewOrder": 23,
+      "disposition": "CANDIDATE_FIXED_FINANCE_SOCIAL_SOURCE_PUBLICATION",
+      "dependencies": [
+        "finance-budget-mixed-source",
+        "social-operating-custody"
+      ],
+      "baselineDependencies": ["0009_world_v2_posting_payload_integrity"],
+      "createdRoles": [],
+      "reusedRoles": [
+        "world_v2_finance_budget_source_owner",
+        "world_v2_finance_budget_source_publisher",
+        "world_v2_finance_budget_source_reader",
+        "world_v2_social_source_owner",
+        "world_v2_social_source_publisher",
+        "world_v2_social_source_reader"
+      ],
+      "createdRelations": [],
+      "definedFunctions": [
+        "verify_postwar_finance_social_publication",
+        "publish_postwar_social_source_bounded",
+        "publish_postwar_finance_source_bounded"
+      ],
+      "definedFunctionSignatures": [
+        "world_v2.publish_postwar_finance_source_bounded(text)",
+        "world_v2.publish_postwar_social_source_bounded(text)",
+        "world_v2.verify_postwar_finance_social_publication(text,text)"
+      ],
+      "functionContracts": [
+        {
+          "qualifiedSignature": "world_v2.verify_postwar_finance_social_publication(text,text)",
+          "owner": "world_v2_finance_budget_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": ["world_v2_social_source_owner"]
+        },
+        {
+          "qualifiedSignature": "world_v2.publish_postwar_social_source_bounded(text)",
+          "owner": "world_v2_social_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": ["world_v2_social_source_publisher"]
+        },
+        {
+          "qualifiedSignature": "world_v2.publish_postwar_finance_source_bounded(text)",
+          "owner": "world_v2_finance_budget_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": ["world_v2_finance_budget_source_publisher"]
+        }
+      ],
+      "renamedFunctions": [],
+      "literalCreatedPolicies": [],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_finance_budget_source_owner": "finance-budget-custody",
+        "world_v2_finance_budget_source_publisher": "finance-budget-custody",
+        "world_v2_finance_budget_source_reader": "finance-budget-custody",
+        "world_v2_social_source_owner": "social-operating-custody",
+        "world_v2_social_source_publisher": "social-operating-custody",
+        "world_v2_social_source_reader": "social-operating-custody"
+      },
+      "versionSemantics": "FIXED_CFC_COUNTRY_DERIVATION_HASHES;EXISTING_PUBLISHERS_ONLY;NO_NEW_ROLE_POLICY_OR_MEMBERSHIP",
+      "permissionDelta": {
+        "reviewStatus": "SOURCE_DECLARATIONS_ONLY_ACTUAL_CATALOG_AND_APPROVED_ENROLLMENT_REQUIRED",
+        "newLoginRoles": false,
+        "membershipEnrollment": false,
+        "newRuntimeTableDml": false,
+        "boundedRuntimeRawSeedSelect": false,
+        "ownerOnlyDifference": "Existing Finance/Social owners add fixed cfc publication functions; only existing matching publishers may invoke; no new table grants."
+      },
+      "rollbackChecks": [
+        "NO_AUTOMATIC_SQL_DOWNGRADE",
+        "UNCERTAIN_COMMIT_STOP_AND_READBACK_NOT_BLIND_RETRY",
+        "PRESERVE_AUTHORITATIVE_HISTORY_IMMUTABLE_ORIGINALS_AND_EXISTING_SOURCE_PINS",
+        "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
+        "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE",
+        "Retain the exact derivation manifest and already registered immutable country originals; do not DELETE registrations, re-sign admission or rerun publication against a different seed."
+      ]
+    },
+    {
+      "id": "postwar-day-one-fx-history-read",
+      "path": "database/proposals/postwar-day-one-fx-history-read.sql",
+      "reviewOrder": 24,
+      "disposition": "CANDIDATE_COMMITTED_FX_ARCHIVE_DATA_READ",
+      "dependencies": [
+        "postwar-day-one-fx-custody",
+        "social-operating-custody",
+        "finance-budget-custody"
+      ],
+      "baselineDependencies": [
+        "0002_world_v2_command_event_ledger",
+        "0003_world_v2_command_receipts_outbox",
+        "0011_world_v2_current_commit_authorization",
+        "0013_world_v2_read_projection_boundary"
+      ],
+      "createdRoles": ["world_v2_day_one_fx_history_owner"],
+      "reusedRoles": [
+        "world_v2_day_one_fx_source_owner",
+        "world_v2_day_one_fx_source_publisher",
+        "world_v2_day_one_fx_source_reader",
+        "world_v2_finance_budget_source_owner",
+        "world_v2_finance_budget_source_publisher",
+        "world_v2_finance_budget_source_reader",
+        "world_v2_social_source_owner",
+        "world_v2_social_source_publisher",
+        "world_v2_social_source_reader"
+      ],
+      "createdRelations": [],
+      "definedFunctions": ["read_postwar_day_one_fx_committed_quote"],
+      "definedFunctionSignatures": [
+        "world_v2.read_postwar_day_one_fx_committed_quote(text,text,text,text,text,text,text,text,text,text,text)"
+      ],
+      "functionContracts": [
+        {
+          "qualifiedSignature": "world_v2.read_postwar_day_one_fx_committed_quote(text,text,text,text,text,text,text,text,text,text,text)",
+          "owner": "world_v2_day_one_fx_history_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_social_source_reader",
+            "world_v2_finance_budget_source_reader",
+            "world_v2_day_one_fx_source_reader"
+          ]
+        }
+      ],
+      "renamedFunctions": [],
+      "literalCreatedPolicies": [
+        "fx_history_host_lock",
+        "fx_history_host_read",
+        "fx_history_host_read_fence",
+        "fx_history_lock",
+        "fx_history_lock_fence",
+        "fx_history_original_lock",
+        "fx_history_read",
+        "fx_history_read_fence"
+      ],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_day_one_fx_history_owner": "postwar-day-one-fx-history-read",
+        "world_v2_day_one_fx_source_owner": "postwar-day-one-fx-custody",
+        "world_v2_day_one_fx_source_publisher": "postwar-day-one-fx-custody",
+        "world_v2_day_one_fx_source_reader": "postwar-day-one-fx-custody",
+        "world_v2_finance_budget_source_owner": "finance-budget-custody",
+        "world_v2_finance_budget_source_publisher": "finance-budget-custody",
+        "world_v2_finance_budget_source_reader": "finance-budget-custody",
+        "world_v2_social_source_owner": "social-operating-custody",
+        "world_v2_social_source_publisher": "social-operating-custody",
+        "world_v2_social_source_reader": "social-operating-custody"
+      },
+      "versionSemantics": "COMMITTED_EVENT_RECEIPT_QUOTE_HASH_BOUND;LATER_QUOTE_REVOCATION_DOES_NOT_ERASE_HISTORY;NEW_FX_CURRENT_GATE_UNCHANGED",
+      "permissionDelta": {
+        "reviewStatus": "SOURCE_DECLARATIONS_ONLY_ACTUAL_CATALOG_AND_APPROVED_ENROLLMENT_REQUIRED",
+        "newLoginRoles": false,
+        "membershipEnrollment": false,
+        "newRuntimeTableDml": false,
+        "boundedRuntimeRawSeedSelect": false,
+        "ownerOnlyDifference": "New inaccessible history owner gets exact-World metadata/committed quote reads and SHARE-lock column UPDATE guarded WITH CHECK(false); online fixed source readers only EXECUTE."
+      },
+      "rollbackChecks": [
+        "NO_AUTOMATIC_SQL_DOWNGRADE",
+        "UNCERTAIN_COMMIT_STOP_AND_READBACK_NOT_BLIND_RETRY",
+        "PRESERVE_AUTHORITATIVE_HISTORY_IMMUTABLE_ORIGINALS_AND_EXISTING_SOURCE_PINS",
+        "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
+        "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE",
+        "After any committed FX, historical replay availability is required: retain the archive function/original quote bytes until a separately reviewed compatible reader replaces it; never use later quote revocation as a historical rollback."
+      ]
+    },
+    {
+      "id": "postwar-mixed-current-projection-read",
+      "path": "database/proposals/postwar-mixed-current-projection-read.sql",
+      "reviewOrder": 25,
+      "disposition": "CANDIDATE_POSTING_AWARE_SOCIAL_CURRENT_V3",
+      "dependencies": [
+        "postwar-social-current-prefix-read",
+        "postwar-day-one-fx-custody",
+        "postwar-day-one-fx-history-read",
+        "postwar-social-startup-seed-header"
+      ],
+      "baselineDependencies": [
+        "0007_world_v2_atomic_transition_facts",
+        "0009_world_v2_posting_payload_integrity"
+      ],
+      "createdRoles": [],
+      "reusedRoles": [
+        "world_v2_postwar_projection_owner",
+        "world_v2_postwar_projection_publisher",
+        "world_v2_postwar_projection_reader"
+      ],
+      "createdRelations": [
+        "postwar_mixed_current_document",
+        "postwar_mixed_current_page"
+      ],
+      "definedFunctions": [
+        "postwar_mixed_fx_group",
+        "postwar_mixed_current_batch",
+        "postwar_mixed_current_prefix",
+        "postwar_write_mixed_current_document",
+        "publish_postwar_mixed_social_current",
+        "read_postwar_mixed_current_page"
+      ],
+      "definedFunctionSignatures": [
+        "world_v2.postwar_mixed_current_batch(text,text,text)",
+        "world_v2.postwar_mixed_current_prefix(text)",
+        "world_v2.postwar_mixed_fx_group(text,jsonb,jsonb,jsonb,jsonb,jsonb)",
+        "world_v2.postwar_write_mixed_current_document(text,text,text,text,text,bigint,bigint,jsonb,jsonb,jsonb)",
+        "world_v2.publish_postwar_mixed_social_current(text,text,text)",
+        "world_v2.read_postwar_mixed_current_page(text,text,text,integer,integer,text)"
+      ],
+      "functionContracts": [
+        {
+          "qualifiedSignature": "world_v2.postwar_mixed_fx_group(text,jsonb,jsonb,jsonb,jsonb,jsonb)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": []
+        },
+        {
+          "qualifiedSignature": "world_v2.postwar_mixed_current_batch(text,text,text)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": false,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": []
+        },
+        {
+          "qualifiedSignature": "world_v2.postwar_mixed_current_prefix(text)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": []
+        },
+        {
+          "qualifiedSignature": "world_v2.postwar_write_mixed_current_document(text,text,text,text,text,bigint,bigint,jsonb,jsonb,jsonb)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": []
+        },
+        {
+          "qualifiedSignature": "world_v2.publish_postwar_mixed_social_current(text,text,text)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": ["world_v2_postwar_projection_publisher"]
+        },
+        {
+          "qualifiedSignature": "world_v2.read_postwar_mixed_current_page(text,text,text,integer,integer,text)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": ["world_v2_postwar_projection_reader"]
+        }
+      ],
+      "renamedFunctions": [],
+      "literalCreatedPolicies": [
+        "mixed_current_owner",
+        "mixed_current_world",
+        "mixed_projection_fx_quote",
+        "mixed_projection_fx_source"
+      ],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_postwar_projection_owner": "postwar-office-derived-read",
+        "world_v2_postwar_projection_publisher": "postwar-office-derived-read",
+        "world_v2_postwar_projection_reader": "postwar-office-derived-read"
+      },
+      "versionSemantics": "APPEND_ONLY_DERIVED_PAGES_NOT_AUTHORITY;COMPLETE_FIVE_FAMILY_PREFIX;ORIGIN_SEPARATE_FROM_OBSERVED_HEAD;NO_LEGACY_NO_POSTING_FALLBACK",
+      "permissionDelta": {
+        "reviewStatus": "SOURCE_DECLARATIONS_ONLY_ACTUAL_CATALOG_AND_APPROVED_ENROLLMENT_REQUIRED",
+        "newLoginRoles": false,
+        "membershipEnrollment": false,
+        "newRuntimeTableDml": false,
+        "boundedRuntimeRawSeedSelect": false,
+        "ownerOnlyDifference": "Existing projection owner gets append-only derived tables and quote-original reads; API bounded reader only six-argument page EXECUTE; publisher only fixed Social derivation EXECUTE."
+      },
+      "rollbackChecks": [
+        "NO_AUTOMATIC_SQL_DOWNGRADE",
+        "UNCERTAIN_COMMIT_STOP_AND_READBACK_NOT_BLIND_RETRY",
+        "PRESERVE_AUTHORITATIVE_HISTORY_IMMUTABLE_ORIGINALS_AND_EXISTING_SOURCE_PINS",
+        "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
+        "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE",
+        "Stop new derived publication and drain readers; retain old and new immutable pages/cursors. Previous no-posting reader must stay UNAVAILABLE after FX; a UI rollback must not relabel H0/current or remove economic postings."
+      ]
+    },
+    {
+      "id": "postwar-mixed-financial-current-publication",
+      "path": "database/proposals/postwar-mixed-financial-current-publication.sql",
+      "reviewOrder": 26,
+      "disposition": "CANDIDATE_POSTING_AWARE_FINANCE_CB_PUBLICATION",
+      "dependencies": [
+        "postwar-mixed-current-projection-read",
+        "postwar-financial-current-derived-read"
+      ],
+      "baselineDependencies": [
+        "0007_world_v2_atomic_transition_facts",
+        "0009_world_v2_posting_payload_integrity"
+      ],
+      "createdRoles": [],
+      "reusedRoles": [
+        "world_v2_postwar_projection_owner",
+        "world_v2_postwar_projection_publisher",
+        "world_v2_postwar_projection_reader"
+      ],
+      "createdRelations": [],
+      "definedFunctions": ["publish_postwar_mixed_financial_current"],
+      "definedFunctionSignatures": [
+        "world_v2.publish_postwar_mixed_financial_current(text,text,text)"
+      ],
+      "functionContracts": [
+        {
+          "qualifiedSignature": "world_v2.publish_postwar_mixed_financial_current(text,text,text)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": ["world_v2_postwar_projection_publisher"]
+        }
+      ],
+      "renamedFunctions": [],
+      "literalCreatedPolicies": [],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_postwar_projection_owner": "postwar-office-derived-read",
+        "world_v2_postwar_projection_publisher": "postwar-office-derived-read",
+        "world_v2_postwar_projection_reader": "postwar-office-derived-read"
+      },
+      "versionSemantics": "SINGLE_GENUINE_REPLAY_SNAPSHOT;ACTUAL_TGA_GCU_AND_ENCUMBRANCES;FIXED_TEN_DOCUMENT_DERIVATION",
+      "permissionDelta": {
+        "reviewStatus": "SOURCE_DECLARATIONS_ONLY_ACTUAL_CATALOG_AND_APPROVED_ENROLLMENT_REQUIRED",
+        "newLoginRoles": false,
+        "membershipEnrollment": false,
+        "newRuntimeTableDml": false,
+        "boundedRuntimeRawSeedSelect": false,
+        "ownerOnlyDifference": "Existing projection owner derives ten bounded Finance/CB documents; existing publisher only fixed publication EXECUTE, reader gains no financial table access."
+      },
+      "rollbackChecks": [
+        "NO_AUTOMATIC_SQL_DOWNGRADE",
+        "UNCERTAIN_COMMIT_STOP_AND_READBACK_NOT_BLIND_RETRY",
+        "PRESERVE_AUTHORITATIVE_HISTORY_IMMUTABLE_ORIGINALS_AND_EXISTING_SOURCE_PINS",
+        "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
+        "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE",
+        "Retain current financial publications and their exact posting coverage; disable only the publication caller if rolling back. Do not restore pre-FX balances, delete GCU holdings or treat reserved capacity as paid."
+      ]
+    },
+    {
+      "id": "postwar-social-mixed-match-publisher",
+      "path": "database/proposals/postwar-social-mixed-match-publisher.sql",
+      "reviewOrder": 27,
+      "disposition": "CANDIDATE_MIXED_PREFIX_SOCIAL_MATCH_DUE",
+      "dependencies": [
+        "social-operating-match-publisher",
+        "postwar-day-one-fx-custody",
+        "postwar-day-one-fx-history-read",
+        "postwar-social-startup-seed-header"
+      ],
+      "baselineDependencies": [
+        "0002_world_v2_command_event_ledger",
+        "0003_world_v2_command_receipts_outbox",
+        "0009_world_v2_posting_payload_integrity"
+      ],
+      "createdRoles": [],
+      "reusedRoles": [
+        "world_v2_social_source_owner",
+        "world_v2_social_source_publisher"
+      ],
+      "createdRelations": [],
+      "definedFunctions": ["publish_social_operating_mixed_match_due"],
+      "definedFunctionSignatures": [
+        "world_v2.publish_social_operating_mixed_match_due(text,text,text,text)"
+      ],
+      "functionContracts": [
+        {
+          "qualifiedSignature": "world_v2.publish_social_operating_mixed_match_due(text,text,text,text)",
+          "owner": "world_v2_social_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": ["world_v2_social_source_publisher"]
+        }
+      ],
+      "renamedFunctions": [],
+      "literalCreatedPolicies": [
+        "mixed_match_owner_insert",
+        "mixed_match_owner_insert_fence",
+        "mixed_match_owner_read",
+        "mixed_match_owner_read_fence"
+      ],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_social_source_owner": "social-operating-custody",
+        "world_v2_social_source_publisher": "social-operating-custody"
+      },
+      "versionSemantics": "FIXED_EXISTING_PUBLISHER;COMPLETE_PREFIX_AND_PENDING_PLAN;IDEMPOTENT_CANONICAL_DUE;NO_UI_CACHE_AUTHORITY",
+      "permissionDelta": {
+        "reviewStatus": "SOURCE_DECLARATIONS_ONLY_ACTUAL_CATALOG_AND_APPROVED_ENROLLMENT_REQUIRED",
+        "newLoginRoles": false,
+        "membershipEnrollment": false,
+        "newRuntimeTableDml": false,
+        "boundedRuntimeRawSeedSelect": false,
+        "ownerOnlyDifference": "Existing Social owner gains exact-World posting/quote reads and uses existing canonical queue insert rights; only matching source publisher EXECUTE, not actor authority."
+      },
+      "rollbackChecks": [
+        "NO_AUTOMATIC_SQL_DOWNGRADE",
+        "UNCERTAIN_COMMIT_STOP_AND_READBACK_NOT_BLIND_RETRY",
+        "PRESERVE_AUTHORITATIVE_HISTORY_IMMUTABLE_ORIGINALS_AND_EXISTING_SOURCE_PINS",
+        "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
+        "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE",
+        "Pause the single consumer and publisher, drain tasks and inventory existing due/FINAL receipts before any release reversal. Preserve queued canonical commands/publication history; do not delete a due command or start a second consumer to work around an unsupported head."
+      ]
+    },
+    {
+      "id": "postwar-bounded-journal-read",
+      "path": "database/proposals/postwar-bounded-journal-read.sql",
+      "reviewOrder": 28,
+      "disposition": "CANDIDATE_BOUNDED_SOURCE_REPLAY_JOURNAL",
+      "dependencies": ["postwar-day-one-fx-history-read"],
+      "baselineDependencies": ["0007_world_v2_atomic_transition_facts"],
+      "createdRoles": [],
+      "reusedRoles": [
+        "world_v2_day_one_fx_history_owner",
+        "world_v2_day_one_fx_source_owner",
+        "world_v2_day_one_fx_source_publisher",
+        "world_v2_finance_budget_source_owner",
+        "world_v2_finance_budget_source_publisher",
+        "world_v2_finance_budget_source_reader",
+        "world_v2_social_source_owner",
+        "world_v2_social_source_publisher",
+        "world_v2_social_source_reader"
+      ],
+      "createdRelations": [],
+      "definedFunctions": ["read_postwar_bounded_journal"],
+      "definedFunctionSignatures": [
+        "world_v2.read_postwar_bounded_journal(text,text,text)"
+      ],
+      "functionContracts": [
+        {
+          "qualifiedSignature": "world_v2.read_postwar_bounded_journal(text,text,text)",
+          "owner": "world_v2_day_one_fx_history_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_social_source_reader",
+            "world_v2_finance_budget_source_reader"
+          ]
+        }
+      ],
+      "renamedFunctions": [],
+      "literalCreatedPolicies": [
+        "postwar_bounded_journal_fence",
+        "postwar_bounded_journal_read"
+      ],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_day_one_fx_history_owner": "postwar-day-one-fx-history-read",
+        "world_v2_day_one_fx_source_owner": "postwar-day-one-fx-custody",
+        "world_v2_day_one_fx_source_publisher": "postwar-day-one-fx-custody",
+        "world_v2_finance_budget_source_owner": "finance-budget-custody",
+        "world_v2_finance_budget_source_publisher": "finance-budget-custody",
+        "world_v2_finance_budget_source_reader": "finance-budget-custody",
+        "world_v2_social_source_owner": "social-operating-custody",
+        "world_v2_social_source_publisher": "social-operating-custody",
+        "world_v2_social_source_reader": "social-operating-custody"
+      },
+      "versionSemantics": "COMPLETE_ACTUAL_WORLD_JOURNAL_DATA_ONLY;H0_TO_256_HEAD;MAX_512_BATCHES_64KIB_EACH_1MIB_TOTAL;NO_INVENTORY_OR_SILENT_TRUNCATION",
+      "permissionDelta": {
+        "reviewStatus": "SOURCE_DECLARATIONS_ONLY_ACTUAL_CATALOG_AND_APPROVED_ENROLLMENT_REQUIRED",
+        "newLoginRoles": false,
+        "membershipEnrollment": false,
+        "newRuntimeTableDml": false,
+        "boundedRuntimeRawSeedSelect": false,
+        "ownerOnlyDifference": "Reuse inaccessible NOLOGIN history owner: exact batch column SELECT and inventory World-ID SELECT; operational Social/Finance source readers only EXECUTE, never direct ledger table privileges.",
+        "baselineRlsBoundary": "BASELINE_FINANCIAL_AND_INVENTORY_LEDGER_TABLES_HAVE_NO_RLS;THIS_PROPOSAL_DOES_NOT_GLOBALLY_ENABLE_RLS. Isolation is enforced by fixed definer exact-World/host/permit predicates plus inaccessible NOLOGIN owner/no membership. New policy declarations do not make those baseline tables RLS-isolated."
+      },
+      "replayReadBounds": {
+        "worldVersionMaximum": "256",
+        "eventSequenceMaximum": "256",
+        "financialBatchMaximum": 512,
+        "rawBatchMaximumBytes": 65536,
+        "rawBatchSetMaximumBytes": 1048576,
+        "inventoryEffects": "REJECT_NONZERO",
+        "sourceChecks": [
+          "ACTUAL_HELD_WORLD_HEAD",
+          "SAME_IMMUTABLE_SEED_AND_ADMISSION",
+          "CURRENT_PUBLICATION_PERMIT_NOT_REVOKED",
+          "CURRENT_HOST_SOCIAL_REGISTRATION_OR_FINANCE_POLICY_NOT_REVOKED"
+        ],
+        "outputNature": "DATA_ONLY_NOT_COMMIT_OR_ACTOR_AUTHORITY"
+      },
+      "rollbackChecks": [
+        "NO_AUTOMATIC_SQL_DOWNGRADE",
+        "UNCERTAIN_COMMIT_STOP_AND_READBACK_NOT_BLIND_RETRY",
+        "PRESERVE_AUTHORITATIVE_HISTORY_IMMUTABLE_ORIGINALS_AND_EXISTING_SOURCE_PINS",
+        "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
+        "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE",
+        "Verify actual baseline relrowsecurity/relforcerowsecurity without globally enabling/disabling RLS, history-owner NOLOGIN flags and absence of any member. Read back only named-reader function EXECUTE and no direct reader ledger SELECT.",
+        "Drain prepared Social/Finance source replay before a reviewed function reversal; preserve all financial batches and never grant raw ledger/seed access or truncate a prefix as a recovery workaround."
+      ]
+    },
+    {
       "id": "isolated-world-clock",
       "path": "database/proposals/isolated-world-clock.sql",
-      "reviewOrder": 22,
+      "reviewOrder": 29,
       "disposition": "EXCLUDED_NOT_A_READ_DEPENDENCY",
       "dependencies": [],
       "baselineDependencies": [],
@@ -828,5 +1419,6 @@
   "migrationApproval": "NOT_GRANTED",
   "installationAllowed": false,
   "productionReviewVerified": false,
-  "finalCandidateSelected": false
+  "finalCandidateSelected": false,
+  "rollbackPolicy": "Per-transaction rollback before a known COMMIT only; preserve all committed history, stop on unknown outcome, and require a separately reviewed forward fix or release reversal. No rollback SQL is generated."
 }

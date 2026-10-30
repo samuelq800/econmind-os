@@ -7,8 +7,13 @@ import path from "node:path";
 import {
   renderPostwarCatalogQuery,
   preparePostwarProductionPreflight,
+  postwarCatalogFunctionContracts,
   // @ts-expect-error Existing Node script convention: no declarations.
 } from "../scripts/world-v2-postwar-production-preflight.mjs";
+import {
+  loadPostwarExpandedProposalPolicy,
+  // @ts-expect-error Existing Node script convention: no declarations.
+} from "../scripts/world-v2-postwar-proposal-candidate.mjs";
 const stripLiterals = (sql: string) =>
   sql.replace(/'(?:''|[^'])*'/gu, "''").replace(/--[^\n]*/gu, "");
 const hash = (bytes: string) =>
@@ -116,6 +121,37 @@ describe("fixed postwar catalog handoff never executes or grants", () => {
       );
     },
   );
+  it("separates exact-signature ACL expectations from release approval and rejects duplicate contracts", async () => {
+    const { policy } = await loadPostwarExpandedProposalPolicy();
+    const contracts = postwarCatalogFunctionContracts(policy.proposals);
+    expect(contracts).toHaveLength(14);
+    expect(
+      contracts.find((c: { qualifiedSignature: string }) =>
+        c.qualifiedSignature.startsWith(
+          "world_v2.read_postwar_mixed_current_page(",
+        ),
+      ),
+    ).toMatchObject({
+      owner: "world_v2_postwar_projection_owner",
+      securityDefiner: true,
+      publicExecute: false,
+      executeRoles: ["world_v2_postwar_projection_reader"],
+    });
+    expect(() =>
+      postwarCatalogFunctionContracts([
+        ...policy.proposals,
+        policy.proposals.find(
+          (p: { id: string }) =>
+            p.id === "postwar-mixed-current-projection-read",
+        ),
+      ]),
+    ).toThrow("DUPLICATE_EXACT_FUNCTION_CATALOG_CONTRACT");
+    const query = await renderPostwarCatalogQuery();
+    expect(query).toContain("'exactFunctionContracts'");
+    expect(query).toContain("pg_catalog.to_regprocedure");
+    expect(query).toContain("'unexpectedDirectExecuteGrantees'");
+    expect(query).toContain("'productionReleaseApproved',false");
+  });
   it("has no network, driver, credential lookup or command dispatch", async () => {
     const source = await readFile(
       "scripts/world-v2-postwar-production-preflight.mjs",
