@@ -9,7 +9,7 @@ const policyPath = fileURLToPath(
 );
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const POLICY_SHA256 =
-  "4d5f741b6c0bfefafc88611aaba8ce659e4aaf3b3f6b98e298e5391fcf8cef72";
+  "912f35816062d4d026ff2d638bd97a3d7fb5b042577479a3c188f2f69cef8ee6";
 export function requireImmutableProposalCandidateSha(candidateSha) {
   if (!/^[a-f0-9]{40}$/u.test(candidateSha ?? "") || /^0+$/u.test(candidateSha))
     throw Error("EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED");
@@ -27,7 +27,7 @@ export async function loadPostwarExpandedProposalPolicy() {
     policy.installationAllowed !== false ||
     policy.productionReviewVerified !== false ||
     policy.finalCandidateSelected !== false ||
-    policy.proposals.length !== 30
+    policy.proposals.length !== 31
   )
     throw Error("UNAPPROVED_EXPLICIT_CANDIDATE_POLICY_REQUIRED");
   const prior = new Set();
@@ -86,7 +86,7 @@ export function validateExpandedProposalRoleDependencies(policy) {
     seen.set(item.id, closure);
   }
 }
-/** Fixed scalar signatures for the eight added proposals. This is declaration
+/** Fixed scalar signatures for the nine added proposals. This is declaration
  * comparison, not a general SQL parser or a substitute for catalog readback. */
 export function inspectPostwarFunctionContracts(item, bytes) {
   if (item.definedFunctionSignatures === undefined) return;
@@ -118,8 +118,12 @@ export function inspectPostwarFunctionContracts(item, bytes) {
         "iu",
       ),
     );
-    const headerEnd = sql.indexOf("$$", match.index + match[0].length);
-    if (headerEnd < 0) throw Error("FIXED_FUNCTION_DECLARATION_REQUIRED");
+    const declarationTail = sql.slice(match.index + match[0].length);
+    const bodyDelimiter = /\bas\s+\$(?:[a-z_][a-z_0-9]*)?\$/iu.exec(
+      declarationTail,
+    );
+    if (!bodyDelimiter) throw Error("FIXED_FUNCTION_DECLARATION_REQUIRED");
+    const headerEnd = match.index + match[0].length + bodyDelimiter.index;
     const header = sql.slice(match.index, headerEnd);
     if (
       owner?.[1] !== expected.owner ||

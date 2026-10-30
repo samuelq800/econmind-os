@@ -27,6 +27,7 @@ const baselineRelations = [
   "authoritative_event",
   "command_submission",
   "command_receipt",
+  "runtime_read_seat",
   "financial_posting_batch",
   "inventory_posting",
 ];

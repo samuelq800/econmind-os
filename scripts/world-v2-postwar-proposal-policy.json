@@ -6,7 +6,7 @@
   "projectRef": "vimksjrhaxdpnkvgsavz",
   "registeredManifestSha256": "e675bd8bd18ba6c51aeffa674320dba3ac79299b7e12eeef834fe28547f9025e",
   "registeredMigrationCount": 23,
-  "proposalPolicy": "Fixed 30-proposal inventory, exact new function contracts and dependency review order only; no installation order, migration approval or final World SHA selected",
+  "proposalPolicy": "Fixed 31-proposal inventory, exact new function contracts and dependency review order only; no installation order, migration approval or final World SHA selected",
   "proposals": [
     {
       "id": "runtime-read-binding-storage",
@@ -1452,9 +1452,105 @@
       ]
     },
     {
+      "id": "postwar-office-recovery-read",
+      "path": "database/proposals/postwar-office-recovery-read.sql",
+      "reviewOrder": 30,
+      "disposition": "CANDIDATE_EXACT_CAPABILITY_READ_ONLY_RECOVERY_METADATA",
+      "dependencies": [
+        "postwar-office-derived-read",
+        "social-intake-authorization",
+        "finance-budget-custody",
+        "postwar-day-one-fx-custody"
+      ],
+      "baselineDependencies": [
+        "0011_world_v2_current_commit_authorization",
+        "0013_world_v2_read_projection_boundary"
+      ],
+      "createdRoles": [],
+      "reusedRoles": [
+        "world_v2_day_one_fx_source_reader",
+        "world_v2_finance_budget_source_reader",
+        "world_v2_postwar_projection_owner",
+        "world_v2_social_intake_lock_reader"
+      ],
+      "createdRelations": [],
+      "definedFunctions": ["read_postwar_office_recovery_binding"],
+      "definedFunctionSignatures": [
+        "world_v2.read_postwar_office_recovery_binding(text,uuid,text,text,text,text,text,text)"
+      ],
+      "functionContracts": [
+        {
+          "qualifiedSignature": "world_v2.read_postwar_office_recovery_binding(text,uuid,text,text,text,text,text,text)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_finance_budget_source_reader",
+            "world_v2_day_one_fx_source_reader",
+            "world_v2_social_intake_lock_reader"
+          ]
+        }
+      ],
+      "renamedFunctions": [],
+      "literalCreatedPolicies": [],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_day_one_fx_source_reader": "postwar-day-one-fx-custody",
+        "world_v2_finance_budget_source_reader": "finance-budget-custody",
+        "world_v2_postwar_projection_owner": "postwar-office-derived-read",
+        "world_v2_social_intake_lock_reader": "social-intake-authorization"
+      },
+      "versionSemantics": "READ_ONLY_NONLOCKING_RECOVERY_METADATA;EXACT_COMMAND_CAPABILITY_NOT_ANY_OFFICE_SEAT;NO_REPLAY_CANDIDATE_COMMIT_OR_NEW_COMMAND_AUTHORITY",
+      "permissionDelta": {
+        "reviewStatus": "SOURCE_DECLARATIONS_ONLY_ACTUAL_CATALOG_AND_APPROVED_ENROLLMENT_REQUIRED",
+        "newLoginRoles": false,
+        "membershipEnrollment": false,
+        "newRuntimeTableDml": false,
+        "boundedRuntimeRawSeedSelect": false,
+        "ownerOnlyDifference": "Existing inaccessible projection metadata owner adds one nonlocking recovery function. Only existing INTAKE privilege groups get EXECUTE; no source-reader membership workaround for Social intake. No new raw SELECT, authority UPDATE, row-lock capability or source/command admission.",
+        "actualIntakeCapabilityGroups": {
+          "FINANCE_BUDGET": "world_v2_finance_budget_source_reader",
+          "FINANCE_TREASURY": "world_v2_day_one_fx_source_reader",
+          "SOCIAL_LABOUR": "world_v2_social_intake_lock_reader"
+        },
+        "baselineRlsBoundary": "Preserve actual baseline RLS flags and existing owner metadata scope. Exact JWT subject/country/office/seat/revision/command-capability/entitlement/immutable-admission checks are mandatory, not a generic seat-header or RLS-alone authority assertion."
+      },
+      "recoveryReadContract": {
+        "requiresTransactionReadOnly": true,
+        "rowLocks": false,
+        "capabilities": ["FINANCE_BUDGET", "FINANCE_TREASURY", "SOCIAL_LABOUR"],
+        "requiredExactBindings": [
+          "JWT_SUBJECT",
+          "WORLD_COUNTRY_OFFICE",
+          "SEAT_REF",
+          "AUTHORIZATION_REVISION",
+          "COMMAND_CAPABILITY",
+          "OFFICE_PRIVATE_ENTITLEMENT_SCOPE",
+          "COHERENT_CURRENT_MEMBERSHIP",
+          "IMMUTABLE_ADMISSION_AND_CURRENT_PERMIT"
+        ],
+        "outputNature": "RECOVERY_METADATA_ONLY_NOT_AUTHORITY_OR_WRITE_OUTCOME",
+        "legacyDefault": "UNCHANGED_UNTIL_EXPLICIT_POSTWAR_READ_ONLY_V1_CONFIGURATION"
+      },
+      "rollbackChecks": [
+        "NO_AUTOMATIC_SQL_DOWNGRADE",
+        "UNCERTAIN_COMMIT_STOP_AND_READBACK_NOT_BLIND_RETRY",
+        "PRESERVE_AUTHORITATIVE_HISTORY_IMMUTABLE_ORIGINALS_AND_EXISTING_SOURCE_PINS",
+        "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
+        "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE",
+        "Drain recovery HTTP calls before a separately reviewed endpoint/function reversal. Preserve all original submissions, queue states and FINAL receipts; metadata absence cannot mean an uncommitted write.",
+        "Do not replace precise command capability with any office capability, route READ ONLY recovery to a FOR SHARE helper, grant Social source-reader membership to intake, or add authority UPDATE/raw seed SELECT as a workaround."
+      ]
+    },
+    {
       "id": "isolated-world-clock",
       "path": "database/proposals/isolated-world-clock.sql",
-      "reviewOrder": 30,
+      "reviewOrder": 31,
       "disposition": "EXCLUDED_NOT_A_READ_DEPENDENCY",
       "dependencies": [],
       "baselineDependencies": [],

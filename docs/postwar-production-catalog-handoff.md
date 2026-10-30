@@ -224,15 +224,15 @@ into a native or production PASS.
 
 ## Mixed FX current-read companion policy (final World SHA pending)
 
-This revision inventories **23 registered baseline + 30 unregistered source
-proposals = 53 SQL files**, with **29 non-Clock proposal transactions**. It
+This revision inventories **23 registered baseline + 31 unregistered source
+proposals = 54 SQL files**, with **30 non-Clock proposal transactions**. It
 selects no final World commit (`sourceCommit: null`, `finalCandidateSelected:
 false`) and does not render or replace a sealed candidate package. In particular,
 the previous 078/checkpoint package remains predecessor evidence. The immutable
 World SHA and exact source bytes must still be supplied to the existing renderer
 from a clean checkout before any new review package exists.
 
-The eight additions are separate from the older H0/no-posting paths:
+The nine additions are separate from the older H0/no-posting paths:
 
 | Proposal | Required predecessor proposals | Fixed function / permission difference |
 | --- | --- | --- |
@@ -244,6 +244,7 @@ The eight additions are separate from the older H0/no-posting paths:
 | `postwar-social-mixed-match-publisher` | Existing MATCH, FX custody/history and startup header | `publish_social_operating_mixed_match_due(text,text,text,text)` uses the existing fixed Social publisher and canonical queue path, complete prefix and pending-plan binding. It does not authorize an actor or depend on a UI cache. |
 | `postwar-bounded-journal-read` | Committed FX history reader | `read_postwar_bounded_journal(text,text,text)` reuses the inaccessible history owner; only Social/Finance source readers get EXECUTE. Exact held head/admission/host/permit, maximum H256, 512 batches, 64KiB each/1MiB total and nonzero-inventory refusal; no raw reader table grants. |
 | `postwar-bounded-prefix-read` | Bounded journal reader | `read_postwar_bounded_prefix(text,text,text)` reuses the history owner/journal locks, returning complete World command/event/COMMITTED-receipt sets. Only Social/Finance source readers get EXECUTE; no raw table grants or country/family filtering. |
+| `postwar-office-recovery-read` | H0 metadata reader + Social intake authorization + Finance/FX custody groups | `read_postwar_office_recovery_binding(text,uuid,text,text,text,text,text,text)` is nonlocking READ ONLY metadata under the existing projection owner. EXECUTE goes to actual intake privilege groups: Finance budget reader, FX reader and **Social intake lock reader**, not Social source reader. Exact command capability remains required. |
 
 The JSON policy contains each full qualified signature, owner, SECURITY DEFINER
 mode, fixed `pg_catalog` search path, PUBLIC EXECUTE expectation and named
@@ -291,3 +292,14 @@ authority token. A missing, oversized or incomplete prefix closes; rollback
 cannot substitute a raw reader SELECT grant, discard frames or alter versions.
 The catalog request also observes baseline command_submission/command_receipt
 metadata for these explicit owner column grants. Final World SHA remains pending.
+
+The recovery metadata function fixes the READ ONLY-to-row-lock incompatibility
+without granting a write/lock capability to recovery. It checks exact JWT subject,
+World/country/office, seat and revision, **command** capability, entitlement and
+immutable admission/permit. An arbitrary office capability or the generic seat
+header is insufficient. Existing Finance/Treasury intake pools already use the
+Finance-budget/FX groups; Social intake uses its separate intake-lock group and
+must never gain Social source-reader membership as a workaround. The original
+legacy mode remains default until the explicit postwar recovery option is set.
+Rollback requires draining recovery requests and retaining submissions, queues
+and FINAL receipts; missing metadata cannot prove a write did not commit.
