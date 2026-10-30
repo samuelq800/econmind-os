@@ -224,15 +224,15 @@ into a native or production PASS.
 
 ## Mixed FX current-read companion policy (final World SHA pending)
 
-This revision inventories **23 registered baseline + 29 unregistered source
-proposals = 52 SQL files**, with **28 non-Clock proposal transactions**. It
+This revision inventories **23 registered baseline + 30 unregistered source
+proposals = 53 SQL files**, with **29 non-Clock proposal transactions**. It
 selects no final World commit (`sourceCommit: null`, `finalCandidateSelected:
 false`) and does not render or replace a sealed candidate package. In particular,
 the previous 078/checkpoint package remains predecessor evidence. The immutable
 World SHA and exact source bytes must still be supplied to the existing renderer
 from a clean checkout before any new review package exists.
 
-The seven additions are separate from the older H0/no-posting paths:
+The eight additions are separate from the older H0/no-posting paths:
 
 | Proposal | Required predecessor proposals | Fixed function / permission difference |
 | --- | --- | --- |
@@ -243,6 +243,7 @@ The seven additions are separate from the older H0/no-posting paths:
 | `postwar-mixed-financial-current-publication` | New mixed-current store + existing financial bounded originals | One three-text-argument publisher. Finance/CB derived balances, TGA/GCU and reservation capacity use the same genuine replay snapshot and independently checked SQL originals; no reader financial-table SELECT or old no-posting fallback. |
 | `postwar-social-mixed-match-publisher` | Existing MATCH, FX custody/history and startup header | `publish_social_operating_mixed_match_due(text,text,text,text)` uses the existing fixed Social publisher and canonical queue path, complete prefix and pending-plan binding. It does not authorize an actor or depend on a UI cache. |
 | `postwar-bounded-journal-read` | Committed FX history reader | `read_postwar_bounded_journal(text,text,text)` reuses the inaccessible history owner; only Social/Finance source readers get EXECUTE. Exact held head/admission/host/permit, maximum H256, 512 batches, 64KiB each/1MiB total and nonzero-inventory refusal; no raw reader table grants. |
+| `postwar-bounded-prefix-read` | Bounded journal reader | `read_postwar_bounded_prefix(text,text,text)` reuses the history owner/journal locks, returning complete World command/event/COMMITTED-receipt sets. Only Social/Finance source readers get EXECUTE; no raw table grants or country/family filtering. |
 
 The JSON policy contains each full qualified signature, owner, SECURITY DEFINER
 mode, fixed `pg_catalog` search path, PUBLIC EXECUTE expectation and named
@@ -280,3 +281,13 @@ The new policy declarations alone are not an RLS isolation claim. Catalog and
 rollback review must check actual relrowsecurity flags, function identity/ACL,
 owner flags/memberships and direct reader privileges together. A role enrollment
 or raw SELECT workaround would change that boundary and is not authorized here.
+
+The complete-prefix addition holds the existing journal H/admission/host/permit
+locks, checks up to 256 events, commands and COMMITTED receipts, and retains all
+unknown/correction/foreign-country frames for strict Core replay. It bounds raw
+event payloads at 64KiB and raw command payloads at 16KiB; serialized history
+plus raw financial payloads must fit 1MiB. Returned data is not a replay-ready or
+authority token. A missing, oversized or incomplete prefix closes; rollback
+cannot substitute a raw reader SELECT grant, discard frames or alter versions.
+The catalog request also observes baseline command_submission/command_receipt
+metadata for these explicit owner column grants. Final World SHA remains pending.

@@ -6,7 +6,7 @@
   "projectRef": "vimksjrhaxdpnkvgsavz",
   "registeredManifestSha256": "e675bd8bd18ba6c51aeffa674320dba3ac79299b7e12eeef834fe28547f9025e",
   "registeredMigrationCount": 23,
-  "proposalPolicy": "Fixed 29-proposal inventory, exact new function contracts and dependency review order only; no installation order, migration approval or final World SHA selected",
+  "proposalPolicy": "Fixed 30-proposal inventory, exact new function contracts and dependency review order only; no installation order, migration approval or final World SHA selected",
   "proposals": [
     {
       "id": "runtime-read-binding-storage",
@@ -1373,9 +1373,88 @@
       ]
     },
     {
+      "id": "postwar-bounded-prefix-read",
+      "path": "database/proposals/postwar-bounded-prefix-read.sql",
+      "reviewOrder": 29,
+      "disposition": "CANDIDATE_COMPLETE_BOUNDED_SOURCE_PREFIX",
+      "dependencies": ["postwar-bounded-journal-read"],
+      "baselineDependencies": [
+        "0002_world_v2_command_event_ledger",
+        "0003_world_v2_command_receipts_outbox"
+      ],
+      "createdRoles": [],
+      "reusedRoles": [
+        "world_v2_day_one_fx_history_owner",
+        "world_v2_finance_budget_source_reader",
+        "world_v2_social_source_reader"
+      ],
+      "createdRelations": [],
+      "definedFunctions": ["read_postwar_bounded_prefix"],
+      "definedFunctionSignatures": [
+        "world_v2.read_postwar_bounded_prefix(text,text,text)"
+      ],
+      "functionContracts": [
+        {
+          "qualifiedSignature": "world_v2.read_postwar_bounded_prefix(text,text,text)",
+          "owner": "world_v2_day_one_fx_history_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_social_source_reader",
+            "world_v2_finance_budget_source_reader"
+          ]
+        }
+      ],
+      "renamedFunctions": [],
+      "literalCreatedPolicies": [],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_day_one_fx_history_owner": "postwar-day-one-fx-history-read",
+        "world_v2_finance_budget_source_reader": "finance-budget-custody",
+        "world_v2_social_source_reader": "social-operating-custody"
+      },
+      "versionSemantics": "COMPLETE_ACTUAL_WORLD_COMMAND_EVENT_COMMITTED_RECEIPT_SETS;NO_COUNTRY_OR_FAMILY_FILTER;UNKNOWN_AND_CORRECTION_FRAMES_RETAINED_FOR_STRICT_CORE_REPLAY;NO_ACTOR_AUTHORITY",
+      "permissionDelta": {
+        "reviewStatus": "SOURCE_DECLARATIONS_ONLY_ACTUAL_CATALOG_AND_APPROVED_ENROLLMENT_REQUIRED",
+        "newLoginRoles": false,
+        "membershipEnrollment": false,
+        "newRuntimeTableDml": false,
+        "boundedRuntimeRawSeedSelect": false,
+        "ownerOnlyDifference": "Existing inaccessible history owner gains fixed command/event/receipt column SELECT; only Social/Finance source-reader groups receive function EXECUTE. Existing journal lock and current host/admission/permit checks run before any prefix read. No raw history table SELECT for operational readers.",
+        "baselineRlsBoundary": "DO_NOT_INFER_RLS_FROM_NOLOGIN_OR_NEW_POLICY_DECLARATIONS. Reuse actual baseline flags; fixed definer exact-World predicates, journal H/host/permit locks, inaccessible history owner and no membership are the isolation boundary. This proposal does not enable or disable baseline RLS."
+      },
+      "replayReadBounds": {
+        "worldVersionMaximum": "256",
+        "eventSequenceMaximum": "256",
+        "eventMaximum": 256,
+        "commandMaximum": 256,
+        "committedReceiptMaximum": 256,
+        "rawEventPayloadMaximumBytes": 65536,
+        "rawCommandPayloadMaximumBytes": 16384,
+        "combinedHistoryAndRawFinancialMaximumBytes": 1048576,
+        "financialBoundsInheritedFrom": "postwar-bounded-journal-read",
+        "unknownOrCorrectionEffects": "RETURN_INTACT_REQUIRE_STRICT_CORE_REPLAY_NOT_SQL_ALLOWLIST",
+        "outputNature": "DATA_ONLY_NOT_AUTHORITY_OR_ALREADY_VALIDATED_REPLAY"
+      },
+      "rollbackChecks": [
+        "NO_AUTOMATIC_SQL_DOWNGRADE",
+        "UNCERTAIN_COMMIT_STOP_AND_READBACK_NOT_BLIND_RETRY",
+        "PRESERVE_AUTHORITATIVE_HISTORY_IMMUTABLE_ORIGINALS_AND_EXISTING_SOURCE_PINS",
+        "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
+        "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE",
+        "Retain the journal dependency and its owner/host/permit locks. Before a reviewed rollback, drain prepared Social/Finance replay; do not restore direct raw history SELECT as fallback or omit foreign-country/unknown frames.",
+        "Preserve all queued/FINAL commands, events, receipts and financial batches. Missing or oversized complete sets must stay unavailable; do not truncate or rewrite canonical prefix/version evidence."
+      ]
+    },
+    {
       "id": "isolated-world-clock",
       "path": "database/proposals/isolated-world-clock.sql",
-      "reviewOrder": 29,
+      "reviewOrder": 30,
       "disposition": "EXCLUDED_NOT_A_READ_DEPENDENCY",
       "dependencies": [],
       "baselineDependencies": [],

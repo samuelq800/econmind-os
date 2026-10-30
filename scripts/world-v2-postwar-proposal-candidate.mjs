@@ -9,7 +9,7 @@ const policyPath = fileURLToPath(
 );
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const POLICY_SHA256 =
-  "a23da0893afaa41759dc3da48839361925888ed38032fcfad917585737f378f3";
+  "4d5f741b6c0bfefafc88611aaba8ce659e4aaf3b3f6b98e298e5391fcf8cef72";
 export function requireImmutableProposalCandidateSha(candidateSha) {
   if (!/^[a-f0-9]{40}$/u.test(candidateSha ?? "") || /^0+$/u.test(candidateSha))
     throw Error("EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED");
@@ -27,7 +27,7 @@ export async function loadPostwarExpandedProposalPolicy() {
     policy.installationAllowed !== false ||
     policy.productionReviewVerified !== false ||
     policy.finalCandidateSelected !== false ||
-    policy.proposals.length !== 29
+    policy.proposals.length !== 30
   )
     throw Error("UNAPPROVED_EXPLICIT_CANDIDATE_POLICY_REQUIRED");
   const prior = new Set();
@@ -86,7 +86,7 @@ export function validateExpandedProposalRoleDependencies(policy) {
     seen.set(item.id, closure);
   }
 }
-/** Fixed scalar signatures for the seven added proposals. This is declaration
+/** Fixed scalar signatures for the eight added proposals. This is declaration
  * comparison, not a general SQL parser or a substitute for catalog readback. */
 export function inspectPostwarFunctionContracts(item, bytes) {
   if (item.definedFunctionSignatures === undefined) return;

@@ -25,6 +25,8 @@ const baselineRelations = [
   "projection_entitlement",
   "opening_seed",
   "authoritative_event",
+  "command_submission",
+  "command_receipt",
   "financial_posting_batch",
   "inventory_posting",
 ];
