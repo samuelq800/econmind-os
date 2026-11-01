@@ -6,7 +6,7 @@
   "projectRef": "vimksjrhaxdpnkvgsavz",
   "registeredManifestSha256": "e675bd8bd18ba6c51aeffa674320dba3ac79299b7e12eeef834fe28547f9025e",
   "registeredMigrationCount": 23,
-  "proposalPolicy": "Fixed 40-proposal source inventory and dependency review order only; no installation order, migration approval or final World SHA selected",
+  "proposalPolicy": "Fixed 54-proposal source inventory and dependency review order only; no installation order, migration approval or final World SHA selected",
   "proposals": [
     {
       "id": "runtime-read-binding-storage",
@@ -21,7 +21,10 @@
       ],
       "createdRoles": [],
       "reusedRoles": [],
-      "createdRelations": ["runtime_read_seat", "runtime_opening_admission"],
+      "createdRelations": [
+        "runtime_read_seat",
+        "runtime_opening_admission"
+      ],
       "definedFunctions": [
         "guard_runtime_opening_admission_publication",
         "validate_runtime_read_seat_insert"
@@ -30,7 +33,10 @@
       "registration": "UNREGISTERED_SOURCE_PROPOSAL",
       "productionApproval": "NOT_GRANTED",
       "productionReviewVerified": false,
-      "deniedRoleNames": ["world_v2_api_login", "world_v2_api_reader"],
+      "deniedRoleNames": [
+        "world_v2_api_login",
+        "world_v2_api_reader"
+      ],
       "roleNamePrefixContext": [],
       "sourceRoleDeps": {}
     },
@@ -39,8 +45,12 @@
       "path": "database/proposals/runtime-admission-publication.sql",
       "reviewOrder": 2,
       "disposition": "REQUIRED_CONTROLLED_ADMISSION",
-      "dependencies": ["runtime-read-binding-storage"],
-      "baselineDependencies": ["0002_world_v2_command_event_ledger"],
+      "dependencies": [
+        "runtime-read-binding-storage"
+      ],
+      "baselineDependencies": [
+        "0002_world_v2_command_event_ledger"
+      ],
       "createdRoles": [
         "world_v2_admission_owner",
         "world_v2_admission_release"
@@ -64,8 +74,13 @@
       "registration": "UNREGISTERED_SOURCE_PROPOSAL",
       "productionApproval": "NOT_GRANTED",
       "productionReviewVerified": false,
-      "deniedRoleNames": ["world_v2_api_login", "world_v2_api_reader"],
-      "roleNamePrefixContext": ["world_v2_opening_admission_"],
+      "deniedRoleNames": [
+        "world_v2_api_login",
+        "world_v2_api_reader"
+      ],
+      "roleNamePrefixContext": [
+        "world_v2_opening_admission_"
+      ],
       "sourceRoleDeps": {
         "world_v2_admission_owner": "runtime-admission-publication",
         "world_v2_admission_release": "runtime-admission-publication"
@@ -108,7 +123,10 @@
       "registration": "UNREGISTERED_SOURCE_PROPOSAL",
       "productionApproval": "NOT_GRANTED",
       "productionReviewVerified": false,
-      "deniedRoleNames": ["world_v2_api_login", "world_v2_api_reader"],
+      "deniedRoleNames": [
+        "world_v2_api_login",
+        "world_v2_api_reader"
+      ],
       "roleNamePrefixContext": [],
       "sourceRoleDeps": {
         "world_v2_postwar_projection_owner": "postwar-office-derived-read",
@@ -202,8 +220,12 @@
       "path": "database/proposals/finance-budget-capacity-source.sql",
       "reviewOrder": 6,
       "disposition": "CANDIDATE_FINANCE_CAPACITY",
-      "dependencies": ["finance-budget-custody"],
-      "baselineDependencies": ["0009_world_v2_posting_payload_integrity"],
+      "dependencies": [
+        "finance-budget-custody"
+      ],
+      "baselineDependencies": [
+        "0009_world_v2_posting_payload_integrity"
+      ],
       "createdRoles": [],
       "reusedRoles": [
         "world_v2_finance_budget_source_owner",
@@ -240,7 +262,9 @@
         "runtime-read-binding-storage",
         "runtime-admission-publication"
       ],
-      "baselineDependencies": ["0011_world_v2_current_commit_authorization"],
+      "baselineDependencies": [
+        "0011_world_v2_current_commit_authorization"
+      ],
       "createdRoles": [
         "world_v2_social_source_owner",
         "world_v2_social_source_publisher",
@@ -278,16 +302,24 @@
       "path": "database/proposals/social-intake-authorization.sql",
       "reviewOrder": 8,
       "disposition": "CANDIDATE_SOCIAL_INTAKE_AUTHORIZATION",
-      "dependencies": ["social-operating-custody"],
-      "baselineDependencies": ["0013_world_v2_read_projection_boundary"],
-      "createdRoles": ["world_v2_social_intake_lock_reader"],
+      "dependencies": [
+        "social-operating-custody"
+      ],
+      "baselineDependencies": [
+        "0013_world_v2_read_projection_boundary"
+      ],
+      "createdRoles": [
+        "world_v2_social_intake_lock_reader"
+      ],
       "reusedRoles": [
         "world_v2_social_source_owner",
         "world_v2_social_source_publisher",
         "world_v2_social_source_reader"
       ],
       "createdRelations": [],
-      "definedFunctions": ["lock_social_intake_binding"],
+      "definedFunctions": [
+        "lock_social_intake_binding"
+      ],
       "renamedFunctions": [],
       "literalCreatedPolicies": [
         "social_intake_owner_entitlement",
@@ -315,7 +347,9 @@
       "path": "database/proposals/social-operating-match-publisher.sql",
       "reviewOrder": 9,
       "disposition": "CANDIDATE_SOCIAL_MATCH",
-      "dependencies": ["social-operating-custody"],
+      "dependencies": [
+        "social-operating-custody"
+      ],
       "baselineDependencies": [
         "0003_world_v2_command_receipts_outbox",
         "0009_world_v2_posting_payload_integrity"
@@ -355,7 +389,9 @@
       "path": "database/proposals/postwar-social-current-derived-read.sql",
       "reviewOrder": 10,
       "disposition": "CANDIDATE_SOCIAL_CURRENT_READ",
-      "dependencies": ["postwar-office-derived-read"],
+      "dependencies": [
+        "postwar-office-derived-read"
+      ],
       "baselineDependencies": [
         "0008_world_v2_materialization_recovery",
         "0009_world_v2_posting_payload_integrity"
@@ -375,7 +411,9 @@
         "publish_postwar_social_current_projection",
         "read_postwar_office_projection_page"
       ],
-      "renamedFunctions": ["read_postwar_office_projection_h0_page"],
+      "renamedFunctions": [
+        "read_postwar_office_projection_h0_page"
+      ],
       "registration": "UNREGISTERED_SOURCE_PROPOSAL",
       "productionApproval": "NOT_GRANTED",
       "productionReviewVerified": false,
@@ -392,8 +430,12 @@
       "path": "database/proposals/postwar-social-current-prefix-read.sql",
       "reviewOrder": 11,
       "disposition": "CANDIDATE_COMPLETE_SOCIAL_CURRENT_PREFIX",
-      "dependencies": ["postwar-social-current-derived-read"],
-      "baselineDependencies": ["0009_world_v2_posting_payload_integrity"],
+      "dependencies": [
+        "postwar-social-current-derived-read"
+      ],
+      "baselineDependencies": [
+        "0009_world_v2_posting_payload_integrity"
+      ],
       "createdRoles": [],
       "reusedRoles": [
         "world_v2_postwar_projection_owner",
@@ -416,7 +458,9 @@
         "publish_postwar_social_current_prefix_projection",
         "read_postwar_office_projection_page"
       ],
-      "renamedFunctions": ["read_postwar_office_projection_v1_page"],
+      "renamedFunctions": [
+        "read_postwar_office_projection_v1_page"
+      ],
       "registration": "UNREGISTERED_SOURCE_PROPOSAL",
       "productionApproval": "NOT_GRANTED",
       "productionReviewVerified": false,
@@ -433,15 +477,21 @@
       "path": "database/proposals/finance-budget-mixed-source.sql",
       "reviewOrder": 12,
       "disposition": "CANDIDATE_FINANCE_MIXED_SOURCE",
-      "dependencies": ["finance-budget-capacity-source"],
-      "baselineDependencies": ["0009_world_v2_posting_payload_integrity"],
+      "dependencies": [
+        "finance-budget-capacity-source"
+      ],
+      "baselineDependencies": [
+        "0009_world_v2_posting_payload_integrity"
+      ],
       "createdRoles": [],
       "reusedRoles": [
         "world_v2_finance_budget_source_owner",
         "world_v2_finance_budget_source_publisher",
         "world_v2_finance_budget_source_reader"
       ],
-      "createdRelations": ["finance_budget_mixed_social_original"],
+      "createdRelations": [
+        "finance_budget_mixed_social_original"
+      ],
       "definedFunctions": [
         "assert_finance_budget_mixed_social_scope",
         "finance_budget_mixed_social_effect_scoped",
@@ -472,8 +522,12 @@
       "path": "database/proposals/postwar-financial-current-derived-read.sql",
       "reviewOrder": 13,
       "disposition": "CANDIDATE_COMPLETE_FINANCIAL_CURRENT_PREFIX",
-      "dependencies": ["postwar-social-current-prefix-read"],
-      "baselineDependencies": ["0009_world_v2_posting_payload_integrity"],
+      "dependencies": [
+        "postwar-social-current-prefix-read"
+      ],
+      "baselineDependencies": [
+        "0009_world_v2_posting_payload_integrity"
+      ],
       "createdRoles": [],
       "reusedRoles": [
         "world_v2_postwar_projection_owner",
@@ -555,13 +609,19 @@
       "path": "database/proposals/postwar-narrow-trade-source.sql",
       "reviewOrder": 15,
       "disposition": "CANDIDATE_TRADE_SOURCE",
-      "dependencies": ["postwar-office-derived-read"],
+      "dependencies": [
+        "postwar-office-derived-read"
+      ],
       "baselineDependencies": [
         "0011_world_v2_current_commit_authorization",
         "0013_world_v2_read_projection_boundary"
       ],
-      "createdRoles": ["world_v2_postwar_narrow_trade_source"],
-      "reusedRoles": ["world_v2_postwar_projection_owner"],
+      "createdRoles": [
+        "world_v2_postwar_narrow_trade_source"
+      ],
+      "reusedRoles": [
+        "world_v2_postwar_projection_owner"
+      ],
       "createdRelations": [
         "postwar_narrow_trade_rights_admission",
         "postwar_narrow_trade_rights_revocation"
@@ -587,15 +647,21 @@
       "path": "database/proposals/postwar-physical-opening-facts-read.sql",
       "reviewOrder": 16,
       "disposition": "CANDIDATE_HISTORICAL_PHYSICAL_READ",
-      "dependencies": ["postwar-office-derived-read"],
-      "baselineDependencies": ["0009_world_v2_posting_payload_integrity"],
+      "dependencies": [
+        "postwar-office-derived-read"
+      ],
+      "baselineDependencies": [
+        "0009_world_v2_posting_payload_integrity"
+      ],
       "createdRoles": [],
       "reusedRoles": [
         "world_v2_postwar_projection_owner",
         "world_v2_postwar_projection_reader"
       ],
       "createdRelations": [],
-      "definedFunctions": ["read_postwar_physical_opening_facts_page"],
+      "definedFunctions": [
+        "read_postwar_physical_opening_facts_page"
+      ],
       "renamedFunctions": [],
       "registration": "UNREGISTERED_SOURCE_PROPOSAL",
       "productionApproval": "NOT_GRANTED",
@@ -616,14 +682,18 @@
         "postwar-office-derived-read",
         "postwar-physical-opening-facts-read"
       ],
-      "baselineDependencies": ["0016_world_v2_opening_seed"],
+      "baselineDependencies": [
+        "0016_world_v2_opening_seed"
+      ],
       "createdRoles": [],
       "reusedRoles": [
         "world_v2_postwar_projection_owner",
         "world_v2_postwar_projection_publisher",
         "world_v2_postwar_projection_reader"
       ],
-      "createdRelations": ["postwar_inventory_provenance_v2"],
+      "createdRelations": [
+        "postwar_inventory_provenance_v2"
+      ],
       "definedFunctions": [
         "publish_postwar_inventory_provenance_v2",
         "read_postwar_inventory_provenance_v2_page"
@@ -654,8 +724,12 @@
       "baselineDependencies": [],
       "createdRoles": [],
       "reusedRoles": [],
-      "createdRelations": ["current_authorization_publication_checkpoint"],
-      "definedFunctions": ["apply_current_authorization_change"],
+      "createdRelations": [
+        "current_authorization_publication_checkpoint"
+      ],
+      "definedFunctions": [
+        "apply_current_authorization_change"
+      ],
       "renamedFunctions": [],
       "registration": "UNREGISTERED_SOURCE_PROPOSAL",
       "productionApproval": "NOT_GRANTED",
@@ -669,7 +743,9 @@
       "path": "database/proposals/postwar-runtime-source-read-policy.sql",
       "reviewOrder": 19,
       "disposition": "OPTIONAL_OFFLINE_ONLY",
-      "dependencies": ["runtime-read-binding-storage"],
+      "dependencies": [
+        "runtime-read-binding-storage"
+      ],
       "baselineDependencies": [],
       "createdRoles": [],
       "reusedRoles": [],
@@ -679,7 +755,10 @@
       "registration": "UNREGISTERED_SOURCE_PROPOSAL",
       "productionApproval": "NOT_GRANTED",
       "productionReviewVerified": false,
-      "deniedRoleNames": ["world_v2_api_login", "world_v2_api_reader"],
+      "deniedRoleNames": [
+        "world_v2_api_login",
+        "world_v2_api_reader"
+      ],
       "roleNamePrefixContext": [],
       "sourceRoleDeps": {
         "world_v2_postwar_offline_seed_reader": "EXTERNAL_REVIEWED_NOLOGIN_GROUP_NOT_PROVISIONED"
@@ -691,11 +770,15 @@
       "reviewOrder": 20,
       "disposition": "CANDIDATE_FINANCIAL_POSTING_DECIMAL_FORWARD_FIX",
       "dependencies": [],
-      "baselineDependencies": ["0009_world_v2_posting_payload_integrity"],
+      "baselineDependencies": [
+        "0009_world_v2_posting_payload_integrity"
+      ],
       "createdRoles": [],
       "reusedRoles": [],
       "createdRelations": [],
-      "definedFunctions": ["validate_financial_posting_payload"],
+      "definedFunctions": [
+        "validate_financial_posting_payload"
+      ],
       "renamedFunctions": [],
       "registration": "UNREGISTERED_SOURCE_PROPOSAL",
       "productionApproval": "NOT_GRANTED",
@@ -786,15 +869,21 @@
       "path": "database/proposals/postwar-social-startup-seed-header.sql",
       "reviewOrder": 22,
       "disposition": "CANDIDATE_FIXED_SOCIAL_STARTUP_HEADER",
-      "dependencies": ["social-operating-custody"],
-      "baselineDependencies": ["0016_world_v2_opening_seed"],
+      "dependencies": [
+        "social-operating-custody"
+      ],
+      "baselineDependencies": [
+        "0016_world_v2_opening_seed"
+      ],
       "createdRoles": [],
       "reusedRoles": [
         "world_v2_social_source_owner",
         "world_v2_social_source_reader"
       ],
       "createdRelations": [],
-      "definedFunctions": ["lock_social_startup_seed_header"],
+      "definedFunctions": [
+        "lock_social_startup_seed_header"
+      ],
       "definedFunctionSignatures": [
         "world_v2.lock_social_startup_seed_header(text,text)"
       ],
@@ -805,7 +894,9 @@
           "securityDefiner": true,
           "searchPath": "pg_catalog",
           "publicExecute": false,
-          "executeRoles": ["world_v2_social_source_reader"]
+          "executeRoles": [
+            "world_v2_social_source_reader"
+          ]
         }
       ],
       "renamedFunctions": [],
@@ -846,7 +937,9 @@
         "finance-budget-mixed-source",
         "social-operating-custody"
       ],
-      "baselineDependencies": ["0009_world_v2_posting_payload_integrity"],
+      "baselineDependencies": [
+        "0009_world_v2_posting_payload_integrity"
+      ],
       "createdRoles": [],
       "reusedRoles": [
         "world_v2_finance_budget_source_owner",
@@ -874,7 +967,9 @@
           "securityDefiner": true,
           "searchPath": "pg_catalog",
           "publicExecute": false,
-          "executeRoles": ["world_v2_social_source_owner"]
+          "executeRoles": [
+            "world_v2_social_source_owner"
+          ]
         },
         {
           "qualifiedSignature": "world_v2.publish_postwar_social_source_bounded(text)",
@@ -882,7 +977,9 @@
           "securityDefiner": true,
           "searchPath": "pg_catalog",
           "publicExecute": false,
-          "executeRoles": ["world_v2_social_source_publisher"]
+          "executeRoles": [
+            "world_v2_social_source_publisher"
+          ]
         },
         {
           "qualifiedSignature": "world_v2.publish_postwar_finance_source_bounded(text)",
@@ -890,7 +987,9 @@
           "securityDefiner": true,
           "searchPath": "pg_catalog",
           "publicExecute": false,
-          "executeRoles": ["world_v2_finance_budget_source_publisher"]
+          "executeRoles": [
+            "world_v2_finance_budget_source_publisher"
+          ]
         }
       ],
       "renamedFunctions": [],
@@ -1020,25 +1119,33 @@
         {
           "signature": "world_v2.publish_central_bank_omo_originals(text,text,text)",
           "owner": "world_v2_cb_omo_source_owner",
-          "execute": ["world_v2_cb_omo_source_publisher"],
+          "execute": [
+            "world_v2_cb_omo_source_publisher"
+          ],
           "publicExecute": false
         },
         {
           "signature": "world_v2.lock_central_bank_omo_startup_header(text,text)",
           "owner": "world_v2_cb_omo_source_owner",
-          "execute": ["world_v2_cb_omo_source_reader"],
+          "execute": [
+            "world_v2_cb_omo_source_reader"
+          ],
           "publicExecute": false
         },
         {
           "signature": "world_v2.lock_central_bank_omo_originals(text,text,text,text,text,timestamptz,uuid,text)",
           "owner": "world_v2_cb_omo_source_owner",
-          "execute": ["world_v2_cb_omo_source_reader"],
+          "execute": [
+            "world_v2_cb_omo_source_reader"
+          ],
           "publicExecute": false
         },
         {
           "signature": "world_v2.revoke_central_bank_omo_original(text,text,text)",
           "owner": "world_v2_cb_omo_source_owner",
-          "execute": ["world_v2_cb_omo_source_publisher"],
+          "execute": [
+            "world_v2_cb_omo_source_publisher"
+          ],
           "publicExecute": false
         }
       ]
@@ -1060,7 +1167,9 @@
         "0011_world_v2_current_commit_authorization",
         "0013_world_v2_read_projection_boundary"
       ],
-      "createdRoles": ["world_v2_day_one_fx_history_owner"],
+      "createdRoles": [
+        "world_v2_day_one_fx_history_owner"
+      ],
       "reusedRoles": [
         "world_v2_day_one_fx_source_owner",
         "world_v2_day_one_fx_source_publisher",
@@ -1076,7 +1185,9 @@
         "world_v2_cb_omo_source_reader"
       ],
       "createdRelations": [],
-      "definedFunctions": ["read_postwar_day_one_fx_committed_quote"],
+      "definedFunctions": [
+        "read_postwar_day_one_fx_committed_quote"
+      ],
       "definedFunctionSignatures": [
         "world_v2.read_postwar_day_one_fx_committed_quote(text,text,text,text,text,text,text,text,text,text,text)"
       ],
@@ -1224,7 +1335,9 @@
           "securityDefiner": true,
           "searchPath": "pg_catalog",
           "publicExecute": false,
-          "executeRoles": ["world_v2_postwar_projection_publisher"]
+          "executeRoles": [
+            "world_v2_postwar_projection_publisher"
+          ]
         },
         {
           "qualifiedSignature": "world_v2.read_postwar_mixed_current_page(text,text,text,integer,integer,text)",
@@ -1232,7 +1345,9 @@
           "securityDefiner": true,
           "searchPath": "pg_catalog",
           "publicExecute": false,
-          "executeRoles": ["world_v2_postwar_projection_reader"]
+          "executeRoles": [
+            "world_v2_postwar_projection_reader"
+          ]
         }
       ],
       "renamedFunctions": [],
@@ -1290,7 +1405,9 @@
         "world_v2_postwar_projection_reader"
       ],
       "createdRelations": [],
-      "definedFunctions": ["publish_postwar_mixed_financial_current"],
+      "definedFunctions": [
+        "publish_postwar_mixed_financial_current"
+      ],
       "definedFunctionSignatures": [
         "world_v2.publish_postwar_mixed_financial_current(text,text,text)"
       ],
@@ -1301,7 +1418,9 @@
           "securityDefiner": true,
           "searchPath": "pg_catalog",
           "publicExecute": false,
-          "executeRoles": ["world_v2_postwar_projection_publisher"]
+          "executeRoles": [
+            "world_v2_postwar_projection_publisher"
+          ]
         }
       ],
       "renamedFunctions": [],
@@ -1356,7 +1475,9 @@
         "world_v2_social_source_publisher"
       ],
       "createdRelations": [],
-      "definedFunctions": ["publish_social_operating_mixed_match_due"],
+      "definedFunctions": [
+        "publish_social_operating_mixed_match_due"
+      ],
       "definedFunctionSignatures": [
         "world_v2.publish_social_operating_mixed_match_due(text,text,text,text)"
       ],
@@ -1367,7 +1488,9 @@
           "securityDefiner": true,
           "searchPath": "pg_catalog",
           "publicExecute": false,
-          "executeRoles": ["world_v2_social_source_publisher"]
+          "executeRoles": [
+            "world_v2_social_source_publisher"
+          ]
         }
       ],
       "renamedFunctions": [],
@@ -1409,8 +1532,12 @@
       "path": "database/proposals/postwar-bounded-journal-read.sql",
       "reviewOrder": 29,
       "disposition": "CANDIDATE_BOUNDED_SOURCE_REPLAY_JOURNAL",
-      "dependencies": ["postwar-day-one-fx-history-read"],
-      "baselineDependencies": ["0007_world_v2_atomic_transition_facts"],
+      "dependencies": [
+        "postwar-day-one-fx-history-read"
+      ],
+      "baselineDependencies": [
+        "0007_world_v2_atomic_transition_facts"
+      ],
       "createdRoles": [],
       "reusedRoles": [
         "world_v2_day_one_fx_history_owner",
@@ -1424,7 +1551,9 @@
         "world_v2_social_source_reader"
       ],
       "createdRelations": [],
-      "definedFunctions": ["read_postwar_bounded_journal"],
+      "definedFunctions": [
+        "read_postwar_bounded_journal"
+      ],
       "definedFunctionSignatures": [
         "world_v2.read_postwar_bounded_journal(text,text,text)"
       ],
@@ -1502,7 +1631,9 @@
       "path": "database/proposals/postwar-bounded-prefix-read.sql",
       "reviewOrder": 30,
       "disposition": "CANDIDATE_COMPLETE_BOUNDED_SOURCE_PREFIX",
-      "dependencies": ["postwar-bounded-journal-read"],
+      "dependencies": [
+        "postwar-bounded-journal-read"
+      ],
       "baselineDependencies": [
         "0002_world_v2_command_event_ledger",
         "0003_world_v2_command_receipts_outbox"
@@ -1514,7 +1645,9 @@
         "world_v2_social_source_reader"
       ],
       "createdRelations": [],
-      "definedFunctions": ["read_postwar_bounded_prefix"],
+      "definedFunctions": [
+        "read_postwar_bounded_prefix"
+      ],
       "definedFunctionSignatures": [
         "world_v2.read_postwar_bounded_prefix(text,text,text)"
       ],
@@ -1599,7 +1732,9 @@
         "world_v2_social_intake_lock_reader"
       ],
       "createdRelations": [],
-      "definedFunctions": ["read_postwar_office_recovery_binding"],
+      "definedFunctions": [
+        "read_postwar_office_recovery_binding"
+      ],
       "definedFunctionSignatures": [
         "world_v2.read_postwar_office_recovery_binding(text,uuid,text,text,text,text,text,text)"
       ],
@@ -1648,7 +1783,11 @@
       "recoveryReadContract": {
         "requiresTransactionReadOnly": true,
         "rowLocks": false,
-        "capabilities": ["FINANCE_BUDGET", "FINANCE_TREASURY", "SOCIAL_LABOUR"],
+        "capabilities": [
+          "FINANCE_BUDGET",
+          "FINANCE_TREASURY",
+          "SOCIAL_LABOUR"
+        ],
         "requiredExactBindings": [
           "JWT_SUBJECT",
           "WORLD_COUNTRY_OFFICE",
@@ -1691,12 +1830,16 @@
         "0013_world_v2_read_projection_boundary",
         "0016_world_v2_opening_seed"
       ],
-      "createdRoles": ["world_v2_postwar_narrow_trade_current_owner"],
+      "createdRoles": [
+        "world_v2_postwar_narrow_trade_current_owner"
+      ],
       "reusedRoles": [
         "world_v2_postwar_narrow_trade_source",
         "world_v2_postwar_projection_owner"
       ],
-      "createdRelations": ["postwar_narrow_trade_current_original"],
+      "createdRelations": [
+        "postwar_narrow_trade_current_original"
+      ],
       "definedFunctions": [
         "lock_postwar_narrow_trade_current_authorization",
         "lock_postwar_narrow_trade_revoked_authorization",
@@ -1739,7 +1882,9 @@
       "path": "database/proposals/postwar-industry-operating-receipts.sql",
       "reviewOrder": 33,
       "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
-      "dependencies": ["postwar-industry-production-source"],
+      "dependencies": [
+        "postwar-industry-production-source"
+      ],
       "baselineDependencies": [
         "0002_world_v2_command_event_ledger",
         "0003_world_v2_command_receipts_outbox",
@@ -1814,7 +1959,9 @@
         "world_v2_admission_release",
         "world_v2_captain_source_owner"
       ],
-      "createdRelations": ["captain_source_publication_registry"],
+      "createdRelations": [
+        "captain_source_publication_registry"
+      ],
       "definedFunctions": [
         "captain_publication_admission",
         "publish_captain_operating_source",
@@ -1866,7 +2013,8 @@
         "postwar-captain-source-publication",
         "postwar-day-one-fx-custody",
         "social-operating-custody",
-        "central-bank-omo-custody"
+        "central-bank-omo-custody",
+        "postwar-narrow-trade-source"
       ],
       "baselineDependencies": [
         "0002_world_v2_command_event_ledger",
@@ -1881,12 +2029,13 @@
       "reusedRoles": [
         "world_v2_captain_source_owner",
         "world_v2_captain_source_reader",
-        "world_v2_day_one_fx_source_reader",
-        "world_v2_finance_budget_source_reader",
-        "world_v2_social_source_reader",
         "world_v2_cb_omo_source_owner",
         "world_v2_cb_omo_source_publisher",
-        "world_v2_cb_omo_source_reader"
+        "world_v2_cb_omo_source_reader",
+        "world_v2_day_one_fx_source_reader",
+        "world_v2_finance_budget_source_reader",
+        "world_v2_postwar_narrow_trade_source",
+        "world_v2_social_source_reader"
       ],
       "createdRelations": [],
       "definedFunctions": [
@@ -1915,7 +2064,8 @@
         "world_v2_social_source_reader": "social-operating-custody",
         "world_v2_cb_omo_source_owner": "central-bank-omo-custody",
         "world_v2_cb_omo_source_publisher": "central-bank-omo-custody",
-        "world_v2_cb_omo_source_reader": "central-bank-omo-custody"
+        "world_v2_cb_omo_source_reader": "central-bank-omo-custody",
+        "world_v2_postwar_narrow_trade_source": "postwar-narrow-trade-source"
       },
       "permissionDelta": {
         "reviewStatus": "SOURCE_DECLARATIONS_ONLY_ACTUAL_CATALOG_AND_APPROVED_ENROLLMENT_REQUIRED",
@@ -1959,7 +2109,9 @@
         "world_v2_postwar_projection_publisher",
         "world_v2_postwar_projection_reader"
       ],
-      "createdRelations": ["postwar_captain_current_document"],
+      "createdRelations": [
+        "postwar_captain_current_document"
+      ],
       "definedFunctions": [
         "postwar_captain_capital",
         "postwar_captain_current_capital",
@@ -2094,7 +2246,8 @@
         "postwar-day-one-fx-history-read",
         "social-operating-custody",
         "runtime-read-binding-storage",
-        "runtime-admission-publication"
+        "runtime-admission-publication",
+        "postwar-narrow-trade-source"
       ],
       "baselineDependencies": [
         "0002_world_v2_command_event_ledger",
@@ -2116,12 +2269,15 @@
         "world_v2_finance_budget_source_owner",
         "world_v2_finance_budget_source_publisher",
         "world_v2_finance_budget_source_reader",
+        "world_v2_postwar_narrow_trade_source",
         "world_v2_social_source_owner",
         "world_v2_social_source_publisher",
         "world_v2_social_source_reader"
       ],
       "createdRelations": [],
-      "definedFunctions": ["read_central_bank_omo_committed_originals"],
+      "definedFunctions": [
+        "read_central_bank_omo_committed_originals"
+      ],
       "renamedFunctions": [],
       "literalCreatedPolicies": [
         "cb_omo_history_fence",
@@ -2148,7 +2304,8 @@
         "world_v2_finance_budget_source_reader": "finance-budget-custody",
         "world_v2_social_source_owner": "social-operating-custody",
         "world_v2_social_source_publisher": "social-operating-custody",
-        "world_v2_social_source_reader": "social-operating-custody"
+        "world_v2_social_source_reader": "social-operating-custody",
+        "world_v2_postwar_narrow_trade_source": "postwar-narrow-trade-source"
       },
       "permissionDelta": {
         "reviewStatus": "SOURCE_DECLARATIONS_ONLY_ACTUAL_CATALOG_AND_APPROVED_ENROLLMENT_REQUIRED",
@@ -2186,7 +2343,9 @@
       "path": "database/proposals/postwar-beneficial-housing-rent-custody.sql",
       "reviewOrder": 39,
       "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
-      "dependencies": ["runtime-admission-publication"],
+      "dependencies": [
+        "runtime-admission-publication"
+      ],
       "baselineDependencies": [
         "0002_world_v2_command_event_ledger",
         "0003_world_v2_command_receipts_outbox",
@@ -2257,7 +2416,9 @@
       "path": "database/proposals/postwar-narrow-trade-automatic-source.sql",
       "reviewOrder": 40,
       "disposition": "CANDIDATE_COMMITTED_CONTRACT_AUTOMATIC_SOURCE",
-      "dependencies": ["postwar-narrow-trade-current-source"],
+      "dependencies": [
+        "postwar-narrow-trade-current-source"
+      ],
       "baselineDependencies": [
         "0001_world_v2_namespace",
         "0002_world_v2_command_event_ledger",
@@ -2273,7 +2434,9 @@
         "world_v2_postwar_projection_owner"
       ],
       "createdRelations": [],
-      "definedFunctions": ["read_postwar_narrow_trade_automatic_source"],
+      "definedFunctions": [
+        "read_postwar_narrow_trade_automatic_source"
+      ],
       "renamedFunctions": [],
       "literalCreatedPolicies": [
         "narrow_automatic_lease_lock",
@@ -2347,7 +2510,9 @@
         "revoke_world_command_execution"
       ],
       "renamedFunctions": [],
-      "literalCreatedPolicies": ["execution_owner_scope"],
+      "literalCreatedPolicies": [
+        "execution_owner_scope"
+      ],
       "declaredFunctionReviewContracts": [
         {
           "qualifiedSignature": "world_v2.execution_registration_admission(text,text,text,text)",
@@ -2483,16 +2648,1163 @@
       ]
     },
     {
+      "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
+      "baselineDependencies": [
+        "0002_world_v2_command_event_ledger",
+        "0003_world_v2_command_receipts_outbox",
+        "0005_world_v2_writer_lease_fencing",
+        "0009_world_v2_posting_payload_integrity",
+        "0011_world_v2_current_commit_authorization",
+        "0013_world_v2_read_projection_boundary",
+        "0016_world_v2_opening_seed"
+      ],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "permissionDelta": {
+        "reviewStatus": "SOURCE_DECLARATIONS_ONLY_ACTUAL_CATALOG_AND_APPROVED_ENROLLMENT_REQUIRED",
+        "newLoginRoles": false,
+        "membershipEnrollment": false,
+        "boundedRuntimeRawSeedSelect": false
+      },
+      "rollbackChecks": [
+        "NO_AUTOMATIC_SQL_DOWNGRADE",
+        "UNCERTAIN_COMMIT_STOP_AND_READBACK_NOT_BLIND_RETRY",
+        "PRESERVE_AUTHORITATIVE_HISTORY_IMMUTABLE_ORIGINALS_AND_EXISTING_SOURCE_PINS",
+        "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
+        "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE"
+      ],
+      "id": "postwar-central-bank-intake-binding",
+      "path": "database/proposals/postwar-central-bank-intake-binding.sql",
+      "reviewOrder": 43,
+      "dependencies": [
+        "runtime-read-binding-storage",
+        "runtime-admission-publication",
+        "central-bank-omo-custody"
+      ],
+      "createdRoles": [],
+      "reusedRoles": [
+        "world_v2_admission_release",
+        "world_v2_cb_omo_source_owner",
+        "world_v2_cb_omo_source_publisher",
+        "world_v2_cb_omo_source_reader"
+      ],
+      "createdRelations": [],
+      "definedFunctions": [
+        "central_bank_intake_admission_header",
+        "central_bank_intake_exact_scope",
+        "central_bank_worker_authorization_scope",
+        "lock_postwar_central_bank_current_authorization",
+        "lock_postwar_central_bank_intake_binding",
+        "lock_postwar_central_bank_revoked_authorization",
+        "read_postwar_central_bank_recovery_binding"
+      ],
+      "renamedFunctions": [],
+      "literalCreatedPolicies": [
+        "central_bank_intake_owner_lock",
+        "central_bank_intake_owner_lock_world_fence",
+        "central_bank_intake_owner_read",
+        "central_bank_intake_owner_world_fence"
+      ],
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_admission_release": "runtime-admission-publication",
+        "world_v2_cb_omo_source_owner": "central-bank-omo-custody",
+        "world_v2_cb_omo_source_publisher": "central-bank-omo-custody",
+        "world_v2_cb_omo_source_reader": "central-bank-omo-custody"
+      },
+      "definedFunctionSignatures": [
+        "world_v2.central_bank_intake_admission_header(text)",
+        "world_v2.central_bank_intake_exact_scope(text,uuid,text,text,text,text,text,text)",
+        "world_v2.central_bank_worker_authorization_scope(text,uuid,text,text)",
+        "world_v2.lock_postwar_central_bank_current_authorization(text,uuid,text,text,text)",
+        "world_v2.lock_postwar_central_bank_intake_binding(text,uuid,text,text,text,text,text,text)",
+        "world_v2.lock_postwar_central_bank_revoked_authorization(text,uuid,text,text)",
+        "world_v2.read_postwar_central_bank_recovery_binding(text,uuid,text,text,text,text,text,text)"
+      ],
+      "functionContracts": [
+        {
+          "qualifiedSignature": "world_v2.central_bank_intake_exact_scope(text,uuid,text,text,text,text,text,text)",
+          "owner": "world_v2_cb_omo_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": []
+        },
+        {
+          "qualifiedSignature": "world_v2.central_bank_intake_admission_header(text)",
+          "owner": "world_v2_cb_omo_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": []
+        },
+        {
+          "qualifiedSignature": "world_v2.lock_postwar_central_bank_intake_binding(text,uuid,text,text,text,text,text,text)",
+          "owner": "world_v2_cb_omo_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_cb_omo_source_reader"
+          ]
+        },
+        {
+          "qualifiedSignature": "world_v2.read_postwar_central_bank_recovery_binding(text,uuid,text,text,text,text,text,text)",
+          "owner": "world_v2_cb_omo_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_cb_omo_source_reader"
+          ]
+        },
+        {
+          "qualifiedSignature": "world_v2.central_bank_worker_authorization_scope(text,uuid,text,text)",
+          "owner": "world_v2_cb_omo_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": []
+        },
+        {
+          "qualifiedSignature": "world_v2.lock_postwar_central_bank_current_authorization(text,uuid,text,text,text)",
+          "owner": "world_v2_cb_omo_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_cb_omo_source_reader"
+          ]
+        },
+        {
+          "qualifiedSignature": "world_v2.lock_postwar_central_bank_revoked_authorization(text,uuid,text,text)",
+          "owner": "world_v2_cb_omo_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_cb_omo_source_reader"
+          ]
+        }
+      ]
+    },
+    {
+      "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
+      "baselineDependencies": [
+        "0002_world_v2_command_event_ledger",
+        "0003_world_v2_command_receipts_outbox",
+        "0005_world_v2_writer_lease_fencing",
+        "0009_world_v2_posting_payload_integrity",
+        "0011_world_v2_current_commit_authorization",
+        "0013_world_v2_read_projection_boundary",
+        "0016_world_v2_opening_seed"
+      ],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "permissionDelta": {
+        "reviewStatus": "SOURCE_DECLARATIONS_ONLY_ACTUAL_CATALOG_AND_APPROVED_ENROLLMENT_REQUIRED",
+        "newLoginRoles": false,
+        "membershipEnrollment": false,
+        "boundedRuntimeRawSeedSelect": false
+      },
+      "rollbackChecks": [
+        "NO_AUTOMATIC_SQL_DOWNGRADE",
+        "UNCERTAIN_COMMIT_STOP_AND_READBACK_NOT_BLIND_RETRY",
+        "PRESERVE_AUTHORITATIVE_HISTORY_IMMUTABLE_ORIGINALS_AND_EXISTING_SOURCE_PINS",
+        "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
+        "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE"
+      ],
+      "id": "postwar-narrow-trade-intake-binding",
+      "path": "database/proposals/postwar-narrow-trade-intake-binding.sql",
+      "reviewOrder": 44,
+      "dependencies": [
+        "runtime-read-binding-storage",
+        "runtime-admission-publication",
+        "postwar-narrow-trade-source",
+        "postwar-narrow-trade-current-source"
+      ],
+      "createdRoles": [],
+      "reusedRoles": [
+        "world_v2_admission_release",
+        "world_v2_postwar_narrow_trade_current_owner",
+        "world_v2_postwar_narrow_trade_source"
+      ],
+      "createdRelations": [],
+      "definedFunctions": [
+        "lock_postwar_trade_intake_binding",
+        "read_postwar_trade_recovery_binding",
+        "trade_intake_admission_header",
+        "trade_intake_exact_scope",
+        "trade_intake_lock_admission"
+      ],
+      "renamedFunctions": [],
+      "literalCreatedPolicies": [],
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_admission_release": "runtime-admission-publication",
+        "world_v2_postwar_narrow_trade_current_owner": "postwar-narrow-trade-current-source",
+        "world_v2_postwar_narrow_trade_source": "postwar-narrow-trade-source"
+      },
+      "definedFunctionSignatures": [
+        "world_v2.lock_postwar_trade_intake_binding(text,uuid,text,text,text,text,text,text)",
+        "world_v2.read_postwar_trade_recovery_binding(text,uuid,text,text,text,text,text,text)",
+        "world_v2.trade_intake_admission_header(text)",
+        "world_v2.trade_intake_exact_scope(text,uuid,text,text,text,text,text,text)",
+        "world_v2.trade_intake_lock_admission(text)"
+      ],
+      "functionContracts": [
+        {
+          "qualifiedSignature": "world_v2.trade_intake_exact_scope(text,uuid,text,text,text,text,text,text)",
+          "owner": "world_v2_postwar_narrow_trade_current_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": []
+        },
+        {
+          "qualifiedSignature": "world_v2.trade_intake_admission_header(text)",
+          "owner": "world_v2_postwar_narrow_trade_current_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": []
+        },
+        {
+          "qualifiedSignature": "world_v2.trade_intake_lock_admission(text)",
+          "owner": "world_v2_postwar_narrow_trade_current_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": []
+        },
+        {
+          "qualifiedSignature": "world_v2.lock_postwar_trade_intake_binding(text,uuid,text,text,text,text,text,text)",
+          "owner": "world_v2_postwar_narrow_trade_current_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_postwar_narrow_trade_source"
+          ]
+        },
+        {
+          "qualifiedSignature": "world_v2.read_postwar_trade_recovery_binding(text,uuid,text,text,text,text,text,text)",
+          "owner": "world_v2_postwar_narrow_trade_current_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_postwar_narrow_trade_source"
+          ]
+        }
+      ]
+    },
+    {
+      "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
+      "baselineDependencies": [
+        "0002_world_v2_command_event_ledger",
+        "0003_world_v2_command_receipts_outbox",
+        "0005_world_v2_writer_lease_fencing",
+        "0009_world_v2_posting_payload_integrity",
+        "0011_world_v2_current_commit_authorization",
+        "0013_world_v2_read_projection_boundary",
+        "0016_world_v2_opening_seed"
+      ],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "permissionDelta": {
+        "reviewStatus": "SOURCE_DECLARATIONS_ONLY_ACTUAL_CATALOG_AND_APPROVED_ENROLLMENT_REQUIRED",
+        "newLoginRoles": false,
+        "membershipEnrollment": false,
+        "boundedRuntimeRawSeedSelect": false
+      },
+      "rollbackChecks": [
+        "NO_AUTOMATIC_SQL_DOWNGRADE",
+        "UNCERTAIN_COMMIT_STOP_AND_READBACK_NOT_BLIND_RETRY",
+        "PRESERVE_AUTHORITATIVE_HISTORY_IMMUTABLE_ORIGINALS_AND_EXISTING_SOURCE_PINS",
+        "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
+        "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE"
+      ],
+      "id": "postwar-beneficial-rent-social-publication",
+      "path": "database/proposals/postwar-beneficial-rent-social-publication.sql",
+      "reviewOrder": 45,
+      "dependencies": [
+        "social-operating-custody",
+        "postwar-beneficial-housing-rent-custody"
+      ],
+      "createdRoles": [],
+      "reusedRoles": [
+        "world_v2_social_source_owner",
+        "world_v2_social_source_publisher"
+      ],
+      "createdRelations": [],
+      "definedFunctions": [
+        "register_postwar_beneficial_rent_social_source_world"
+      ],
+      "renamedFunctions": [],
+      "literalCreatedPolicies": [],
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_social_source_owner": "social-operating-custody",
+        "world_v2_social_source_publisher": "social-operating-custody"
+      },
+      "definedFunctionSignatures": [
+        "world_v2.register_postwar_beneficial_rent_social_source_world(text,text,text)"
+      ],
+      "functionContracts": [
+        {
+          "qualifiedSignature": "world_v2.register_postwar_beneficial_rent_social_source_world(text,text,text)",
+          "owner": "world_v2_social_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_social_source_publisher"
+          ]
+        }
+      ]
+    },
+    {
+      "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
+      "baselineDependencies": [
+        "0002_world_v2_command_event_ledger",
+        "0003_world_v2_command_receipts_outbox",
+        "0005_world_v2_writer_lease_fencing",
+        "0009_world_v2_posting_payload_integrity",
+        "0011_world_v2_current_commit_authorization",
+        "0013_world_v2_read_projection_boundary",
+        "0016_world_v2_opening_seed"
+      ],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "permissionDelta": {
+        "reviewStatus": "SOURCE_DECLARATIONS_ONLY_ACTUAL_CATALOG_AND_APPROVED_ENROLLMENT_REQUIRED",
+        "newLoginRoles": false,
+        "membershipEnrollment": false,
+        "boundedRuntimeRawSeedSelect": false
+      },
+      "rollbackChecks": [
+        "NO_AUTOMATIC_SQL_DOWNGRADE",
+        "UNCERTAIN_COMMIT_STOP_AND_READBACK_NOT_BLIND_RETRY",
+        "PRESERVE_AUTHORITATIVE_HISTORY_IMMUTABLE_ORIGINALS_AND_EXISTING_SOURCE_PINS",
+        "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
+        "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE"
+      ],
+      "id": "postwar-mixed-goods-omo-current-effects",
+      "path": "database/proposals/postwar-mixed-goods-omo-current-effects.sql",
+      "reviewOrder": 46,
+      "dependencies": [
+        "postwar-mixed-current-projection-read",
+        "central-bank-omo-custody",
+        "postwar-narrow-trade-current-source"
+      ],
+      "createdRoles": [],
+      "reusedRoles": [
+        "world_v2_cb_omo_source_owner",
+        "world_v2_postwar_narrow_trade_current_owner",
+        "world_v2_postwar_projection_owner"
+      ],
+      "createdRelations": [],
+      "definedFunctions": [
+        "postwar_mixed_goods_group",
+        "postwar_mixed_omo_group",
+        "postwar_projection_current_account_balance",
+        "postwar_projection_current_inventory_balance",
+        "postwar_projection_omo_original",
+        "postwar_projection_trade_approved",
+        "postwar_projection_trade_originals"
+      ],
+      "renamedFunctions": [],
+      "literalCreatedPolicies": [
+        "mixed_extended_inventory_owner_fence",
+        "mixed_extended_inventory_owner_read",
+        "mixed_trade_historical_fence",
+        "mixed_trade_historical_read"
+      ],
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_cb_omo_source_owner": "central-bank-omo-custody",
+        "world_v2_postwar_narrow_trade_current_owner": "postwar-narrow-trade-current-source",
+        "world_v2_postwar_projection_owner": "postwar-office-derived-read"
+      },
+      "definedFunctionSignatures": [
+        "world_v2.postwar_projection_omo_original(text,text,text,text,text)",
+        "world_v2.postwar_projection_trade_originals(text,text)",
+        "world_v2.postwar_projection_trade_approved(text,text,text,text,text,uuid,text,timestamptz)",
+        "world_v2.postwar_projection_current_account_balance(text,jsonb,bigint)",
+        "world_v2.postwar_projection_current_inventory_balance(text,jsonb,bigint)",
+        "world_v2.postwar_mixed_omo_group(text,jsonb,jsonb,jsonb,jsonb,jsonb)",
+        "world_v2.postwar_mixed_goods_group(text,jsonb,jsonb,jsonb,jsonb,jsonb)"
+      ],
+      "functionContracts": [
+        {
+          "qualifiedSignature": "world_v2.postwar_projection_omo_original(text,text,text,text,text)",
+          "owner": "world_v2_cb_omo_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_postwar_projection_owner"
+          ]
+        },
+        {
+          "qualifiedSignature": "world_v2.postwar_projection_trade_originals(text,text)",
+          "owner": "world_v2_postwar_narrow_trade_current_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_postwar_projection_owner"
+          ]
+        },
+        {
+          "qualifiedSignature": "world_v2.postwar_projection_trade_approved(text,text,text,text,text,uuid,text,timestamptz)",
+          "owner": "world_v2_postwar_narrow_trade_current_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_postwar_projection_owner"
+          ]
+        },
+        {
+          "qualifiedSignature": "world_v2.postwar_projection_current_account_balance(text,jsonb,bigint)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": []
+        },
+        {
+          "qualifiedSignature": "world_v2.postwar_projection_current_inventory_balance(text,jsonb,bigint)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": []
+        },
+        {
+          "qualifiedSignature": "world_v2.postwar_mixed_omo_group(text,jsonb,jsonb,jsonb,jsonb,jsonb)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": []
+        },
+        {
+          "qualifiedSignature": "world_v2.postwar_mixed_goods_group(text,jsonb,jsonb,jsonb,jsonb,jsonb)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": []
+        }
+      ]
+    },
+    {
+      "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
+      "baselineDependencies": [
+        "0002_world_v2_command_event_ledger",
+        "0003_world_v2_command_receipts_outbox",
+        "0005_world_v2_writer_lease_fencing",
+        "0009_world_v2_posting_payload_integrity",
+        "0011_world_v2_current_commit_authorization",
+        "0013_world_v2_read_projection_boundary",
+        "0016_world_v2_opening_seed"
+      ],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "permissionDelta": {
+        "reviewStatus": "SOURCE_DECLARATIONS_ONLY_ACTUAL_CATALOG_AND_APPROVED_ENROLLMENT_REQUIRED",
+        "newLoginRoles": false,
+        "membershipEnrollment": false,
+        "boundedRuntimeRawSeedSelect": false
+      },
+      "rollbackChecks": [
+        "NO_AUTOMATIC_SQL_DOWNGRADE",
+        "UNCERTAIN_COMMIT_STOP_AND_READBACK_NOT_BLIND_RETRY",
+        "PRESERVE_AUTHORITATIVE_HISTORY_IMMUTABLE_ORIGINALS_AND_EXISTING_SOURCE_PINS",
+        "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
+        "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE"
+      ],
+      "id": "postwar-narrow-trade-history-read",
+      "path": "database/proposals/postwar-narrow-trade-history-read.sql",
+      "reviewOrder": 47,
+      "dependencies": [
+        "postwar-narrow-trade-current-source",
+        "postwar-captain-mixed-read",
+        "central-bank-omo-history-read"
+      ],
+      "createdRoles": [],
+      "reusedRoles": [
+        "world_v2_captain_source_owner",
+        "world_v2_day_one_fx_history_owner",
+        "world_v2_postwar_narrow_trade_current_owner",
+        "world_v2_postwar_narrow_trade_source",
+        "world_v2_postwar_projection_owner"
+      ],
+      "createdRelations": [],
+      "definedFunctions": [
+        "assert_postwar_narrow_trade_history_host"
+      ],
+      "renamedFunctions": [],
+      "literalCreatedPolicies": [],
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_captain_source_owner": "captain-operating-custody",
+        "world_v2_day_one_fx_history_owner": "postwar-day-one-fx-history-read",
+        "world_v2_postwar_narrow_trade_current_owner": "postwar-narrow-trade-current-source",
+        "world_v2_postwar_narrow_trade_source": "postwar-narrow-trade-source",
+        "world_v2_postwar_projection_owner": "postwar-office-derived-read"
+      },
+      "definedFunctionSignatures": [
+        "world_v2.assert_postwar_narrow_trade_history_host(text,text,text,text,text,text)"
+      ],
+      "functionContracts": [
+        {
+          "qualifiedSignature": "world_v2.assert_postwar_narrow_trade_history_host(text,text,text,text,text,text)",
+          "owner": "world_v2_postwar_narrow_trade_current_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_captain_source_owner",
+            "world_v2_day_one_fx_history_owner"
+          ]
+        }
+      ]
+    },
+    {
+      "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
+      "baselineDependencies": [
+        "0002_world_v2_command_event_ledger",
+        "0003_world_v2_command_receipts_outbox",
+        "0005_world_v2_writer_lease_fencing",
+        "0009_world_v2_posting_payload_integrity",
+        "0011_world_v2_current_commit_authorization",
+        "0013_world_v2_read_projection_boundary",
+        "0016_world_v2_opening_seed"
+      ],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "permissionDelta": {
+        "reviewStatus": "SOURCE_DECLARATIONS_ONLY_ACTUAL_CATALOG_AND_APPROVED_ENROLLMENT_REQUIRED",
+        "newLoginRoles": false,
+        "membershipEnrollment": false,
+        "boundedRuntimeRawSeedSelect": false
+      },
+      "rollbackChecks": [
+        "NO_AUTOMATIC_SQL_DOWNGRADE",
+        "UNCERTAIN_COMMIT_STOP_AND_READBACK_NOT_BLIND_RETRY",
+        "PRESERVE_AUTHORITATIVE_HISTORY_IMMUTABLE_ORIGINALS_AND_EXISTING_SOURCE_PINS",
+        "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
+        "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE"
+      ],
+      "id": "postwar-mixed-beneficial-rent-current-effects",
+      "path": "database/proposals/postwar-mixed-beneficial-rent-current-effects.sql",
+      "reviewOrder": 48,
+      "dependencies": [
+        "postwar-mixed-current-projection-read",
+        "postwar-beneficial-housing-rent-custody"
+      ],
+      "createdRoles": [],
+      "reusedRoles": [
+        "world_v2_beneficial_rent_source_owner",
+        "world_v2_postwar_projection_owner"
+      ],
+      "createdRelations": [],
+      "definedFunctions": [
+        "postwar_mixed_beneficial_rent_group",
+        "postwar_projection_rent_balance",
+        "postwar_projection_rent_original"
+      ],
+      "renamedFunctions": [],
+      "literalCreatedPolicies": [],
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_beneficial_rent_source_owner": "postwar-beneficial-housing-rent-custody",
+        "world_v2_postwar_projection_owner": "postwar-office-derived-read"
+      },
+      "definedFunctionSignatures": [
+        "world_v2.postwar_projection_rent_original(text,text,text,text,text,text)",
+        "world_v2.postwar_projection_rent_balance(text,jsonb,bigint,numeric)",
+        "world_v2.postwar_mixed_beneficial_rent_group(text,jsonb,jsonb,jsonb,jsonb,jsonb)"
+      ],
+      "functionContracts": [
+        {
+          "qualifiedSignature": "world_v2.postwar_projection_rent_original(text,text,text,text,text,text)",
+          "owner": "world_v2_beneficial_rent_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_postwar_projection_owner"
+          ]
+        },
+        {
+          "qualifiedSignature": "world_v2.postwar_projection_rent_balance(text,jsonb,bigint,numeric)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": []
+        },
+        {
+          "qualifiedSignature": "world_v2.postwar_mixed_beneficial_rent_group(text,jsonb,jsonb,jsonb,jsonb,jsonb)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": []
+        }
+      ]
+    },
+    {
+      "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
+      "baselineDependencies": [
+        "0002_world_v2_command_event_ledger",
+        "0003_world_v2_command_receipts_outbox",
+        "0005_world_v2_writer_lease_fencing",
+        "0009_world_v2_posting_payload_integrity",
+        "0011_world_v2_current_commit_authorization",
+        "0013_world_v2_read_projection_boundary",
+        "0016_world_v2_opening_seed"
+      ],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "permissionDelta": {
+        "reviewStatus": "SOURCE_DECLARATIONS_ONLY_ACTUAL_CATALOG_AND_APPROVED_ENROLLMENT_REQUIRED",
+        "newLoginRoles": false,
+        "membershipEnrollment": false,
+        "boundedRuntimeRawSeedSelect": false
+      },
+      "rollbackChecks": [
+        "NO_AUTOMATIC_SQL_DOWNGRADE",
+        "UNCERTAIN_COMMIT_STOP_AND_READBACK_NOT_BLIND_RETRY",
+        "PRESERVE_AUTHORITATIVE_HISTORY_IMMUTABLE_ORIGINALS_AND_EXISTING_SOURCE_PINS",
+        "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
+        "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE"
+      ],
+      "id": "postwar-industry-labour-current-read",
+      "path": "database/proposals/postwar-industry-labour-current-read.sql",
+      "reviewOrder": 49,
+      "dependencies": [
+        "postwar-mixed-current-projection-read",
+        "postwar-finance-social-source-publication"
+      ],
+      "createdRoles": [],
+      "reusedRoles": [
+        "world_v2_postwar_projection_owner",
+        "world_v2_postwar_projection_publisher",
+        "world_v2_postwar_projection_reader",
+        "world_v2_social_source_owner"
+      ],
+      "createdRelations": [
+        "postwar_industry_labour_document",
+        "postwar_industry_labour_page",
+        "postwar_industry_labour_scope"
+      ],
+      "definedFunctions": [
+        "postwar_industry_labour_source_current",
+        "prepare_postwar_industry_labour_scopes",
+        "publish_postwar_industry_labour_current",
+        "read_postwar_industry_labour_current_page"
+      ],
+      "renamedFunctions": [],
+      "literalCreatedPolicies": [],
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_postwar_projection_owner": "postwar-office-derived-read",
+        "world_v2_postwar_projection_publisher": "postwar-office-derived-read",
+        "world_v2_postwar_projection_reader": "postwar-office-derived-read",
+        "world_v2_social_source_owner": "social-operating-custody"
+      },
+      "definedFunctionSignatures": [
+        "world_v2.postwar_industry_labour_source_current(text,text,text,text,text,text)",
+        "world_v2.prepare_postwar_industry_labour_scopes(text)",
+        "world_v2.publish_postwar_industry_labour_current(text,text,text)",
+        "world_v2.read_postwar_industry_labour_current_page(text,integer,integer,text)"
+      ],
+      "functionContracts": [
+        {
+          "qualifiedSignature": "world_v2.postwar_industry_labour_source_current(text,text,text,text,text,text)",
+          "owner": "world_v2_social_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_postwar_projection_owner"
+          ]
+        },
+        {
+          "qualifiedSignature": "world_v2.prepare_postwar_industry_labour_scopes(text)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_postwar_projection_publisher"
+          ]
+        },
+        {
+          "qualifiedSignature": "world_v2.publish_postwar_industry_labour_current(text,text,text)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_postwar_projection_publisher"
+          ]
+        },
+        {
+          "qualifiedSignature": "world_v2.read_postwar_industry_labour_current_page(text,integer,integer,text)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_postwar_projection_reader"
+          ]
+        }
+      ]
+    },
+    {
+      "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
+      "baselineDependencies": [
+        "0002_world_v2_command_event_ledger",
+        "0003_world_v2_command_receipts_outbox",
+        "0005_world_v2_writer_lease_fencing",
+        "0009_world_v2_posting_payload_integrity",
+        "0011_world_v2_current_commit_authorization",
+        "0013_world_v2_read_projection_boundary",
+        "0016_world_v2_opening_seed"
+      ],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "permissionDelta": {
+        "reviewStatus": "SOURCE_DECLARATIONS_ONLY_ACTUAL_CATALOG_AND_APPROVED_ENROLLMENT_REQUIRED",
+        "newLoginRoles": false,
+        "membershipEnrollment": false,
+        "boundedRuntimeRawSeedSelect": false
+      },
+      "rollbackChecks": [
+        "NO_AUTOMATIC_SQL_DOWNGRADE",
+        "UNCERTAIN_COMMIT_STOP_AND_READBACK_NOT_BLIND_RETRY",
+        "PRESERVE_AUTHORITATIVE_HISTORY_IMMUTABLE_ORIGINALS_AND_EXISTING_SOURCE_PINS",
+        "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
+        "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE"
+      ],
+      "id": "postwar-bounded-prefix-pages",
+      "path": "database/proposals/postwar-bounded-prefix-pages.sql",
+      "reviewOrder": 50,
+      "dependencies": [
+        "postwar-bounded-prefix-read",
+        "postwar-bounded-journal-read"
+      ],
+      "createdRoles": [],
+      "reusedRoles": [
+        "world_v2_day_one_fx_history_owner",
+        "world_v2_day_one_fx_source_owner",
+        "world_v2_day_one_fx_source_publisher",
+        "world_v2_finance_budget_source_owner",
+        "world_v2_finance_budget_source_publisher",
+        "world_v2_finance_budget_source_reader",
+        "world_v2_social_source_owner",
+        "world_v2_social_source_publisher",
+        "world_v2_social_source_reader"
+      ],
+      "createdRelations": [],
+      "definedFunctions": [
+        "read_postwar_bounded_prefix_page"
+      ],
+      "renamedFunctions": [],
+      "literalCreatedPolicies": [],
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_day_one_fx_history_owner": "postwar-day-one-fx-history-read",
+        "world_v2_day_one_fx_source_owner": "postwar-day-one-fx-custody",
+        "world_v2_day_one_fx_source_publisher": "postwar-day-one-fx-custody",
+        "world_v2_finance_budget_source_owner": "finance-budget-custody",
+        "world_v2_finance_budget_source_publisher": "finance-budget-custody",
+        "world_v2_finance_budget_source_reader": "finance-budget-custody",
+        "world_v2_social_source_owner": "social-operating-custody",
+        "world_v2_social_source_publisher": "social-operating-custody",
+        "world_v2_social_source_reader": "social-operating-custody"
+      },
+      "definedFunctionSignatures": [
+        "world_v2.read_postwar_bounded_prefix_page(text,text,text,bigint,bigint,bigint,bigint,text,text)"
+      ],
+      "functionContracts": [
+        {
+          "qualifiedSignature": "world_v2.read_postwar_bounded_prefix_page(text,text,text,bigint,bigint,bigint,bigint,text,text)",
+          "owner": "world_v2_day_one_fx_history_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_social_source_reader",
+            "world_v2_finance_budget_source_reader"
+          ]
+        }
+      ]
+    },
+    {
+      "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
+      "baselineDependencies": [
+        "0002_world_v2_command_event_ledger",
+        "0003_world_v2_command_receipts_outbox",
+        "0005_world_v2_writer_lease_fencing",
+        "0009_world_v2_posting_payload_integrity",
+        "0011_world_v2_current_commit_authorization",
+        "0013_world_v2_read_projection_boundary",
+        "0016_world_v2_opening_seed"
+      ],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "permissionDelta": {
+        "reviewStatus": "SOURCE_DECLARATIONS_ONLY_ACTUAL_CATALOG_AND_APPROVED_ENROLLMENT_REQUIRED",
+        "newLoginRoles": false,
+        "membershipEnrollment": false,
+        "boundedRuntimeRawSeedSelect": false
+      },
+      "rollbackChecks": [
+        "NO_AUTOMATIC_SQL_DOWNGRADE",
+        "UNCERTAIN_COMMIT_STOP_AND_READBACK_NOT_BLIND_RETRY",
+        "PRESERVE_AUTHORITATIVE_HISTORY_IMMUTABLE_ORIGINALS_AND_EXISTING_SOURCE_PINS",
+        "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
+        "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE"
+      ],
+      "id": "postwar-industry-intake-binding",
+      "path": "database/proposals/postwar-industry-intake-binding.sql",
+      "reviewOrder": 51,
+      "dependencies": [
+        "postwar-industry-production-source",
+        "runtime-read-binding-storage",
+        "runtime-admission-publication"
+      ],
+      "createdRoles": [],
+      "reusedRoles": [
+        "world_v2_admission_release",
+        "world_v2_industry_source_owner",
+        "world_v2_industry_source_publisher",
+        "world_v2_industry_source_reader"
+      ],
+      "createdRelations": [],
+      "definedFunctions": [
+        "industry_intake_admission_header",
+        "industry_intake_exact_scope",
+        "lock_postwar_industry_intake_binding",
+        "read_postwar_industry_recovery_binding"
+      ],
+      "renamedFunctions": [],
+      "literalCreatedPolicies": [
+        "industry_intake_owner_lock",
+        "industry_intake_owner_lock_fence",
+        "industry_intake_owner_select",
+        "industry_intake_owner_select_fence"
+      ],
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_admission_release": "runtime-admission-publication",
+        "world_v2_industry_source_owner": "postwar-industry-production-source",
+        "world_v2_industry_source_publisher": "postwar-industry-production-source",
+        "world_v2_industry_source_reader": "postwar-industry-production-source"
+      },
+      "definedFunctionSignatures": [
+        "world_v2.industry_intake_exact_scope(text,uuid,text,text,text,text,text,text)",
+        "world_v2.industry_intake_admission_header(text)",
+        "world_v2.lock_postwar_industry_intake_binding(text,uuid,text,text,text,text,text,text)",
+        "world_v2.read_postwar_industry_recovery_binding(text,uuid,text,text,text,text,text,text)"
+      ],
+      "functionContracts": [
+        {
+          "qualifiedSignature": "world_v2.industry_intake_exact_scope(text,uuid,text,text,text,text,text,text)",
+          "owner": "world_v2_industry_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": []
+        },
+        {
+          "qualifiedSignature": "world_v2.industry_intake_admission_header(text)",
+          "owner": "world_v2_industry_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": []
+        },
+        {
+          "qualifiedSignature": "world_v2.lock_postwar_industry_intake_binding(text,uuid,text,text,text,text,text,text)",
+          "owner": "world_v2_industry_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_industry_source_reader"
+          ]
+        },
+        {
+          "qualifiedSignature": "world_v2.read_postwar_industry_recovery_binding(text,uuid,text,text,text,text,text,text)",
+          "owner": "world_v2_industry_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_industry_source_reader"
+          ]
+        }
+      ]
+    },
+    {
+      "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
+      "baselineDependencies": [
+        "0002_world_v2_command_event_ledger",
+        "0003_world_v2_command_receipts_outbox",
+        "0005_world_v2_writer_lease_fencing",
+        "0009_world_v2_posting_payload_integrity",
+        "0011_world_v2_current_commit_authorization",
+        "0013_world_v2_read_projection_boundary",
+        "0016_world_v2_opening_seed"
+      ],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "permissionDelta": {
+        "reviewStatus": "SOURCE_DECLARATIONS_ONLY_ACTUAL_CATALOG_AND_APPROVED_ENROLLMENT_REQUIRED",
+        "newLoginRoles": false,
+        "membershipEnrollment": false,
+        "boundedRuntimeRawSeedSelect": false
+      },
+      "rollbackChecks": [
+        "NO_AUTOMATIC_SQL_DOWNGRADE",
+        "UNCERTAIN_COMMIT_STOP_AND_READBACK_NOT_BLIND_RETRY",
+        "PRESERVE_AUTHORITATIVE_HISTORY_IMMUTABLE_ORIGINALS_AND_EXISTING_SOURCE_PINS",
+        "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
+        "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE"
+      ],
+      "id": "postwar-industry-first-day-source",
+      "path": "database/proposals/postwar-industry-first-day-source.sql",
+      "reviewOrder": 52,
+      "dependencies": [
+        "postwar-industry-production-source"
+      ],
+      "createdRoles": [],
+      "reusedRoles": [
+        "world_v2_industry_source_owner",
+        "world_v2_industry_source_publisher",
+        "world_v2_industry_source_reader"
+      ],
+      "createdRelations": [
+        "postwar_industry_first_day_source",
+        "postwar_industry_first_day_source_revocation"
+      ],
+      "definedFunctions": [
+        "lock_postwar_industry_first_day_revocation_parent",
+        "publish_postwar_industry_first_day_source",
+        "read_postwar_industry_first_day_source",
+        "revoke_postwar_industry_first_day_source"
+      ],
+      "renamedFunctions": [],
+      "literalCreatedPolicies": [
+        "first_day_owner"
+      ],
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_industry_source_owner": "postwar-industry-production-source",
+        "world_v2_industry_source_publisher": "postwar-industry-production-source",
+        "world_v2_industry_source_reader": "postwar-industry-production-source"
+      },
+      "definedFunctionSignatures": [
+        "world_v2.lock_postwar_industry_first_day_revocation_parent()",
+        "world_v2.publish_postwar_industry_first_day_source(text,text,text,text,text,text,text)",
+        "world_v2.read_postwar_industry_first_day_source(text,text,text,bigint,bigint)",
+        "world_v2.revoke_postwar_industry_first_day_source(text,text,text)"
+      ],
+      "functionContracts": [
+        {
+          "qualifiedSignature": "world_v2.lock_postwar_industry_first_day_revocation_parent()",
+          "owner": "world_v2_industry_source_owner",
+          "securityDefiner": false,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": []
+        },
+        {
+          "qualifiedSignature": "world_v2.publish_postwar_industry_first_day_source(text,text,text,text,text,text,text)",
+          "owner": "world_v2_industry_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_industry_source_publisher"
+          ]
+        },
+        {
+          "qualifiedSignature": "world_v2.read_postwar_industry_first_day_source(text,text,text,bigint,bigint)",
+          "owner": "world_v2_industry_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_industry_source_reader"
+          ]
+        },
+        {
+          "qualifiedSignature": "world_v2.revoke_postwar_industry_first_day_source(text,text,text)",
+          "owner": "world_v2_industry_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_industry_source_publisher"
+          ]
+        }
+      ]
+    },
+    {
+      "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
+      "baselineDependencies": [
+        "0002_world_v2_command_event_ledger",
+        "0003_world_v2_command_receipts_outbox",
+        "0005_world_v2_writer_lease_fencing",
+        "0009_world_v2_posting_payload_integrity",
+        "0011_world_v2_current_commit_authorization",
+        "0013_world_v2_read_projection_boundary",
+        "0016_world_v2_opening_seed"
+      ],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "permissionDelta": {
+        "reviewStatus": "SOURCE_DECLARATIONS_ONLY_ACTUAL_CATALOG_AND_APPROVED_ENROLLMENT_REQUIRED",
+        "newLoginRoles": false,
+        "membershipEnrollment": false,
+        "boundedRuntimeRawSeedSelect": false
+      },
+      "rollbackChecks": [
+        "NO_AUTOMATIC_SQL_DOWNGRADE",
+        "UNCERTAIN_COMMIT_STOP_AND_READBACK_NOT_BLIND_RETRY",
+        "PRESERVE_AUTHORITATIVE_HISTORY_IMMUTABLE_ORIGINALS_AND_EXISTING_SOURCE_PINS",
+        "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
+        "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE"
+      ],
+      "id": "postwar-paged-office-history-originals",
+      "path": "database/proposals/postwar-paged-office-history-originals.sql",
+      "reviewOrder": 53,
+      "dependencies": [
+        "central-bank-omo-history-read",
+        "postwar-captain-mixed-read"
+      ],
+      "createdRoles": [],
+      "reusedRoles": [
+        "world_v2_captain_source_owner",
+        "world_v2_captain_source_reader",
+        "world_v2_cb_omo_source_owner",
+        "world_v2_cb_omo_source_publisher",
+        "world_v2_cb_omo_source_reader",
+        "world_v2_day_one_fx_history_owner",
+        "world_v2_day_one_fx_source_owner",
+        "world_v2_day_one_fx_source_publisher",
+        "world_v2_day_one_fx_source_reader",
+        "world_v2_finance_budget_source_owner",
+        "world_v2_finance_budget_source_publisher",
+        "world_v2_finance_budget_source_reader",
+        "world_v2_postwar_narrow_trade_source",
+        "world_v2_social_source_owner",
+        "world_v2_social_source_publisher",
+        "world_v2_social_source_reader"
+      ],
+      "createdRelations": [],
+      "definedFunctions": [
+        "read_postwar_paged_captain_originals",
+        "read_postwar_paged_omo_originals"
+      ],
+      "renamedFunctions": [],
+      "literalCreatedPolicies": [],
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_captain_source_owner": "captain-operating-custody",
+        "world_v2_captain_source_reader": "captain-operating-custody",
+        "world_v2_cb_omo_source_owner": "central-bank-omo-custody",
+        "world_v2_cb_omo_source_publisher": "central-bank-omo-custody",
+        "world_v2_cb_omo_source_reader": "central-bank-omo-custody",
+        "world_v2_day_one_fx_history_owner": "postwar-day-one-fx-history-read",
+        "world_v2_day_one_fx_source_owner": "postwar-day-one-fx-custody",
+        "world_v2_day_one_fx_source_publisher": "postwar-day-one-fx-custody",
+        "world_v2_day_one_fx_source_reader": "postwar-day-one-fx-custody",
+        "world_v2_finance_budget_source_owner": "finance-budget-custody",
+        "world_v2_finance_budget_source_publisher": "finance-budget-custody",
+        "world_v2_finance_budget_source_reader": "finance-budget-custody",
+        "world_v2_postwar_narrow_trade_source": "postwar-narrow-trade-source",
+        "world_v2_social_source_owner": "social-operating-custody",
+        "world_v2_social_source_publisher": "social-operating-custody",
+        "world_v2_social_source_reader": "social-operating-custody"
+      },
+      "definedFunctionSignatures": [
+        "world_v2.read_postwar_paged_omo_originals(text,text,text,text,text,text,text,bigint,bigint,bigint,bigint)",
+        "world_v2.read_postwar_paged_captain_originals(text,text,text,text,text,text,text,bigint,bigint,bigint,bigint)"
+      ],
+      "functionContracts": [
+        {
+          "qualifiedSignature": "world_v2.read_postwar_paged_omo_originals(text,text,text,text,text,text,text,bigint,bigint,bigint,bigint)",
+          "owner": "world_v2_day_one_fx_history_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_social_source_reader",
+            "world_v2_finance_budget_source_reader"
+          ]
+        },
+        {
+          "qualifiedSignature": "world_v2.read_postwar_paged_captain_originals(text,text,text,text,text,text,text,bigint,bigint,bigint,bigint)",
+          "owner": "world_v2_captain_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_social_source_reader",
+            "world_v2_finance_budget_source_reader"
+          ]
+        }
+      ]
+    },
+    {
       "id": "isolated-world-clock",
       "path": "database/proposals/isolated-world-clock.sql",
-      "reviewOrder": 43,
+      "reviewOrder": 54,
       "disposition": "EXCLUDED_NOT_A_READ_DEPENDENCY",
       "dependencies": [],
       "baselineDependencies": [],
       "createdRoles": [],
       "reusedRoles": [],
-      "createdRelations": ["isolated_clock_input", "isolated_clock_head"],
-      "definedFunctions": ["reject_isolated_clock_input_mutation"],
+      "createdRelations": [
+        "isolated_clock_input",
+        "isolated_clock_head"
+      ],
+      "definedFunctions": [
+        "reject_isolated_clock_input_mutation"
+      ],
       "renamedFunctions": [],
       "registration": "UNREGISTERED_SOURCE_PROPOSAL",
       "productionApproval": "NOT_GRANTED",
