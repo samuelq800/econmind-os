@@ -9,7 +9,7 @@ const policyPath = fileURLToPath(
 );
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const POLICY_SHA256 =
-  "1f88f26ddca3a29e48b27701d5e822b58631a422a0ce115b3e6e23f3fed0cc8c";
+  "33b0e96b5402a2d227680663c7c813ce782069d471079daf97119ceb3285082d";
 export function requireImmutableProposalCandidateSha(candidateSha) {
   if (!/^[a-f0-9]{40}$/u.test(candidateSha ?? "") || /^0+$/u.test(candidateSha))
     throw Error("EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED");
@@ -27,7 +27,7 @@ export async function loadPostwarExpandedProposalPolicy() {
     policy.installationAllowed !== false ||
     policy.productionReviewVerified !== false ||
     policy.finalCandidateSelected !== false ||
-    policy.proposals.length !== 54
+    policy.proposals.length !== 72
   )
     throw Error("UNAPPROVED_EXPLICIT_CANDIDATE_POLICY_REQUIRED");
   const prior = new Set();
@@ -96,12 +96,27 @@ export function inspectPostwarFunctionContracts(item, bytes) {
     /create\s+(?:or\s+replace\s+)?function\s+world_v2\.([a-z_0-9]+)\s*\((.*?)\)\s*returns/gisu,
   )) {
     const [, name, argumentsText] = match;
+    if (
+      item.id === "postwar-industry-opening-production-validation" &&
+      name === "validate_inventory_production_payload"
+    ) {
+      if (
+        argumentsText.trim() !==
+        "payload jsonb, row_value world_v2.inventory_posting"
+      )
+        throw Error("FIXED_INDUSTRY_VALIDATOR_SIGNATURE_REQUIRED");
+      continue; // separately pinned exact baseline replacement, not a generic scalar helper
+    }
     const types =
       argumentsText.trim() === ""
         ? []
         : argumentsText.split(",").map((argument) => {
             const fields = argument.trim().split(/\s+/u);
-            if (!/^(?:text|jsonb|bigint|integer|uuid|timestamptz|numeric)$/u.test(fields[1] ?? ""))
+            if (
+              !/^(?:text|jsonb|bigint|integer|uuid|timestamptz|numeric)$/u.test(
+                fields[1] ?? "",
+              )
+            )
               throw Error("FIXED_SCALAR_FUNCTION_SIGNATURE_REQUIRED");
             return fields[1];
           });
@@ -192,9 +207,73 @@ export function validatePostwarFinancialPostingReplacement(
 }
 /** Extract catalog names only, never interpret proposal SQL as executable input.
  * Metadata extraction is not approval or an exhaustive SQL/security parser. */
+function industryOpeningDeclaration(bytes) {
+  const sql = bytes.toString("utf8");
+  const header =
+    /create(?: or replace)? function world_v2\.validate_inventory_production_payload\(payload jsonb, row_value world_v2\.inventory_posting\)/u;
+  const match = header.exec(sql);
+  const end = match ? sql.indexOf("\n$$;", match.index) : -1;
+  if (
+    !match ||
+    end < match.index ||
+    header.test(sql.slice(match.index + match[0].length))
+  )
+    throw Error("FIXED_INDUSTRY_VALIDATOR_DECLARATION_REQUIRED");
+  return sql.slice(match.index, end + 4);
+}
+function industryOpeningReplacement(item, bytes) {
+  const entries = item.namedFunctionReplacements;
+  if (
+    item.id !== "postwar-industry-opening-production-validation" ||
+    entries?.length !== 1 ||
+    entries[0].qualifiedSignature !==
+      "world_v2.validate_inventory_production_payload(jsonb,world_v2.inventory_posting)" ||
+    entries[0].baselineMigrationId !==
+      "0023_world_v2_production_consumption_posting"
+  )
+    throw Error("FIXED_INDUSTRY_BASELINE_REPLACEMENT_REQUIRED");
+  const entry = entries[0],
+    declaration = industryOpeningDeclaration(bytes);
+  if (
+    sha(bytes) !== entry.successorSqlSha256 ||
+    sha(declaration) !== entry.successorDeclarationSourceSha256
+  )
+    throw Error("NAMED_FUNCTION_REPLACEMENT_SOURCE_BYTES_CHANGED");
+  // CREATE OR REPLACE keeps the existing owner and ACL; no replacement can
+  // silently reassign this immutable-baseline signature or switch it to definer.
+  const header = declaration.slice(0, declaration.indexOf("as $$"));
+  if (
+    /security\s+definer/iu.test(header) ||
+    !/set\s+search_path\s*=\s*pg_catalog/iu.test(header) ||
+    /(?:alter\s+function|grant|revoke)[^;]*world_v2\.validate_inventory_production_payload/iu.test(
+      bytes.toString("utf8"),
+    )
+  )
+    throw Error("INDUSTRY_BASELINE_OWNER_ACL_AND_INVOKER_MUST_BE_PRESERVED");
+  return entry;
+}
+export function validatePostwarIndustryOpeningReplacement(
+  item,
+  bytes,
+  baselineBytes,
+) {
+  const entry = industryOpeningReplacement(item, bytes);
+  if (
+    sha(baselineBytes) !== entry.baselineArtifactSha256 ||
+    sha(industryOpeningDeclaration(baselineBytes)) !==
+      entry.predecessorDeclarationSourceSha256
+  )
+    throw Error("NAMED_FUNCTION_BASELINE_PREDECESSOR_CHANGED");
+  return entry;
+}
+function fixedNamedBaselineReplacement(item, bytes) {
+  return item.id === "postwar-industry-opening-production-validation"
+    ? industryOpeningReplacement(item, bytes)
+    : financialPostingReplacement(item, bytes);
+}
 export function inspectExpandedProposalBytes(item, bytes) {
   if (item.namedFunctionReplacements !== undefined)
-    financialPostingReplacement(item, bytes);
+    fixedNamedBaselineReplacement(item, bytes);
   inspectPostwarFunctionContracts(item, bytes);
   const sql = bytes.toString("utf8");
   const names = (pattern) =>
@@ -305,7 +384,7 @@ export async function loadPostwarExpandedProposalCandidate(
       throw Error("UNREGISTERED_PROPOSAL_OR_BASELINE_DEPENDENCY_INVALID");
     const bytes = await read(item.path);
     if (item.namedFunctionReplacements !== undefined) {
-      const replacement = financialPostingReplacement(item, bytes);
+      const replacement = fixedNamedBaselineReplacement(item, bytes);
       const predecessor = manifest.migrations.find(
         (m) => m.migration_id === replacement.baselineMigrationId,
       );
@@ -317,7 +396,9 @@ export async function loadPostwarExpandedProposalCandidate(
         throw Error(
           "EXACT_REGISTERED_BASELINE_REPLACEMENT_DEPENDENCY_REQUIRED",
         );
-      validatePostwarFinancialPostingReplacement(
+      (item.id === "postwar-industry-opening-production-validation"
+        ? validatePostwarIndustryOpeningReplacement
+        : validatePostwarFinancialPostingReplacement)(
         item,
         bytes,
         await read(predecessor.path),
