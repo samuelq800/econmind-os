@@ -124,7 +124,7 @@ describe("fixed postwar catalog handoff never executes or grants", () => {
   it("separates exact-signature ACL expectations from release approval and rejects duplicate contracts", async () => {
     const { policy } = await loadPostwarExpandedProposalPolicy();
     const contracts = postwarCatalogFunctionContracts(policy.proposals);
-    expect(contracts).toHaveLength(16);
+    expect(contracts).toHaveLength(104);
     expect(
       contracts.find((c: { qualifiedSignature: string }) =>
         c.qualifiedSignature.startsWith(
@@ -151,6 +151,93 @@ describe("fixed postwar catalog handoff never executes or grants", () => {
     expect(query).toContain("pg_catalog.to_regprocedure");
     expect(query).toContain("'unexpectedDirectExecuteGrantees'");
     expect(query).toContain("'productionReleaseApproved',false");
+  });
+  it("retains exactly the two reviewed ordered provider chains and their unchanged ACLs", async () => {
+    const { policy } = await loadPostwarExpandedProposalPolicy();
+    const contracts = postwarCatalogFunctionContracts(policy.proposals);
+    const read = contracts.find(
+      (v: { qualifiedSignature: string }) =>
+        v.qualifiedSignature ===
+        "world_v2.read_postwar_mixed_current_page(text,text,text,integer,integer,text)",
+    );
+    expect(read.proposalId).toBe("postwar-paged-current-projection");
+    expect(
+      read.providerChain.map((v: { proposalId: string }) => v.proposalId),
+    ).toEqual([
+      "postwar-mixed-current-projection-read",
+      "postwar-paged-current-projection",
+    ]);
+    const apply = contracts.find(
+      (v: { qualifiedSignature: string }) =>
+        v.qualifiedSignature ===
+        "world_v2.postwar_apply_current_frame_page(text,text,jsonb)",
+    );
+    expect(apply.proposalId).toBe("postwar-mixed-industry-current-effects");
+    expect(
+      apply.providerChain.map((v: { proposalId: string }) => v.proposalId),
+    ).toEqual([
+      "postwar-paged-current-projection",
+      "postwar-mixed-industry-current-effects",
+    ]);
+    for (const entry of [read, apply])
+      expect(entry.providerChain[0].contract).toEqual(
+        entry.providerChain[1].contract,
+      );
+  });
+  it("rejects reversed or missing providers, signature changes, and any ACL change in a reviewed chain", async () => {
+    const { policy } = await loadPostwarExpandedProposalPolicy();
+    const before = policy.proposals.find(
+      (v: { id: string }) => v.id === "postwar-mixed-current-projection-read",
+    );
+    const after = policy.proposals.find(
+      (v: { id: string }) => v.id === "postwar-paged-current-projection",
+    );
+    const signature =
+      "world_v2.read_postwar_mixed_current_page(text,text,text,integer,integer,text)";
+    const pair = [before, after].map((v) => ({
+      ...v,
+      functionContracts: v.functionContracts.filter(
+        (c: { qualifiedSignature: string }) =>
+          c.qualifiedSignature === signature,
+      ),
+    }));
+    expect(() => postwarCatalogFunctionContracts([...pair].reverse())).toThrow(
+      "REVIEWED_FUNCTION_REPLACEMENT_PREDECESSOR_REQUIRED",
+    );
+    expect(() => postwarCatalogFunctionContracts([pair[1]])).toThrow(
+      "REVIEWED_FUNCTION_REPLACEMENT_PREDECESSOR_REQUIRED",
+    );
+    for (const field of [
+      "owner",
+      "securityDefiner",
+      "searchPath",
+      "publicExecute",
+      "executeRoles",
+    ]) {
+      const drift = structuredClone(pair);
+      const values: Record<string, unknown> = {
+        owner: "world_v2_unreviewed_owner",
+        securityDefiner: false,
+        searchPath: "public",
+        publicExecute: true,
+        executeRoles: ["world_v2_unreviewed_reader"],
+      };
+      drift[1].functionContracts[0][field] = values[field];
+      expect(() => postwarCatalogFunctionContracts(drift)).toThrow(
+        "REVIEWED_FUNCTION_REPLACEMENT_ACL_CHANGED",
+      );
+    }
+    const drift = structuredClone(pair);
+    drift[1].functionContracts[0].qualifiedSignature =
+      "world_v2.read_postwar_mixed_current_page(text)";
+    expect(() => postwarCatalogFunctionContracts(drift)).toThrow(
+      "REVIEWED_FUNCTION_REPLACEMENT_SIGNATURE_CHANGED",
+    );
+    const unknown = structuredClone(pair);
+    unknown[1].id = "unreviewed-replacement";
+    expect(() => postwarCatalogFunctionContracts(unknown)).toThrow(
+      "DUPLICATE_EXACT_FUNCTION_CATALOG_CONTRACT",
+    );
   });
   it("has no network, driver, credential lookup or command dispatch", async () => {
     const source = await readFile(

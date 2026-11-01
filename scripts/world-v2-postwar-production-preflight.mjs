@@ -52,16 +52,66 @@ export async function renderPostwarCatalogQuery() {
 }
 /** Expected function ACLs are review metadata, never GRANT instructions. */
 export function postwarCatalogFunctionContracts(proposals) {
+  // These two ordered forward replacements are already explicit candidate
+  // declarations. This is not a general last-definition-wins registry.
+  const reviewedChains = [
+    [
+      "world_v2.read_postwar_mixed_current_page(text,text,text,integer,integer,text)",
+      "postwar-mixed-current-projection-read",
+      "postwar-paged-current-projection",
+    ],
+    [
+      "world_v2.postwar_apply_current_frame_page(text,text,jsonb)",
+      "postwar-paged-current-projection",
+      "postwar-mixed-industry-current-effects",
+    ],
+  ];
+  const acl = (contract) =>
+    JSON.stringify([
+      contract.qualifiedSignature,
+      contract.owner,
+      contract.securityDefiner,
+      contract.searchPath,
+      contract.publicExecute,
+      [...contract.executeRoles].sort(),
+    ]);
   const contracts = new Map();
   for (const proposal of proposals.filter(
     (p) => !p.disposition.startsWith("EXCLUDED_"),
   )) {
     for (const contract of proposal.functionContracts ?? []) {
-      if (contracts.has(contract.qualifiedSignature))
-        throw Error("DUPLICATE_EXACT_FUNCTION_CATALOG_CONTRACT");
+      const chain = reviewedChains.find(
+        ([signature, predecessor, successor]) =>
+          (proposal.id === predecessor || proposal.id === successor) &&
+          contract.qualifiedSignature.split("(")[0] === signature.split("(")[0],
+      );
+      if (chain && contract.qualifiedSignature !== chain[0])
+        throw Error("REVIEWED_FUNCTION_REPLACEMENT_SIGNATURE_CHANGED");
+      const previous = contracts.get(contract.qualifiedSignature);
+      if (previous) {
+        if (
+          !chain ||
+          previous.proposalId !== chain[1] ||
+          proposal.id !== chain[2]
+        )
+          throw Error("DUPLICATE_EXACT_FUNCTION_CATALOG_CONTRACT");
+        if (acl(previous) !== acl(contract))
+          throw Error("REVIEWED_FUNCTION_REPLACEMENT_ACL_CHANGED");
+      } else if (chain && proposal.id === chain[2]) {
+        throw Error("REVIEWED_FUNCTION_REPLACEMENT_PREDECESSOR_REQUIRED");
+      }
       contracts.set(contract.qualifiedSignature, {
         ...contract,
         proposalId: proposal.id,
+        providerChain: [
+          ...(previous?.providerChain ?? []),
+          {
+            proposalId: proposal.id,
+            sourcePath: proposal.path ?? null,
+            sourceSha256: proposal.sha256 ?? null,
+            contract: { ...contract },
+          },
+        ],
       });
     }
   }
