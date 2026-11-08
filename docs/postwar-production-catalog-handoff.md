@@ -355,3 +355,20 @@ immutable World commit and observes that commit's bytes; source metadata tests d
 not execute SQL, prove database upgrades, validate signatures or establish a
 Node/Cloudflare/Supabase production binding. The original no-candidate-SHA mode
 continues to represent only its historical six-proposal handoff.
+
+The generalized utility custody retains the existing publisher signature and
+adds `read_postwar_industry_water_grant_publication(text,text,text,text)` for
+exact World/country/facility/RUN recovery. The old two-text-argument function is
+retained solely as a fixed C02/OPEN-02-REFINED_FUEL wrapper. Both overloads remain
+SECURITY DEFINER under `world_v2_industry_source_owner`, fixed `pg_catalog` search
+path, PUBLIC EXECUTE revoked and EXECUTE only for the existing Industry publisher.
+The function-name inventory therefore has one name with two exact signatures;
+no additional role or membership is introduced. New grant publication recovers
+through the scoped overload and binds the real schedule command. The fresh
+source declaration uses `(world_id,schedule_command_id)` as the publication
+primary key, replacing the old `(world_id,run_id)` label key. This records source
+semantics only: it does not migrate an existing installed primary key or prove
+same-RUN cross-country database behavior; that requires the separately tracked
+actual SQL test. Source selection follows each registered refinery's actual
+country, facility and POWER storage originals, preserving the old C02 wrapper
+without treating it as a default for other countries.

@@ -706,6 +706,53 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
             ),
           ).toThrow("POWER_SERVICE_FIXED_EXECUTE_DECLARATIONS_CHANGED");
         }
+        if (item.id === "postwar-industry-utility-custody") {
+          const overloadedName =
+            "read_postwar_industry_water_grant_publication";
+          expect(
+            item.definedFunctions.filter(
+              (name: string) => name === overloadedName,
+            ),
+          ).toHaveLength(1);
+          for (const types of ["text,text", "text,text,text,text"]) {
+            const signature = `world_v2.${overloadedName}(${types})`;
+            expect(item.definedFunctionSignatures).toContain(signature);
+            expect(
+              item.functionContracts.find(
+                (c: { qualifiedSignature: string }) =>
+                  c.qualifiedSignature === signature,
+              ),
+            ).toMatchObject({
+              owner: "world_v2_industry_source_owner",
+              securityDefiner: true,
+              searchPath: "pg_catalog",
+              publicExecute: false,
+              executeRoles: ["world_v2_industry_source_publisher"],
+            });
+            expect(bytes.toString()).toContain(
+              `revoke all on function ${signature}from public;`,
+            );
+            expect(bytes.toString()).toContain(
+              `grant execute on function ${signature}to world_v2_industry_source_publisher;`,
+            );
+          }
+          expect(bytes.toString()).toContain(
+            "primary key(world_id,schedule_command_id)",
+          );
+          expect(bytes.toString()).not.toContain(
+            "primary key(world_id,run_id)",
+          );
+          expect(bytes.toString()).toContain(
+            "read_postwar_industry_water_grant_publication(p_world,'COUNTRY_02','OPEN-02-REFINED_FUEL',p_run)",
+          );
+          expect(bytes.toString()).toContain(
+            "return query select * from world_v2.read_postwar_industry_water_grant_publication(p_world,p_country,p_facility,p_run)",
+          );
+          expect(item.relationKeyReviewContracts[0].primaryKey).toEqual([
+            "world_id",
+            "schedule_command_id",
+          ]);
+        }
         if (item.id === "postwar-captain-h0-current") {
           expect(() =>
             inspectExpandedProposalBytes(

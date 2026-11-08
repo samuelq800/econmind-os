@@ -5301,7 +5301,8 @@
         "world_v2.lock_postwar_industry_water_grant_scope(text,text,text,text,timestamptz,text)",
         "world_v2.read_postwar_industry_water_grant_preclaim_scope(text,text,text,text,timestamptz,text)",
         "world_v2.read_postwar_industry_utility_history_source(text,text,text,bigint,bigint)",
-        "world_v2.read_postwar_industry_water_command_evidence(text,text,text,text,bigint,bigint,text,text,jsonb)"
+        "world_v2.read_postwar_industry_water_command_evidence(text,text,text,text,bigint,bigint,text,text,jsonb)",
+        "world_v2.read_postwar_industry_water_grant_publication(text,text,text,text)"
       ],
       "functionContracts": [
         {
@@ -5367,10 +5368,26 @@
           "searchPath": "pg_catalog",
           "publicExecute": false,
           "executeRoles": ["world_v2_industry_source_reader"]
+        },
+        {
+          "qualifiedSignature": "world_v2.read_postwar_industry_water_grant_publication(text,text,text,text)",
+          "owner": "world_v2_industry_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": ["world_v2_industry_source_publisher"]
         }
       ],
       "runtimePrerequisites": ["postwar-source-revocation-fence"],
-      "versionSemantics": "FIXED_ADOPTED_C2_COMPACT_SOURCE_AND_BOUND_AUTOMATIC_GRANT;EXACT_ACTUAL_PARENT_AND_CHILD_ORIGINALS;CURRENT_AND_COMMITTED_HISTORY_DISTINCT;NO_GRANT_FROM_PUBLIC_ALLOCATION_PROPOSAL_OR_STAFF_PRESENCE"
+      "versionSemantics": "FIXED_ADOPTED_SOURCE_SELECTED_REFINERY_COUNTRY_COMPACT_AND_BOUND_AUTOMATIC_GRANT;EXACT_ACTUAL_PARENT_AND_CHILD_ORIGINALS;CURRENT_AND_COMMITTED_HISTORY_DISTINCT;NO_GRANT_FROM_PUBLIC_ALLOCATION_PROPOSAL_OR_STAFF_PRESENCE;SCOPED_RECOVERY_WORLD_COUNTRY_FACILITY_RUN;LEGACY_TWO_ARG_RECOVERY_FIXED_C2_ONLY;SCHEDULE_COMMAND_PRIMARY_KEY_PREVENTS_CROSS_COUNTRY_RUN_ID_COLLISION",
+      "relationKeyReviewContracts": [
+        {
+          "qualifiedRelation": "world_v2.postwar_industry_water_grant_publication",
+          "primaryKey": ["world_id", "schedule_command_id"],
+          "previousPrimaryKey": ["world_id", "run_id"],
+          "semantics": "FRESH_SOURCE_DECLARATION_NOT_EXISTING_DATABASE_UPGRADE;ACTUAL_RUN_SCHEDULE_IDENTITY_NOT_RUN_LABEL"
+        }
+      ]
     },
     {
       "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",

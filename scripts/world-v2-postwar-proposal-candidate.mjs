@@ -9,7 +9,7 @@ const policyPath = fileURLToPath(
 );
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const POLICY_SHA256 =
-  "899a67534f9d4413ac662bf6d2bb3278dea938286bfdf460192c253eadcfe471";
+  "472d950c49db5e47d4f2d1afbd52565a3b5228b9dd1dc16332b85d2ac97619b2";
 export function requireImmutableProposalCandidateSha(candidateSha) {
   if (!/^[a-f0-9]{40}$/u.test(candidateSha ?? "") || /^0+$/u.test(candidateSha))
     throw Error("EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED");
