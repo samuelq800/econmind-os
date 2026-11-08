@@ -9,7 +9,7 @@ const policyPath = fileURLToPath(
 );
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const POLICY_SHA256 =
-  "56cf64ef75f0266b606a398cd306d25d2e5b36adb250234e49639928401e8ff7";
+  "4a8ee637960a807292a376b9c30ca09931ffa5480e6292c6eee8550afa40fe8c";
 export function requireImmutableProposalCandidateSha(candidateSha) {
   if (!/^[a-f0-9]{40}$/u.test(candidateSha ?? "") || /^0+$/u.test(candidateSha))
     throw Error("EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED");
@@ -27,7 +27,7 @@ export async function loadPostwarExpandedProposalPolicy() {
     policy.installationAllowed !== false ||
     policy.productionReviewVerified !== false ||
     policy.finalCandidateSelected !== false ||
-    policy.proposals.length !== 73
+    policy.proposals.length !== 77
   )
     throw Error("UNAPPROVED_EXPLICIT_CANDIDATE_POLICY_REQUIRED");
   const prior = new Set();
@@ -337,7 +337,35 @@ function fixedNamedBaselineReplacement(item, bytes) {
     ? industryOpeningReplacement(item, bytes)
     : financialPostingReplacement(item, bytes);
 }
+/** Only the named adjacent Trade derived-table CHECK extension is declared.
+ * This is source review metadata, never a general DROP or installation permit. */
+export function inspectPostwarTradeConstraintExtension(item, bytes) {
+  if (item.namedConstraintExtension === undefined) return null;
+  const expected = {
+    qualifiedRelation: "world_v2.postwar_paged_current_document",
+    constraint: "postwar_paged_current_document_office_id_check",
+    previousOffices: ["FINANCE", "CENTRAL_BANK", "SOCIAL", "CAPTAIN"],
+    nextOffices: ["FINANCE", "CENTRAL_BANK", "SOCIAL", "CAPTAIN", "TRADE"],
+    semantics:
+      "EXACT_ADJACENT_DROP_AND_ADD_IN_ONE_SOURCE_TRANSACTION_NOT_GENERAL_DROP_APPROVAL",
+  };
+  if (
+    item.id !== "postwar-trade-current-projection" ||
+    JSON.stringify(item.namedConstraintExtension) !== JSON.stringify(expected)
+  )
+    throw Error("FIXED_TRADE_DERIVED_CHECK_EXTENSION_REQUIRED");
+  const sql = bytes.toString("utf8");
+  const pair =
+    /alter\s+table\s+world_v2\.postwar_paged_current_document\s+drop\s+constraint\s+postwar_paged_current_document_office_id_check\s*;\s*alter\s+table\s+world_v2\.postwar_paged_current_document\s+add\s+constraint\s+postwar_paged_current_document_office_id_check\s+check\s*\(\s*office_id\s+in\s*\(\s*'FINANCE'\s*,\s*'CENTRAL_BANK'\s*,\s*'SOCIAL'\s*,\s*'CAPTAIN'\s*,\s*'TRADE'\s*\)\s*\)\s*;/giu;
+  if (
+    [...sql.matchAll(pair)].length !== 1 ||
+    /\bdrop\b/iu.test(sql.replace(pair, ""))
+  )
+    throw Error("EXACT_ADJACENT_TRADE_CHECK_EXTENSION_REQUIRED");
+  return { ...expected, declarationOnly: true, productionApplied: false };
+}
 export function inspectExpandedProposalBytes(item, bytes) {
+  inspectPostwarTradeConstraintExtension(item, bytes);
   if (item.namedFunctionReplacements !== undefined)
     fixedNamedBaselineReplacement(item, bytes);
   inspectPostwarFunctionContracts(item, bytes);

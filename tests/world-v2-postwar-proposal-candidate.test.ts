@@ -9,10 +9,40 @@ import {
   validatePostwarFinancialPostingReplacement,
   inspectPostwarFunctionContracts,
   inspectPostwarDefinerColumnReads,
+  inspectPostwarTradeConstraintExtension,
   // @ts-expect-error Node render-only helper has no declarations.
 } from "../scripts/world-v2-postwar-proposal-candidate.mjs";
 
 describe("expanded proposal catalog candidate is explicit, immutable and unapproved", () => {
+  it("accepts only Trade's exact adjacent named derived CHECK extension", async () => {
+    const { policy } = await loadPostwarExpandedProposalPolicy();
+    const item = policy.proposals.find(
+      (p: { id: string }) => p.id === "postwar-trade-current-projection",
+    );
+    const sql =
+      "alter table world_v2.postwar_paged_current_document drop constraint postwar_paged_current_document_office_id_check;alter table world_v2.postwar_paged_current_document add constraint postwar_paged_current_document_office_id_check check(office_id in('FINANCE','CENTRAL_BANK','SOCIAL','CAPTAIN','TRADE'));";
+    expect(
+      inspectPostwarTradeConstraintExtension(item, Buffer.from(sql)),
+    ).toMatchObject({ declarationOnly: true, productionApplied: false });
+    for (const changed of [
+      sql.split(";alter")[0] + ";",
+      sql.replace("'SOCIAL',", ""),
+      sql.replaceAll(
+        "world_v2.postwar_paged_current_document",
+        "world_v2.other_table",
+      ),
+      sql + "drop table world_v2.world_head;",
+    ])
+      expect(() =>
+        inspectPostwarTradeConstraintExtension(item, Buffer.from(changed)),
+      ).toThrow("EXACT_ADJACENT_TRADE_CHECK_EXTENSION_REQUIRED");
+    expect(() =>
+      inspectPostwarTradeConstraintExtension(
+        { ...item, id: "other" },
+        Buffer.from(sql),
+      ),
+    ).toThrow("FIXED_TRADE_DERIVED_CHECK_EXTENSION_REQUIRED");
+  });
   it.each([
     "main",
     "latest",
@@ -26,12 +56,12 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       "EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED",
     );
   });
-  it("has an explicit seventy-three-file dependency order and no pretend final SHA", async () => {
+  it("has an explicit seventy-seven-file dependency order and no pretend final SHA", async () => {
     const { policy } = await loadPostwarExpandedProposalPolicy();
     expect(policy.sourceCommit).toBeNull();
     expect(policy.installationAllowed).toBe(false);
     expect(policy.migrationApproval).toBe("NOT_GRANTED");
-    expect(policy.proposals).toHaveLength(73);
+    expect(policy.proposals).toHaveLength(77);
     const seen = new Set<string>();
     for (const p of policy.proposals) {
       expect(p.path).toBe(`database/proposals/${p.id}.sql`);
@@ -39,15 +69,15 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       expect(p.registration).toBe("UNREGISTERED_SOURCE_PROPOSAL");
       seen.add(p.id);
     }
-    expect(policy.registeredMigrationCount + policy.proposals.length).toBe(96);
+    expect(policy.registeredMigrationCount + policy.proposals.length).toBe(100);
     expect(
       policy.proposals.filter(
         (p: { disposition: string }) => !p.disposition.startsWith("EXCLUDED_"),
       ).length,
-    ).toBe(72);
+    ).toBe(76);
     expect(
       policy.proposals.map((p: { reviewOrder: number }) => p.reviewOrder),
-    ).toEqual(Array.from({ length: 73 }, (_, i) => i + 1));
+    ).toEqual(Array.from({ length: 77 }, (_, i) => i + 1));
     expect([...seen]).toContain("social-operating-match-publisher");
     expect([...seen]).toContain("postwar-social-current-derived-read");
     expect(
@@ -587,7 +617,7 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
     );
   });
   (process.env.POSTWAR_PROPOSAL_METADATA_SOURCE ? it : it.skip)(
-    "compares all fifty-eight actual proposal object/role inventories without selecting a final candidate",
+    "compares all seventy-seven actual proposal object/role inventories without selecting a final candidate",
     async () => {
       const { policy } = await loadPostwarExpandedProposalPolicy();
       for (const item of policy.proposals) {
