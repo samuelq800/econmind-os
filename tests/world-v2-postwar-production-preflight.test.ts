@@ -124,7 +124,7 @@ describe("fixed postwar catalog handoff never executes or grants", () => {
   it("separates exact-signature ACL expectations from release approval and rejects duplicate contracts", async () => {
     const { policy } = await loadPostwarExpandedProposalPolicy();
     const contracts = postwarCatalogFunctionContracts(policy.proposals);
-    expect(contracts).toHaveLength(104);
+    expect(contracts).toHaveLength(106);
     expect(
       contracts.find((c: { qualifiedSignature: string }) =>
         c.qualifiedSignature.startsWith(
@@ -151,8 +151,10 @@ describe("fixed postwar catalog handoff never executes or grants", () => {
     expect(query).toContain("pg_catalog.to_regprocedure");
     expect(query).toContain("'unexpectedDirectExecuteGrantees'");
     expect(query).toContain("'productionReleaseApproved',false");
+    expect(query).toContain("'definerColumnReadContracts'");
+    expect(query).toContain("'actualSelectColumns'");
   });
-  it("retains exactly the two reviewed ordered provider chains and their unchanged ACLs", async () => {
+  it("retains exactly the three reviewed ordered provider chains and their unchanged ACLs", async () => {
     const { policy } = await loadPostwarExpandedProposalPolicy();
     const contracts = postwarCatalogFunctionContracts(policy.proposals);
     const read = contracts.find(
@@ -179,10 +181,69 @@ describe("fixed postwar catalog handoff never executes or grants", () => {
       "postwar-paged-current-projection",
       "postwar-mixed-industry-current-effects",
     ]);
-    for (const entry of [read, apply])
+    const captain = contracts.find(
+      (v: { qualifiedSignature: string }) =>
+        v.qualifiedSignature ===
+        "world_v2.read_postwar_captain_current_page(text,integer,integer,text)",
+    );
+    expect(captain.proposalId).toBe("postwar-captain-h0-current");
+    expect(
+      captain.providerChain.map((v: { proposalId: string }) => v.proposalId),
+    ).toEqual([
+      "postwar-paged-current-projection",
+      "postwar-captain-h0-current",
+    ]);
+    const alias = contracts.find(
+      (v: { qualifiedSignature: string }) =>
+        v.qualifiedSignature ===
+        "world_v2.read_postwar_captain_current_page_before_h0_v1(text,integer,integer,text)",
+    );
+    expect(alias).toMatchObject({
+      owner: captain.owner,
+      securityDefiner: true,
+      searchPath: "pg_catalog",
+      publicExecute: false,
+      executeRoles: [],
+      proposalId: "postwar-captain-h0-current",
+    });
+    expect(
+      contracts.filter(
+        (v: { providerChain: unknown[] }) => v.providerChain.length > 1,
+      ),
+    ).toHaveLength(3);
+    for (const entry of [read, apply, captain])
       expect(entry.providerChain[0].contract).toEqual(
         entry.providerChain[1].contract,
       );
+  });
+  it("rejects a missing or reversed H0 predecessor, changed dispatcher ACL and unreviewed alias grants", async () => {
+    const { policy } = await loadPostwarExpandedProposalPolicy();
+    const signature =
+      "world_v2.read_postwar_captain_current_page(text,integer,integer,text)";
+    const pair = [
+      "postwar-paged-current-projection",
+      "postwar-captain-h0-current",
+    ].map((id) => {
+      const p = policy.proposals.find((v: { id: string }) => v.id === id);
+      return {
+        ...p,
+        functionContracts: p.functionContracts.filter(
+          (v: { qualifiedSignature: string }) =>
+            v.qualifiedSignature === signature,
+        ),
+      };
+    });
+    expect(() => postwarCatalogFunctionContracts([pair[1]])).toThrow(
+      "REVIEWED_FUNCTION_REPLACEMENT_PREDECESSOR_REQUIRED",
+    );
+    expect(() => postwarCatalogFunctionContracts([...pair].reverse())).toThrow(
+      "REVIEWED_FUNCTION_REPLACEMENT_PREDECESSOR_REQUIRED",
+    );
+    const changed = structuredClone(pair);
+    changed[1].functionContracts[0].executeRoles = [];
+    expect(() => postwarCatalogFunctionContracts(changed)).toThrow(
+      "REVIEWED_FUNCTION_REPLACEMENT_ACL_CHANGED",
+    );
   });
   it("rejects reversed or missing providers, signature changes, and any ACL change in a reviewed chain", async () => {
     const { policy } = await loadPostwarExpandedProposalPolicy();

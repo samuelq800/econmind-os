@@ -8,6 +8,7 @@ import {
   validateExpandedProposalRoleDependencies,
   validatePostwarFinancialPostingReplacement,
   inspectPostwarFunctionContracts,
+  inspectPostwarDefinerColumnReads,
   // @ts-expect-error Node render-only helper has no declarations.
 } from "../scripts/world-v2-postwar-proposal-candidate.mjs";
 
@@ -25,12 +26,12 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       "EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED",
     );
   });
-  it("has an explicit seventy-two-file dependency order and no pretend final SHA", async () => {
+  it("has an explicit seventy-three-file dependency order and no pretend final SHA", async () => {
     const { policy } = await loadPostwarExpandedProposalPolicy();
     expect(policy.sourceCommit).toBeNull();
     expect(policy.installationAllowed).toBe(false);
     expect(policy.migrationApproval).toBe("NOT_GRANTED");
-    expect(policy.proposals).toHaveLength(72);
+    expect(policy.proposals).toHaveLength(73);
     const seen = new Set<string>();
     for (const p of policy.proposals) {
       expect(p.path).toBe(`database/proposals/${p.id}.sql`);
@@ -38,15 +39,15 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       expect(p.registration).toBe("UNREGISTERED_SOURCE_PROPOSAL");
       seen.add(p.id);
     }
-    expect(policy.registeredMigrationCount + policy.proposals.length).toBe(95);
+    expect(policy.registeredMigrationCount + policy.proposals.length).toBe(96);
     expect(
       policy.proposals.filter(
         (p: { disposition: string }) => !p.disposition.startsWith("EXCLUDED_"),
       ).length,
-    ).toBe(71);
+    ).toBe(72);
     expect(
       policy.proposals.map((p: { reviewOrder: number }) => p.reviewOrder),
-    ).toEqual(Array.from({ length: 72 }, (_, i) => i + 1));
+    ).toEqual(Array.from({ length: 73 }, (_, i) => i + 1));
     expect([...seen]).toContain("social-operating-match-publisher");
     expect([...seen]).toContain("postwar-social-current-derived-read");
     expect(
@@ -57,6 +58,70 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
     expect(policy.proposals.at(-1).disposition).toBe(
       "EXCLUDED_NOT_A_READ_DEPENDENCY",
     );
+  });
+  it("records the exact H0 dispatcher, private renamed predecessor and fence prerequisite", async () => {
+    const { policy } = await loadPostwarExpandedProposalPolicy();
+    const h0 = policy.proposals.find(
+      (p: { id: string }) => p.id === "postwar-captain-h0-current",
+    );
+    expect(h0.createdRoles).toEqual([]);
+    expect(h0.createdRelations).toEqual([
+      "postwar_captain_h0_current_document",
+    ]);
+    expect(h0.dependencies).toContain("postwar-paged-current-projection");
+    expect(h0.runtimePrerequisites).toEqual([
+      "postwar-source-revocation-fence",
+    ]);
+    expect(h0.renamedFunctions).toEqual([
+      "read_postwar_captain_current_page_before_h0_v1",
+    ]);
+    expect(h0.renamedFunctionContracts).toEqual([
+      {
+        qualifiedSignature:
+          "world_v2.read_postwar_captain_current_page_before_h0_v1(text,integer,integer,text)",
+        owner: "world_v2_postwar_projection_owner",
+        securityDefiner: true,
+        searchPath: "pg_catalog",
+        publicExecute: false,
+        executeRoles: [],
+      },
+    ]);
+    expect(h0.permissionDelta.membershipEnrollment).toBe(false);
+  });
+  it("pins rent metadata reads to only two seat and seven authorization columns on its inaccessible owner", async () => {
+    const { policy } = await loadPostwarExpandedProposalPolicy();
+    const rent = policy.proposals.find(
+      (p: { id: string }) => p.id === "postwar-beneficial-housing-rent-custody",
+    );
+    expect(
+      rent.definerColumnReadContracts.map(
+        (c: { columns: string[] }) => c.columns.length,
+      ),
+    ).toEqual([2, 7]);
+    const sql = rent.definerColumnReadContracts
+      .map(
+        (c: { columns: string[]; qualifiedRelation: string; role: string }) =>
+          `grant select(${c.columns.join(",")})on ${c.qualifiedRelation} to ${c.role};`,
+      )
+      .join("\n");
+    const contracts = inspectPostwarDefinerColumnReads(rent, Buffer.from(sql));
+    expect(contracts).toHaveLength(2);
+    for (const replacement of [
+      sql.replace("select(world_id,auth_subject)", "select"),
+      sql.replace(
+        "world_id,auth_subject)",
+        "world_id,auth_subject,created_at_real)",
+      ),
+      sql.replace(
+        "to world_v2_beneficial_rent_source_owner",
+        "to world_v2_beneficial_rent_source_reader",
+      ),
+      sql.replace(",active)", ")"),
+    ]) {
+      expect(() =>
+        inspectPostwarDefinerColumnReads(rent, Buffer.from(replacement)),
+      ).toThrow("RENT_DEFINER_EXACT_METADATA_COLUMN_SELECT_REQUIRED");
+    }
   });
   it("records bytes as observed evidence, rejects out-of-allowlist objects and requires NOLOGIN declarations", () => {
     const item = {
@@ -532,6 +597,32 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
         expect(inspectExpandedProposalBytes(item, bytes).sha256Meaning).toBe(
           "OBSERVED_IMMUTABLE_CANDIDATE_BYTES_NOT_APPROVAL",
         );
+        if (item.id === "postwar-captain-h0-current") {
+          expect(() =>
+            inspectExpandedProposalBytes(
+              item,
+              Buffer.concat([
+                bytes,
+                Buffer.from(
+                  "\ngrant execute on function world_v2.read_postwar_captain_current_page_before_h0_v1(text,integer,integer,text) to world_v2_postwar_projection_reader;\n",
+                ),
+              ]),
+            ),
+          ).toThrow("CAPTAIN_H0_PRIVATE_RENAMED_DISPATCHER_CONTRACT_CHANGED");
+          expect(() =>
+            inspectExpandedProposalBytes(
+              item,
+              Buffer.from(
+                bytes
+                  .toString()
+                  .replace(
+                    "from public,world_v2_postwar_projection_reader;",
+                    "from public;",
+                  ),
+              ),
+            ),
+          ).toThrow("CAPTAIN_H0_PRIVATE_RENAMED_DISPATCHER_CONTRACT_CHANGED");
+        }
         if (item.id === "financial-posting-decimal-validation") {
           const predecessor = item.namedFunctionReplacements[0];
           const baseline = await readFile(

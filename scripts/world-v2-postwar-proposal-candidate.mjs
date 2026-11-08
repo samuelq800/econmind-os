@@ -9,7 +9,7 @@ const policyPath = fileURLToPath(
 );
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const POLICY_SHA256 =
-  "33b0e96b5402a2d227680663c7c813ce782069d471079daf97119ceb3285082d";
+  "56cf64ef75f0266b606a398cd306d25d2e5b36adb250234e49639928401e8ff7";
 export function requireImmutableProposalCandidateSha(candidateSha) {
   if (!/^[a-f0-9]{40}$/u.test(candidateSha ?? "") || /^0+$/u.test(candidateSha))
     throw Error("EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED");
@@ -27,7 +27,7 @@ export async function loadPostwarExpandedProposalPolicy() {
     policy.installationAllowed !== false ||
     policy.productionReviewVerified !== false ||
     policy.finalCandidateSelected !== false ||
-    policy.proposals.length !== 72
+    policy.proposals.length !== 73
   )
     throw Error("UNAPPROVED_EXPLICIT_CANDIDATE_POLICY_REQUIRED");
   const prior = new Set();
@@ -153,6 +153,72 @@ export function inspectPostwarFunctionContracts(item, bytes) {
     actual.length !== item.functionContracts?.length
   )
     throw Error("PROPOSAL_FUNCTION_SIGNATURE_CHANGED");
+  if (item.renamedFunctionContracts !== undefined) {
+    const alias = item.renamedFunctionContracts[0];
+    const predecessor = item.functionContracts.find(
+      (c) =>
+        c.qualifiedSignature ===
+        "world_v2.read_postwar_captain_current_page(text,integer,integer,text)",
+    );
+    if (
+      item.id !== "postwar-captain-h0-current" ||
+      item.renamedFunctionContracts.length !== 1 ||
+      alias.qualifiedSignature !==
+        "world_v2.read_postwar_captain_current_page_before_h0_v1(text,integer,integer,text)" ||
+      alias.owner !== predecessor?.owner ||
+      alias.securityDefiner !== predecessor.securityDefiner ||
+      alias.searchPath !== predecessor.searchPath ||
+      alias.publicExecute !== false ||
+      alias.executeRoles.length !== 0 ||
+      !/alter\s+function\s+world_v2\.read_postwar_captain_current_page\(text,integer,integer,text\)\s*rename\s+to\s+read_postwar_captain_current_page_before_h0_v1\s*;/iu.test(
+        sql,
+      ) ||
+      !/revoke\s+all\s+on\s+function\s+world_v2\.read_postwar_captain_current_page_before_h0_v1\(text,integer,integer,text\)\s*from\s+public,world_v2_postwar_projection_reader\s*;/iu.test(
+        sql,
+      ) ||
+      /grant\s+(?:all|execute)[^;]*read_postwar_captain_current_page_before_h0_v1/iu.test(
+        sql,
+      )
+    )
+      throw Error("CAPTAIN_H0_PRIVATE_RENAMED_DISPATCHER_CONTRACT_CHANGED");
+  }
+}
+/** Fixed column ACL review for the rent definer's nested baseline RLS reads.
+ * This compares declarations, never grants access or replaces catalog evidence. */
+export function inspectPostwarDefinerColumnReads(item, bytes) {
+  if (item.definerColumnReadContracts === undefined) return [];
+  if (
+    item.id !== "postwar-beneficial-housing-rent-custody" ||
+    item.definerColumnReadContracts.length !== 2
+  )
+    throw Error("FIXED_RENT_METADATA_COLUMN_CONTRACT_REQUIRED");
+  const sql = bytes.toString("utf8");
+  return item.definerColumnReadContracts.map((contract) => {
+    const grants = [...sql.matchAll(/\bgrant\s+select\b[^;]*;/giu)]
+      .map((match) => match[0])
+      .filter((statement) => statement.includes(contract.qualifiedRelation));
+    const match = grants[0]?.match(
+      /^grant\s+select\s*\(([^)]*)\)\s*on\s+(world_v2\.[a-z_0-9]+)\s+to\s+([a-z_0-9]+)\s*;/iu,
+    );
+    const columns = match?.[1]
+      .split(",")
+      .map((name) => name.trim())
+      .sort();
+    if (
+      grants.length !== 1 ||
+      !match ||
+      match[2] !== contract.qualifiedRelation ||
+      match[3] !== contract.role ||
+      JSON.stringify(columns) !== JSON.stringify([...contract.columns].sort())
+    )
+      throw Error("RENT_DEFINER_EXACT_METADATA_COLUMN_SELECT_REQUIRED");
+    return {
+      ...contract,
+      columns,
+      declarationOnly: true,
+      productionApplied: false,
+    };
+  });
 }
 // This is a fixed declaration comparison for the reviewed 0009 forward-fix,
 // not a PostgreSQL parser or a pg_get_functiondef hash normalizer.
@@ -275,6 +341,10 @@ export function inspectExpandedProposalBytes(item, bytes) {
   if (item.namedFunctionReplacements !== undefined)
     fixedNamedBaselineReplacement(item, bytes);
   inspectPostwarFunctionContracts(item, bytes);
+  const definerColumnReadContracts = inspectPostwarDefinerColumnReads(
+    item,
+    bytes,
+  );
   const sql = bytes.toString("utf8");
   const names = (pattern) =>
     [...new Set([...sql.matchAll(pattern)].map((m) => m[1]))].sort();
@@ -330,6 +400,9 @@ export function inspectExpandedProposalBytes(item, bytes) {
     throw Error("DECLARED_FIXED_NOLOGIN_ROLE_REQUIREMENTS_MISSING");
   return {
     ...item,
+    ...(definerColumnReadContracts.length
+      ? { definerColumnReadContracts }
+      : {}),
     referencedRoleNames: referencedRoles,
     sha256: sha(bytes),
     bytes: bytes.length,

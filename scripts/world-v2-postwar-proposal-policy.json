@@ -6,7 +6,7 @@
   "projectRef": "vimksjrhaxdpnkvgsavz",
   "registeredManifestSha256": "e675bd8bd18ba6c51aeffa674320dba3ac79299b7e12eeef834fe28547f9025e",
   "registeredMigrationCount": 23,
-  "proposalPolicy": "Fixed 72-proposal source inventory and dependency review order only; no installation order, migration approval or final World SHA selected",
+  "proposalPolicy": "Fixed 73-proposal source inventory and dependency review order only; no installation order, migration approval or final World SHA selected",
   "proposals": [
     {
       "id": "runtime-read-binding-storage",
@@ -2256,7 +2256,32 @@
         "PRESERVE_AUTHORITATIVE_HISTORY_IMMUTABLE_ORIGINALS_AND_EXISTING_SOURCE_PINS",
         "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
         "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE"
-      ]
+      ],
+      "definerColumnReadContracts": [
+        {
+          "qualifiedRelation": "world_v2.runtime_read_seat",
+          "role": "world_v2_beneficial_rent_source_owner",
+          "columns": ["world_id", "auth_subject"]
+        },
+        {
+          "qualifiedRelation": "world_v2.current_commit_authorization",
+          "role": "world_v2_beneficial_rent_source_owner",
+          "columns": [
+            "world_id",
+            "auth_subject",
+            "country_id",
+            "office_id",
+            "team_id",
+            "authorization_version",
+            "active"
+          ]
+        }
+      ],
+      "sourceRevisionProvenance": {
+        "predecessorSha256": "100a7db01229d7b1d2fd554d4a97e9c55b49caeb91547268e272f6bdcec63d39",
+        "correctedSha256": "f5e0eb573d5ab1a28819d56a58d8f6d4c41683639b2001d11bc7bf6e80114da0",
+        "meaning": "PRIVATE_DEFINER_NESTED_BASELINE_RLS_METADATA_COLUMN_READ_FIX;NO_RUNTIME_GRANT_OR_ENROLLMENT;ACTUAL_ROLE_PG16_15_TARGETED_EVIDENCE_ONLY"
+      }
     },
     {
       "id": "postwar-narrow-trade-automatic-source",
@@ -5124,9 +5149,98 @@
         "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
         "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE"
       ],
+      "id": "postwar-captain-h0-current",
+      "path": "database/proposals/postwar-captain-h0-current.sql",
+      "reviewOrder": 71,
+      "dependencies": [
+        "postwar-captain-current-derived-read",
+        "postwar-paged-current-projection"
+      ],
+      "createdRoles": [],
+      "reusedRoles": [
+        "world_v2_postwar_projection_owner",
+        "world_v2_postwar_projection_publisher",
+        "world_v2_postwar_projection_reader"
+      ],
+      "createdRelations": ["postwar_captain_h0_current_document"],
+      "definedFunctions": [
+        "publish_postwar_captain_h0_current",
+        "read_postwar_captain_current_page"
+      ],
+      "renamedFunctions": ["read_postwar_captain_current_page_before_h0_v1"],
+      "literalCreatedPolicies": ["captain_h0_owner_world"],
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_postwar_projection_owner": "postwar-office-derived-read",
+        "world_v2_postwar_projection_publisher": "postwar-office-derived-read",
+        "world_v2_postwar_projection_reader": "postwar-office-derived-read"
+      },
+      "definedFunctionSignatures": [
+        "world_v2.publish_postwar_captain_h0_current(text,text)",
+        "world_v2.read_postwar_captain_current_page(text,integer,integer,text)"
+      ],
+      "functionContracts": [
+        {
+          "qualifiedSignature": "world_v2.publish_postwar_captain_h0_current(text,text)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": ["world_v2_postwar_projection_publisher"]
+        },
+        {
+          "qualifiedSignature": "world_v2.read_postwar_captain_current_page(text,integer,integer,text)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": ["world_v2_postwar_projection_reader"]
+        }
+      ],
+      "renamedFunctionContracts": [
+        {
+          "qualifiedSignature": "world_v2.read_postwar_captain_current_page_before_h0_v1(text,integer,integer,text)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": []
+        }
+      ],
+      "runtimePrerequisites": ["postwar-source-revocation-fence"],
+      "versionSemantics": "EXACT_ZERO_GLOBAL_HEAD_AND_EMPTY_JOURNALS;ADMITTED_GENESIS_AND_IMMUTABLE_PARENT_HASH_REQUIRED;NO_SYNTHETIC_EVENT;H_POSITIVE_DELEGATES_PRESERVED_PRIVATE_DISPATCHER;OLD_H0_CURSOR_STALE_AFTER_HEAD_ADVANCE"
+    },
+    {
+      "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
+      "baselineDependencies": [
+        "0002_world_v2_command_event_ledger",
+        "0003_world_v2_command_receipts_outbox",
+        "0005_world_v2_writer_lease_fencing",
+        "0009_world_v2_posting_payload_integrity",
+        "0011_world_v2_current_commit_authorization",
+        "0013_world_v2_read_projection_boundary",
+        "0016_world_v2_opening_seed"
+      ],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "permissionDelta": {
+        "reviewStatus": "SOURCE_DECLARATIONS_ONLY_ACTUAL_CATALOG_AND_APPROVED_ENROLLMENT_REQUIRED",
+        "newLoginRoles": false,
+        "membershipEnrollment": false,
+        "boundedRuntimeRawSeedSelect": false
+      },
+      "rollbackChecks": [
+        "NO_AUTOMATIC_SQL_DOWNGRADE",
+        "UNCERTAIN_COMMIT_STOP_AND_READBACK_NOT_BLIND_RETRY",
+        "PRESERVE_AUTHORITATIVE_HISTORY_IMMUTABLE_ORIGINALS_AND_EXISTING_SOURCE_PINS",
+        "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
+        "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE"
+      ],
       "id": "postwar-source-revocation-fence",
       "path": "database/proposals/postwar-source-revocation-fence.sql",
-      "reviewOrder": 71,
+      "reviewOrder": 72,
       "dependencies": [
         "runtime-admission-publication",
         "runtime-read-binding-storage",
@@ -5244,7 +5358,7 @@
     {
       "id": "isolated-world-clock",
       "path": "database/proposals/isolated-world-clock.sql",
-      "reviewOrder": 72,
+      "reviewOrder": 73,
       "disposition": "EXCLUDED_NOT_A_READ_DEPENDENCY",
       "dependencies": [],
       "baselineDependencies": [],

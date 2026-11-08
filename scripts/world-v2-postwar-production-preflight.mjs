@@ -52,7 +52,7 @@ export async function renderPostwarCatalogQuery() {
 }
 /** Expected function ACLs are review metadata, never GRANT instructions. */
 export function postwarCatalogFunctionContracts(proposals) {
-  // These two ordered forward replacements are already explicit candidate
+  // These ordered forward replacements are already explicit candidate
   // declarations. This is not a general last-definition-wins registry.
   const reviewedChains = [
     [
@@ -64,6 +64,11 @@ export function postwarCatalogFunctionContracts(proposals) {
       "world_v2.postwar_apply_current_frame_page(text,text,jsonb)",
       "postwar-paged-current-projection",
       "postwar-mixed-industry-current-effects",
+    ],
+    [
+      "world_v2.read_postwar_captain_current_page(text,integer,integer,text)",
+      "postwar-paged-current-projection",
+      "postwar-captain-h0-current",
     ],
   ];
   const acl = (contract) =>
@@ -79,7 +84,10 @@ export function postwarCatalogFunctionContracts(proposals) {
   for (const proposal of proposals.filter(
     (p) => !p.disposition.startsWith("EXCLUDED_"),
   )) {
-    for (const contract of proposal.functionContracts ?? []) {
+    for (const contract of [
+      ...(proposal.functionContracts ?? []),
+      ...(proposal.renamedFunctionContracts ?? []),
+    ]) {
       const chain = reviewedChains.find(
         ([signature, predecessor, successor]) =>
           (proposal.id === predecessor || proposal.id === successor) &&
@@ -124,6 +132,9 @@ function catalogQueryForPins(pins) {
     (proposal) => !proposal.disposition.startsWith("EXCLUDED_"),
   );
   const exactFunctionContracts = postwarCatalogFunctionContracts(relevant);
+  const definerColumnReadContracts = relevant.flatMap(
+    (p) => p.definerColumnReadContracts ?? [],
+  );
   const relationNames = [
     ...new Set([
       ...baselineRelations,
@@ -134,6 +145,7 @@ function catalogQueryForPins(pins) {
     ...new Set([
       ...baselineFunctions,
       ...relevant.flatMap((proposal) => proposal.definedFunctions),
+      ...relevant.flatMap((proposal) => proposal.renamedFunctions ?? []),
     ]),
   ].sort();
   const roleNames = [
@@ -203,6 +215,13 @@ select pg_catalog.jsonb_build_object(
  'serverVersionNum',pg_catalog.current_setting('server_version_num'),
  'worldSchemaExists',exists(select 1 from namespace),
  'productionReleaseApproved',false,
+ 'definerColumnReadContracts',coalesce((select pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object(
+  'expected',contract,'roleExists',r.oid is not null,'relationExists',c.oid is not null,
+  'tableSelect',case when r.oid is not null and c.oid is not null then pg_catalog.has_table_privilege(r.oid,c.oid,'SELECT')else false end,
+  'actualSelectColumns',coalesce((select pg_catalog.jsonb_agg(a.attname order by a.attname)from pg_catalog.pg_attribute a where a.attrelid=c.oid and a.attnum>0 and not a.attisdropped and r.oid is not null and pg_catalog.has_column_privilege(r.oid,c.oid,a.attnum,'SELECT')),'[]'::jsonb)
+ ))from pg_catalog.jsonb_array_elements(${literal(JSON.stringify(definerColumnReadContracts))}::jsonb)contract
+ left join pg_catalog.pg_roles r on r.rolname=contract->>'role'
+ left join pg_catalog.pg_class c on c.oid=case when exists(select 1 from namespace)then pg_catalog.to_regclass(contract->>'qualifiedRelation')else null end),'[]'::jsonb),
  'runtimeBindingVerified',false,
  'relations',coalesce((select pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object('name',c.name,'exists',c.oid is not null,'kind',c.relkind,'owner',c.owner,'rls',c.relrowsecurity,'forceRls',c.relforcerowsecurity,
  'columns',coalesce((select pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object('name',a.attname,'type',pg_catalog.format_type(a.atttypid,a.atttypmod),'notNull',a.attnotnull)order by a.attnum)from pg_catalog.pg_attribute a where a.attrelid=c.oid and a.attnum>0 and not a.attisdropped),'[]'::jsonb),
