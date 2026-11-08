@@ -5,7 +5,11 @@ import { readFile, writeFile, mkdir, lstat, realpath } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { WORLD_V2_RELEASE_PROJECT_REF } from "./render-world-v2-release-query.mjs";
-import { loadPostwarExpandedProposalCandidate } from "./world-v2-postwar-proposal-candidate.mjs";
+import {
+  loadPostwarExpandedProposalCandidate,
+  COMPLETE_OPENING_INVENTORY_REPAIR_ID,
+  COMPLETE_OPENING_INVENTORY_ADAPTATIONS,
+} from "./world-v2-postwar-proposal-candidate.mjs";
 
 const bindingPath = fileURLToPath(
   new URL(
@@ -141,6 +145,77 @@ export function postwarCatalogFunctionContracts(proposals) {
           },
         ],
       });
+    }
+    if (proposal.fixedFunctionAdaptations !== undefined) {
+      if (
+        proposal.id !== COMPLETE_OPENING_INVENTORY_REPAIR_ID ||
+        proposal.fixedFunctionAdaptations.length !== 13
+      )
+        throw Error("FIXED_COMPLETE_INVENTORY_REPAIR_ONLY");
+      for (const [
+        i,
+        expected,
+      ] of COMPLETE_OPENING_INVENTORY_ADAPTATIONS.entries()) {
+        const adaptation = proposal.fixedFunctionAdaptations[i],
+          contract = adaptation?.contract;
+        const predecessor = proposals.find(
+          (p) => p.id === expected.predecessor,
+        );
+        const name = expected.signature.split("(")[0].split(".")[1];
+        if (
+          adaptation?.qualifiedSignature !== expected.signature ||
+          adaptation.predecessor !== expected.predecessor ||
+          !predecessor ||
+          proposals.indexOf(predecessor) >= proposals.indexOf(proposal) ||
+          !proposal.dependencies.includes(predecessor.id) ||
+          ![
+            ...predecessor.definedFunctions,
+            ...predecessor.renamedFunctions,
+          ].includes(name)
+        )
+          throw Error("REVIEWED_FUNCTION_REPLACEMENT_PREDECESSOR_REQUIRED");
+        const expectedContract = {
+          qualifiedSignature: expected.signature,
+          owner: expected.signature.startsWith(
+            "world_v2.read_postwar_narrow_trade_",
+          )
+            ? "world_v2_postwar_narrow_trade_current_owner"
+            : "world_v2_postwar_projection_owner",
+          securityDefiner: true,
+          searchPath: "pg_catalog",
+          publicExecute: false,
+          executeRoles: expected.executeRoles,
+        };
+        if (acl(contract) !== acl(expectedContract))
+          throw Error("REVIEWED_FUNCTION_REPLACEMENT_ACL_CHANGED");
+        const previous = contracts.get(expected.signature);
+        if (
+          previous &&
+          (previous.proposalId !== expected.predecessor ||
+            acl(previous) !== acl(contract))
+        )
+          throw Error("REVIEWED_FUNCTION_REPLACEMENT_ACL_CHANGED");
+        contracts.set(expected.signature, {
+          ...contract,
+          proposalId: proposal.id,
+          providerChain: [
+            ...(previous?.providerChain ?? [
+              {
+                proposalId: predecessor.id,
+                sourcePath: predecessor.path,
+                sourceSha256: predecessor.sha256 ?? null,
+                contract: { ...contract },
+              },
+            ]),
+            {
+              proposalId: proposal.id,
+              sourcePath: proposal.path,
+              sourceSha256: proposal.sha256 ?? null,
+              contract: { ...contract },
+            },
+          ],
+        });
+      }
     }
   }
   return [...contracts.values()].sort((a, b) =>

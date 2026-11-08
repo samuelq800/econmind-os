@@ -6,7 +6,7 @@
   "projectRef": "vimksjrhaxdpnkvgsavz",
   "registeredManifestSha256": "e675bd8bd18ba6c51aeffa674320dba3ac79299b7e12eeef834fe28547f9025e",
   "registeredMigrationCount": 23,
-  "proposalPolicy": "Fixed 79-proposal source inventory and dependency review order only; no installation order, migration approval or final World SHA selected",
+  "proposalPolicy": "Fixed 80-proposal source inventory and dependency review order only; no installation order, migration approval or final World SHA selected",
   "proposals": [
     {
       "id": "runtime-read-binding-storage",
@@ -6103,9 +6103,277 @@
       "reviewOrder": 78
     },
     {
+      "id": "postwar-complete-opening-inventory-read-repair",
+      "path": "database/proposals/postwar-complete-opening-inventory-read-repair.sql",
+      "reviewOrder": 79,
+      "disposition": "REQUIRED_COMPLETE_ADMITTED_INVENTORY_READ_REPAIR",
+      "dependencies": [
+        "postwar-office-derived-read",
+        "postwar-social-current-derived-read",
+        "postwar-physical-opening-facts-read",
+        "postwar-physical-inventory-provenance",
+        "postwar-trade-current-projection",
+        "postwar-narrow-trade-current-source",
+        "postwar-narrow-trade-automatic-source",
+        "postwar-narrow-trade-paged-source",
+        "postwar-mixed-goods-omo-current-effects",
+        "postwar-source-revocation-fence"
+      ],
+      "baselineDependencies": [
+        "0007_world_v2_atomic_transition_facts",
+        "0016_world_v2_opening_seed"
+      ],
+      "createdRoles": [],
+      "reusedRoles": [
+        "world_v2_postwar_narrow_trade_current_owner",
+        "world_v2_postwar_narrow_trade_source",
+        "world_v2_postwar_projection_owner",
+        "world_v2_postwar_projection_publisher",
+        "world_v2_postwar_projection_reader"
+      ],
+      "createdRelations": [],
+      "definedFunctions": [
+        "postwar_complete_opening_inventory_document",
+        "publish_postwar_complete_opening_inventory"
+      ],
+      "definedFunctionSignatures": [
+        "world_v2.postwar_complete_opening_inventory_document(text,text,text)",
+        "world_v2.publish_postwar_complete_opening_inventory(text,text,text,text,text,text)"
+      ],
+      "functionContracts": [
+        {
+          "qualifiedSignature": "world_v2.postwar_complete_opening_inventory_document(text,text,text)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": ["world_v2_postwar_narrow_trade_current_owner"]
+        },
+        {
+          "qualifiedSignature": "world_v2.publish_postwar_complete_opening_inventory(text,text,text,text,text,text)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": ["world_v2_postwar_projection_publisher"]
+        }
+      ],
+      "fixedFunctionAdaptations": [
+        {
+          "qualifiedSignature": "world_v2.publish_postwar_office_projection(text,text,text,text,text,text,text,text)",
+          "predecessor": "postwar-office-derived-read",
+          "predecessorProsrcSha256": "d5edd7eb5ee8eff8eff5455a45b99a3d680a2963773e9efcc7330a9944190037",
+          "successorProsrcSha256": "111412723943d36aebce870374cd4d7b728b291119e17e5bad50371730beb800",
+          "contract": {
+            "qualifiedSignature": "world_v2.publish_postwar_office_projection(text,text,text,text,text,text,text,text)",
+            "owner": "world_v2_postwar_projection_owner",
+            "securityDefiner": true,
+            "searchPath": "pg_catalog",
+            "publicExecute": false,
+            "executeRoles": ["world_v2_postwar_projection_publisher"]
+          }
+        },
+        {
+          "qualifiedSignature": "world_v2.read_postwar_office_projection_h0_page(text,text,text,integer,integer,text)",
+          "predecessor": "postwar-social-current-derived-read",
+          "predecessorProsrcSha256": "ce4477def490cd613dd615cc7c53668fecce08077bdbaf707bd53b2140cc7303",
+          "successorProsrcSha256": "9a7c3ec6785a3ba20152a2db10a1999d2c1677fac23669bd3a7a713e8a1d34f6",
+          "contract": {
+            "qualifiedSignature": "world_v2.read_postwar_office_projection_h0_page(text,text,text,integer,integer,text)",
+            "owner": "world_v2_postwar_projection_owner",
+            "securityDefiner": true,
+            "searchPath": "pg_catalog",
+            "publicExecute": false,
+            "executeRoles": []
+          }
+        },
+        {
+          "qualifiedSignature": "world_v2.read_postwar_physical_opening_facts_page(text,text,text,integer,integer,text)",
+          "predecessor": "postwar-physical-opening-facts-read",
+          "predecessorProsrcSha256": "1873dbc7183fdfcf79cf058303de179484a60f463cc12ab508142fb7ed6526d4",
+          "successorProsrcSha256": "933e7e0c0cc1b6f1ae2bd9ed3e52ecdf36a0aa64ff1426a1e07a43f7b6335148",
+          "contract": {
+            "qualifiedSignature": "world_v2.read_postwar_physical_opening_facts_page(text,text,text,integer,integer,text)",
+            "owner": "world_v2_postwar_projection_owner",
+            "securityDefiner": true,
+            "searchPath": "pg_catalog",
+            "publicExecute": false,
+            "executeRoles": ["world_v2_postwar_projection_reader"]
+          }
+        },
+        {
+          "qualifiedSignature": "world_v2.publish_postwar_inventory_provenance_v2(text,text,text,text,text,text)",
+          "predecessor": "postwar-physical-inventory-provenance",
+          "predecessorProsrcSha256": "664d6998114a136d31e9ce510eeb51420a47a7804a8ec3cc0ed175c23c79b231",
+          "successorProsrcSha256": "af0c6d9725fd113492288d7a9f7c9a2a3cbf3728dfe0c683e48999542c65ce93",
+          "contract": {
+            "qualifiedSignature": "world_v2.publish_postwar_inventory_provenance_v2(text,text,text,text,text,text)",
+            "owner": "world_v2_postwar_projection_owner",
+            "securityDefiner": true,
+            "searchPath": "pg_catalog",
+            "publicExecute": false,
+            "executeRoles": ["world_v2_postwar_projection_publisher"]
+          }
+        },
+        {
+          "qualifiedSignature": "world_v2.read_postwar_inventory_provenance_v2_page(text,text,text,integer,integer,text)",
+          "predecessor": "postwar-physical-inventory-provenance",
+          "predecessorProsrcSha256": "092717c07debae7b65d80c92e5bc026de9a479dcc744bcb37ce75c2f6a54c3b5",
+          "successorProsrcSha256": "5ffe3b252a9628b53f907c907775b19627c352381216e96ef7542712a9d7c3ae",
+          "contract": {
+            "qualifiedSignature": "world_v2.read_postwar_inventory_provenance_v2_page(text,text,text,integer,integer,text)",
+            "owner": "world_v2_postwar_projection_owner",
+            "securityDefiner": true,
+            "searchPath": "pg_catalog",
+            "publicExecute": false,
+            "executeRoles": ["world_v2_postwar_projection_reader"]
+          }
+        },
+        {
+          "qualifiedSignature": "world_v2.postwar_write_trade_current_document(text,text,text,text,text,bigint,bigint,jsonb,jsonb,jsonb)",
+          "predecessor": "postwar-trade-current-projection",
+          "predecessorProsrcSha256": "26a485843da1fda3653af11463e31566a4bd21b1ebab1701f001c977107934ab",
+          "successorProsrcSha256": "8f356638bbe8ee5a7330a9bc9c512c9403e9f3621c928f8ed2dc90d5e1613e43",
+          "contract": {
+            "qualifiedSignature": "world_v2.postwar_write_trade_current_document(text,text,text,text,text,bigint,bigint,jsonb,jsonb,jsonb)",
+            "owner": "world_v2_postwar_projection_owner",
+            "securityDefiner": true,
+            "searchPath": "pg_catalog",
+            "publicExecute": false,
+            "executeRoles": []
+          }
+        },
+        {
+          "qualifiedSignature": "world_v2.publish_postwar_paged_trade_current(text,text,text)",
+          "predecessor": "postwar-trade-current-projection",
+          "predecessorProsrcSha256": "0712526600a433fe15538fe929fda6639183b558f19c7e46fb89d095441aea7f",
+          "successorProsrcSha256": "67f1b079b5369596469991bc77f4991cfd83d00feb630e0ad98e11780a165b07",
+          "contract": {
+            "qualifiedSignature": "world_v2.publish_postwar_paged_trade_current(text,text,text)",
+            "owner": "world_v2_postwar_projection_owner",
+            "securityDefiner": true,
+            "searchPath": "pg_catalog",
+            "publicExecute": false,
+            "executeRoles": ["world_v2_postwar_projection_publisher"]
+          }
+        },
+        {
+          "qualifiedSignature": "world_v2.read_postwar_trade_current_page(text,text,integer,integer,text)",
+          "predecessor": "postwar-trade-current-projection",
+          "predecessorProsrcSha256": "3e45e6458435fc7c0826b47b1e135d5a9e451c9fada1e2278a4a1ff3a81f549d",
+          "successorProsrcSha256": "a0e4dfa8c02ddafe4a4a10ce945b3ba71b93f71af05f09beaea87865869d2d5b",
+          "contract": {
+            "qualifiedSignature": "world_v2.read_postwar_trade_current_page(text,text,integer,integer,text)",
+            "owner": "world_v2_postwar_projection_owner",
+            "securityDefiner": true,
+            "searchPath": "pg_catalog",
+            "publicExecute": false,
+            "executeRoles": ["world_v2_postwar_projection_reader"]
+          }
+        },
+        {
+          "qualifiedSignature": "world_v2.read_postwar_narrow_trade_current_source(text,text,text,text,uuid,text,text)",
+          "predecessor": "postwar-narrow-trade-current-source",
+          "predecessorProsrcSha256": "79c1e5bbb3be38532348104b6b0ac0238553aeda1c4fbb2acb356018ea27f480",
+          "successorProsrcSha256": "fc24a1d24263f21ca1dddb203f814d2330b488ecc64622d87f6c52b3a7a71dc3",
+          "contract": {
+            "qualifiedSignature": "world_v2.read_postwar_narrow_trade_current_source(text,text,text,text,uuid,text,text)",
+            "owner": "world_v2_postwar_narrow_trade_current_owner",
+            "securityDefiner": true,
+            "searchPath": "pg_catalog",
+            "publicExecute": false,
+            "executeRoles": ["world_v2_postwar_narrow_trade_source"]
+          }
+        },
+        {
+          "qualifiedSignature": "world_v2.read_postwar_narrow_trade_automatic_source(text,text,text,timestamptz,text)",
+          "predecessor": "postwar-narrow-trade-automatic-source",
+          "predecessorProsrcSha256": "1fb35345a77572946bfb27b6f8781d4a925c82c31686b558dc03de0f7b5d5a36",
+          "successorProsrcSha256": "dda90c55fb02af9ef1fb9dfb3c5558714689c063811040ab89ac600260d4729c",
+          "contract": {
+            "qualifiedSignature": "world_v2.read_postwar_narrow_trade_automatic_source(text,text,text,timestamptz,text)",
+            "owner": "world_v2_postwar_narrow_trade_current_owner",
+            "securityDefiner": true,
+            "searchPath": "pg_catalog",
+            "publicExecute": false,
+            "executeRoles": ["world_v2_postwar_narrow_trade_source"]
+          }
+        },
+        {
+          "qualifiedSignature": "world_v2.read_postwar_narrow_trade_current_paged_scope(text,text,text,text,uuid,text,text)",
+          "predecessor": "postwar-narrow-trade-paged-source",
+          "predecessorProsrcSha256": "f2b51e8ab7f6e0c5a767830ddf3d86cc4f6ac1e129b5c0f285502bc92646440a",
+          "successorProsrcSha256": "b70778b883cad9d575376bb2b5e3e5c3273ce9907aca37e6fd29b1a52b6b291a",
+          "contract": {
+            "qualifiedSignature": "world_v2.read_postwar_narrow_trade_current_paged_scope(text,text,text,text,uuid,text,text)",
+            "owner": "world_v2_postwar_narrow_trade_current_owner",
+            "securityDefiner": true,
+            "searchPath": "pg_catalog",
+            "publicExecute": false,
+            "executeRoles": ["world_v2_postwar_narrow_trade_source"]
+          }
+        },
+        {
+          "qualifiedSignature": "world_v2.read_postwar_narrow_trade_automatic_paged_scope(text,text,text,timestamptz,text)",
+          "predecessor": "postwar-narrow-trade-paged-source",
+          "predecessorProsrcSha256": "fc88ffc0739f9a0367facc88dbefb201f932f4d35f71dc384c450d5898bf7dd7",
+          "successorProsrcSha256": "5ada845e0009edd1b61bfa842c0519a0c715df1a091f40d8533270e78247edc3",
+          "contract": {
+            "qualifiedSignature": "world_v2.read_postwar_narrow_trade_automatic_paged_scope(text,text,text,timestamptz,text)",
+            "owner": "world_v2_postwar_narrow_trade_current_owner",
+            "securityDefiner": true,
+            "searchPath": "pg_catalog",
+            "publicExecute": false,
+            "executeRoles": ["world_v2_postwar_narrow_trade_source"]
+          }
+        },
+        {
+          "qualifiedSignature": "world_v2.postwar_projection_current_inventory_balance(text,jsonb,bigint)",
+          "predecessor": "postwar-mixed-goods-omo-current-effects",
+          "predecessorProsrcSha256": "95f1d3974e9af89510e50fb4d56a7ae4fbb5e3c7607f1848c61787d2c2f15db0",
+          "successorProsrcSha256": "03215136ec048d9eb60efa91c14c3a92e4bdab4e86b75405d2b6a29b0020f38b",
+          "contract": {
+            "qualifiedSignature": "world_v2.postwar_projection_current_inventory_balance(text,jsonb,bigint)",
+            "owner": "world_v2_postwar_projection_owner",
+            "securityDefiner": true,
+            "searchPath": "pg_catalog",
+            "publicExecute": false,
+            "executeRoles": []
+          }
+        }
+      ],
+      "fixedAdaptationSqlSha256": "aa47ebbae894c4c9f0dbaff22a18757962a294e5fa18fb0fcea802ae8454cb37",
+      "renamedFunctions": [],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_postwar_projection_owner": "postwar-office-derived-read",
+        "world_v2_postwar_projection_publisher": "postwar-office-derived-read",
+        "world_v2_postwar_projection_reader": "postwar-office-derived-read",
+        "world_v2_postwar_narrow_trade_current_owner": "postwar-narrow-trade-current-source",
+        "world_v2_postwar_narrow_trade_source": "postwar-narrow-trade-source"
+      },
+      "permissionDelta": {
+        "membershipEnrollment": false,
+        "boundedRuntimeRawSeedSelect": false,
+        "newRoles": false,
+        "existingDefinerOpeningSeedReadOnly": true,
+        "newRpcExecuteRoles": [
+          "world_v2_postwar_narrow_trade_current_owner",
+          "world_v2_postwar_projection_publisher"
+        ],
+        "adaptedFunctionOwnerOidAndAcl": "UNCHANGED_EXACT_PREDECESSOR_ONLY"
+      },
+      "runtimePrerequisites": ["postwar-source-revocation-fence"],
+      "versionSemantics": "APPEND_COMPLETE_DERIVED_INVENTORY_FROM_SAME_ACTUAL_ADMITTED_SEED;LEGACY_DOCUMENTS_AND_WORLD_FINAL_HISTORY_IMMUTABLE;13_EXACT_INSTALLED_FUNCTION_BODY_ADAPTATIONS_NOT_UNVERIFIED_CREATE;NO_SOURCE_ADOPTION_OR_ECONOMIC_AUTHORITY"
+    },
+    {
       "id": "isolated-world-clock",
       "path": "database/proposals/isolated-world-clock.sql",
-      "reviewOrder": 79,
+      "reviewOrder": 80,
       "disposition": "EXCLUDED_NOT_A_READ_DEPENDENCY",
       "dependencies": [],
       "baselineDependencies": [],

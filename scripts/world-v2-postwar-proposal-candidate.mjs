@@ -9,7 +9,7 @@ const policyPath = fileURLToPath(
 );
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const POLICY_SHA256 =
-  "472d950c49db5e47d4f2d1afbd52565a3b5228b9dd1dc16332b85d2ac97619b2";
+  "73a9f0606b16d218743757d4121caeb89f1f9290ee05ed9a631304c253f5d5c7";
 export function requireImmutableProposalCandidateSha(candidateSha) {
   if (!/^[a-f0-9]{40}$/u.test(candidateSha ?? "") || /^0+$/u.test(candidateSha))
     throw Error("EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED");
@@ -27,7 +27,7 @@ export async function loadPostwarExpandedProposalPolicy() {
     policy.installationAllowed !== false ||
     policy.productionReviewVerified !== false ||
     policy.finalCandidateSelected !== false ||
-    policy.proposals.length !== 79
+    policy.proposals.length !== 80
   )
     throw Error("UNAPPROVED_EXPLICIT_CANDIDATE_POLICY_REQUIRED");
   const prior = new Set();
@@ -417,7 +417,142 @@ export function inspectPostwarCaptainAllocationOptions(item, bytes) {
   )
     throw Error("CAPTAIN_ALLOCATION_PRIVATE_IMMUTABLE_HELPER_REQUIRED");
 }
+// One immutable repair source, not a generic dynamic-DDL registration surface.
+export const COMPLETE_OPENING_INVENTORY_REPAIR_ID =
+  "postwar-complete-opening-inventory-read-repair";
+export const COMPLETE_OPENING_INVENTORY_REPAIR_SHA256 =
+  "aa47ebbae894c4c9f0dbaff22a18757962a294e5fa18fb0fcea802ae8454cb37";
+export const COMPLETE_OPENING_INVENTORY_ADAPTATIONS = Object.freeze(
+  [
+    [
+      "world_v2.publish_postwar_office_projection(text,text,text,text,text,text,text,text)",
+      "postwar-office-derived-read",
+      ["world_v2_postwar_projection_publisher"],
+    ],
+    [
+      "world_v2.read_postwar_office_projection_h0_page(text,text,text,integer,integer,text)",
+      "postwar-social-current-derived-read",
+      [],
+    ],
+    [
+      "world_v2.read_postwar_physical_opening_facts_page(text,text,text,integer,integer,text)",
+      "postwar-physical-opening-facts-read",
+      ["world_v2_postwar_projection_reader"],
+    ],
+    [
+      "world_v2.publish_postwar_inventory_provenance_v2(text,text,text,text,text,text)",
+      "postwar-physical-inventory-provenance",
+      ["world_v2_postwar_projection_publisher"],
+    ],
+    [
+      "world_v2.read_postwar_inventory_provenance_v2_page(text,text,text,integer,integer,text)",
+      "postwar-physical-inventory-provenance",
+      ["world_v2_postwar_projection_reader"],
+    ],
+    [
+      "world_v2.postwar_write_trade_current_document(text,text,text,text,text,bigint,bigint,jsonb,jsonb,jsonb)",
+      "postwar-trade-current-projection",
+      [],
+    ],
+    [
+      "world_v2.publish_postwar_paged_trade_current(text,text,text)",
+      "postwar-trade-current-projection",
+      ["world_v2_postwar_projection_publisher"],
+    ],
+    [
+      "world_v2.read_postwar_trade_current_page(text,text,integer,integer,text)",
+      "postwar-trade-current-projection",
+      ["world_v2_postwar_projection_reader"],
+    ],
+    [
+      "world_v2.read_postwar_narrow_trade_current_source(text,text,text,text,uuid,text,text)",
+      "postwar-narrow-trade-current-source",
+      ["world_v2_postwar_narrow_trade_source"],
+    ],
+    [
+      "world_v2.read_postwar_narrow_trade_automatic_source(text,text,text,timestamptz,text)",
+      "postwar-narrow-trade-automatic-source",
+      ["world_v2_postwar_narrow_trade_source"],
+    ],
+    [
+      "world_v2.read_postwar_narrow_trade_current_paged_scope(text,text,text,text,uuid,text,text)",
+      "postwar-narrow-trade-paged-source",
+      ["world_v2_postwar_narrow_trade_source"],
+    ],
+    [
+      "world_v2.read_postwar_narrow_trade_automatic_paged_scope(text,text,text,timestamptz,text)",
+      "postwar-narrow-trade-paged-source",
+      ["world_v2_postwar_narrow_trade_source"],
+    ],
+    [
+      "world_v2.postwar_projection_current_inventory_balance(text,jsonb,bigint)",
+      "postwar-mixed-goods-omo-current-effects",
+      [],
+    ],
+  ].map(([signature, predecessor, executeRoles]) =>
+    Object.freeze({
+      signature,
+      predecessor,
+      executeRoles: Object.freeze(executeRoles),
+    }),
+  ),
+);
+export function inspectCompleteOpeningInventoryRepair(item, bytes) {
+  if (item.id !== COMPLETE_OPENING_INVENTORY_REPAIR_ID) {
+    if (item.fixedFunctionAdaptations !== undefined)
+      throw Error("FIXED_COMPLETE_INVENTORY_REPAIR_ONLY");
+    return;
+  }
+  if (
+    sha(bytes) !== COMPLETE_OPENING_INVENTORY_REPAIR_SHA256 ||
+    item.fixedAdaptationSqlSha256 !== COMPLETE_OPENING_INVENTORY_REPAIR_SHA256
+  )
+    throw Error("FIXED_COMPLETE_INVENTORY_REPAIR_BYTES_REQUIRED");
+  const blocks = [
+    ...bytes
+      .toString("utf8")
+      .matchAll(/-- Fixed adaptation: ([^\n]+)\n([\s\S]*?)end;\$adapt\$;/gu),
+  ];
+  if (blocks.length !== 13 || item.fixedFunctionAdaptations?.length !== 13)
+    throw Error("FIXED_COMPLETE_INVENTORY_ADAPTATIONS_REQUIRED");
+  for (const [
+    i,
+    expected,
+  ] of COMPLETE_OPENING_INVENTORY_ADAPTATIONS.entries()) {
+    const [, signature, block] = blocks[i];
+    const actual = item.fixedFunctionAdaptations[i],
+      contract = actual?.contract;
+    const owner = signature.startsWith("world_v2.read_postwar_narrow_trade_")
+      ? "world_v2_postwar_narrow_trade_current_owner"
+      : "world_v2_postwar_projection_owner";
+    const hashes = [...block.matchAll(/'([a-f0-9]{64})'/gu)].map((m) => m[1]);
+    const body = block.match(
+      /replacement:=\$newbody\$([\s\S]*?)\$newbody\$;/u,
+    )?.[1];
+    if (
+      signature !== expected.signature ||
+      actual.qualifiedSignature !== expected.signature ||
+      actual.predecessor !== expected.predecessor ||
+      !item.dependencies.includes(expected.predecessor) ||
+      hashes.length !== 2 ||
+      actual.predecessorProsrcSha256 !== hashes[0] ||
+      actual.successorProsrcSha256 !== hashes[1] ||
+      body === undefined ||
+      sha(Buffer.from(body)) !== hashes[1] ||
+      contract?.qualifiedSignature !== signature ||
+      contract.owner !== owner ||
+      contract.securityDefiner !== true ||
+      contract.searchPath !== "pg_catalog" ||
+      contract.publicExecute !== false ||
+      JSON.stringify([...(contract.executeRoles ?? [])].sort()) !==
+        JSON.stringify([...expected.executeRoles].sort())
+    )
+      throw Error("FIXED_COMPLETE_INVENTORY_ADAPTATION_CONTRACT_CHANGED");
+  }
+}
+
 export function inspectExpandedProposalBytes(item, bytes) {
+  inspectCompleteOpeningInventoryRepair(item, bytes);
   inspectPostwarCaptainAllocationOptions(item, bytes);
   inspectPostwarTradeConstraintExtension(item, bytes);
   if (item.namedFunctionReplacements !== undefined)

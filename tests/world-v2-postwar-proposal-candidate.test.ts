@@ -11,10 +11,54 @@ import {
   inspectPostwarDefinerColumnReads,
   inspectPostwarTradeConstraintExtension,
   inspectPostwarCaptainAllocationOptions,
+  inspectCompleteOpeningInventoryRepair,
   // @ts-expect-error Node render-only helper has no declarations.
 } from "../scripts/world-v2-postwar-proposal-candidate.mjs";
 
 describe("expanded proposal catalog candidate is explicit, immutable and unapproved", () => {
+  it("records two declared complete-inventory RPCs and thirteen exact existing-function adaptations without granting authority", async () => {
+    const { policy } = await loadPostwarExpandedProposalPolicy();
+    const item = policy.proposals.find(
+      (p: { id: string }) =>
+        p.id === "postwar-complete-opening-inventory-read-repair",
+    );
+    expect(item.reviewOrder).toBe(79);
+    expect(item.definedFunctions).toEqual([
+      "postwar_complete_opening_inventory_document",
+      "publish_postwar_complete_opening_inventory",
+    ]);
+    expect(item.definedFunctionSignatures).toHaveLength(2);
+    expect(item.fixedFunctionAdaptations).toHaveLength(13);
+    expect(item.fixedAdaptationSqlSha256).toBe(
+      "aa47ebbae894c4c9f0dbaff22a18757962a294e5fa18fb0fcea802ae8454cb37",
+    );
+    expect(item.createdRoles).toEqual([]);
+    expect(item.createdRelations).toEqual([]);
+    expect(item.permissionDelta.membershipEnrollment).toBe(false);
+    expect(item.permissionDelta.boundedRuntimeRawSeedSelect).toBe(false);
+    for (const adaptation of item.fixedFunctionAdaptations) {
+      const previous = policy.proposals.find(
+        (p: { id: string }) => p.id === adaptation.predecessor,
+      );
+      expect(previous.reviewOrder).toBeLessThan(item.reviewOrder);
+      expect(item.dependencies).toContain(previous.id);
+      expect([
+        ...previous.definedFunctions,
+        ...previous.renamedFunctions,
+      ]).toContain(adaptation.qualifiedSignature.split("(")[0].split(".")[1]);
+      expect(adaptation.predecessorProsrcSha256).toMatch(/^[a-f0-9]{64}$/u);
+      expect(adaptation.successorProsrcSha256).toMatch(/^[a-f0-9]{64}$/u);
+    }
+    expect(() =>
+      inspectCompleteOpeningInventoryRepair(item, Buffer.from("unreviewed DO")),
+    ).toThrow("FIXED_COMPLETE_INVENTORY_REPAIR_BYTES_REQUIRED");
+    expect(() =>
+      inspectCompleteOpeningInventoryRepair(
+        { id: "other", fixedFunctionAdaptations: [] },
+        Buffer.from(""),
+      ),
+    ).toThrow("FIXED_COMPLETE_INVENTORY_REPAIR_ONLY");
+  });
   it("accepts only Trade's exact adjacent named derived CHECK extension", async () => {
     const { policy } = await loadPostwarExpandedProposalPolicy();
     const item = policy.proposals.find(
@@ -116,12 +160,12 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       "EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED",
     );
   });
-  it("has an explicit seventy-nine-file dependency order and no pretend final SHA", async () => {
+  it("has an explicit eighty-file dependency order and no pretend final SHA", async () => {
     const { policy } = await loadPostwarExpandedProposalPolicy();
     expect(policy.sourceCommit).toBeNull();
     expect(policy.installationAllowed).toBe(false);
     expect(policy.migrationApproval).toBe("NOT_GRANTED");
-    expect(policy.proposals).toHaveLength(79);
+    expect(policy.proposals).toHaveLength(80);
     const seen = new Set<string>();
     for (const p of policy.proposals) {
       expect(p.path).toBe(`database/proposals/${p.id}.sql`);
@@ -129,15 +173,15 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       expect(p.registration).toBe("UNREGISTERED_SOURCE_PROPOSAL");
       seen.add(p.id);
     }
-    expect(policy.registeredMigrationCount + policy.proposals.length).toBe(102);
+    expect(policy.registeredMigrationCount + policy.proposals.length).toBe(103);
     expect(
       policy.proposals.filter(
         (p: { disposition: string }) => !p.disposition.startsWith("EXCLUDED_"),
       ).length,
-    ).toBe(78);
+    ).toBe(79);
     expect(
       policy.proposals.map((p: { reviewOrder: number }) => p.reviewOrder),
-    ).toEqual(Array.from({ length: 79 }, (_, i) => i + 1));
+    ).toEqual(Array.from({ length: 80 }, (_, i) => i + 1));
     expect([...seen]).toContain("social-operating-match-publisher");
     expect([...seen]).toContain("postwar-social-current-derived-read");
     expect(
@@ -677,7 +721,7 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
     );
   });
   (process.env.POSTWAR_PROPOSAL_METADATA_SOURCE ? it : it.skip)(
-    "compares all seventy-nine actual proposal object/role inventories without selecting a final candidate",
+    "compares all eighty actual proposal object/role inventories without selecting a final candidate",
     async () => {
       const { policy } = await loadPostwarExpandedProposalPolicy();
       for (const item of policy.proposals) {
@@ -705,6 +749,44 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
               ]),
             ),
           ).toThrow("POWER_SERVICE_FIXED_EXECUTE_DECLARATIONS_CHANGED");
+        }
+        if (item.id === "postwar-complete-opening-inventory-read-repair") {
+          expect(() =>
+            inspectExpandedProposalBytes(
+              item,
+              Buffer.concat([
+                bytes,
+                Buffer.from(
+                  "\ngrant execute on function world_v2.postwar_complete_opening_inventory_document(text,text,text)to public;\n",
+                ),
+              ]),
+            ),
+          ).toThrow("FIXED_COMPLETE_INVENTORY_REPAIR_BYTES_REQUIRED");
+          for (const change of [
+            "signature",
+            "predecessor",
+            "oldHash",
+            "owner",
+            "acl",
+          ]) {
+            const altered = structuredClone(item);
+            const a = altered.fixedFunctionAdaptations[0];
+            if (change === "signature")
+              a.qualifiedSignature = "world_v2.other(text)";
+            if (change === "predecessor")
+              a.predecessor = "runtime-read-binding-storage";
+            if (change === "oldHash")
+              a.predecessorProsrcSha256 = "0".repeat(64);
+            if (change === "owner")
+              a.contract.owner = "world_v2_postwar_projection_reader";
+            if (change === "acl")
+              a.contract.executeRoles.push(
+                "world_v2_postwar_projection_reader",
+              );
+            expect(() => inspectExpandedProposalBytes(altered, bytes)).toThrow(
+              "FIXED_COMPLETE_INVENTORY_ADAPTATION_CONTRACT_CHANGED",
+            );
+          }
         }
         if (item.id === "postwar-industry-utility-custody") {
           const overloadedName =

@@ -372,3 +372,34 @@ same-RUN cross-country database behavior; that requires the separately tracked
 actual SQL test. Source selection follows each registered refinery's actual
 country, facility and POWER storage originals, preserving the old C02 wrapper
 without treating it as a default for other countries.
+
+## Complete opening inventory repair: 80 source proposals
+
+The current explicit inventory is **80 proposals including one excluded Clock**,
+**79 non-Clock**, plus the same 23 registered migration sources (103 inventoried
+files, 102 excluding Clock). This is a review count, not an installation or an
+operation-completion count. The retained older catalog/native packages remain
+predecessor evidence.
+
+`postwar-complete-opening-inventory-read-repair` follows the physical opening
+reader/provenance, Trade current/automatic/paged source and current projection,
+Goods inventory balance helper and existing source-revocation fence providers.
+Its exact candidate SQL hash is
+`aa47ebbae894c4c9f0dbaff22a18757962a294e5fa18fb0fcea802ae8454cb37`.
+There are two new declared RPCs: the private complete-document selector is
+EXEC-only to the existing Trade current owner; the complete-inventory publisher
+is EXEC-only to the existing projection publisher. No roles, memberships, runtime
+raw-seed SELECT, source adoption or World/FINAL mutation are created.
+
+Thirteen existing functions are adapted through closed, exact predecessor and
+successor body hashes. They retain their owners, OIDs and EXECUTE ACLs; they are
+recorded separately from the two CREATE declarations. Read-only catalog output
+includes all fifteen exact contracts and the actual predecessor/provider chain.
+This source-specific metadata inspection does not execute its dynamic DO blocks
+or enable a general dynamic-DDL or last-definition-wins registry. The repair
+appends corrected derived inventory pages from the same admitted seed while
+retaining old documents and history. Its controlled publisher still requires
+actual source pins, held admission/head and revocation fences. Catalog generation
+does not prove that corrected pages were published, that a live role was enrolled,
+or that any trade/production operation ran. Production and business acceptance
+remain NOT_RUN.

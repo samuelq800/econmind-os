@@ -121,10 +121,54 @@ describe("fixed postwar catalog handoff never executes or grants", () => {
       );
     },
   );
+  it("retains all thirteen fixed adaptation ACLs and provider lineage, rejecting drift or absent providers", async () => {
+    const { policy } = await loadPostwarExpandedProposalPolicy();
+    const item = policy.proposals.find(
+      (p: { id: string }) =>
+        p.id === "postwar-complete-opening-inventory-read-repair",
+    );
+    const result = postwarCatalogFunctionContracts(policy.proposals);
+    for (const a of item.fixedFunctionAdaptations) {
+      const c = result.find(
+        (c: { qualifiedSignature: string }) =>
+          c.qualifiedSignature === a.qualifiedSignature,
+      );
+      expect(c.proposalId).toBe(item.id);
+      expect(c.executeRoles).toEqual(a.contract.executeRoles);
+      expect(
+        c.providerChain.map((p: { proposalId: string }) => p.proposalId),
+      ).toEqual([a.predecessor, item.id]);
+      expect(c.providerChain[0].contract).toEqual(c.providerChain[1].contract);
+    }
+    const old = policy.proposals.filter(
+      (p: { id: string }) => p.id !== item.id,
+    );
+    expect(postwarCatalogFunctionContracts(old)).toHaveLength(133);
+    expect(() =>
+      postwarCatalogFunctionContracts(
+        policy.proposals.filter(
+          (p: { id: string }) =>
+            p.id !== item.fixedFunctionAdaptations[0].predecessor,
+        ),
+      ),
+    ).toThrow("REVIEWED_FUNCTION_REPLACEMENT_PREDECESSOR_REQUIRED");
+    const changed = structuredClone(policy.proposals);
+    changed.find(
+      (p: { id: string }) => p.id === item.id,
+    ).fixedFunctionAdaptations[0].contract.executeRoles = [];
+    expect(() => postwarCatalogFunctionContracts(changed)).toThrow(
+      "REVIEWED_FUNCTION_REPLACEMENT_ACL_CHANGED",
+    );
+    const unreviewed = structuredClone(item);
+    unreviewed.id = "unreviewed-do";
+    expect(() => postwarCatalogFunctionContracts([...old, unreviewed])).toThrow(
+      "FIXED_COMPLETE_INVENTORY_REPAIR_ONLY",
+    );
+  });
   it("separates exact-signature ACL expectations from release approval and rejects duplicate contracts", async () => {
     const { policy } = await loadPostwarExpandedProposalPolicy();
     const contracts = postwarCatalogFunctionContracts(policy.proposals);
-    expect(contracts).toHaveLength(133);
+    expect(contracts).toHaveLength(142);
     expect(
       contracts.find((c: { qualifiedSignature: string }) =>
         c.qualifiedSignature.startsWith(
@@ -210,7 +254,7 @@ describe("fixed postwar catalog handoff never executes or grants", () => {
       contracts.filter(
         (v: { providerChain: unknown[] }) => v.providerChain.length > 1,
       ),
-    ).toHaveLength(7);
+    ).toHaveLength(20);
     for (const [signature, predecessor, successor] of [
       [
         "world_v2.read_postwar_industry_first_day_source(text,text,text,bigint,bigint)",
