@@ -146,6 +146,21 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
         (p: { id: string }) => p.id === "postwar-industry-first-day-source",
       ).versionSemantics,
     ).toContain("49_NOT_APPLICABLE");
+    const firstday = policy.proposals.find(
+      (p: { id: string }) => p.id === "postwar-industry-first-day-source",
+    );
+    expect(firstday.versionSemantics).toContain(
+      "PINNED_ZERO_DOMESTIC_DISTANCE_IS_SOURCE_DATA_NOT_EXECUTABILITY",
+    );
+    expect(firstday.versionSemantics).toContain(
+      "POSITIVE_DISTANCE_CORE_EXECUTION_RULE_UNCHANGED",
+    );
+    expect(
+      firstday.functionContracts.map(
+        (c: { qualifiedSignature: string }) => c.qualifiedSignature,
+      ),
+    ).toEqual(firstday.definedFunctionSignatures);
+    expect(firstday.createdRoles).toEqual([]);
   });
   it.each([
     "main",
