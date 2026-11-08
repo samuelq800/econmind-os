@@ -143,7 +143,7 @@ describe("fixed postwar catalog handoff never executes or grants", () => {
     const old = policy.proposals.filter(
       (p: { id: string }) => p.id !== item.id,
     );
-    expect(postwarCatalogFunctionContracts(old)).toHaveLength(133);
+    expect(postwarCatalogFunctionContracts(old)).toHaveLength(134);
     expect(() =>
       postwarCatalogFunctionContracts(
         policy.proposals.filter(
@@ -168,7 +168,7 @@ describe("fixed postwar catalog handoff never executes or grants", () => {
   it("separates exact-signature ACL expectations from release approval and rejects duplicate contracts", async () => {
     const { policy } = await loadPostwarExpandedProposalPolicy();
     const contracts = postwarCatalogFunctionContracts(policy.proposals);
-    expect(contracts).toHaveLength(142);
+    expect(contracts).toHaveLength(143);
     expect(
       contracts.find((c: { qualifiedSignature: string }) =>
         c.qualifiedSignature.startsWith(

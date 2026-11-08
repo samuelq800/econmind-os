@@ -3174,7 +3174,8 @@
         "postwar_industry_labour_source_current",
         "prepare_postwar_industry_labour_scopes",
         "publish_postwar_industry_labour_current",
-        "read_postwar_industry_labour_current_page"
+        "read_postwar_industry_labour_current_page",
+        "repair_postwar_industry_regional_source_capacity"
       ],
       "renamedFunctions": [],
       "literalCreatedPolicies": [],
@@ -3190,7 +3191,8 @@
         "world_v2.postwar_industry_labour_source_current(text,text,text,text,text,text)",
         "world_v2.prepare_postwar_industry_labour_scopes(text)",
         "world_v2.publish_postwar_industry_labour_current(text,text,text)",
-        "world_v2.read_postwar_industry_labour_current_page(text,integer,integer,text)"
+        "world_v2.read_postwar_industry_labour_current_page(text,integer,integer,text)",
+        "world_v2.repair_postwar_industry_regional_source_capacity(text,text)"
       ],
       "functionContracts": [
         {
@@ -3224,6 +3226,14 @@
           "searchPath": "pg_catalog",
           "publicExecute": false,
           "executeRoles": ["world_v2_postwar_projection_reader"]
+        },
+        {
+          "qualifiedSignature": "world_v2.repair_postwar_industry_regional_source_capacity(text,text)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": ["world_v2_postwar_projection_publisher"]
         }
       ]
     },

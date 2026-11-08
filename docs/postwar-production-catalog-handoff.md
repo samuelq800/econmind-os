@@ -403,3 +403,16 @@ actual source pins, held admission/head and revocation fences. Catalog generatio
 does not prove that corrected pages were published, that a live role was enrolled,
 or that any trade/production operation ran. Production and business acceptance
 remain NOT_RUN.
+
+The Industry labour proposal also declares one fixed regional-source-capacity
+repair RPC. Its exact two-text-argument signature retains the existing projection
+owner and allows only the existing projection publisher group. It creates no
+role or membership. The RPC restores a missing Industry origin-0 document from
+the admitted stored source under the existing revocation fence; it does not
+relax the generic H0 publisher, rewrite an existing document, or change World
+events. The existing labour preparation signature retains its ACL while using
+text JSON traversal before converting the selected employment subtree. Runtime
+use of the repair requires the separately installed source-revocation-fence
+proposal. Historical installations need the explicit function-only forward
+receipt, preserving the original source receipts; regenerating this catalog
+does not apply that update or authorize production execution.
