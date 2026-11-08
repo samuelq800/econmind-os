@@ -109,6 +109,39 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
         inspectPostwarCaptainAllocationOptions(item, Buffer.from(changed)),
       ).toThrow("CAPTAIN_ALLOCATION_PRIVATE_IMMUTABLE_HELPER_REQUIRED");
   });
+  it("records the immutable opening-base repair without source authority or extra permissions", async () => {
+    const { policy } = await loadPostwarExpandedProposalPolicy();
+    const item = policy.proposals.find(
+      (p: { id: string }) => p.id === "postwar-office-opening-read-base-repair",
+    );
+    expect(item.createdRoles).toEqual([]);
+    expect(item.createdRelations).toEqual([]);
+    expect(item.literalCreatedPolicies).toEqual([]);
+    expect(item.definedFunctionSignatures).toEqual([
+      "world_v2.repair_postwar_office_opening_read_bases(text,text,text,text,text,text)",
+    ]);
+    expect(item.dependencies).toEqual([
+      "postwar-office-derived-read",
+      "postwar-social-current-prefix-read",
+      "postwar-industry-labour-current-read",
+      "postwar-source-revocation-fence",
+    ]);
+    expect(item.dependencies).not.toContain(
+      "postwar-physical-inventory-provenance",
+    );
+    expect(item.dependencies).not.toContain(
+      "postwar-complete-opening-inventory-read-repair",
+    );
+    expect(item.functionContracts[0]).toMatchObject({
+      owner: "world_v2_postwar_projection_owner",
+      securityDefiner: true,
+      searchPath: "pg_catalog",
+      publicExecute: false,
+      executeRoles: ["world_v2_postwar_projection_publisher"],
+    });
+    expect(item.versionSemantics).toContain("NO_GENERIC_H0_GATE_RELAXATION");
+    expect(item.productionApproval).toBe("NOT_GRANTED");
+  });
   it("records the creation licence supplement with only fixed private owner helpers", async () => {
     const { policy } = await loadPostwarExpandedProposalPolicy();
     const item = policy.proposals.find(
@@ -234,12 +267,12 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       "EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED",
     );
   });
-  it("has an explicit eighty-one-file dependency order and no pretend final SHA", async () => {
+  it("has an explicit eighty-two-file dependency order and no pretend final SHA", async () => {
     const { policy } = await loadPostwarExpandedProposalPolicy();
     expect(policy.sourceCommit).toBeNull();
     expect(policy.installationAllowed).toBe(false);
     expect(policy.migrationApproval).toBe("NOT_GRANTED");
-    expect(policy.proposals).toHaveLength(81);
+    expect(policy.proposals).toHaveLength(82);
     const seen = new Set<string>();
     for (const p of policy.proposals) {
       expect(p.path).toBe(`database/proposals/${p.id}.sql`);
@@ -247,15 +280,15 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       expect(p.registration).toBe("UNREGISTERED_SOURCE_PROPOSAL");
       seen.add(p.id);
     }
-    expect(policy.registeredMigrationCount + policy.proposals.length).toBe(104);
+    expect(policy.registeredMigrationCount + policy.proposals.length).toBe(105);
     expect(
       policy.proposals.filter(
         (p: { disposition: string }) => !p.disposition.startsWith("EXCLUDED_"),
       ).length,
-    ).toBe(80);
+    ).toBe(81);
     expect(
       policy.proposals.map((p: { reviewOrder: number }) => p.reviewOrder),
-    ).toEqual(Array.from({ length: 81 }, (_, i) => i + 1));
+    ).toEqual(Array.from({ length: 82 }, (_, i) => i + 1));
     expect([...seen]).toContain("social-operating-match-publisher");
     expect([...seen]).toContain("postwar-social-current-derived-read");
     expect(
@@ -795,7 +828,7 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
     );
   });
   (process.env.POSTWAR_PROPOSAL_METADATA_SOURCE ? it : it.skip)(
-    "compares all eighty-one actual proposal object/role inventories without selecting a final candidate",
+    "compares all eighty-two actual proposal object/role inventories without selecting a final candidate",
     async () => {
       const { policy } = await loadPostwarExpandedProposalPolicy();
       for (const item of policy.proposals) {

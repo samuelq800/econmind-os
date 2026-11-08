@@ -6,7 +6,7 @@
   "projectRef": "vimksjrhaxdpnkvgsavz",
   "registeredManifestSha256": "e675bd8bd18ba6c51aeffa674320dba3ac79299b7e12eeef834fe28547f9025e",
   "registeredMigrationCount": 23,
-  "proposalPolicy": "Fixed 81-proposal source inventory and dependency review order only; no installation order, migration approval or final World SHA selected",
+  "proposalPolicy": "Fixed 82-proposal source inventory and dependency review order only; no installation order, migration approval or final World SHA selected",
   "proposals": [
     {
       "id": "runtime-read-binding-storage",
@@ -6485,9 +6485,72 @@
       "versionSemantics": "APPEND_COMPLETE_DERIVED_INVENTORY_FROM_SAME_ACTUAL_ADMITTED_SEED;LEGACY_DOCUMENTS_AND_WORLD_FINAL_HISTORY_IMMUTABLE;13_EXACT_INSTALLED_FUNCTION_BODY_ADAPTATIONS_NOT_UNVERIFIED_CREATE;NO_SOURCE_ADOPTION_OR_ECONOMIC_AUTHORITY"
     },
     {
+      "id": "postwar-office-opening-read-base-repair",
+      "path": "database/proposals/postwar-office-opening-read-base-repair.sql",
+      "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
+      "dependencies": [
+        "postwar-office-derived-read",
+        "postwar-social-current-prefix-read",
+        "postwar-industry-labour-current-read",
+        "postwar-source-revocation-fence"
+      ],
+      "baselineDependencies": [
+        "0002_world_v2_command_event_ledger",
+        "0016_world_v2_opening_seed"
+      ],
+      "createdRoles": [],
+      "reusedRoles": [
+        "world_v2_postwar_projection_owner",
+        "world_v2_postwar_projection_publisher",
+        "world_v2_postwar_projection_reader"
+      ],
+      "createdRelations": [],
+      "definedFunctions": ["repair_postwar_office_opening_read_bases"],
+      "renamedFunctions": [],
+      "literalCreatedPolicies": [],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_postwar_projection_owner": "postwar-office-derived-read",
+        "world_v2_postwar_projection_publisher": "postwar-office-derived-read",
+        "world_v2_postwar_projection_reader": "postwar-office-derived-read"
+      },
+      "definedFunctionSignatures": [
+        "world_v2.repair_postwar_office_opening_read_bases(text,text,text,text,text,text)"
+      ],
+      "functionContracts": [
+        {
+          "qualifiedSignature": "world_v2.repair_postwar_office_opening_read_bases(text,text,text,text,text,text)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": ["world_v2_postwar_projection_publisher"]
+        }
+      ],
+      "versionSemantics": "RECOVER_ONLY_MISSING_SAME_ADMITTED_IMMUTABLE_ORIGIN_ZERO_READ_BASES;EXACT_SOURCE_PINS_AND_REVOCATION_FENCE;NO_GENERIC_H0_GATE_RELAXATION;EXACT_EXISTING_BYTES_IDEMPOTENT_CONFLICT_OR_REVOKED_STOP;NOT_GENUINE_CURRENT_CORE_REPLAY_OR_SOURCE_ADMISSION;NO_ECONOMIC_WRITE_OR_NEW_OPERATING_RIGHT",
+      "permissionDelta": {
+        "reviewStatus": "SOURCE_DECLARATIONS_ONLY_ACTUAL_CATALOG_AND_APPROVED_ENROLLMENT_REQUIRED",
+        "newLoginRoles": false,
+        "membershipEnrollment": false,
+        "boundedRuntimeRawSeedSelect": false
+      },
+      "rollbackChecks": [
+        "NO_AUTOMATIC_SQL_DOWNGRADE",
+        "UNCERTAIN_COMMIT_STOP_AND_READBACK_NOT_BLIND_RETRY",
+        "PRESERVE_AUTHORITATIVE_HISTORY_IMMUTABLE_ORIGINALS_AND_EXISTING_SOURCE_PINS",
+        "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
+        "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE"
+      ],
+      "reviewOrder": 81
+    },
+    {
       "id": "isolated-world-clock",
       "path": "database/proposals/isolated-world-clock.sql",
-      "reviewOrder": 81,
+      "reviewOrder": 82,
       "disposition": "EXCLUDED_NOT_A_READ_DEPENDENCY",
       "dependencies": [],
       "baselineDependencies": [],

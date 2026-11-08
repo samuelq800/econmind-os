@@ -442,3 +442,21 @@ Creation is not employment, attendance, completed work or wage payment. The
 source-only package records observed SQL bytes and exact signatures/owners/ACLs;
 it does not execute preparation, validate a host, prove a native CREATE chain,
 register migrations, activate a Clock or grant production approval.
+
+## Missing immutable opening read bases (independent source supplement)
+
+This next source-only catalog adds `postwar-office-opening-read-base-repair`: 82
+proposals, one excluded Clock, 81 non-Clock proposals and the unchanged 23
+registered sources (105 inventory files). Its single six-text-argument RPC uses
+the existing ProjectionOwner definer, fixed pg_catalog path and only existing
+ProjectionPublisher EXECUTE. It declares no table, role, policy or membership.
+
+It can recover missing origin-0 read bases from the same admitted stored seed
+after H has advanced, with exact source pins and revocation fences; existing
+exact bytes are idempotent while conflicts/revocations stop. Its hard dependencies
+are the existing derived-read, Social prefix, Industry labour-current and source
+fence proposals. Later provenance and complete-inventory repair calls remain
+separate layers, not invented prerequisites of this RPC. The generic H0 gate is
+unchanged, and recovery of opening data is not genuine current replay, a source
+admission, economic execution or production permission. Current publication
+still needs the actual Core/Node path at the observed global head.

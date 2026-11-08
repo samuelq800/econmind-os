@@ -9,7 +9,7 @@ const policyPath = fileURLToPath(
 );
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const POLICY_SHA256 =
-  "524bd0006ae10116f725192e0e27236a62c2851080298a9fecc8eff255f4823d";
+  "4a9fb010f0ab6b7ce28730d1f034a487498558ef892a5e4c9908611032ec31bf";
 export function requireImmutableProposalCandidateSha(candidateSha) {
   if (!/^[a-f0-9]{40}$/u.test(candidateSha ?? "") || /^0+$/u.test(candidateSha))
     throw Error("EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED");
@@ -27,7 +27,7 @@ export async function loadPostwarExpandedProposalPolicy() {
     policy.installationAllowed !== false ||
     policy.productionReviewVerified !== false ||
     policy.finalCandidateSelected !== false ||
-    policy.proposals.length !== 81
+    policy.proposals.length !== 82
   )
     throw Error("UNAPPROVED_EXPLICIT_CANDIDATE_POLICY_REQUIRED");
   const prior = new Set();
