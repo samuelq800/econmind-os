@@ -234,17 +234,17 @@ from a clean checkout before any new review package exists.
 
 The nine additions are separate from the older H0/no-posting paths:
 
-| Proposal | Required predecessor proposals | Fixed function / permission difference |
-| --- | --- | --- |
-| `postwar-social-startup-seed-header` | Social custody | `lock_social_startup_seed_header(text,text)`; existing Social owner computes the actual stored seed SHA at startup, source reader gets metadata EXECUTE, never raw payload SELECT. |
-| `postwar-finance-social-source-publication` | Finance mixed source + Social custody | Three exact publication/verification signatures; existing Finance/Social publishers and owners only. The fixed cfc country derivation manifest is data provenance, not a signature or role enrollment. |
-| `postwar-day-one-fx-history-read` | FX custody + Social custody + Finance custody | One eleven-text-argument committed-quote reader under a new inaccessible NOLOGIN history owner. Existing three source-reader groups receive EXECUTE only; private exact-World SHARE locks use owner column grants with `WITH CHECK(false)`, not runtime UPDATE. |
-| `postwar-mixed-current-projection-read` | Complete Social prefix, FX custody/history and startup header | Six exact signatures and two append-only derived page tables. Bounded reader gets only the six-argument page function; publisher gets fixed Social publication. Complete Budget/Social/FX frames and actual posting hashes distinguish current global head from the last Social state origin. |
-| `postwar-mixed-financial-current-publication` | New mixed-current store + existing financial bounded originals | One three-text-argument publisher. Finance/CB derived balances, TGA/GCU and reservation capacity use the same genuine replay snapshot and independently checked SQL originals; no reader financial-table SELECT or old no-posting fallback. |
-| `postwar-social-mixed-match-publisher` | Existing MATCH, FX custody/history and startup header | `publish_social_operating_mixed_match_due(text,text,text,text)` uses the existing fixed Social publisher and canonical queue path, complete prefix and pending-plan binding. It does not authorize an actor or depend on a UI cache. |
-| `postwar-bounded-journal-read` | Committed FX history reader | `read_postwar_bounded_journal(text,text,text)` reuses the inaccessible history owner; only Social/Finance source readers get EXECUTE. Exact held head/admission/host/permit, maximum H256, 512 batches, 64KiB each/1MiB total and nonzero-inventory refusal; no raw reader table grants. |
-| `postwar-bounded-prefix-read` | Bounded journal reader | `read_postwar_bounded_prefix(text,text,text)` reuses the history owner/journal locks, returning complete World command/event/COMMITTED-receipt sets. Only Social/Finance source readers get EXECUTE; no raw table grants or country/family filtering. |
-| `postwar-office-recovery-read` | H0 metadata reader + Social intake authorization + Finance/FX custody groups | `read_postwar_office_recovery_binding(text,uuid,text,text,text,text,text,text)` is nonlocking READ ONLY metadata under the existing projection owner. EXECUTE goes to actual intake privilege groups: Finance budget reader, FX reader and **Social intake lock reader**, not Social source reader. Exact command capability remains required. |
+| Proposal                                      | Required predecessor proposals                                               | Fixed function / permission difference                                                                                                                                                                                                                                                                                                         |
+| --------------------------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `postwar-social-startup-seed-header`          | Social custody                                                               | `lock_social_startup_seed_header(text,text)`; existing Social owner computes the actual stored seed SHA at startup, source reader gets metadata EXECUTE, never raw payload SELECT.                                                                                                                                                             |
+| `postwar-finance-social-source-publication`   | Finance mixed source + Social custody                                        | Three exact publication/verification signatures; existing Finance/Social publishers and owners only. The fixed cfc country derivation manifest is data provenance, not a signature or role enrollment.                                                                                                                                         |
+| `postwar-day-one-fx-history-read`             | FX custody + Social custody + Finance custody                                | One eleven-text-argument committed-quote reader under a new inaccessible NOLOGIN history owner. Existing three source-reader groups receive EXECUTE only; private exact-World SHARE locks use owner column grants with `WITH CHECK(false)`, not runtime UPDATE.                                                                                |
+| `postwar-mixed-current-projection-read`       | Complete Social prefix, FX custody/history and startup header                | Six exact signatures and two append-only derived page tables. Bounded reader gets only the six-argument page function; publisher gets fixed Social publication. Complete Budget/Social/FX frames and actual posting hashes distinguish current global head from the last Social state origin.                                                  |
+| `postwar-mixed-financial-current-publication` | New mixed-current store + existing financial bounded originals               | One three-text-argument publisher. Finance/CB derived balances, TGA/GCU and reservation capacity use the same genuine replay snapshot and independently checked SQL originals; no reader financial-table SELECT or old no-posting fallback.                                                                                                    |
+| `postwar-social-mixed-match-publisher`        | Existing MATCH, FX custody/history and startup header                        | `publish_social_operating_mixed_match_due(text,text,text,text)` uses the existing fixed Social publisher and canonical queue path, complete prefix and pending-plan binding. It does not authorize an actor or depend on a UI cache.                                                                                                           |
+| `postwar-bounded-journal-read`                | Committed FX history reader                                                  | `read_postwar_bounded_journal(text,text,text)` reuses the inaccessible history owner; only Social/Finance source readers get EXECUTE. Exact held head/admission/host/permit, maximum H256, 512 batches, 64KiB each/1MiB total and nonzero-inventory refusal; no raw reader table grants.                                                       |
+| `postwar-bounded-prefix-read`                 | Bounded journal reader                                                       | `read_postwar_bounded_prefix(text,text,text)` reuses the history owner/journal locks, returning complete World command/event/COMMITTED-receipt sets. Only Social/Finance source readers get EXECUTE; no raw table grants or country/family filtering.                                                                                          |
+| `postwar-office-recovery-read`                | H0 metadata reader + Social intake authorization + Finance/FX custody groups | `read_postwar_office_recovery_binding(text,uuid,text,text,text,text,text,text)` is nonlocking READ ONLY metadata under the existing projection owner. EXECUTE goes to actual intake privilege groups: Finance budget reader, FX reader and **Social intake lock reader**, not Social source reader. Exact command capability remains required. |
 
 The JSON policy contains each full qualified signature, owner, SECURITY DEFINER
 mode, fixed `pg_catalog` search path, PUBLIC EXECUTE expectation and named
@@ -303,3 +303,55 @@ must never gain Social source-reader membership as a workaround. The original
 legacy mode remains default until the explicit postwar recovery option is set.
 Rollback requires draining recovery requests and retaining submissions, queues
 and FINAL receipts; missing metadata cannot prove a write did not commit.
+
+## 2026-11-08 source-only integration update
+
+The explicit-candidate inventory now contains **79 proposal files**, including
+one excluded `isolated-world-clock` proposal. Together with the unchanged 23
+registered migration sources this is 102 inventoried source files, or 101 SQL
+files in a package that excludes Clock. These are source counts, not installed
+objects, approved migrations or successful office operations. Historical counts,
+fixed candidates and provider observations above remain historical.
+
+Two additional proposals reuse existing Industry roles and tables:
+
+- `postwar-industry-power-service-source` follows utility custody, first-day
+  source, run history and work publication. It publishes actual E03 POWER staff
+  originals and replaces the exact first-day reader and WORK publication
+  functions without changing their owners or EXECUTE groups. A person-day is a
+  labour unit; the source is not a manufacturing recipe, WORK, payment or energy
+  delivery. Existing source/admission/revocation and complete-prefix guards remain
+  required. The source-revocation fence must be installed before guarded runtime
+  transactions, although its review-order entry follows these declarations.
+- `postwar-industry-power-service-current` follows that source and mixed Industry
+  current effects. It replaces only the exact Industry-original helper and
+  RUN/WORK reducer contracts. Committed historical staff originals do not become
+  invalid because of a later target-source revocation. Current action guards
+  remain separate. Zero journal effects still require complete frame validation.
+
+The catalog loader names all four replacement chains explicitly and rejects
+missing/reversed predecessors, changed signatures or ACL drift. This is not a
+last-definition-wins rule. No new roles, memberships, raw reader grants or source
+facts are generated by the companion package.
+
+Captain's private immutable `postwar_captain_allocation_options(jsonb,text)` is
+owned by the existing projection owner, has PUBLIC EXECUTE revoked and has no
+reader EXECUTE grant. It returns bounded registered reason references, not an
+allocation approval. Its declaration precedes the H0 and paged readers that use
+it. The adopted new-scenario capital remains 70 total, seven buckets of 10; this
+metadata change does not reissue capital or modify an existing world.
+
+First-day refinery selection is now source-based: the current mapping contains
+21 actual REFINED_FUEL facility countries and 49 not-applicable countries. Each
+selected country retains its actual facility, recipe, domestic-access source,
+exact decimals and raw hashes; C02 values are not a country default. Not-applicable
+selection stops before registration. This does not authorize another recipe,
+operator rights, operational roads or retroactive changes to existing worlds.
+
+All additions remain `UNREGISTERED_SOURCE_PROPOSAL`, migration approval
+`NOT_GRANTED`, installation disabled and production **NOT_VERIFIED**. The policy
+selects no final World SHA. A package requires an explicitly supplied clean
+immutable World commit and observes that commit's bytes; source metadata tests do
+not execute SQL, prove database upgrades, validate signatures or establish a
+Node/Cloudflare/Supabase production binding. The original no-candidate-SHA mode
+continues to represent only its historical six-proposal handoff.

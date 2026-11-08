@@ -124,7 +124,7 @@ describe("fixed postwar catalog handoff never executes or grants", () => {
   it("separates exact-signature ACL expectations from release approval and rejects duplicate contracts", async () => {
     const { policy } = await loadPostwarExpandedProposalPolicy();
     const contracts = postwarCatalogFunctionContracts(policy.proposals);
-    expect(contracts).toHaveLength(130);
+    expect(contracts).toHaveLength(132);
     expect(
       contracts.find((c: { qualifiedSignature: string }) =>
         c.qualifiedSignature.startsWith(
@@ -154,7 +154,7 @@ describe("fixed postwar catalog handoff never executes or grants", () => {
     expect(query).toContain("'definerColumnReadContracts'");
     expect(query).toContain("'actualSelectColumns'");
   });
-  it("retains exactly the three reviewed ordered provider chains and their unchanged ACLs", async () => {
+  it("retains exactly the seven reviewed ordered provider chains and their unchanged ACLs", async () => {
     const { policy } = await loadPostwarExpandedProposalPolicy();
     const contracts = postwarCatalogFunctionContracts(policy.proposals);
     const read = contracts.find(
@@ -210,7 +210,77 @@ describe("fixed postwar catalog handoff never executes or grants", () => {
       contracts.filter(
         (v: { providerChain: unknown[] }) => v.providerChain.length > 1,
       ),
-    ).toHaveLength(3);
+    ).toHaveLength(7);
+    for (const [signature, predecessor, successor] of [
+      [
+        "world_v2.read_postwar_industry_first_day_source(text,text,text,bigint,bigint)",
+        "postwar-industry-first-day-source",
+        "postwar-industry-power-service-source",
+      ],
+      [
+        "world_v2.publish_postwar_industry_work_due(text,text,text,text,text,timestamptz,text,text,text)",
+        "postwar-industry-work-publication",
+        "postwar-industry-power-service-source",
+      ],
+      [
+        "world_v2.postwar_projection_industry_original(text,jsonb,jsonb)",
+        "postwar-mixed-industry-current-effects",
+        "postwar-industry-power-service-current",
+      ],
+      [
+        "world_v2.postwar_mixed_industry_work_group(text,jsonb,jsonb,jsonb,jsonb,jsonb)",
+        "postwar-mixed-industry-current-effects",
+        "postwar-industry-power-service-current",
+      ],
+    ]) {
+      const entry = contracts.find(
+        (v: { qualifiedSignature: string }) =>
+          v.qualifiedSignature === signature,
+      );
+      expect(
+        entry.providerChain.map((v: { proposalId: string }) => v.proposalId),
+      ).toEqual([predecessor, successor]);
+      expect(entry.providerChain[0].contract).toEqual(
+        entry.providerChain[1].contract,
+      );
+      const pair = [predecessor, successor].map((id) => {
+        const proposal = policy.proposals.find(
+          (v: { id: string }) => v.id === id,
+        );
+        return {
+          ...proposal,
+          functionContracts: proposal.functionContracts.filter(
+            (v: { qualifiedSignature: string }) =>
+              v.qualifiedSignature === signature,
+          ),
+        };
+      });
+      expect(() => postwarCatalogFunctionContracts([pair[1]])).toThrow(
+        "REVIEWED_FUNCTION_REPLACEMENT_PREDECESSOR_REQUIRED",
+      );
+      expect(() =>
+        postwarCatalogFunctionContracts([...pair].reverse()),
+      ).toThrow("REVIEWED_FUNCTION_REPLACEMENT_PREDECESSOR_REQUIRED");
+      const drift = structuredClone(pair);
+      drift[1].functionContracts[0].executeRoles = [
+        "world_v2_unreviewed_reader",
+      ];
+      expect(() => postwarCatalogFunctionContracts(drift)).toThrow(
+        "REVIEWED_FUNCTION_REPLACEMENT_ACL_CHANGED",
+      );
+    }
+    expect(
+      contracts.find(
+        (v: { qualifiedSignature: string }) =>
+          v.qualifiedSignature ===
+          "world_v2.postwar_captain_allocation_options(jsonb,text)",
+      ),
+    ).toMatchObject({
+      owner: "world_v2_postwar_projection_owner",
+      securityDefiner: false,
+      publicExecute: false,
+      executeRoles: [],
+    });
     for (const entry of [read, apply, captain])
       expect(entry.providerChain[0].contract).toEqual(
         entry.providerChain[1].contract,

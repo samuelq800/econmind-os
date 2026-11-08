@@ -70,6 +70,26 @@ export function postwarCatalogFunctionContracts(proposals) {
       "postwar-paged-current-projection",
       "postwar-captain-h0-current",
     ],
+    [
+      "world_v2.read_postwar_industry_first_day_source(text,text,text,bigint,bigint)",
+      "postwar-industry-first-day-source",
+      "postwar-industry-power-service-source",
+    ],
+    [
+      "world_v2.publish_postwar_industry_work_due(text,text,text,text,text,timestamptz,text,text,text)",
+      "postwar-industry-work-publication",
+      "postwar-industry-power-service-source",
+    ],
+    [
+      "world_v2.postwar_projection_industry_original(text,jsonb,jsonb)",
+      "postwar-mixed-industry-current-effects",
+      "postwar-industry-power-service-current",
+    ],
+    [
+      "world_v2.postwar_mixed_industry_work_group(text,jsonb,jsonb,jsonb,jsonb,jsonb)",
+      "postwar-mixed-industry-current-effects",
+      "postwar-industry-power-service-current",
+    ],
   ];
   const acl = (contract) =>
     JSON.stringify([

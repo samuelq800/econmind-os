@@ -10,6 +10,7 @@ import {
   inspectPostwarFunctionContracts,
   inspectPostwarDefinerColumnReads,
   inspectPostwarTradeConstraintExtension,
+  inspectPostwarCaptainAllocationOptions,
   // @ts-expect-error Node render-only helper has no declarations.
 } from "../scripts/world-v2-postwar-proposal-candidate.mjs";
 
@@ -43,6 +44,65 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       ),
     ).toThrow("FIXED_TRADE_DERIVED_CHECK_EXTENSION_REQUIRED");
   });
+  it("keeps the Captain options helper private and immutable", () => {
+    const item = { id: "postwar-captain-current-derived-read" };
+    const sql =
+      "create function world_v2.postwar_captain_allocation_options(p_packet jsonb,p_country text)returns jsonb language plpgsql immutable set search_path=pg_catalog as $$begin return null;end;$$;alter function world_v2.postwar_captain_allocation_options(jsonb,text)owner to world_v2_postwar_projection_owner;revoke all on function world_v2.postwar_captain_allocation_options(jsonb,text)from public;";
+    expect(() =>
+      inspectPostwarCaptainAllocationOptions(item, Buffer.from(sql)),
+    ).not.toThrow();
+    for (const changed of [
+      sql.replace("plpgsql immutable", "plpgsql security definer"),
+      sql.replace("from public", "from world_v2_postwar_projection_reader"),
+      sql.replace(
+        "owner to world_v2_postwar_projection_owner",
+        "owner to world_v2_postwar_projection_reader",
+      ),
+      sql +
+        "grant execute on function world_v2.postwar_captain_allocation_options(jsonb,text)to world_v2_postwar_projection_reader;",
+    ])
+      expect(() =>
+        inspectPostwarCaptainAllocationOptions(item, Buffer.from(changed)),
+      ).toThrow("CAPTAIN_ALLOCATION_PRIVATE_IMMUTABLE_HELPER_REQUIRED");
+  });
+  it("records POWER replacements only after their actual fixed providers", async () => {
+    const { policy } = await loadPostwarExpandedProposalPolicy();
+    for (const id of [
+      "postwar-industry-power-service-source",
+      "postwar-industry-power-service-current",
+    ]) {
+      const item = policy.proposals.find((p: { id: string }) => p.id === id);
+      expect(item.createdRoles).toEqual([]);
+      expect(item.createdRelations).toEqual([]);
+      expect(item.permissionDelta).toMatchObject({
+        membershipEnrollment: false,
+        boundedRuntimeRawSeedSelect: false,
+      });
+      for (const replacement of item.reviewedFunctionReplacements) {
+        const previous = policy.proposals.find(
+          (p: { id: string }) => p.id === replacement.predecessor,
+        );
+        expect(previous.reviewOrder).toBeLessThan(item.reviewOrder);
+        expect(item.dependencies).toContain(previous.id);
+        expect(
+          previous.functionContracts.find(
+            (c: { qualifiedSignature: string }) =>
+              c.qualifiedSignature === replacement.qualifiedSignature,
+          ),
+        ).toEqual(
+          item.functionContracts.find(
+            (c: { qualifiedSignature: string }) =>
+              c.qualifiedSignature === replacement.qualifiedSignature,
+          ),
+        );
+      }
+    }
+    expect(
+      policy.proposals.find(
+        (p: { id: string }) => p.id === "postwar-industry-first-day-source",
+      ).versionSemantics,
+    ).toContain("49_NOT_APPLICABLE");
+  });
   it.each([
     "main",
     "latest",
@@ -56,12 +116,12 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       "EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED",
     );
   });
-  it("has an explicit seventy-seven-file dependency order and no pretend final SHA", async () => {
+  it("has an explicit seventy-nine-file dependency order and no pretend final SHA", async () => {
     const { policy } = await loadPostwarExpandedProposalPolicy();
     expect(policy.sourceCommit).toBeNull();
     expect(policy.installationAllowed).toBe(false);
     expect(policy.migrationApproval).toBe("NOT_GRANTED");
-    expect(policy.proposals).toHaveLength(77);
+    expect(policy.proposals).toHaveLength(79);
     const seen = new Set<string>();
     for (const p of policy.proposals) {
       expect(p.path).toBe(`database/proposals/${p.id}.sql`);
@@ -69,15 +129,15 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       expect(p.registration).toBe("UNREGISTERED_SOURCE_PROPOSAL");
       seen.add(p.id);
     }
-    expect(policy.registeredMigrationCount + policy.proposals.length).toBe(100);
+    expect(policy.registeredMigrationCount + policy.proposals.length).toBe(102);
     expect(
       policy.proposals.filter(
         (p: { disposition: string }) => !p.disposition.startsWith("EXCLUDED_"),
       ).length,
-    ).toBe(76);
+    ).toBe(78);
     expect(
       policy.proposals.map((p: { reviewOrder: number }) => p.reviewOrder),
-    ).toEqual(Array.from({ length: 77 }, (_, i) => i + 1));
+    ).toEqual(Array.from({ length: 79 }, (_, i) => i + 1));
     expect([...seen]).toContain("social-operating-match-publisher");
     expect([...seen]).toContain("postwar-social-current-derived-read");
     expect(
@@ -617,7 +677,7 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
     );
   });
   (process.env.POSTWAR_PROPOSAL_METADATA_SOURCE ? it : it.skip)(
-    "compares all seventy-seven actual proposal object/role inventories without selecting a final candidate",
+    "compares all seventy-nine actual proposal object/role inventories without selecting a final candidate",
     async () => {
       const { policy } = await loadPostwarExpandedProposalPolicy();
       for (const item of policy.proposals) {
@@ -627,6 +687,25 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
         expect(inspectExpandedProposalBytes(item, bytes).sha256Meaning).toBe(
           "OBSERVED_IMMUTABLE_CANDIDATE_BYTES_NOT_APPROVAL",
         );
+        if (
+          [
+            "postwar-industry-power-service-source",
+            "postwar-industry-power-service-current",
+          ].includes(item.id)
+        ) {
+          const signature = item.functionContracts[0].qualifiedSignature;
+          expect(() =>
+            inspectExpandedProposalBytes(
+              item,
+              Buffer.concat([
+                bytes,
+                Buffer.from(
+                  `\ngrant execute on function ${signature} to world_v2_industry_source_reader;\n`,
+                ),
+              ]),
+            ),
+          ).toThrow("POWER_SERVICE_FIXED_EXECUTE_DECLARATIONS_CHANGED");
+        }
         if (item.id === "postwar-captain-h0-current") {
           expect(() =>
             inspectExpandedProposalBytes(

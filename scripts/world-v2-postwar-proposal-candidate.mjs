@@ -9,7 +9,7 @@ const policyPath = fileURLToPath(
 );
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const POLICY_SHA256 =
-  "4a8ee637960a807292a376b9c30ca09931ffa5480e6292c6eee8550afa40fe8c";
+  "899a67534f9d4413ac662bf6d2bb3278dea938286bfdf460192c253eadcfe471";
 export function requireImmutableProposalCandidateSha(candidateSha) {
   if (!/^[a-f0-9]{40}$/u.test(candidateSha ?? "") || /^0+$/u.test(candidateSha))
     throw Error("EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED");
@@ -27,7 +27,7 @@ export async function loadPostwarExpandedProposalPolicy() {
     policy.installationAllowed !== false ||
     policy.productionReviewVerified !== false ||
     policy.finalCandidateSelected !== false ||
-    policy.proposals.length !== 77
+    policy.proposals.length !== 79
   )
     throw Error("UNAPPROVED_EXPLICIT_CANDIDATE_POLICY_REQUIRED");
   const prior = new Set();
@@ -86,7 +86,7 @@ export function validateExpandedProposalRoleDependencies(policy) {
     seen.set(item.id, closure);
   }
 }
-/** Fixed scalar signatures for the nine added proposals. This is declaration
+/** Fixed scalar signatures for explicitly reviewed proposal declarations. This is declaration
  * comparison, not a general SQL parser or a substitute for catalog readback. */
 export function inspectPostwarFunctionContracts(item, bytes) {
   if (item.definedFunctionSignatures === undefined) return;
@@ -146,6 +146,35 @@ export function inspectPostwarFunctionContracts(item, bytes) {
       !/set\s+search_path\s*=\s*pg_catalog\b/iu.test(header)
     )
       throw Error("PROPOSAL_FUNCTION_OWNER_OR_EXECUTION_MODE_CHANGED");
+    if (
+      [
+        "postwar-industry-power-service-source",
+        "postwar-industry-power-service-current",
+      ].includes(item.id)
+    ) {
+      const grants = [
+        ...sql.matchAll(
+          new RegExp(
+            `grant\\s+(execute|all)\\s+on\\s+function\\s+${identity}\\s*to\\s+([^;]+);`,
+            "giu",
+          ),
+        ),
+      ];
+      const roles = grants
+        .flatMap((entry) => entry[2].split(",").map((role) => role.trim()))
+        .sort();
+      if (
+        expected.publicExecute !== false ||
+        !new RegExp(
+          `revoke\\s+all\\s+on\\s+function\\s+${identity}\\s*from\\s+public\\s*;`,
+          "iu",
+        ).test(sql) ||
+        grants.some((entry) => entry[1].toLowerCase() !== "execute") ||
+        JSON.stringify(roles) !==
+          JSON.stringify([...expected.executeRoles].sort())
+      )
+        throw Error("POWER_SERVICE_FIXED_EXECUTE_DECLARATIONS_CHANGED");
+    }
   }
   if (
     JSON.stringify(actual.sort()) !==
@@ -364,7 +393,32 @@ export function inspectPostwarTradeConstraintExtension(item, bytes) {
     throw Error("EXACT_ADJACENT_TRADE_CHECK_EXTENSION_REQUIRED");
   return { ...expected, declarationOnly: true, productionApplied: false };
 }
+/** The Captain UI helper remains private, immutable metadata, never approval. */
+export function inspectPostwarCaptainAllocationOptions(item, bytes) {
+  if (item.id !== "postwar-captain-current-derived-read") return;
+  const sql = bytes.toString("utf8");
+  const signature =
+    "world_v2\\.postwar_captain_allocation_options\\(jsonb,text\\)";
+  if (
+    !/create\s+function\s+world_v2\.postwar_captain_allocation_options\(p_packet jsonb,p_country text\)returns jsonb\s+language plpgsql immutable set search_path=pg_catalog as \$\$/iu.test(
+      sql,
+    ) ||
+    !new RegExp(
+      `alter\\s+function\\s+${signature}owner\\s+to\\s+world_v2_postwar_projection_owner\\s*;`,
+      "iu",
+    ).test(sql) ||
+    !new RegExp(
+      `revoke\\s+all\\s+on\\s+function\\s+${signature}from\\s+public\\s*;`,
+      "iu",
+    ).test(sql) ||
+    /grant\s+(?:execute|all)[^;]*world_v2\.postwar_captain_allocation_options/iu.test(
+      sql,
+    )
+  )
+    throw Error("CAPTAIN_ALLOCATION_PRIVATE_IMMUTABLE_HELPER_REQUIRED");
+}
 export function inspectExpandedProposalBytes(item, bytes) {
+  inspectPostwarCaptainAllocationOptions(item, bytes);
   inspectPostwarTradeConstraintExtension(item, bytes);
   if (item.namedFunctionReplacements !== undefined)
     fixedNamedBaselineReplacement(item, bytes);
