@@ -416,3 +416,29 @@ use of the repair requires the separately installed source-revocation-fence
 proposal. Historical installations need the explicit function-only forward
 receipt, preserving the original source receipts; regenerating this catalog
 does not apply that update or authorize production execution.
+
+## Employment creation licence supplement (source-only)
+
+This independent update inventories 81 source proposals, one excluded Clock and
+80 non-Clock proposals, plus the unchanged 23 registered sources (104 inventory
+files). Earlier counts and receipts above remain historical evidence.
+
+`postwar-social-employment-creation` follows the existing Social prefix scope
+and Social/Finance custody. It declares one immutable forced-RLS, exact-World
+licence table and three fixed ProjectionOwner definer functions. The controlled
+prepare is EXEC-only for the existing ProjectionPublisher. The effect check is
+private to the existing SocialSourceOwner and FinanceBudgetSourceOwner; the pool
+lookup is private to FinanceBudgetSourceOwner. No new login, membership, online
+raw SELECT or public EXECUTE is added by this catalog. The ordinary reader and
+publisher do not gain either private effect/pool helper.
+
+Nine existing Budget, Social, Finance, Industry and MATCH SQL files change only
+function bodies; their contracts are unchanged. They record this supplement as
+a creation-path runtime prerequisite. The two older Social foundations remain
+before the supplement, avoiding a false circular install dependency. Existing
+scope bytes, original licences and committed history are not rewritten.
+
+Creation is not employment, attendance, completed work or wage payment. The
+source-only package records observed SQL bytes and exact signatures/owners/ACLs;
+it does not execute preparation, validate a host, prove a native CREATE chain,
+register migrations, activate a Clock or grant production approval.

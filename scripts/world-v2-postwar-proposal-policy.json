@@ -6,7 +6,7 @@
   "projectRef": "vimksjrhaxdpnkvgsavz",
   "registeredManifestSha256": "e675bd8bd18ba6c51aeffa674320dba3ac79299b7e12eeef834fe28547f9025e",
   "registeredMigrationCount": 23,
-  "proposalPolicy": "Fixed 80-proposal source inventory and dependency review order only; no installation order, migration approval or final World SHA selected",
+  "proposalPolicy": "Fixed 81-proposal source inventory and dependency review order only; no installation order, migration approval or final World SHA selected",
   "proposals": [
     {
       "id": "runtime-read-binding-storage",
@@ -385,7 +385,8 @@
         "world_v2_postwar_projection_owner": "postwar-office-derived-read",
         "world_v2_postwar_projection_publisher": "postwar-office-derived-read",
         "world_v2_postwar_projection_reader": "postwar-office-derived-read"
-      }
+      },
+      "runtimePrerequisites": ["postwar-social-employment-creation"]
     },
     {
       "id": "postwar-social-current-prefix-read",
@@ -426,12 +427,108 @@
         "world_v2_postwar_projection_owner": "postwar-office-derived-read",
         "world_v2_postwar_projection_publisher": "postwar-office-derived-read",
         "world_v2_postwar_projection_reader": "postwar-office-derived-read"
-      }
+      },
+      "runtimePrerequisites": ["postwar-social-employment-creation"]
+    },
+    {
+      "id": "postwar-social-employment-creation",
+      "path": "database/proposals/postwar-social-employment-creation.sql",
+      "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
+      "dependencies": [
+        "postwar-social-current-prefix-read",
+        "social-operating-custody",
+        "finance-budget-custody"
+      ],
+      "baselineDependencies": [
+        "0002_world_v2_command_event_ledger",
+        "0003_world_v2_command_receipts_outbox",
+        "0016_world_v2_opening_seed"
+      ],
+      "createdRoles": [],
+      "reusedRoles": [
+        "world_v2_finance_budget_source_owner",
+        "world_v2_postwar_projection_owner",
+        "world_v2_postwar_projection_publisher",
+        "world_v2_postwar_projection_reader",
+        "world_v2_social_source_owner"
+      ],
+      "createdRelations": ["postwar_social_employment_creation_licence"],
+      "definedFunctions": [
+        "postwar_social_created_pool",
+        "postwar_social_employment_creation_effect_scoped",
+        "prepare_postwar_social_employment_creation_licences"
+      ],
+      "renamedFunctions": [],
+      "literalCreatedPolicies": [
+        "social_creation_licence_owner",
+        "social_creation_licence_world"
+      ],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_finance_budget_source_owner": "finance-budget-custody",
+        "world_v2_postwar_projection_owner": "postwar-office-derived-read",
+        "world_v2_postwar_projection_publisher": "postwar-office-derived-read",
+        "world_v2_postwar_projection_reader": "postwar-office-derived-read",
+        "world_v2_social_source_owner": "social-operating-custody"
+      },
+      "definedFunctionSignatures": [
+        "world_v2.postwar_social_created_pool(text,text,text,bigint)",
+        "world_v2.postwar_social_employment_creation_effect_scoped(text,text,jsonb,jsonb,bigint)",
+        "world_v2.prepare_postwar_social_employment_creation_licences(text)"
+      ],
+      "functionContracts": [
+        {
+          "qualifiedSignature": "world_v2.postwar_social_created_pool(text,text,text,bigint)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": ["world_v2_finance_budget_source_owner"]
+        },
+        {
+          "qualifiedSignature": "world_v2.postwar_social_employment_creation_effect_scoped(text,text,jsonb,jsonb,bigint)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": [
+            "world_v2_social_source_owner",
+            "world_v2_finance_budget_source_owner"
+          ]
+        },
+        {
+          "qualifiedSignature": "world_v2.prepare_postwar_social_employment_creation_licences(text)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": ["world_v2_postwar_projection_publisher"]
+        }
+      ],
+      "permissionDelta": {
+        "reviewStatus": "SOURCE_DECLARATIONS_ONLY_ACTUAL_CATALOG_AND_APPROVED_ENROLLMENT_REQUIRED",
+        "newLoginRoles": false,
+        "membershipEnrollment": false,
+        "boundedRuntimeRawSeedSelect": false
+      },
+      "rollbackChecks": [
+        "NO_AUTOMATIC_SQL_DOWNGRADE",
+        "UNCERTAIN_COMMIT_STOP_AND_READBACK_NOT_BLIND_RETRY",
+        "PRESERVE_AUTHORITATIVE_HISTORY_IMMUTABLE_ORIGINALS_AND_EXISTING_SOURCE_PINS",
+        "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
+        "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE"
+      ],
+      "versionSemantics": "ACTUAL_ADMITTED_E03_NPC_USAGE_LICENSES_DUTIES_AND_GOV_LC;IMMUTABLE_SUPPLEMENT_NOT_SCOPE_REWRITE;CREATION_NOT_EMPLOYMENT_ATTENDANCE_WORK_PAYMENT_OR_TRADABLE_RIGHT;SAME_COMPLETE_PREFIX_LICENCE_CHECK_IN_BUDGET_SOCIAL_FINANCIAL_MATCH_AND_INDUSTRY;NO_CALLER_LICENCE_OR_READY_INPUT",
+      "reviewOrder": 12
     },
     {
       "id": "finance-budget-mixed-source",
       "path": "database/proposals/finance-budget-mixed-source.sql",
-      "reviewOrder": 12,
+      "reviewOrder": 13,
       "disposition": "CANDIDATE_FINANCE_MIXED_SOURCE",
       "dependencies": ["finance-budget-capacity-source"],
       "baselineDependencies": ["0009_world_v2_posting_payload_integrity"],
@@ -465,12 +562,13 @@
         "budget_mixed_owner_event",
         "budget_mixed_owner_event_world"
       ],
-      "sourceBasis": "DIRECT_ADMITTED_STORED_SEED_WITH_PRIVATE_ALL_COUNTRY_SCOPE_INDEX_NOT_H0_READ_AUTHORITY"
+      "sourceBasis": "DIRECT_ADMITTED_STORED_SEED_WITH_PRIVATE_ALL_COUNTRY_SCOPE_INDEX_NOT_H0_READ_AUTHORITY",
+      "runtimePrerequisites": ["postwar-social-employment-creation"]
     },
     {
       "id": "postwar-financial-current-derived-read",
       "path": "database/proposals/postwar-financial-current-derived-read.sql",
-      "reviewOrder": 13,
+      "reviewOrder": 14,
       "disposition": "CANDIDATE_COMPLETE_FINANCIAL_CURRENT_PREFIX",
       "dependencies": ["postwar-social-current-prefix-read"],
       "baselineDependencies": ["0009_world_v2_posting_payload_integrity"],
@@ -503,12 +601,13 @@
         "world_v2_postwar_projection_owner": "postwar-office-derived-read",
         "world_v2_postwar_projection_publisher": "postwar-office-derived-read",
         "world_v2_postwar_projection_reader": "postwar-office-derived-read"
-      }
+      },
+      "runtimePrerequisites": ["postwar-social-employment-creation"]
     },
     {
       "id": "postwar-industry-production-source",
       "path": "database/proposals/postwar-industry-production-source.sql",
-      "reviewOrder": 14,
+      "reviewOrder": 15,
       "disposition": "CANDIDATE_INDUSTRY_CUSTODY",
       "dependencies": [
         "runtime-read-binding-storage",
@@ -553,7 +652,7 @@
     {
       "id": "postwar-narrow-trade-source",
       "path": "database/proposals/postwar-narrow-trade-source.sql",
-      "reviewOrder": 15,
+      "reviewOrder": 16,
       "disposition": "CANDIDATE_TRADE_SOURCE",
       "dependencies": ["postwar-office-derived-read"],
       "baselineDependencies": [
@@ -585,7 +684,7 @@
     {
       "id": "postwar-physical-opening-facts-read",
       "path": "database/proposals/postwar-physical-opening-facts-read.sql",
-      "reviewOrder": 16,
+      "reviewOrder": 17,
       "disposition": "CANDIDATE_HISTORICAL_PHYSICAL_READ",
       "dependencies": ["postwar-office-derived-read"],
       "baselineDependencies": ["0009_world_v2_posting_payload_integrity"],
@@ -610,7 +709,7 @@
     {
       "id": "postwar-physical-inventory-provenance",
       "path": "database/proposals/postwar-physical-inventory-provenance.sql",
-      "reviewOrder": 17,
+      "reviewOrder": 18,
       "disposition": "CANDIDATE_IMMUTABLE_INVENTORY_PROVENANCE_V2",
       "dependencies": [
         "postwar-office-derived-read",
@@ -648,7 +747,7 @@
     {
       "id": "current-authorization-writer-preparation",
       "path": "database/proposals/current-authorization-writer-preparation.sql",
-      "reviewOrder": 18,
+      "reviewOrder": 19,
       "disposition": "OPTIONAL_DEFAULT_DENY_CONTEXT",
       "dependencies": [],
       "baselineDependencies": [],
@@ -667,7 +766,7 @@
     {
       "id": "postwar-runtime-source-read-policy",
       "path": "database/proposals/postwar-runtime-source-read-policy.sql",
-      "reviewOrder": 19,
+      "reviewOrder": 20,
       "disposition": "OPTIONAL_OFFLINE_ONLY",
       "dependencies": ["runtime-read-binding-storage"],
       "baselineDependencies": [],
@@ -688,7 +787,7 @@
     {
       "id": "financial-posting-decimal-validation",
       "path": "database/proposals/financial-posting-decimal-validation.sql",
-      "reviewOrder": 20,
+      "reviewOrder": 21,
       "disposition": "CANDIDATE_FINANCIAL_POSTING_DECIMAL_FORWARD_FIX",
       "dependencies": [],
       "baselineDependencies": ["0009_world_v2_posting_payload_integrity"],
@@ -724,7 +823,7 @@
     {
       "id": "postwar-day-one-fx-custody",
       "path": "database/proposals/postwar-day-one-fx-custody.sql",
-      "reviewOrder": 21,
+      "reviewOrder": 22,
       "disposition": "CANDIDATE_FINANCE_TREASURY_FX_CUSTODY",
       "dependencies": [
         "runtime-read-binding-storage",
@@ -784,7 +883,7 @@
     {
       "id": "postwar-social-startup-seed-header",
       "path": "database/proposals/postwar-social-startup-seed-header.sql",
-      "reviewOrder": 22,
+      "reviewOrder": 23,
       "disposition": "CANDIDATE_FIXED_SOCIAL_STARTUP_HEADER",
       "dependencies": ["social-operating-custody"],
       "baselineDependencies": ["0016_world_v2_opening_seed"],
@@ -840,7 +939,7 @@
     {
       "id": "postwar-finance-social-source-publication",
       "path": "database/proposals/postwar-finance-social-source-publication.sql",
-      "reviewOrder": 23,
+      "reviewOrder": 24,
       "disposition": "CANDIDATE_FIXED_FINANCE_SOCIAL_SOURCE_PUBLICATION",
       "dependencies": [
         "finance-budget-mixed-source",
@@ -929,7 +1028,7 @@
     {
       "id": "central-bank-omo-custody",
       "path": "database/proposals/central-bank-omo-custody.sql",
-      "reviewOrder": 24,
+      "reviewOrder": 25,
       "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
       "dependencies": [
         "runtime-admission-publication",
@@ -1046,7 +1145,7 @@
     {
       "id": "postwar-day-one-fx-history-read",
       "path": "database/proposals/postwar-day-one-fx-history-read.sql",
-      "reviewOrder": 25,
+      "reviewOrder": 26,
       "disposition": "CANDIDATE_COMMITTED_FX_ARCHIVE_DATA_READ",
       "dependencies": [
         "postwar-day-one-fx-custody",
@@ -1147,7 +1246,7 @@
     {
       "id": "postwar-mixed-current-projection-read",
       "path": "database/proposals/postwar-mixed-current-projection-read.sql",
-      "reviewOrder": 26,
+      "reviewOrder": 27,
       "disposition": "CANDIDATE_POSTING_AWARE_SOCIAL_CURRENT_V3",
       "dependencies": [
         "postwar-social-current-prefix-read",
@@ -1268,12 +1367,13 @@
         "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
         "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE",
         "Stop new derived publication and drain readers; retain old and new immutable pages/cursors. Previous no-posting reader must stay UNAVAILABLE after FX; a UI rollback must not relabel H0/current or remove economic postings."
-      ]
+      ],
+      "runtimePrerequisites": ["postwar-social-employment-creation"]
     },
     {
       "id": "postwar-mixed-financial-current-publication",
       "path": "database/proposals/postwar-mixed-financial-current-publication.sql",
-      "reviewOrder": 27,
+      "reviewOrder": 28,
       "disposition": "CANDIDATE_POSTING_AWARE_FINANCE_CB_PUBLICATION",
       "dependencies": [
         "postwar-mixed-current-projection-read",
@@ -1337,7 +1437,7 @@
     {
       "id": "postwar-social-mixed-match-publisher",
       "path": "database/proposals/postwar-social-mixed-match-publisher.sql",
-      "reviewOrder": 28,
+      "reviewOrder": 29,
       "disposition": "CANDIDATE_MIXED_PREFIX_SOCIAL_MATCH_DUE",
       "dependencies": [
         "social-operating-match-publisher",
@@ -1402,12 +1502,13 @@
         "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
         "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE",
         "Pause the single consumer and publisher, drain tasks and inventory existing due/FINAL receipts before any release reversal. Preserve queued canonical commands/publication history; do not delete a due command or start a second consumer to work around an unsupported head."
-      ]
+      ],
+      "runtimePrerequisites": ["postwar-social-employment-creation"]
     },
     {
       "id": "postwar-bounded-journal-read",
       "path": "database/proposals/postwar-bounded-journal-read.sql",
-      "reviewOrder": 29,
+      "reviewOrder": 30,
       "disposition": "CANDIDATE_BOUNDED_SOURCE_REPLAY_JOURNAL",
       "dependencies": ["postwar-day-one-fx-history-read"],
       "baselineDependencies": ["0007_world_v2_atomic_transition_facts"],
@@ -1500,7 +1601,7 @@
     {
       "id": "postwar-bounded-prefix-read",
       "path": "database/proposals/postwar-bounded-prefix-read.sql",
-      "reviewOrder": 30,
+      "reviewOrder": 31,
       "disposition": "CANDIDATE_COMPLETE_BOUNDED_SOURCE_PREFIX",
       "dependencies": ["postwar-bounded-journal-read"],
       "baselineDependencies": [
@@ -1579,7 +1680,7 @@
     {
       "id": "postwar-office-recovery-read",
       "path": "database/proposals/postwar-office-recovery-read.sql",
-      "reviewOrder": 31,
+      "reviewOrder": 32,
       "disposition": "CANDIDATE_EXACT_CAPABILITY_READ_ONLY_RECOVERY_METADATA",
       "dependencies": [
         "postwar-office-derived-read",
@@ -1675,7 +1776,7 @@
     {
       "id": "postwar-narrow-trade-current-source",
       "path": "database/proposals/postwar-narrow-trade-current-source.sql",
-      "reviewOrder": 32,
+      "reviewOrder": 33,
       "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
       "dependencies": [
         "postwar-day-one-fx-custody",
@@ -1737,7 +1838,7 @@
     {
       "id": "postwar-industry-operating-receipts",
       "path": "database/proposals/postwar-industry-operating-receipts.sql",
-      "reviewOrder": 33,
+      "reviewOrder": 34,
       "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
       "dependencies": ["postwar-industry-production-source"],
       "baselineDependencies": [
@@ -1794,7 +1895,7 @@
     {
       "id": "postwar-captain-source-publication",
       "path": "database/proposals/postwar-captain-source-publication.sql",
-      "reviewOrder": 34,
+      "reviewOrder": 35,
       "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
       "dependencies": [
         "captain-operating-custody",
@@ -1858,7 +1959,7 @@
     {
       "id": "postwar-captain-mixed-read",
       "path": "database/proposals/postwar-captain-mixed-read.sql",
-      "reviewOrder": 35,
+      "reviewOrder": 36,
       "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
       "dependencies": [
         "captain-operating-custody",
@@ -1938,7 +2039,7 @@
     {
       "id": "postwar-captain-current-derived-read",
       "path": "database/proposals/postwar-captain-current-derived-read.sql",
-      "reviewOrder": 36,
+      "reviewOrder": 37,
       "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
       "dependencies": [
         "captain-operating-custody",
@@ -2031,7 +2132,7 @@
     {
       "id": "postwar-captain-intake-binding",
       "path": "database/proposals/postwar-captain-intake-binding.sql",
-      "reviewOrder": 37,
+      "reviewOrder": 38,
       "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
       "dependencies": [
         "captain-operating-custody",
@@ -2097,7 +2198,7 @@
     {
       "id": "central-bank-omo-history-read",
       "path": "database/proposals/central-bank-omo-history-read.sql",
-      "reviewOrder": 38,
+      "reviewOrder": 39,
       "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
       "dependencies": [
         "captain-operating-custody",
@@ -2201,7 +2302,7 @@
     {
       "id": "postwar-beneficial-housing-rent-custody",
       "path": "database/proposals/postwar-beneficial-housing-rent-custody.sql",
-      "reviewOrder": 39,
+      "reviewOrder": 40,
       "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
       "dependencies": ["runtime-admission-publication"],
       "baselineDependencies": [
@@ -2297,7 +2398,7 @@
     {
       "id": "postwar-narrow-trade-automatic-source",
       "path": "database/proposals/postwar-narrow-trade-automatic-source.sql",
-      "reviewOrder": 40,
+      "reviewOrder": 41,
       "disposition": "CANDIDATE_COMMITTED_CONTRACT_AUTOMATIC_SOURCE",
       "dependencies": ["postwar-narrow-trade-current-source"],
       "baselineDependencies": [
@@ -2356,7 +2457,7 @@
     {
       "id": "world-command-execution-registration",
       "path": "database/proposals/world-command-execution-registration.sql",
-      "reviewOrder": 41,
+      "reviewOrder": 42,
       "disposition": "CANDIDATE_REGISTERED_HOST_NO_ACTIVATION",
       "dependencies": [
         "runtime-admission-publication",
@@ -2436,7 +2537,7 @@
     {
       "id": "world-actor-identity-registry",
       "path": "database/proposals/world-actor-identity-registry.sql",
-      "reviewOrder": 42,
+      "reviewOrder": 43,
       "disposition": "CANDIDATE_REGISTERED_HOST_NO_ACTIVATION",
       "dependencies": [],
       "baselineDependencies": [
@@ -2553,7 +2654,7 @@
       ],
       "id": "postwar-central-bank-intake-binding",
       "path": "database/proposals/postwar-central-bank-intake-binding.sql",
-      "reviewOrder": 43,
+      "reviewOrder": 44,
       "dependencies": [
         "runtime-read-binding-storage",
         "runtime-admission-publication",
@@ -2688,7 +2789,7 @@
       ],
       "id": "postwar-narrow-trade-intake-binding",
       "path": "database/proposals/postwar-narrow-trade-intake-binding.sql",
-      "reviewOrder": 44,
+      "reviewOrder": 45,
       "dependencies": [
         "runtime-read-binding-storage",
         "runtime-admission-publication",
@@ -2797,7 +2898,7 @@
       ],
       "id": "postwar-beneficial-rent-social-publication",
       "path": "database/proposals/postwar-beneficial-rent-social-publication.sql",
-      "reviewOrder": 45,
+      "reviewOrder": 46,
       "dependencies": [
         "social-operating-custody",
         "postwar-beneficial-housing-rent-custody"
@@ -2862,7 +2963,7 @@
       ],
       "id": "postwar-mixed-goods-omo-current-effects",
       "path": "database/proposals/postwar-mixed-goods-omo-current-effects.sql",
-      "reviewOrder": 46,
+      "reviewOrder": 47,
       "dependencies": [
         "postwar-mixed-current-projection-read",
         "central-bank-omo-custody",
@@ -2995,7 +3096,7 @@
       ],
       "id": "postwar-narrow-trade-history-read",
       "path": "database/proposals/postwar-narrow-trade-history-read.sql",
-      "reviewOrder": 47,
+      "reviewOrder": 48,
       "dependencies": [
         "postwar-narrow-trade-current-source",
         "postwar-captain-mixed-read",
@@ -3068,7 +3169,7 @@
       ],
       "id": "postwar-mixed-beneficial-rent-current-effects",
       "path": "database/proposals/postwar-mixed-beneficial-rent-current-effects.sql",
-      "reviewOrder": 48,
+      "reviewOrder": 49,
       "dependencies": [
         "postwar-mixed-current-projection-read",
         "postwar-beneficial-housing-rent-custody"
@@ -3153,7 +3254,7 @@
       ],
       "id": "postwar-industry-labour-current-read",
       "path": "database/proposals/postwar-industry-labour-current-read.sql",
-      "reviewOrder": 49,
+      "reviewOrder": 50,
       "dependencies": [
         "postwar-mixed-current-projection-read",
         "postwar-finance-social-source-publication"
@@ -3266,7 +3367,7 @@
       ],
       "id": "postwar-bounded-prefix-pages",
       "path": "database/proposals/postwar-bounded-prefix-pages.sql",
-      "reviewOrder": 50,
+      "reviewOrder": 51,
       "dependencies": [
         "postwar-bounded-prefix-read",
         "postwar-bounded-journal-read",
@@ -3353,7 +3454,7 @@
       ],
       "id": "postwar-industry-intake-binding",
       "path": "database/proposals/postwar-industry-intake-binding.sql",
-      "reviewOrder": 51,
+      "reviewOrder": 52,
       "dependencies": [
         "postwar-industry-production-source",
         "runtime-read-binding-storage",
@@ -3478,7 +3579,7 @@
       ],
       "id": "postwar-industry-first-day-source",
       "path": "database/proposals/postwar-industry-first-day-source.sql",
-      "reviewOrder": 52,
+      "reviewOrder": 53,
       "dependencies": ["postwar-industry-production-source"],
       "createdRoles": [],
       "reusedRoles": [
@@ -3576,7 +3677,7 @@
       ],
       "id": "postwar-paged-office-history-originals",
       "path": "database/proposals/postwar-paged-office-history-originals.sql",
-      "reviewOrder": 53,
+      "reviewOrder": 54,
       "dependencies": [
         "central-bank-omo-history-read",
         "postwar-captain-mixed-read"
@@ -3685,7 +3786,7 @@
       ],
       "id": "postwar-narrow-trade-paged-source",
       "path": "database/proposals/postwar-narrow-trade-paged-source.sql",
-      "reviewOrder": 54,
+      "reviewOrder": 55,
       "dependencies": [
         "postwar-narrow-trade-current-source",
         "postwar-narrow-trade-automatic-source"
@@ -3762,7 +3863,7 @@
       ],
       "id": "postwar-beneficial-rent-paged-custody",
       "path": "database/proposals/postwar-beneficial-rent-paged-custody.sql",
-      "reviewOrder": 55,
+      "reviewOrder": 56,
       "dependencies": ["postwar-beneficial-housing-rent-custody"],
       "createdRoles": [],
       "reusedRoles": [
@@ -3834,7 +3935,7 @@
       ],
       "id": "postwar-captain-paged-scope",
       "path": "database/proposals/postwar-captain-paged-scope.sql",
-      "reviewOrder": 56,
+      "reviewOrder": 57,
       "dependencies": ["postwar-captain-mixed-read"],
       "createdRoles": [],
       "reusedRoles": [
@@ -3894,7 +3995,7 @@
       ],
       "id": "central-bank-omo-paged-custody",
       "path": "database/proposals/central-bank-omo-paged-custody.sql",
-      "reviewOrder": 57,
+      "reviewOrder": 58,
       "dependencies": ["central-bank-omo-custody"],
       "createdRoles": [],
       "reusedRoles": [
@@ -3954,7 +4055,7 @@
       ],
       "id": "postwar-social-match-prefix-pages",
       "path": "database/proposals/postwar-social-match-prefix-pages.sql",
-      "reviewOrder": 58,
+      "reviewOrder": 59,
       "dependencies": [
         "postwar-bounded-prefix-pages",
         "postwar-day-one-fx-history-read",
@@ -4018,7 +4119,7 @@
       ],
       "id": "postwar-social-paged-match-publisher",
       "path": "database/proposals/postwar-social-paged-match-publisher.sql",
-      "reviewOrder": 59,
+      "reviewOrder": 60,
       "dependencies": [
         "postwar-social-mixed-match-publisher",
         "postwar-social-match-prefix-pages",
@@ -4052,7 +4153,8 @@
           "executeRoles": ["world_v2_social_source_publisher"]
         }
       ],
-      "runtimeDependencies": ["postwar-source-revocation-fence"]
+      "runtimeDependencies": ["postwar-source-revocation-fence"],
+      "runtimePrerequisites": ["postwar-social-employment-creation"]
     },
     {
       "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
@@ -4083,7 +4185,7 @@
       ],
       "id": "postwar-paged-current-projection",
       "path": "database/proposals/postwar-paged-current-projection.sql",
-      "reviewOrder": 60,
+      "reviewOrder": 61,
       "dependencies": [
         "postwar-bounded-prefix-pages",
         "postwar-mixed-goods-omo-current-effects",
@@ -4292,7 +4394,8 @@
           "predecessorProposal": "postwar-captain-current-derived-read",
           "legacyOriginals": "RETAINED_IMMUTABLE_NO_AUTOMATIC_DOWNGRADE"
         }
-      ]
+      ],
+      "runtimePrerequisites": ["postwar-social-employment-creation"]
     },
     {
       "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
@@ -4323,7 +4426,7 @@
       ],
       "id": "postwar-industry-run-custody",
       "path": "database/proposals/postwar-industry-run-custody.sql",
-      "reviewOrder": 61,
+      "reviewOrder": 62,
       "dependencies": [
         "postwar-industry-intake-binding",
         "postwar-industry-first-day-source",
@@ -4393,7 +4496,7 @@
       ],
       "id": "postwar-industry-run-history",
       "path": "database/proposals/postwar-industry-run-history.sql",
-      "reviewOrder": 62,
+      "reviewOrder": 63,
       "dependencies": [
         "postwar-industry-run-custody",
         "social-operating-custody",
@@ -4474,7 +4577,7 @@
       ],
       "id": "postwar-industry-work-custody",
       "path": "database/proposals/postwar-industry-work-custody.sql",
-      "reviewOrder": 63,
+      "reviewOrder": 64,
       "dependencies": [
         "postwar-industry-run-custody",
         "postwar-industry-first-day-source",
@@ -4557,7 +4660,7 @@
       ],
       "id": "postwar-industry-work-publication",
       "path": "database/proposals/postwar-industry-work-publication.sql",
-      "reviewOrder": 64,
+      "reviewOrder": 65,
       "dependencies": [
         "postwar-industry-work-custody",
         "postwar-industry-production-source"
@@ -4648,7 +4751,7 @@
       ],
       "id": "postwar-industry-wage-history",
       "path": "database/proposals/postwar-industry-wage-history.sql",
-      "reviewOrder": 65,
+      "reviewOrder": 66,
       "dependencies": [
         "postwar-industry-run-history",
         "postwar-industry-work-custody",
@@ -4782,7 +4885,7 @@
         }
       ],
       "runtimeDependencies": ["postwar-source-revocation-fence"],
-      "reviewOrder": 66
+      "reviewOrder": 67
     },
     {
       "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
@@ -4861,7 +4964,7 @@
           "executeRoles": ["world_v2_postwar_projection_reader"]
         }
       ],
-      "reviewOrder": 67
+      "reviewOrder": 68
     },
     {
       "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
@@ -4998,7 +5101,8 @@
         }
       ],
       "runtimeDependencies": ["postwar-source-revocation-fence"],
-      "reviewOrder": 68
+      "reviewOrder": 69,
+      "runtimePrerequisites": ["postwar-social-employment-creation"]
     },
     {
       "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
@@ -5074,7 +5178,7 @@
           "rawSeedSelect": false
         }
       ],
-      "reviewOrder": 69
+      "reviewOrder": 70
     },
     {
       "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
@@ -5105,7 +5209,7 @@
       ],
       "id": "postwar-industry-paid-work-read",
       "path": "database/proposals/postwar-industry-paid-work-read.sql",
-      "reviewOrder": 70,
+      "reviewOrder": 71,
       "dependencies": [
         "postwar-industry-production-source",
         "postwar-industry-first-day-source",
@@ -5173,7 +5277,7 @@
       ],
       "id": "postwar-captain-h0-current",
       "path": "database/proposals/postwar-captain-h0-current.sql",
-      "reviewOrder": 71,
+      "reviewOrder": 72,
       "dependencies": [
         "postwar-captain-current-derived-read",
         "postwar-paged-current-projection"
@@ -5262,7 +5366,7 @@
       ],
       "id": "postwar-industry-utility-custody",
       "path": "database/proposals/postwar-industry-utility-custody.sql",
-      "reviewOrder": 72,
+      "reviewOrder": 73,
       "dependencies": [
         "postwar-industry-first-day-source",
         "postwar-industry-run-history",
@@ -5428,7 +5532,7 @@
       ],
       "id": "postwar-industry-logistics-custody",
       "path": "database/proposals/postwar-industry-logistics-custody.sql",
-      "reviewOrder": 73,
+      "reviewOrder": 74,
       "dependencies": [
         "postwar-industry-first-day-source",
         "postwar-industry-run-history",
@@ -5578,7 +5682,7 @@
       ],
       "id": "postwar-mixed-industry-utility-effects",
       "path": "database/proposals/postwar-mixed-industry-utility-effects.sql",
-      "reviewOrder": 74,
+      "reviewOrder": 75,
       "dependencies": [
         "postwar-mixed-industry-current-effects",
         "postwar-industry-utility-custody",
@@ -5692,7 +5796,7 @@
       ],
       "id": "postwar-trade-current-projection",
       "path": "database/proposals/postwar-trade-current-projection.sql",
-      "reviewOrder": 75,
+      "reviewOrder": 76,
       "dependencies": [
         "postwar-paged-current-projection",
         "postwar-mixed-goods-omo-current-effects",
@@ -5805,7 +5909,7 @@
       ],
       "id": "postwar-source-revocation-fence",
       "path": "database/proposals/postwar-source-revocation-fence.sql",
-      "reviewOrder": 76,
+      "reviewOrder": 77,
       "dependencies": [
         "runtime-admission-publication",
         "runtime-read-binding-storage",
@@ -6019,7 +6123,7 @@
         }
       ],
       "runtimePrerequisites": ["postwar-source-revocation-fence"],
-      "reviewOrder": 77
+      "reviewOrder": 78
     },
     {
       "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
@@ -6110,12 +6214,12 @@
         }
       ],
       "runtimePrerequisites": ["postwar-source-revocation-fence"],
-      "reviewOrder": 78
+      "reviewOrder": 79
     },
     {
       "id": "postwar-complete-opening-inventory-read-repair",
       "path": "database/proposals/postwar-complete-opening-inventory-read-repair.sql",
-      "reviewOrder": 79,
+      "reviewOrder": 80,
       "disposition": "REQUIRED_COMPLETE_ADMITTED_INVENTORY_READ_REPAIR",
       "dependencies": [
         "postwar-office-derived-read",
@@ -6383,7 +6487,7 @@
     {
       "id": "isolated-world-clock",
       "path": "database/proposals/isolated-world-clock.sql",
-      "reviewOrder": 80,
+      "reviewOrder": 81,
       "disposition": "EXCLUDED_NOT_A_READ_DEPENDENCY",
       "dependencies": [],
       "baselineDependencies": [],
