@@ -6,7 +6,7 @@
   "projectRef": "vimksjrhaxdpnkvgsavz",
   "registeredManifestSha256": "e675bd8bd18ba6c51aeffa674320dba3ac79299b7e12eeef834fe28547f9025e",
   "registeredMigrationCount": 23,
-  "proposalPolicy": "Fixed 82-proposal source inventory and dependency review order only; no installation order, migration approval or final World SHA selected",
+  "proposalPolicy": "Fixed 84-proposal source inventory and dependency review order only; no installation order, migration approval or final World SHA selected",
   "proposals": [
     {
       "id": "runtime-read-binding-storage",
@@ -6800,9 +6800,72 @@
       ]
     },
     {
+      "baselineDependencies": [
+        "0002_world_v2_command_event_ledger",
+        "0003_world_v2_command_receipts_outbox",
+        "0005_world_v2_writer_lease_fencing",
+        "0009_world_v2_posting_payload_integrity",
+        "0011_world_v2_current_commit_authorization",
+        "0013_world_v2_read_projection_boundary",
+        "0016_world_v2_opening_seed"
+      ],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "permissionDelta": {
+        "reviewStatus": "SOURCE_DECLARATIONS_ONLY_ACTUAL_CATALOG_AND_APPROVED_ENROLLMENT_REQUIRED",
+        "newLoginRoles": false,
+        "membershipEnrollment": false,
+        "boundedRuntimeRawSeedSelect": false
+      },
+      "rollbackChecks": [
+        "NO_AUTOMATIC_SQL_DOWNGRADE",
+        "UNCERTAIN_COMMIT_STOP_AND_READBACK_NOT_BLIND_RETRY",
+        "PRESERVE_AUTHORITATIVE_HISTORY_IMMUTABLE_ORIGINALS_AND_EXISTING_SOURCE_PINS",
+        "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
+        "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE"
+      ],
+      "id": "postwar-industry-logistics-v2-utility-forward",
+      "path": "database/proposals/postwar-industry-logistics-v2-utility-forward.sql",
+      "reviewOrder": 83,
+      "disposition": "CANDIDATE_EXACT_LOGISTICS_V2_UTILITY_FORWARD",
+      "dependencies": [
+        "postwar-mixed-industry-utility-effects",
+        "postwar-source-revocation-fence"
+      ],
+      "createdRoles": [],
+      "reusedRoles": ["world_v2_postwar_projection_owner"],
+      "createdRelations": [],
+      "definedFunctions": ["postwar_mixed_industry_utility_group"],
+      "renamedFunctions": [],
+      "literalCreatedPolicies": [],
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_postwar_projection_owner": "postwar-office-derived-read"
+      },
+      "definedFunctionSignatures": [
+        "world_v2.postwar_mixed_industry_utility_group(text,jsonb,jsonb,jsonb,jsonb,jsonb)"
+      ],
+      "functionContracts": [
+        {
+          "qualifiedSignature": "world_v2.postwar_mixed_industry_utility_group(text,jsonb,jsonb,jsonb,jsonb,jsonb)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": []
+        }
+      ],
+      "fixedLogisticsV2ForwardSha256": "9e6cf01285d85654cb312e941635db794b7a6777214acfdca6691fcd4fbdef65",
+      "predecessorDefinitionSha256": "68aa4022c34c5bef2f874ccaaf0d40123e913ad9a8be31ae17ca82a4924bdb69",
+      "successorDefinitionSha256": "5ac6a49584eaf5371c1a40d12516254a41b9404c2820819b7688c658b0ac3d03",
+      "versionSemantics": "EXACT_V1_OR_ADOPTED_MULTICOUNTRY_V2_ONLY;ALL_REGISTERED_RUN_SOURCE_HASH_AND_JOURNAL_CHECKS_PRESERVED;NO_PRIVILEGE_OR_ECONOMIC_RECORD_CHANGE"
+    },
+    {
       "id": "isolated-world-clock",
       "path": "database/proposals/isolated-world-clock.sql",
-      "reviewOrder": 83,
+      "reviewOrder": 84,
       "disposition": "EXCLUDED_NOT_A_READ_DEPENDENCY",
       "dependencies": [],
       "baselineDependencies": [],

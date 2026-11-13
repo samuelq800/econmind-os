@@ -255,8 +255,13 @@ describe("fixed postwar catalog handoff never executes or grants", () => {
       contracts.filter(
         (v: { providerChain: unknown[] }) => v.providerChain.length > 1,
       ),
-    ).toHaveLength(24);
+    ).toHaveLength(25);
     for (const [signature, predecessor, successor] of [
+      [
+        "world_v2.postwar_mixed_industry_utility_group(text,jsonb,jsonb,jsonb,jsonb,jsonb)",
+        "postwar-mixed-industry-utility-effects",
+        "postwar-industry-logistics-v2-utility-forward",
+      ],
       [
         "world_v2.read_postwar_industry_first_day_source(text,text,text,bigint,bigint)",
         "postwar-industry-first-day-source",

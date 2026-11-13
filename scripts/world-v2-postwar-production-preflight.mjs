@@ -60,6 +60,11 @@ export function postwarCatalogFunctionContracts(proposals) {
   // declarations. This is not a general last-definition-wins registry.
   const reviewedChains = [
     [
+      "world_v2.postwar_mixed_industry_utility_group(text,jsonb,jsonb,jsonb,jsonb,jsonb)",
+      "postwar-mixed-industry-utility-effects",
+      "postwar-industry-logistics-v2-utility-forward",
+    ],
+    [
       "world_v2.read_postwar_mixed_current_page(text,text,text,integer,integer,text)",
       "postwar-mixed-current-projection-read",
       "postwar-paged-current-projection",

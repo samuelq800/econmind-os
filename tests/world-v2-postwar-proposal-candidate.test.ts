@@ -267,12 +267,12 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       "EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED",
     );
   });
-  it("has an explicit eighty-three-file dependency order and no pretend final SHA", async () => {
+  it("has an explicit eighty-four-file dependency order and no pretend final SHA", async () => {
     const { policy } = await loadPostwarExpandedProposalPolicy();
     expect(policy.sourceCommit).toBeNull();
     expect(policy.installationAllowed).toBe(false);
     expect(policy.migrationApproval).toBe("NOT_GRANTED");
-    expect(policy.proposals).toHaveLength(83);
+    expect(policy.proposals).toHaveLength(84);
     const seen = new Set<string>();
     for (const p of policy.proposals) {
       expect(p.path).toBe(`database/proposals/${p.id}.sql`);
@@ -280,15 +280,15 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       expect(p.registration).toBe("UNREGISTERED_SOURCE_PROPOSAL");
       seen.add(p.id);
     }
-    expect(policy.registeredMigrationCount + policy.proposals.length).toBe(106);
+    expect(policy.registeredMigrationCount + policy.proposals.length).toBe(107);
     expect(
       policy.proposals.filter(
         (p: { disposition: string }) => !p.disposition.startsWith("EXCLUDED_"),
       ).length,
-    ).toBe(82);
+    ).toBe(83);
     expect(
       policy.proposals.map((p: { reviewOrder: number }) => p.reviewOrder),
-    ).toEqual(Array.from({ length: 83 }, (_, i) => i + 1));
+    ).toEqual(Array.from({ length: 84 }, (_, i) => i + 1));
     expect([...seen]).toContain("social-operating-match-publisher");
     expect([...seen]).toContain("postwar-social-current-derived-read");
     expect(
@@ -828,7 +828,7 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
     );
   });
   (process.env.POSTWAR_PROPOSAL_METADATA_SOURCE ? it : it.skip)(
-    "compares all eighty-three actual proposal object/role inventories without selecting a final candidate",
+    "compares all eighty-four actual proposal object/role inventories without selecting a final candidate",
     async () => {
       const { policy } = await loadPostwarExpandedProposalPolicy();
       for (const item of policy.proposals) {
@@ -838,6 +838,20 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
         expect(inspectExpandedProposalBytes(item, bytes).sha256Meaning).toBe(
           "OBSERVED_IMMUTABLE_CANDIDATE_BYTES_NOT_APPROVAL",
         );
+        if (item.id === "postwar-industry-logistics-v2-utility-forward") {
+          expect(() =>
+            inspectExpandedProposalBytes(
+              item,
+              Buffer.concat([bytes, Buffer.from("\n-- changed")]),
+            ),
+          ).toThrow("LOGISTICS_V2_GUARDED_SOURCE_OR_PREDECESSOR_CHANGED");
+          expect(() =>
+            inspectExpandedProposalBytes(
+              { ...item, predecessorDefinitionSha256: "0".repeat(64) },
+              bytes,
+            ),
+          ).toThrow("LOGISTICS_V2_GUARDED_SOURCE_OR_PREDECESSOR_CHANGED");
+        }
         if (
           [
             "postwar-industry-power-service-source",

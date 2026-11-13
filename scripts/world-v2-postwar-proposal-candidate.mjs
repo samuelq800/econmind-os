@@ -9,7 +9,7 @@ const policyPath = fileURLToPath(
 );
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const POLICY_SHA256 =
-  "0b9b1bbda4d99c53ce0ef6b5af76a0c044ee8802a4ec8334991a4acb6eda1506";
+  "c30e4b11f4568c03446f31ec5379873810c5fce76da8e6066b7ad7c8b03e59c4";
 export function requireImmutableProposalCandidateSha(candidateSha) {
   if (!/^[a-f0-9]{40}$/u.test(candidateSha ?? "") || /^0+$/u.test(candidateSha))
     throw Error("EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED");
@@ -27,7 +27,7 @@ export async function loadPostwarExpandedProposalPolicy() {
     policy.installationAllowed !== false ||
     policy.productionReviewVerified !== false ||
     policy.finalCandidateSelected !== false ||
-    policy.proposals.length !== 83
+    policy.proposals.length !== 84
   )
     throw Error("UNAPPROVED_EXPLICIT_CANDIDATE_POLICY_REQUIRED");
   const prior = new Set();
@@ -611,7 +611,26 @@ export function inspectPendingProgrammeTargetForward(item, bytes) {
   )
     throw Error("PENDING_TARGET_FIXED_NEW_FUNCTIONS_REQUIRED");
 }
+export function inspectLogisticsV2UtilityForward(item, bytes) {
+  if (item.id !== "postwar-industry-logistics-v2-utility-forward") {
+    if (item.fixedLogisticsV2ForwardSha256 !== undefined)
+      throw Error("ONLY_FIXED_LOGISTICS_V2_UTILITY_FORWARD");
+    return;
+  }
+  if (
+    sha(bytes) !==
+      "9e6cf01285d85654cb312e941635db794b7a6777214acfdca6691fcd4fbdef65" ||
+    item.fixedLogisticsV2ForwardSha256 !==
+      "9e6cf01285d85654cb312e941635db794b7a6777214acfdca6691fcd4fbdef65" ||
+    item.predecessorDefinitionSha256 !==
+      "68aa4022c34c5bef2f874ccaaf0d40123e913ad9a8be31ae17ca82a4924bdb69" ||
+    item.successorDefinitionSha256 !==
+      "5ac6a49584eaf5371c1a40d12516254a41b9404c2820819b7688c658b0ac3d03"
+  )
+    throw Error("LOGISTICS_V2_GUARDED_SOURCE_OR_PREDECESSOR_CHANGED");
+}
 export function inspectExpandedProposalBytes(item, bytes) {
+  inspectLogisticsV2UtilityForward(item, bytes);
   inspectPendingProgrammeTargetForward(item, bytes);
   inspectCompleteOpeningInventoryRepair(item, bytes);
   inspectPostwarCaptainAllocationOptions(item, bytes);
