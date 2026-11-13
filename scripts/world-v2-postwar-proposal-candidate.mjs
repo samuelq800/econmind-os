@@ -9,7 +9,7 @@ const policyPath = fileURLToPath(
 );
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const POLICY_SHA256 =
-  "c30e4b11f4568c03446f31ec5379873810c5fce76da8e6066b7ad7c8b03e59c4";
+  "d571dbbe2328ac1adab90facc9336f45861b3ca6c873cfa43a0a54b22b160f7c";
 export function requireImmutableProposalCandidateSha(candidateSha) {
   if (!/^[a-f0-9]{40}$/u.test(candidateSha ?? "") || /^0+$/u.test(candidateSha))
     throw Error("EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED");
@@ -27,7 +27,7 @@ export async function loadPostwarExpandedProposalPolicy() {
     policy.installationAllowed !== false ||
     policy.productionReviewVerified !== false ||
     policy.finalCandidateSelected !== false ||
-    policy.proposals.length !== 84
+    policy.proposals.length !== 85
   )
     throw Error("UNAPPROVED_EXPLICIT_CANDIDATE_POLICY_REQUIRED");
   const prior = new Set();
@@ -150,6 +150,7 @@ export function inspectPostwarFunctionContracts(item, bytes) {
       [
         "postwar-industry-power-service-source",
         "postwar-industry-power-service-current",
+        "postwar-industry-water-service-source",
       ].includes(item.id)
     ) {
       const grants = [

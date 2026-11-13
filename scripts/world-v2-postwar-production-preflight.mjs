@@ -134,6 +134,26 @@ export function postwarCatalogFunctionContracts(proposals) {
       "postwar-social-paged-match-publisher",
       "postwar-pending-programme-target-prefix",
     ],
+    [
+      "world_v2.read_postwar_industry_first_day_source(text,text,text,bigint,bigint)",
+      "postwar-industry-power-service-source",
+      "postwar-industry-water-service-source",
+    ],
+    [
+      "world_v2.publish_postwar_industry_work_due(text,text,text,text,text,timestamptz,text,text,text)",
+      "postwar-industry-power-service-source",
+      "postwar-industry-water-service-source",
+    ],
+    [
+      "world_v2.postwar_projection_industry_original(text,jsonb,jsonb)",
+      "postwar-pending-programme-target-prefix",
+      "postwar-industry-water-service-source",
+    ],
+    [
+      "world_v2.postwar_mixed_industry_work_group(text,jsonb,jsonb,jsonb,jsonb,jsonb)",
+      "postwar-pending-programme-target-prefix",
+      "postwar-industry-water-service-source",
+    ],
   ];
   const acl = (contract) =>
     JSON.stringify([
@@ -166,7 +186,14 @@ export function postwarCatalogFunctionContracts(proposals) {
           previous.proposalId !== chain[1] ||
           proposal.id !== chain[2]
         )
-          throw Error("DUPLICATE_EXACT_FUNCTION_CATALOG_CONTRACT");
+          throw Error(
+            "DUPLICATE_EXACT_FUNCTION_CATALOG_CONTRACT: " +
+              contract.qualifiedSignature +
+              ": " +
+              previous.proposalId +
+              " -> " +
+              proposal.id,
+          );
         const pendingGroupExtension =
           proposal.id === "postwar-pending-programme-target-prefix" &&
           contract.qualifiedSignature ===

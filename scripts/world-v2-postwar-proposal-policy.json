@@ -6863,9 +6863,147 @@
       "versionSemantics": "EXACT_V1_OR_ADOPTED_MULTICOUNTRY_V2_ONLY;ALL_REGISTERED_RUN_SOURCE_HASH_AND_JOURNAL_CHECKS_PRESERVED;NO_PRIVILEGE_OR_ECONOMIC_RECORD_CHANGE"
     },
     {
+      "disposition": "CANDIDATE_OFFICE_OPERATION_SOURCE_NOT_INSTALLATION",
+      "baselineDependencies": [
+        "0002_world_v2_command_event_ledger",
+        "0003_world_v2_command_receipts_outbox",
+        "0005_world_v2_writer_lease_fencing",
+        "0009_world_v2_posting_payload_integrity",
+        "0011_world_v2_current_commit_authorization",
+        "0013_world_v2_read_projection_boundary",
+        "0016_world_v2_opening_seed"
+      ],
+      "registration": "UNREGISTERED_SOURCE_PROPOSAL",
+      "productionApproval": "NOT_GRANTED",
+      "productionReviewVerified": false,
+      "permissionDelta": {
+        "reviewStatus": "SOURCE_DECLARATIONS_ONLY_ACTUAL_CATALOG_AND_APPROVED_ENROLLMENT_REQUIRED",
+        "newLoginRoles": false,
+        "membershipEnrollment": false,
+        "boundedRuntimeRawSeedSelect": false
+      },
+      "rollbackChecks": [
+        "NO_AUTOMATIC_SQL_DOWNGRADE",
+        "UNCERTAIN_COMMIT_STOP_AND_READBACK_NOT_BLIND_RETRY",
+        "PRESERVE_AUTHORITATIVE_HISTORY_IMMUTABLE_ORIGINALS_AND_EXISTING_SOURCE_PINS",
+        "RECORD_PREVIOUS_FUNCTION_SIGNATURE_OWNER_ACL_POLICY_TRIGGER_HASHES",
+        "VERIFY_OWNED_FUNCTION_ACLS_AND_ROLE_MEMBERSHIPS_AFTER_REVIEWED_CHANGE"
+      ],
+      "id": "postwar-industry-water-service-source",
+      "path": "database/proposals/postwar-industry-water-service-source.sql",
+      "dependencies": [
+        "postwar-industry-power-service-source",
+        "postwar-pending-programme-target-prefix",
+        "postwar-industry-logistics-v2-utility-forward"
+      ],
+      "createdRoles": [],
+      "reusedRoles": [
+        "world_v2_industry_source_owner",
+        "world_v2_industry_source_publisher",
+        "world_v2_industry_source_reader",
+        "world_v2_postwar_projection_owner",
+        "world_v2_postwar_projection_publisher",
+        "world_v2_postwar_projection_reader",
+        "world_v2_social_source_owner",
+        "world_v2_social_source_publisher"
+      ],
+      "createdRelations": [],
+      "definedFunctions": [
+        "postwar_mixed_industry_work_group",
+        "postwar_projection_industry_original",
+        "publish_postwar_industry_water_service_source",
+        "publish_postwar_industry_work_due",
+        "read_postwar_industry_first_day_source"
+      ],
+      "renamedFunctions": [],
+      "literalCreatedPolicies": [],
+      "deniedRoleNames": [],
+      "roleNamePrefixContext": [],
+      "sourceRoleDeps": {
+        "world_v2_industry_source_owner": "postwar-industry-production-source",
+        "world_v2_industry_source_publisher": "postwar-industry-production-source",
+        "world_v2_industry_source_reader": "postwar-industry-production-source",
+        "world_v2_postwar_projection_owner": "postwar-office-derived-read",
+        "world_v2_social_source_owner": "social-operating-custody",
+        "world_v2_postwar_projection_publisher": "postwar-office-derived-read",
+        "world_v2_postwar_projection_reader": "postwar-office-derived-read",
+        "world_v2_social_source_publisher": "social-operating-custody"
+      },
+      "definedFunctionSignatures": [
+        "world_v2.publish_postwar_industry_water_service_source(text,text)",
+        "world_v2.read_postwar_industry_first_day_source(text,text,text,bigint,bigint)",
+        "world_v2.publish_postwar_industry_work_due(text,text,text,text,text,timestamptz,text,text,text)",
+        "world_v2.postwar_projection_industry_original(text,jsonb,jsonb)",
+        "world_v2.postwar_mixed_industry_work_group(text,jsonb,jsonb,jsonb,jsonb,jsonb)"
+      ],
+      "functionContracts": [
+        {
+          "qualifiedSignature": "world_v2.publish_postwar_industry_water_service_source(text,text)",
+          "owner": "world_v2_industry_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": ["world_v2_industry_source_publisher"]
+        },
+        {
+          "qualifiedSignature": "world_v2.read_postwar_industry_first_day_source(text,text,text,bigint,bigint)",
+          "owner": "world_v2_industry_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": ["world_v2_industry_source_reader"]
+        },
+        {
+          "qualifiedSignature": "world_v2.publish_postwar_industry_work_due(text,text,text,text,text,timestamptz,text,text,text)",
+          "owner": "world_v2_industry_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": ["world_v2_industry_source_publisher"]
+        },
+        {
+          "qualifiedSignature": "world_v2.postwar_projection_industry_original(text,jsonb,jsonb)",
+          "owner": "world_v2_industry_source_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": ["world_v2_postwar_projection_owner"]
+        },
+        {
+          "qualifiedSignature": "world_v2.postwar_mixed_industry_work_group(text,jsonb,jsonb,jsonb,jsonb,jsonb)",
+          "owner": "world_v2_postwar_projection_owner",
+          "securityDefiner": true,
+          "searchPath": "pg_catalog",
+          "publicExecute": false,
+          "executeRoles": ["world_v2_social_source_owner"]
+        }
+      ],
+      "versionSemantics": "ADOPTED_NEW_WORLD_FIRST_DAY_WATER_ATTENDANCE_OVER_EXISTING_SAME_COUNTRY_OP_POWER_PERSONS;NO_NEW_PEOPLE_OR_VOLUME_LABOUR_COEFFICIENT;NO_WORK_PAY_OR_WATER_COMPLETION_FROM_SOURCE_REGISTRATION;EXACT_480_MINUTE_SHARED_CAP_AND_PAID_CONTINUOUS_ATTENDANCE_REMAIN_CORE_CONSTRAINTS",
+      "reviewedFunctionReplacements": [
+        {
+          "qualifiedSignature": "world_v2.read_postwar_industry_first_day_source(text,text,text,bigint,bigint)",
+          "predecessor": "postwar-industry-power-service-source"
+        },
+        {
+          "qualifiedSignature": "world_v2.publish_postwar_industry_work_due(text,text,text,text,text,timestamptz,text,text,text)",
+          "predecessor": "postwar-industry-power-service-source"
+        },
+        {
+          "qualifiedSignature": "world_v2.postwar_projection_industry_original(text,jsonb,jsonb)",
+          "predecessor": "postwar-pending-programme-target-prefix"
+        },
+        {
+          "qualifiedSignature": "world_v2.postwar_mixed_industry_work_group(text,jsonb,jsonb,jsonb,jsonb,jsonb)",
+          "predecessor": "postwar-pending-programme-target-prefix"
+        }
+      ],
+      "runtimePrerequisites": ["postwar-source-revocation-fence"],
+      "reviewOrder": 84
+    },
+    {
       "id": "isolated-world-clock",
       "path": "database/proposals/isolated-world-clock.sql",
-      "reviewOrder": 84,
+      "reviewOrder": 85,
       "disposition": "EXCLUDED_NOT_A_READ_DEPENDENCY",
       "dependencies": [],
       "baselineDependencies": [],
