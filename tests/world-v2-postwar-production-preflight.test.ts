@@ -143,7 +143,7 @@ describe("fixed postwar catalog handoff never executes or grants", () => {
     const old = policy.proposals.filter(
       (p: { id: string }) => p.id !== item.id,
     );
-    expect(postwarCatalogFunctionContracts(old)).toHaveLength(134);
+    expect(postwarCatalogFunctionContracts(old)).toHaveLength(143);
     expect(() =>
       postwarCatalogFunctionContracts(
         policy.proposals.filter(
@@ -168,7 +168,7 @@ describe("fixed postwar catalog handoff never executes or grants", () => {
   it("separates exact-signature ACL expectations from release approval and rejects duplicate contracts", async () => {
     const { policy } = await loadPostwarExpandedProposalPolicy();
     const contracts = postwarCatalogFunctionContracts(policy.proposals);
-    expect(contracts).toHaveLength(147);
+    expect(contracts).toHaveLength(152);
     expect(
       contracts.find((c: { qualifiedSignature: string }) =>
         c.qualifiedSignature.startsWith(
@@ -198,7 +198,7 @@ describe("fixed postwar catalog handoff never executes or grants", () => {
     expect(query).toContain("'definerColumnReadContracts'");
     expect(query).toContain("'actualSelectColumns'");
   });
-  it("retains exactly the seven reviewed ordered provider chains and their unchanged ACLs", async () => {
+  it("retains reviewed provider chains and only the declared pending-programme ACL addition", async () => {
     const { policy } = await loadPostwarExpandedProposalPolicy();
     const contracts = postwarCatalogFunctionContracts(policy.proposals);
     const read = contracts.find(
@@ -218,12 +218,13 @@ describe("fixed postwar catalog handoff never executes or grants", () => {
         v.qualifiedSignature ===
         "world_v2.postwar_apply_current_frame_page(text,text,jsonb)",
     );
-    expect(apply.proposalId).toBe("postwar-mixed-industry-current-effects");
+    expect(apply.proposalId).toBe("postwar-pending-programme-target-prefix");
     expect(
       apply.providerChain.map((v: { proposalId: string }) => v.proposalId),
     ).toEqual([
       "postwar-paged-current-projection",
       "postwar-mixed-industry-current-effects",
+      "postwar-pending-programme-target-prefix",
     ]);
     const captain = contracts.find(
       (v: { qualifiedSignature: string }) =>
@@ -254,7 +255,7 @@ describe("fixed postwar catalog handoff never executes or grants", () => {
       contracts.filter(
         (v: { providerChain: unknown[] }) => v.providerChain.length > 1,
       ),
-    ).toHaveLength(20);
+    ).toHaveLength(24);
     for (const [signature, predecessor, successor] of [
       [
         "world_v2.read_postwar_industry_first_day_source(text,text,text,bigint,bigint)",
@@ -283,7 +284,13 @@ describe("fixed postwar catalog handoff never executes or grants", () => {
       );
       expect(
         entry.providerChain.map((v: { proposalId: string }) => v.proposalId),
-      ).toEqual([predecessor, successor]);
+      ).toEqual([
+        predecessor,
+        successor,
+        ...(successor === "postwar-industry-power-service-current"
+          ? ["postwar-pending-programme-target-prefix"]
+          : []),
+      ]);
       expect(entry.providerChain[0].contract).toEqual(
         entry.providerChain[1].contract,
       );

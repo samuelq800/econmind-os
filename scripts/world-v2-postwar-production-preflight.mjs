@@ -94,6 +94,41 @@ export function postwarCatalogFunctionContracts(proposals) {
       "postwar-mixed-industry-current-effects",
       "postwar-industry-power-service-current",
     ],
+    [
+      "world_v2.postwar_social_prefix_effect_scoped(text,text,text,jsonb,jsonb,bigint)",
+      "postwar-social-current-prefix-read",
+      "postwar-pending-programme-target-prefix",
+    ],
+    [
+      "world_v2.postwar_social_origin_at_prefix(text,text)",
+      "postwar-social-current-prefix-read",
+      "postwar-pending-programme-target-prefix",
+    ],
+    [
+      "world_v2.read_postwar_industry_run_original(text,text,text,text,text,bigint,bigint,text,text)",
+      "postwar-industry-run-history",
+      "postwar-pending-programme-target-prefix",
+    ],
+    [
+      "world_v2.postwar_projection_industry_original(text,jsonb,jsonb)",
+      "postwar-industry-power-service-current",
+      "postwar-pending-programme-target-prefix",
+    ],
+    [
+      "world_v2.postwar_mixed_industry_work_group(text,jsonb,jsonb,jsonb,jsonb,jsonb)",
+      "postwar-industry-power-service-current",
+      "postwar-pending-programme-target-prefix",
+    ],
+    [
+      "world_v2.postwar_apply_current_frame_page(text,text,jsonb)",
+      "postwar-mixed-industry-current-effects",
+      "postwar-pending-programme-target-prefix",
+    ],
+    [
+      "world_v2.publish_social_operating_paged_match_due(text,text,text,text)",
+      "postwar-social-paged-match-publisher",
+      "postwar-pending-programme-target-prefix",
+    ],
   ];
   const acl = (contract) =>
     JSON.stringify([
@@ -127,7 +162,16 @@ export function postwarCatalogFunctionContracts(proposals) {
           proposal.id !== chain[2]
         )
           throw Error("DUPLICATE_EXACT_FUNCTION_CATALOG_CONTRACT");
-        if (acl(previous) !== acl(contract))
+        const pendingGroupExtension =
+          proposal.id === "postwar-pending-programme-target-prefix" &&
+          contract.qualifiedSignature ===
+            "world_v2.postwar_mixed_industry_work_group(text,jsonb,jsonb,jsonb,jsonb,jsonb)" &&
+          previous.proposalId === "postwar-industry-power-service-current" &&
+          previous.executeRoles.length === 0 &&
+          JSON.stringify(contract.executeRoles) ===
+            JSON.stringify(["world_v2_social_source_owner"]) &&
+          acl({ ...contract, executeRoles: [] }) === acl(previous);
+        if (acl(previous) !== acl(contract) && !pendingGroupExtension)
           throw Error("REVIEWED_FUNCTION_REPLACEMENT_ACL_CHANGED");
       } else if (chain && proposal.id === chain[2]) {
         throw Error("REVIEWED_FUNCTION_REPLACEMENT_PREDECESSOR_REQUIRED");

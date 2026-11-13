@@ -9,7 +9,7 @@ const policyPath = fileURLToPath(
 );
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const POLICY_SHA256 =
-  "4a9fb010f0ab6b7ce28730d1f034a487498558ef892a5e4c9908611032ec31bf";
+  "0b9b1bbda4d99c53ce0ef6b5af76a0c044ee8802a4ec8334991a4acb6eda1506";
 export function requireImmutableProposalCandidateSha(candidateSha) {
   if (!/^[a-f0-9]{40}$/u.test(candidateSha ?? "") || /^0+$/u.test(candidateSha))
     throw Error("EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED");
@@ -27,7 +27,7 @@ export async function loadPostwarExpandedProposalPolicy() {
     policy.installationAllowed !== false ||
     policy.productionReviewVerified !== false ||
     policy.finalCandidateSelected !== false ||
-    policy.proposals.length !== 82
+    policy.proposals.length !== 83
   )
     throw Error("UNAPPROVED_EXPLICIT_CANDIDATE_POLICY_REQUIRED");
   const prior = new Set();
@@ -551,7 +551,68 @@ export function inspectCompleteOpeningInventoryRepair(item, bytes) {
   }
 }
 
+/** Fixed guarded increment only. The embedded pre/post catalogs bind inherited
+ * function ownership/ACL where CREATE OR REPLACE intentionally has no ALTER. */
+export function inspectPendingProgrammeTargetForward(item, bytes) {
+  if (item.id !== "postwar-pending-programme-target-prefix") {
+    if (item.fixedGuardedForwardSha256 !== undefined)
+      throw Error("ONLY_FIXED_PENDING_TARGET_GUARDED_FORWARD");
+    return;
+  }
+  if (sha(bytes) !== item.fixedGuardedForwardSha256)
+    throw Error("PENDING_TARGET_GUARDED_SOURCE_BYTES_CHANGED");
+  const embedded = [
+    ...bytes
+      .toString("utf8")
+      .matchAll(
+        /declare specs jsonb:=\$pending_specs\$([\s\S]*?)\$pending_specs\$::jsonb;/gu,
+      ),
+  ].map((match) => JSON.parse(match[1]));
+  if (
+    embedded.length !== 2 ||
+    embedded[0].length !== 7 ||
+    embedded[1].length !== 10
+  )
+    throw Error("PENDING_TARGET_EXACT_PRE_AND_POST_CATALOG_REQUIRED");
+  const [before, after] = embedded;
+  const contracts = after.map((entry) => ({
+    qualifiedSignature: entry.signature,
+    owner: entry.owner,
+    securityDefiner: entry.securityDefiner,
+    searchPath: "pg_catalog",
+    publicExecute: false,
+    executeRoles: entry.acl
+      .filter((acl) => acl.grantee !== entry.owner)
+      .map((acl) => acl.grantee)
+      .sort(),
+  }));
+  if (JSON.stringify(contracts) !== JSON.stringify(item.functionContracts))
+    throw Error("PENDING_TARGET_SUCCESSOR_CONTRACT_CHANGED");
+  for (const previous of before) {
+    const replacement = item.guardedReplacements?.find(
+      (r) => r.qualifiedSignature === previous.signature,
+    );
+    const next = after.find((r) => r.signature === previous.signature);
+    if (
+      !replacement ||
+      replacement.predecessorProsrcSha256 !== previous.bodySha256 ||
+      replacement.successorProsrcSha256 !== next?.bodySha256 ||
+      !item.dependencies.includes(replacement.predecessor)
+    )
+      throw Error("PENDING_TARGET_EXACT_PREDECESSOR_CHAIN_REQUIRED");
+  }
+  if (
+    item.guardedReplacements.length !== 7 ||
+    JSON.stringify(
+      after
+        .filter((r) => !before.some((b) => b.signature === r.signature))
+        .map((r) => r.signature),
+    ) !== JSON.stringify(item.newFunctionSignatures)
+  )
+    throw Error("PENDING_TARGET_FIXED_NEW_FUNCTIONS_REQUIRED");
+}
 export function inspectExpandedProposalBytes(item, bytes) {
+  inspectPendingProgrammeTargetForward(item, bytes);
   inspectCompleteOpeningInventoryRepair(item, bytes);
   inspectPostwarCaptainAllocationOptions(item, bytes);
   inspectPostwarTradeConstraintExtension(item, bytes);
