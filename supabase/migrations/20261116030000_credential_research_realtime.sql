@@ -2,11 +2,11 @@
 -- refetch through the existing guarded research-source RPC after each change.
 begin;
 create table public.credential_source_revisions (
-  source text primary key check (source = 'research'),
+  source text primary key check (source in ('research','jobs')),
   revision bigint not null default 0,
   updated_at timestamptz not null default now()
 );
-insert into public.credential_source_revisions(source) values ('research');
+insert into public.credential_source_revisions(source) values ('research'),('jobs');
 alter table public.credential_source_revisions enable row level security;
 revoke all on public.credential_source_revisions from public, anon, authenticated;
 grant select on public.credential_source_revisions to authenticated;
@@ -29,6 +29,14 @@ begin
 end;
 $$;
 revoke all on function private.bump_credential_research_revision() from public, anon, authenticated;
+create function private.bump_credential_jobs_revision() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  update public.credential_source_revisions set revision = revision + 1, updated_at = now() where source = 'jobs';
+  return null;
+end;
+$$;
+revoke all on function private.bump_credential_jobs_revision() from public, anon, authenticated;
 create trigger credential_research_source_changed
 after insert or update or delete or truncate on public.research_papers
 for each statement execute function private.bump_credential_research_revision();

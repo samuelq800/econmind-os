@@ -6,6 +6,7 @@ import { chromium } from "playwright";
 // privately. It must not be copied into the public website or this repository.
 export const APPROVED_TEMPLATE_SHA256 = "591e6c0d67eec9b59ed856f060eca4d3ad5ed8d041b91bf3f67361cf0da6a358";
 export const YALE_SIGNATURE_SHA256 = "587af46f950be365383eb8505e77ec072472df5dbc77f6aba734f8ebdf161c53";
+export const APPROVED_VISUAL_SHA256 = "59aa31c04c7713e052a901d30bb823b797913aca2d643a441f6e5eeb2bda4181";
 
 export async function loadApprovedTemplate(path) {
   if (!path) throw new Error("A private approved template path is required.");
@@ -105,4 +106,12 @@ export async function renderCertificate({ templatePath, fields = {}, output = "p
     if (output === "pdf") return await page.pdf({ format: "A4", landscape: true, printBackground: true, displayHeaderFooter: false, preferCSSPageSize: true });
     return await page.locator(".certificate").screenshot({ type: "png", animations: "disabled" });
   } finally { await browser.close(); }
+}
+
+/** Refuse rendering if fonts, layout or graphics differ from the approved baseline. */
+export async function verifyVisualEnvironment(templatePath) {
+  const image = await renderCertificate({ templatePath, output: "png" });
+  if (createHash("sha256").update(image).digest("hex") !== APPROVED_VISUAL_SHA256) {
+    throw new Error("Rendering environment does not match the approved visual baseline.");
+  }
 }

@@ -51,6 +51,21 @@ with tempfile.TemporaryDirectory(prefix="em-cred-", dir="/tmp") as directory:
             codes = list(pool.map(try_issue, same_name_batches))
         assert sorted(codes) == [0, 1], codes
         assert sql("select count(*) from private.credentials where recipient_name='Same Person';") == '1'
-        print("PASS: concurrent numbering, idempotency, and duplicate-name race checks")
+        original_batch = sql(f"set role authenticated; set request.jwt.claim.sub='{ACTOR}'; select public.create_credential_draft('70000000-0000-4000-8000-000000000001','{template}','2030-01-01','EconMind Founder Team','[{{\"name\":\"Original\"}}]');")
+        sql(f"set role authenticated; set request.jwt.claim.sub='{ACTOR}'; select public.review_credential_draft('{original_batch}'); select public.test_attest_credential_preview('{original_batch}'); select public.issue_credential_batch('{original_batch}');")
+        original_id = sql(f"select id from private.credentials where batch_id='{original_batch}'")
+        sql(f"set role authenticated; set request.jwt.claim.sub='{ACTOR}'; select public.revoke_credential('{original_id}','Correction');")
+        replacements = []
+        for number in range(2):
+            key = f"70000000-0000-4000-8000-{number + 2:012d}"
+            query = f"set role authenticated; set request.jwt.claim.sub='{ACTOR}'; select public.create_credential_draft('{key}','{template}','2030-01-01','EconMind Founder Team',jsonb_build_array(jsonb_build_object('name','Replacement {number}','replaces_id','{original_id}')));"
+            batch = sql(query)
+            sql(f"set role authenticated; set request.jwt.claim.sub='{ACTOR}'; select public.review_credential_draft('{batch}'); select public.test_attest_credential_preview('{batch}');")
+            replacements.append(batch)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+            replacement_codes = list(pool.map(try_issue, replacements))
+        assert sorted(replacement_codes) == [0, 1], replacement_codes
+        assert sql(f"select count(*) from private.credentials where replaces_id='{original_id}';") == '1'
+        print("PASS: concurrent numbering, idempotency, duplicate-name and replacement races")
     finally:
         subprocess.run(["pg_ctl", "-D", db, "-m", "immediate", "stop"], check=True, stdout=subprocess.DEVNULL)

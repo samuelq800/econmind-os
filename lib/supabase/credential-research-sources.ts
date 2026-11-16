@@ -59,7 +59,7 @@ export function watchCredentialResearchSources(onUpdate: (rows: CredentialResear
     }
   }
   const channel = client.channel("credential-research-source-revision")
-    .on("postgres_changes", { event: "*", schema: "public", table: "credential_source_revisions" }, () => { void refresh(); })
+    .on("postgres_changes", { event: "*", schema: "public", table: "credential_source_revisions", filter: "source=eq.research" }, () => { void refresh(); })
     .subscribe(status => { if (status === "SUBSCRIBED") void refresh(); });
   void refresh();
   const timer = window.setInterval(() => { if (document.visibilityState === "visible") void refresh(); }, 15000);

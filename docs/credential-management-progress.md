@@ -1,7 +1,9 @@
 # Credential Management V1: implementation status
 
-This branch is an **incomplete draft**. Do not merge, run its migrations against
-production, activate the shared directory, or issue certificates from it.
+This branch is a **release candidate under verification**. The user authorized
+publication after checks pass, but that condition is not yet met. Do not merge,
+apply production migrations, activate the shared directory, or issue real
+certificates until the documented checks and deployment prerequisites pass.
 
 ## Implemented in the isolated development branch
 
@@ -27,8 +29,8 @@ production, activate the shared directory, or issue certificates from it.
   request previews, review, verify, issue and download an individual PDF when
   the separately hosted private rendering service is configured.
 - CSV and XLSX import preserve per-recipient fields and support editing before
-  draft creation. CSV parsing and a real XLSX fixture have focused local tests;
-  the actual browser import still requires end-to-end verification.
+  draft creation. CSV parsing, an XLSX fixture and an isolated browser import
+  using synthetic data have passed; production integration is not yet verified.
 - The private renderer checks the approved template digest, keeps the original
   default signature, optionally accepts the separately provisioned Yale
   signature only when its digest matches, and checks for text overflow.
@@ -36,25 +38,29 @@ production, activate the shared directory, or issue certificates from it.
   A4 page. A Node service validates the user session and guarded RPC before
   preview, layout attestation or individual PDF export; these paths have local
   mocked-auth tests, not an integrated production Supabase verification.
+- Leased verification and PDF-export jobs support per-item failures and retry,
+  with private PDF storage, authorized ZIP downloads and replacement history.
+  These mechanisms have local tests; production integration remains unverified.
 
 ## Required before release
 
 - Reconcile and import the Team page's current appointments, then verify its
   activation, all public fields, deletion, and admin tables in the deployed
   environment. Do not activate the unreviewed snapshot.
-- Complete the superme-only administration UI, full search and export, richer
-  template editing and audit/history management; verify browser imports and all
-  per-recipient fields end to end.
+- Verify the superme-only administration UI, full search, spreadsheet import,
+  per-recipient editing, template versions and audit/history management in a
+  real browser with the intended Supabase policies.
 - Provision and independently review the private rendering service, including
   both signature files, network controls, load limits and actual Supabase
   authorization. The local test harness simulates the trusted database role.
-- Implement durable background PDF/ZIP jobs, progress, retry and replacement
-  history, private storage, end-to-end authorization and broader visual/PDF
-  regression tests. Synchronous verification is not suitable for large batches.
+- Review and verify the implemented leased background verification/PDF jobs,
+  retry, private bucket, ZIP streaming and replacement history with real
+  Supabase, multiple workers, failure recovery and the intended batch size.
+  The browser currently buffers downloaded ZIPs, so test peak memory usage.
 - Verify Research Library and directory source pickers with actual Supabase
   Realtime and RLS configuration.
-- Review database migrations and deployed environment prerequisites; this
-  branch does not authorize production migration or deployment.
+- Review database migrations and deployment prerequisites; publication is
+  authorized only after the documented checks pass.
 
 ## Local database checks
 
@@ -65,7 +71,18 @@ must likewise be run only in a fresh disposable PostgreSQL instance.
 
 On the earlier foundation commit, the normal Next.js production build generated
 488 static pages. After subsequent Team and administrator changes, a full
-production build and authenticated end-to-end test have not been completed.
+production build and authenticated end-to-end test have not been completed. An
+isolated Next.js build and browser test using synthetic data passed for draft
+entry, Yale signatory selection and XLSX import; it is not a full-site build.
 Focused component, rendering and disposable PostgreSQL checks pass locally,
-including 12 concurrent batches with duplicate submissions. No production
-database, worker or site deployment was performed.
+including simultaneous issuance, duplicate submissions, replacement races,
+job leases, recovery and PDF retry. On 2026-11-16 the focused frontend suite
+passed 11 tests, the private renderer passed 11 tests with no skips, all five
+disposable PostgreSQL suites passed, and both concurrency suites passed.
+The signature-switch image check confines pixel changes to the signature area.
+The private renderer's baseline matches
+pixel-for-pixel on the local Mac, with single-page A4 output. The current root
+security gate reports an existing moderate minimatch advisory in a development
+dependency; a targeted candidate passed isolated lint and audit but has not
+been authorized or applied. No production database, worker or site deployment
+was performed.

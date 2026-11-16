@@ -11,8 +11,10 @@ create table private.credential_templates (
   subtype text not null check (length(trim(subtype)) between 1 and 120),
   version integer not null check (version > 0),
   text_content jsonb not null check (jsonb_typeof(text_content) = 'object'),
+  active boolean not null default true,
   created_by uuid not null,
   created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
   unique (category, subtype, version)
 );
 
@@ -24,7 +26,7 @@ create table private.credential_batches (
   issue_date date not null,
   issuing_authority text not null check (issuing_authority in ('EconMind Founder Team', 'EconMind Leadership Group')),
   signature_key text not null check (signature_key in ('samuel_qian_v1', 'yale_chen_v1')),
-  status text not null default 'draft' check (status in ('draft', 'reviewed', 'issued')),
+  status text not null default 'draft' check (status in ('draft', 'reviewed', 'issued', 'cancelled')),
   created_by uuid not null,
   reviewed_by uuid,
   duplicates_acknowledged boolean not null default false,
@@ -46,6 +48,7 @@ create table private.credentials (
   batch_id uuid not null references private.credential_batches(id),
   batch_entry integer not null,
   certificate_number text not null unique,
+  replaces_id uuid references private.credentials(id),
   recipient_name text not null,
   category text not null,
   subtype text not null,
@@ -56,13 +59,15 @@ create table private.credentials (
   template_id uuid not null references private.credential_templates(id),
   template_snapshot jsonb not null,
   recipient_snapshot jsonb not null,
-  status text not null default 'issued' check (status in ('issued', 'revoked')),
+  status text not null default 'issued' check (status in ('issued', 'revoked', 'replaced')),
   created_by uuid not null,
   created_at timestamptz not null default now(),
   revoked_by uuid,
   revoked_at timestamptz,
   revocation_reason text,
-  unique (batch_id, batch_entry)
+  unique (batch_id, batch_entry),
+  unique (replaces_id),
+  check (replaces_id is null or replaces_id <> id)
 );
 
 create table private.credential_audit_logs (
@@ -111,6 +116,8 @@ begin
   perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended(p_category || ':' || trim(p_subtype), 0));
   select coalesce(max(t.version), 0) + 1 into next_version from private.credential_templates t
     where t.category = p_category and t.subtype = trim(p_subtype);
+  update private.credential_templates set active=false,updated_at=now()
+    where category=p_category and subtype=trim(p_subtype) and active;
   insert into private.credential_templates(category, subtype, version, text_content, created_by)
     values (p_category, trim(p_subtype), next_version, p_text_content, actor) returning id into new_id;
   insert into private.credential_audit_logs(actor, action, details)
@@ -133,18 +140,30 @@ begin
   if jsonb_array_length(p_entries) not between 1 and 500 or octet_length(p_entries::text) > 1000000 then
     raise exception 'Invalid number or size of entries' using errcode = '22023';
   end if;
-  if not exists (select 1 from private.credential_templates where id = p_template_id) then
-    raise exception 'Template not found' using errcode = '22023';
+  select * into existing from private.credential_batches where request_key = p_request_key;
+  if found then
+    if existing.created_by <> actor or existing.template_id <> p_template_id or existing.entries <> p_entries
+      or existing.issue_date <> p_issue_date or existing.issuing_authority <> p_issuing_authority or existing.signature_key <> p_signature_key then
+      raise exception 'Idempotency key already used for different draft' using errcode = '23505';
+    end if;
+    return existing.id;
   end if;
+  perform 1 from private.credential_templates where id = p_template_id and active for share;
+  if not found then raise exception 'Active template not found' using errcode = '22023'; end if;
   for entry in select value from jsonb_array_elements(p_entries) loop
     if jsonb_typeof(entry) <> 'object' or jsonb_typeof(entry->'name') is distinct from 'string'
       or length(trim(entry->>'name')) not between 1 and 200 or octet_length(entry::text) > 10000 then
       raise exception 'Invalid recipient' using errcode = '22023';
     end if;
     if exists (select 1 from jsonb_each(entry) f
-      where f.key not in ('name','role','department','project','contribution','service_period','user_id')
+      where f.key not in ('name','role','department','project','contribution','service_period','user_id','replaces_id')
         or jsonb_typeof(f.value) <> 'string' or length(f.value #>> '{}') > 4000) then
       raise exception 'Invalid recipient field' using errcode = '22023';
+    end if;
+    if entry ? 'replaces_id' and (entry->>'replaces_id' !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+      or not exists (select 1 from private.credentials c join private.credential_templates t on t.id=p_template_id
+        where c.id=(entry->>'replaces_id')::uuid and c.status='revoked' and c.category=t.category)) then
+      raise exception 'Replacement must reference a revoked credential in the same category' using errcode='22023';
     end if;
   end loop;
   insert into private.credential_batches(request_key, template_id, entries, issue_date, issuing_authority, signature_key, created_by)
@@ -160,6 +179,24 @@ begin
   end if;
   insert into private.credential_audit_logs(actor, action, batch_id) values (actor, 'draft_created', new_id);
   return new_id;
+end;
+$$;
+
+create function public.set_credential_template_active(p_template_id uuid,p_active boolean) returns void
+language plpgsql security definer set search_path = '' as $$
+declare actor uuid := private.require_credential_admin(); template private.credential_templates%rowtype;
+begin
+  if p_active is null then raise exception 'Active status required' using errcode='22023'; end if;
+  select * into template from private.credential_templates where id=p_template_id;
+  if not found then raise exception 'Template not found' using errcode='22023'; end if;
+  perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended(template.category || ':' || template.subtype, 0));
+  if p_active then
+    update private.credential_templates set active=false,updated_at=now()
+      where category=template.category and subtype=template.subtype and active and id<>p_template_id;
+  end if;
+  update private.credential_templates set active=p_active,updated_at=now() where id=p_template_id;
+  insert into private.credential_audit_logs(actor,action,details)
+    values(actor,'template_activation_changed',jsonb_build_object('template_id',p_template_id,'active',p_active));
 end;
 $$;
 
@@ -206,6 +243,13 @@ begin
   -- Recheck under a category-level lock so two concurrent batches cannot both
   -- pass review and silently issue the same name without acknowledgement.
   perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended('credential-duplicates:' || t.category, 0));
+  perform c.id from private.credentials c where c.id in (
+    select (e.value->>'replaces_id')::uuid from jsonb_array_elements(b.entries) e where e.value ? 'replaces_id'
+  ) order by c.id for update;
+  if exists (select 1 from jsonb_array_elements(b.entries) e left join private.credentials c on c.id=(e.value->>'replaces_id')::uuid
+    where e.value ? 'replaces_id' and (c.id is null or c.status <> 'revoked' or c.category <> t.category)) then
+    raise exception 'The original credential is no longer available for replacement' using errcode='22023';
+  end if;
   if not b.duplicates_acknowledged and exists (
     select 1 from jsonb_array_elements(b.entries) e join private.credentials c
       on lower(c.recipient_name) = lower(trim(e.value->>'name')) and c.category = t.category
@@ -216,11 +260,16 @@ begin
     returning last_sequence - total + 1 into first_seq;
   for item in select value, ordinality from jsonb_array_elements(b.entries) with ordinality loop
     seq := first_seq + item.ordinality::integer - 1;
-    insert into private.credentials(batch_id, batch_entry, certificate_number, recipient_name, category, subtype,
+    insert into private.credentials(batch_id, batch_entry, certificate_number, replaces_id, recipient_name, category, subtype,
       issue_date, issuing_authority, signature_key, template_id, template_snapshot, recipient_snapshot, created_by)
-    values (b.id, item.ordinality, 'EML-' || t.category || '-' || yr || '-' || lpad(seq::text, 6, '0'),
+    values (b.id, item.ordinality, 'EML-' || t.category || '-' || yr || '-' || lpad(seq::text, 6, '0'), (item.value->>'replaces_id')::uuid,
       trim(item.value->>'name'), t.category, t.subtype, b.issue_date, b.issuing_authority, b.signature_key, t.id,
       jsonb_build_object('version', t.version, 'text_content', t.text_content), item.value, actor);
+    if item.value ? 'replaces_id' then
+      update private.credentials set status='replaced' where id=(item.value->>'replaces_id')::uuid and status='revoked';
+      insert into private.credential_audit_logs(actor,action,batch_id,credential_id,details)
+        values(actor,'credential_replaced',b.id,(item.value->>'replaces_id')::uuid,jsonb_build_object('replacement_number','EML-' || t.category || '-' || yr || '-' || lpad(seq::text,6,'0')));
+    end if;
   end loop;
   update private.credential_batches set status = 'issued', issued_at = now() where id = b.id;
   insert into private.credential_audit_logs(actor, action, batch_id, details)
@@ -292,14 +341,14 @@ begin
   end if;
   return jsonb_build_object(
     'counts', (select jsonb_build_object(
-      'issued', count(*) filter (where status = 'issued'),
-      'issued_this_month', count(*) filter (where status = 'issued' and created_at >= date_trunc('month', now())),
-      'revoked', count(*) filter (where status = 'revoked')) from private.credentials),
+      'issued', count(*),
+      'issued_this_month', count(*) filter (where created_at >= date_trunc('month', now())),
+      'revoked', count(*) filter (where status in ('revoked','replaced'))) from private.credentials),
     'pending', (select count(*) from private.credential_batches where status in ('draft', 'reviewed')),
     'templates', (select coalesce(jsonb_agg(to_jsonb(t) order by t.created_at desc), '[]'::jsonb)
-      from (select id, category, subtype, version, text_content, created_at from private.credential_templates order by created_at desc limit 100) t),
+      from (select id, category, subtype, version, active, text_content, created_at, updated_at from private.credential_templates order by created_at desc, id desc) t),
     'credentials', (select coalesce(jsonb_agg(to_jsonb(c) order by c.created_at desc, c.id desc), '[]'::jsonb)
-      from (select id, batch_id, certificate_number, recipient_name, category, subtype, issue_date, issuing_authority,
+      from (select id, batch_id, template_id, replaces_id, certificate_number, recipient_name, category, subtype, issue_date, issuing_authority,
         signatory_title, signature_key, template_snapshot, recipient_snapshot, status, created_at, revoked_at, revocation_reason
         from private.credentials where p_before is null or (created_at, id) < (p_before, p_before_id)
         order by created_at desc, id desc limit p_limit) c),
@@ -324,7 +373,7 @@ $$;
 create function public.search_credential_records(p_query text default '', p_category text default null,
   p_department text default '', p_from date default null, p_to date default null,
   p_before timestamptz default null, p_before_id uuid default null, p_limit integer default 50)
-returns table (id uuid, batch_id uuid, certificate_number text, recipient_name text, category text, subtype text,
+returns table (id uuid, batch_id uuid, template_id uuid, replaces_id uuid, certificate_number text, recipient_name text, category text, subtype text,
   issue_date date, signature_key text, status text, created_at timestamptz, recipient_snapshot jsonb)
 language plpgsql stable security definer set search_path = '' as $$
 declare caller uuid := private.require_credential_admin();
@@ -335,7 +384,7 @@ begin
     or (p_from is not null and p_to is not null and p_from > p_to) then
     raise exception 'Invalid search filter' using errcode = '22023';
   end if;
-  return query select c.id,c.batch_id,c.certificate_number,c.recipient_name,c.category,c.subtype,c.issue_date,
+  return query select c.id,c.batch_id,c.template_id,c.replaces_id,c.certificate_number,c.recipient_name,c.category,c.subtype,c.issue_date,
     c.signature_key,c.status,c.created_at,c.recipient_snapshot from private.credentials c
     where (coalesce(trim(p_query),'') = '' or position(lower(trim(p_query)) in lower(c.recipient_name)) > 0
       or position(lower(trim(p_query)) in lower(c.certificate_number)) > 0)
@@ -348,11 +397,13 @@ end;
 $$;
 
 revoke all on function public.create_credential_template(text,text,jsonb), public.create_credential_draft(uuid,uuid,date,text,jsonb,text),
+  public.set_credential_template_active(uuid,boolean),
   public.review_credential_draft(uuid,boolean), public.issue_credential_batch(uuid), public.revoke_credential(uuid,text),
   public.list_credential_admin_data(integer,timestamptz,uuid), public.list_credential_audit_logs(integer,bigint),
   public.search_credential_records(text,text,text,date,date,timestamptz,uuid,integer)
   from public, anon, authenticated;
 grant execute on function public.create_credential_template(text,text,jsonb), public.create_credential_draft(uuid,uuid,date,text,jsonb,text),
+  public.set_credential_template_active(uuid,boolean),
   public.review_credential_draft(uuid,boolean), public.issue_credential_batch(uuid), public.revoke_credential(uuid,text),
   public.list_credential_admin_data(integer,timestamptz,uuid), public.list_credential_audit_logs(integer,bigint),
   public.search_credential_records(text,text,text,date,date,timestamptz,uuid,integer) to authenticated;
