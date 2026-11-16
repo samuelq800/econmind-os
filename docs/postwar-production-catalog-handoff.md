@@ -1,5 +1,33 @@
 # Postwar production prerequisites: render-only handoff
 
+## 2026-11-16 candidate increment (not installed or production-approved)
+
+The expanded policy inventories **88 proposals**, selecting **86 non-Clock**
+proposals and **159 distinct final function contracts**. It appends FX quote
+read (`1782340c`), TEST_ONLY finite Clock observation (`42675048`, excluded),
+and Social application prefix (`0cf40e28`). The older counts below describe
+historical candidates, not this increment.
+
+The prior 153-contract count omitted two existing Social helpers:
+`postwar_social_complete_prefix(text)` and
+`postwar_current_social_witness(text,text)`. Their original contracts are now
+explicit so six Social forward replacements have exact predecessor chains.
+Together with two FX and two new Social functions this gives 159. Six replaced
+functions retain owner/ACL/OID semantics; this inventory is not execution proof.
+
+Both `isolated-world-clock` and `postwar-test-only-finite-clock-observation`
+remain `EXCLUDED_*`. The finite bridge's four contracts and private guard owner
+are inventoried for explicit isolated-clone selection only; they do not enter
+the default catalog or minimum role handoff. This renderer grants no role,
+installs no SQL and activates no Clock. It preserves the historical fixed
+production binding unchanged. Frozen source hashes and per-function contracts
+are in `world-v2-postwar-proposal-policy.json`.
+
+Actual combined-candidate clean-Git inventory, installation, upgrade and native
+readback remain separate required evidence. File-copy metadata tests establish
+only agreement with frozen SQL bytes. No production acceptance follows from
+this candidate inventory.
+
 This candidate lives in the companion release owner's repository. It does not
 register a migration, approve P0 code, obtain a credential or execute SQL.
 `world-v2-postwar-production-preflight.mjs` verifies the complete clean World

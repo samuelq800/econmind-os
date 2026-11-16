@@ -154,6 +154,36 @@ export function postwarCatalogFunctionContracts(proposals) {
       "postwar-pending-programme-target-prefix",
       "postwar-industry-water-service-source",
     ],
+    [
+      "world_v2.postwar_social_prefix_effect_scoped(text,text,text,jsonb,jsonb,bigint)",
+      "postwar-pending-programme-target-prefix",
+      "postwar-social-application-prefix",
+    ],
+    [
+      "world_v2.postwar_social_origin_at_prefix(text,text)",
+      "postwar-pending-programme-target-prefix",
+      "postwar-social-application-prefix",
+    ],
+    [
+      "world_v2.postwar_apply_current_frame_page(text,text,jsonb)",
+      "postwar-pending-programme-target-prefix",
+      "postwar-social-application-prefix",
+    ],
+    [
+      "world_v2.publish_social_operating_paged_match_due(text,text,text,text)",
+      "postwar-pending-programme-target-prefix",
+      "postwar-social-application-prefix",
+    ],
+    [
+      "world_v2.postwar_social_complete_prefix(text)",
+      "postwar-social-current-prefix-read",
+      "postwar-social-application-prefix",
+    ],
+    [
+      "world_v2.postwar_current_social_witness(text,text)",
+      "postwar-social-current-derived-read",
+      "postwar-social-application-prefix",
+    ],
   ];
   const acl = (contract) =>
     JSON.stringify([
@@ -540,12 +570,20 @@ export async function preparePostwarProductionPreflight({
       candidateRoleAttributes:
         "NOLOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE NOREPLICATION",
       candidateDefinerOwners: [
-        ...new Set(pins.proposals.flatMap((p) => p.createdRoles)),
+        ...new Set(
+          pins.proposals
+            .filter((p) => !p.disposition.startsWith("EXCLUDED_"))
+            .flatMap((p) => p.createdRoles),
+        ),
       ]
         .filter((role) => role.endsWith("_owner"))
         .sort(),
       candidateSourcePublisherGroups: [
-        ...new Set(pins.proposals.flatMap((p) => p.createdRoles)),
+        ...new Set(
+          pins.proposals
+            .filter((p) => !p.disposition.startsWith("EXCLUDED_"))
+            .flatMap((p) => p.createdRoles),
+        ),
       ]
         .filter(
           (role) => role.endsWith("_publisher") || role.endsWith("_release"),

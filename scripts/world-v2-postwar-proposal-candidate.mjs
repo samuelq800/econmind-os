@@ -9,7 +9,7 @@ const policyPath = fileURLToPath(
 );
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const POLICY_SHA256 =
-  "d571dbbe2328ac1adab90facc9336f45861b3ca6c873cfa43a0a54b22b160f7c";
+  "45908128954953bfd9b35b136d6758a7addd03e8609daeb36f586a96b8605267";
 export function requireImmutableProposalCandidateSha(candidateSha) {
   if (!/^[a-f0-9]{40}$/u.test(candidateSha ?? "") || /^0+$/u.test(candidateSha))
     throw Error("EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED");
@@ -27,7 +27,7 @@ export async function loadPostwarExpandedProposalPolicy() {
     policy.installationAllowed !== false ||
     policy.productionReviewVerified !== false ||
     policy.finalCandidateSelected !== false ||
-    policy.proposals.length !== 85
+    policy.proposals.length !== 88
   )
     throw Error("UNAPPROVED_EXPLICIT_CANDIDATE_POLICY_REQUIRED");
   const prior = new Set();
@@ -151,25 +151,30 @@ export function inspectPostwarFunctionContracts(item, bytes) {
         "postwar-industry-power-service-source",
         "postwar-industry-power-service-current",
         "postwar-industry-water-service-source",
+        "postwar-day-one-fx-quotes-read",
+        "postwar-test-only-finite-clock-observation",
       ].includes(item.id)
     ) {
+      const hasSignature = (targets) =>
+        [...targets.matchAll(/world_v2\.[a-z_0-9]+\([^)]*\)/giu)].some(
+          (target) => target[0].replace(/\s+/gu, "") === signature,
+        );
       const grants = [
         ...sql.matchAll(
-          new RegExp(
-            `grant\\s+(execute|all)\\s+on\\s+function\\s+${identity}\\s*to\\s+([^;]+);`,
-            "giu",
-          ),
+          /grant\s+(execute|all)\s+on\s+function\s+([^;]+?)\s*to\s+([^;]+);/giu,
         ),
-      ];
+      ].filter((entry) => hasSignature(entry[2]));
       const roles = grants
-        .flatMap((entry) => entry[2].split(",").map((role) => role.trim()))
+        .flatMap((entry) => entry[3].split(",").map((role) => role.trim()))
         .sort();
+      const revokedPublic = [
+        ...sql.matchAll(
+          /revoke\s+all\s+on\s+function\s+([^;]+?)\s*from\s+public\s*;/giu,
+        ),
+      ].some((entry) => hasSignature(entry[1]));
       if (
         expected.publicExecute !== false ||
-        !new RegExp(
-          `revoke\\s+all\\s+on\\s+function\\s+${identity}\\s*from\\s+public\\s*;`,
-          "iu",
-        ).test(sql) ||
+        !revokedPublic ||
         grants.some((entry) => entry[1].toLowerCase() !== "execute") ||
         JSON.stringify(roles) !==
           JSON.stringify([...expected.executeRoles].sort())
@@ -555,7 +560,8 @@ export function inspectCompleteOpeningInventoryRepair(item, bytes) {
 /** Fixed guarded increment only. The embedded pre/post catalogs bind inherited
  * function ownership/ACL where CREATE OR REPLACE intentionally has no ALTER. */
 export function inspectPendingProgrammeTargetForward(item, bytes) {
-  if (item.id !== "postwar-pending-programme-target-prefix") {
+  const application = item.id === "postwar-social-application-prefix";
+  if (item.id !== "postwar-pending-programme-target-prefix" && !application) {
     if (item.fixedGuardedForwardSha256 !== undefined)
       throw Error("ONLY_FIXED_PENDING_TARGET_GUARDED_FORWARD");
     return;
@@ -566,13 +572,15 @@ export function inspectPendingProgrammeTargetForward(item, bytes) {
     ...bytes
       .toString("utf8")
       .matchAll(
-        /declare specs jsonb:=\$pending_specs\$([\s\S]*?)\$pending_specs\$::jsonb;/gu,
+        application
+          ? /declare specs jsonb:=\$application_specs\$([\s\S]*?)\$application_specs\$::jsonb;/gu
+          : /declare specs jsonb:=\$pending_specs\$([\s\S]*?)\$pending_specs\$::jsonb;/gu,
       ),
   ].map((match) => JSON.parse(match[1]));
   if (
     embedded.length !== 2 ||
-    embedded[0].length !== 7 ||
-    embedded[1].length !== 10
+    embedded[0].length !== (application ? 6 : 7) ||
+    embedded[1].length !== (application ? 8 : 10)
   )
     throw Error("PENDING_TARGET_EXACT_PRE_AND_POST_CATALOG_REQUIRED");
   const [before, after] = embedded;
@@ -603,7 +611,7 @@ export function inspectPendingProgrammeTargetForward(item, bytes) {
       throw Error("PENDING_TARGET_EXACT_PREDECESSOR_CHAIN_REQUIRED");
   }
   if (
-    item.guardedReplacements.length !== 7 ||
+    item.guardedReplacements.length !== (application ? 6 : 7) ||
     JSON.stringify(
       after
         .filter((r) => !before.some((b) => b.signature === r.signature))
@@ -631,6 +639,11 @@ export function inspectLogisticsV2UtilityForward(item, bytes) {
     throw Error("LOGISTICS_V2_GUARDED_SOURCE_OR_PREDECESSOR_CHANGED");
 }
 export function inspectExpandedProposalBytes(item, bytes) {
+  if (
+    item.fixedSourceSha256 !== undefined &&
+    sha(bytes) !== item.fixedSourceSha256
+  )
+    throw Error("FIXED_SOURCE_PROPOSAL_BYTES_REQUIRED");
   inspectLogisticsV2UtilityForward(item, bytes);
   inspectPendingProgrammeTargetForward(item, bytes);
   inspectCompleteOpeningInventoryRepair(item, bytes);
@@ -690,9 +703,11 @@ export function inspectExpandedProposalBytes(item, bytes) {
     throw Error("PROPOSAL_ROLE_ALLOWLIST_CHANGED_REVIEW_POLICY_REQUIRED");
   if (
     item.createdRoles.length &&
-    (!/nologin\s+nosuperuser\s+nobypassrls\s+nocreatedb\s+nocreaterole\s+noreplication/iu.test(
-      sql,
-    ) ||
+    (!(
+      item.id === "postwar-test-only-finite-clock-observation"
+        ? /nologin\s+nosuperuser\s+nocreatedb\s+nocreaterole\s+noinherit\s+noreplication\s+nobypassrls/iu
+        : /nologin\s+nosuperuser\s+nobypassrls\s+nocreatedb\s+nocreaterole\s+noreplication/iu
+    ).test(sql) ||
       item.createdRoles.some((role) => !sql.includes(role)))
   )
     throw Error("DECLARED_FIXED_NOLOGIN_ROLE_REQUIREMENTS_MISSING");
@@ -754,6 +769,19 @@ export async function loadPostwarExpandedProposalCandidate(
     )
       throw Error("UNREGISTERED_PROPOSAL_OR_BASELINE_DEPENDENCY_INVALID");
     const bytes = await read(item.path);
+    if (item.id === "postwar-social-application-prefix") {
+      for (const [predecessorPath, expectedHash] of Object.entries(
+        item.requiredPredecessorFiles,
+      )) {
+        if (
+          !item.dependencies.some(
+            (id) => predecessorPath === `database/proposals/${id}.sql`,
+          ) ||
+          sha(await read(predecessorPath)) !== expectedHash
+        )
+          throw Error("SOCIAL_APPLICATION_EXACT_PREDECESSOR_BYTES_REQUIRED");
+      }
+    }
     if (item.namedFunctionReplacements !== undefined) {
       const replacement = fixedNamedBaselineReplacement(item, bytes);
       const predecessor = manifest.migrations.find(

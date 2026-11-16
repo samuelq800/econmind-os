@@ -143,7 +143,7 @@ describe("fixed postwar catalog handoff never executes or grants", () => {
     const old = policy.proposals.filter(
       (p: { id: string }) => p.id !== item.id,
     );
-    expect(postwarCatalogFunctionContracts(old)).toHaveLength(144);
+    expect(postwarCatalogFunctionContracts(old)).toHaveLength(150);
     expect(() =>
       postwarCatalogFunctionContracts(
         policy.proposals.filter(
@@ -168,7 +168,7 @@ describe("fixed postwar catalog handoff never executes or grants", () => {
   it("separates exact-signature ACL expectations from release approval and rejects duplicate contracts", async () => {
     const { policy } = await loadPostwarExpandedProposalPolicy();
     const contracts = postwarCatalogFunctionContracts(policy.proposals);
-    expect(contracts).toHaveLength(153);
+    expect(contracts).toHaveLength(159);
     expect(
       contracts.find((c: { qualifiedSignature: string }) =>
         c.qualifiedSignature.startsWith(
@@ -218,13 +218,14 @@ describe("fixed postwar catalog handoff never executes or grants", () => {
         v.qualifiedSignature ===
         "world_v2.postwar_apply_current_frame_page(text,text,jsonb)",
     );
-    expect(apply.proposalId).toBe("postwar-pending-programme-target-prefix");
+    expect(apply.proposalId).toBe("postwar-social-application-prefix");
     expect(
       apply.providerChain.map((v: { proposalId: string }) => v.proposalId),
     ).toEqual([
       "postwar-paged-current-projection",
       "postwar-mixed-industry-current-effects",
       "postwar-pending-programme-target-prefix",
+      "postwar-social-application-prefix",
     ]);
     const captain = contracts.find(
       (v: { qualifiedSignature: string }) =>
@@ -255,7 +256,7 @@ describe("fixed postwar catalog handoff never executes or grants", () => {
       contracts.filter(
         (v: { providerChain: unknown[] }) => v.providerChain.length > 1,
       ),
-    ).toHaveLength(25);
+    ).toHaveLength(27);
     for (const [signature, predecessor, successor] of [
       [
         "world_v2.postwar_mixed_industry_utility_group(text,jsonb,jsonb,jsonb,jsonb,jsonb)",

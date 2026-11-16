@@ -267,12 +267,12 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       "EXPLICIT_FULL_IMMUTABLE_CANDIDATE_SHA_REQUIRED",
     );
   });
-  it("has an explicit eighty-five-file dependency order and no pretend final SHA", async () => {
+  it("has an explicit eighty-eight-file dependency order and no pretend final SHA", async () => {
     const { policy } = await loadPostwarExpandedProposalPolicy();
     expect(policy.sourceCommit).toBeNull();
     expect(policy.installationAllowed).toBe(false);
     expect(policy.migrationApproval).toBe("NOT_GRANTED");
-    expect(policy.proposals).toHaveLength(85);
+    expect(policy.proposals).toHaveLength(88);
     const seen = new Set<string>();
     for (const p of policy.proposals) {
       expect(p.path).toBe(`database/proposals/${p.id}.sql`);
@@ -280,15 +280,15 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
       expect(p.registration).toBe("UNREGISTERED_SOURCE_PROPOSAL");
       seen.add(p.id);
     }
-    expect(policy.registeredMigrationCount + policy.proposals.length).toBe(108);
+    expect(policy.registeredMigrationCount + policy.proposals.length).toBe(111);
     expect(
       policy.proposals.filter(
         (p: { disposition: string }) => !p.disposition.startsWith("EXCLUDED_"),
       ).length,
-    ).toBe(84);
+    ).toBe(86);
     expect(
       policy.proposals.map((p: { reviewOrder: number }) => p.reviewOrder),
-    ).toEqual(Array.from({ length: 85 }, (_, i) => i + 1));
+    ).toEqual(Array.from({ length: 88 }, (_, i) => i + 1));
     expect([...seen]).toContain("social-operating-match-publisher");
     expect([...seen]).toContain("postwar-social-current-derived-read");
     expect(
@@ -296,9 +296,11 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
         (p: { id: string }) => p.id === "postwar-social-current-derived-read",
       ).renamedFunctions,
     ).toEqual(["read_postwar_office_projection_h0_page"]);
-    expect(policy.proposals.at(-1).disposition).toBe(
-      "EXCLUDED_NOT_A_READ_DEPENDENCY",
-    );
+    expect(
+      policy.proposals.find(
+        (p: { id: string }) => p.id === "isolated-world-clock",
+      ).disposition,
+    ).toBe("EXCLUDED_NOT_A_READ_DEPENDENCY");
   });
   it("records the exact H0 dispatcher, private renamed predecessor and fence prerequisite", async () => {
     const { policy } = await loadPostwarExpandedProposalPolicy();
@@ -828,7 +830,7 @@ describe("expanded proposal catalog candidate is explicit, immutable and unappro
     );
   });
   (process.env.POSTWAR_PROPOSAL_METADATA_SOURCE ? it : it.skip)(
-    "compares all eighty-five actual proposal object/role inventories without selecting a final candidate",
+    "compares all eighty-eight actual proposal object/role inventories without selecting a final candidate",
     async () => {
       const { policy } = await loadPostwarExpandedProposalPolicy();
       for (const item of policy.proposals) {
