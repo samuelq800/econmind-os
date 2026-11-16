@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  minimatch@10.2.6: 11.0.1
+
 patchedDependencies:
   braces@3.0.3: a2cb06ae655b56fe857bf33d09c5b74f303c6d653b3e28c7f3d0da652f074b07
 
@@ -825,6 +828,12 @@ packages:
     engines: { node: ">=20.9.0" }
     cpu: [x64]
     os: [win32]
+
+  "@isaacs/nonrecursive-glob-match@1.0.3":
+    resolution:
+      {
+        integrity: sha512-SI7kyKHq4XXDRozw+r9GlRZkia1ZkFrpLW98r2IC2Bpr8YkFGE3fvjzmxCG0x78A++69HmDNrDvSMYBZmHGpKA==,
+      }
 
   "@jridgewell/gen-mapping@0.3.13":
     resolution:
@@ -3736,10 +3745,10 @@ packages:
       }
     engines: { node: ">=8.6" }
 
-  minimatch@10.2.6:
+  minimatch@11.0.1:
     resolution:
       {
-        integrity: sha512-vpLQEs+VLCr1nU0BXS07maYoFwlDAH0gngQuuttxIwutDFEMHq2blX+8vpgxDdK3J1PwjCJiep77OitTZ4Ll1A==,
+        integrity: sha512-t+Vn6DX4wPCxS23y03C0uhF7S1jpi1GfqPrnlEipCJaA2ykiNbMkVlDutZtmvLfRcUN6R8AYVlzTsQrT4RZoLQ==,
       }
     engines: { node: 18 || 20 || >=22 }
 
@@ -5131,6 +5140,8 @@ snapshots:
   "@img/sharp-win32-x64@0.35.5":
     optional: true
 
+  "@isaacs/nonrecursive-glob-match@1.0.3": {}
+
   "@jridgewell/gen-mapping@0.3.13":
     dependencies:
       "@jridgewell/sourcemap-codec": 1.6.0
@@ -5612,7 +5623,7 @@ snapshots:
       "@typescript-eslint/types": 8.72.0
       "@typescript-eslint/visitor-keys": 8.72.0
       debug: 4.4.3
-      minimatch: 10.2.6
+      minimatch: 11.0.1
       semver: 7.8.5
       tinyglobby: 0.2.17
       ts-api-utils: 2.5.0(typescript@5.9.3)
@@ -6866,8 +6877,9 @@ snapshots:
       braces: 3.0.3(patch_hash=a2cb06ae655b56fe857bf33d09c5b74f303c6d653b3e28c7f3d0da652f074b07)
       picomatch: 2.3.2
 
-  minimatch@10.2.6:
+  minimatch@11.0.1:
     dependencies:
+      "@isaacs/nonrecursive-glob-match": 1.0.3
       brace-expansion: 5.0.12
 
   minimatch@3.1.5:

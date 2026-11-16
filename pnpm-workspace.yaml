@@ -8,3 +8,8 @@ allowBuilds:
 
 patchedDependencies:
   braces@3.0.3: patches/braces@3.0.3.patch
+
+# Keep legacy callable minimatch 3 APIs; upgrade only the vulnerable modern
+# optimizer used by TypeScript's parser to the upstream fixed implementation.
+overrides:
+  minimatch@10.2.6: 11.0.1
