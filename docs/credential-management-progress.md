@@ -43,3 +43,10 @@ production, activate the shared directory, or issue certificates from it.
 disposable local PostgreSQL instance. It runs role/numbering checks, then tests
 parallel issuance and duplicate submissions. `scripts/test-organization-directory.sql`
 must likewise be run only in a fresh disposable PostgreSQL instance.
+
+Verified locally on 2026-11-16: the normal Next.js production build generated
+488 static pages; TypeScript and scoped lint passed; the two focused Vitest
+files passed (4 tests); disposable PostgreSQL tests passed for admin/anonymous
+access, directory visibility, numbering and revocation; 12 concurrent batches
+with duplicate submissions produced exactly 12 distinct numbers. No production
+database, worker or site deployment was performed.
