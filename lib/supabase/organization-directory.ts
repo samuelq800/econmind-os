@@ -6,6 +6,7 @@ export type OrganizationAppointment = {
   title: string;
   organizational_group: string;
   region: string | null;
+  legacy_name: string | null;
   description: string | null;
   focus: string[];
   portrait_path: string | null;

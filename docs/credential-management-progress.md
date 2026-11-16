@@ -16,24 +16,43 @@ production, activate the shared directory, or issue certificates from it.
   a public/private distinction, and a separate activation flag. It starts empty
   and inactive; school team data is not treated as organizational staff data.
 - A browser directory watcher coalesces refreshes and cleans up its channel.
+- Team and its administrative tables can read the shared directory after
+  activation, with an explicit legacy appointment link for preserving existing
+  presentation data. A 2026-11-15 public snapshot is a candidate seed only;
+  it must be reconciled before activation.
+- A draft administrative page exposes real dashboard totals, manual drafts,
+  template creation, organization/research source candidates and a two-choice
+  signatory selector. Both signers have the same Initial Founder title and a
+  versioned signature key is preserved with each draft and issuance. It can
+  request previews, review, verify, issue and download an individual PDF when
+  the separately hosted private rendering service is configured.
+- CSV and XLSX import preserve per-recipient fields and support editing before
+  draft creation. CSV parsing and a real XLSX fixture have focused local tests;
+  the actual browser import still requires end-to-end verification.
+- The private renderer checks the approved template digest, keeps the original
+  default signature, optionally accepts the separately provisioned Yale
+  signature only when its digest matches, and checks for text overflow.
+  Local baseline PNG comparison is pixel-identical; PDF is a single landscape
+  A4 page. A Node service validates the user session and guarded RPC before
+  preview, layout attestation or individual PDF export; these paths have local
+  mocked-auth tests, not an integrated production Supabase verification.
 
 ## Required before release
 
-- Reconcile and import the Team page's current appointments, retain all public
-  page fields and existing functionality, and connect the public page and its
-  administration tables to the same directory. Verify activation and deletion.
-- Build the superme-only administration UI, source pickers, full search and
-  export, manual entry, spreadsheet import, and audit/history management.
-- Build an authorized private rendering service using the exact approved HTML,
-  original badge and original private signature. Never publish the signature in
-  static assets. Preserve the baseline and verify overflow without resizing.
-- Implement the trusted renderer which must attest a successful preview and
-  overflow checks before the database allows issuance. The local test harness
-  simulates this attestation; it does not test an actual render.
-- Implement PDF/ZIP generation, job progress, retries, replacement history,
-  private storage, end-to-end authorization and visual/PDF regression tests.
-- Wire Research Library and directory changes to the source pickers and verify
-  live behavior with the actual Supabase Realtime and RLS configuration.
+- Reconcile and import the Team page's current appointments, then verify its
+  activation, all public fields, deletion, and admin tables in the deployed
+  environment. Do not activate the unreviewed snapshot.
+- Complete the superme-only administration UI, full search and export, richer
+  template editing and audit/history management; verify browser imports and all
+  per-recipient fields end to end.
+- Provision and independently review the private rendering service, including
+  both signature files, network controls, load limits and actual Supabase
+  authorization. The local test harness simulates the trusted database role.
+- Implement durable background PDF/ZIP jobs, progress, retry and replacement
+  history, private storage, end-to-end authorization and broader visual/PDF
+  regression tests. Synchronous verification is not suitable for large batches.
+- Verify Research Library and directory source pickers with actual Supabase
+  Realtime and RLS configuration.
 - Review database migrations and deployed environment prerequisites; this
   branch does not authorize production migration or deployment.
 
@@ -44,9 +63,9 @@ disposable local PostgreSQL instance. It runs role/numbering checks, then tests
 parallel issuance and duplicate submissions. `scripts/test-organization-directory.sql`
 must likewise be run only in a fresh disposable PostgreSQL instance.
 
-Verified locally on 2026-11-16: the normal Next.js production build generated
-488 static pages; TypeScript and scoped lint passed; the two focused Vitest
-files passed (4 tests); disposable PostgreSQL tests passed for admin/anonymous
-access, directory visibility, numbering and revocation; 12 concurrent batches
-with duplicate submissions produced exactly 12 distinct numbers. No production
+On the earlier foundation commit, the normal Next.js production build generated
+488 static pages. After subsequent Team and administrator changes, a full
+production build and authenticated end-to-end test have not been completed.
+Focused component, rendering and disposable PostgreSQL checks pass locally,
+including 12 concurrent batches with duplicate submissions. No production
 database, worker or site deployment was performed.

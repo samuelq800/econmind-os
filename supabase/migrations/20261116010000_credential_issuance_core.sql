@@ -23,9 +23,11 @@ create table private.credential_batches (
   entries jsonb not null check (jsonb_typeof(entries) = 'array'),
   issue_date date not null,
   issuing_authority text not null check (issuing_authority in ('EconMind Founder Team', 'EconMind Leadership Group')),
+  signature_key text not null check (signature_key in ('samuel_qian_v1', 'yale_chen_v1')),
   status text not null default 'draft' check (status in ('draft', 'reviewed', 'issued')),
   created_by uuid not null,
   reviewed_by uuid,
+  duplicates_acknowledged boolean not null default false,
   created_at timestamptz not null default now(),
   reviewed_at timestamptz,
   preview_verified_at timestamptz,
@@ -49,6 +51,7 @@ create table private.credentials (
   subtype text not null,
   issue_date date not null,
   issuing_authority text not null,
+  signature_key text not null check (signature_key in ('samuel_qian_v1', 'yale_chen_v1')),
   signatory_title text not null default 'EconMind Initial Founder',
   template_id uuid not null references private.credential_templates(id),
   template_snapshot jsonb not null,
@@ -117,12 +120,13 @@ end;
 $$;
 
 create function public.create_credential_draft(p_request_key uuid, p_template_id uuid, p_issue_date date,
-  p_issuing_authority text, p_entries jsonb)
+  p_issuing_authority text, p_entries jsonb, p_signature_key text default 'samuel_qian_v1')
 returns uuid language plpgsql security definer set search_path = '' as $$
 declare actor uuid := private.require_credential_admin(); new_id uuid; existing private.credential_batches%rowtype; entry jsonb;
 begin
   if p_request_key is null or p_issue_date is null or extract(year from p_issue_date) not between 2000 and 9999
     or p_issuing_authority is null or p_issuing_authority not in ('EconMind Founder Team', 'EconMind Leadership Group')
+    or p_signature_key is null or p_signature_key not in ('samuel_qian_v1', 'yale_chen_v1')
     or p_entries is null or jsonb_typeof(p_entries) <> 'array' then
     raise exception 'Invalid draft' using errcode = '22023';
   end if;
@@ -137,14 +141,19 @@ begin
       or length(trim(entry->>'name')) not between 1 and 200 or octet_length(entry::text) > 10000 then
       raise exception 'Invalid recipient' using errcode = '22023';
     end if;
+    if exists (select 1 from jsonb_each(entry) f
+      where f.key not in ('name','role','department','project','contribution','service_period','user_id')
+        or jsonb_typeof(f.value) <> 'string' or length(f.value #>> '{}') > 4000) then
+      raise exception 'Invalid recipient field' using errcode = '22023';
+    end if;
   end loop;
-  insert into private.credential_batches(request_key, template_id, entries, issue_date, issuing_authority, created_by)
-    values (p_request_key, p_template_id, p_entries, p_issue_date, p_issuing_authority, actor)
+  insert into private.credential_batches(request_key, template_id, entries, issue_date, issuing_authority, signature_key, created_by)
+    values (p_request_key, p_template_id, p_entries, p_issue_date, p_issuing_authority, p_signature_key, actor)
     on conflict (request_key) do nothing returning id into new_id;
   if new_id is null then
     select * into existing from private.credential_batches where request_key = p_request_key;
     if existing.created_by <> actor or existing.template_id <> p_template_id or existing.entries <> p_entries
-      or existing.issue_date <> p_issue_date or existing.issuing_authority <> p_issuing_authority then
+      or existing.issue_date <> p_issue_date or existing.issuing_authority <> p_issuing_authority or existing.signature_key <> p_signature_key then
       raise exception 'Idempotency key already used for different draft' using errcode = '23505';
     end if;
     return existing.id;
@@ -154,14 +163,28 @@ begin
 end;
 $$;
 
-create function public.review_credential_draft(p_batch_id uuid) returns void
+create function public.review_credential_draft(p_batch_id uuid, p_acknowledge_duplicates boolean default false) returns void
 language plpgsql security definer set search_path = '' as $$
-declare actor uuid := private.require_credential_admin();
+declare actor uuid := private.require_credential_admin(); batch private.credential_batches%rowtype; duplicate_count integer;
 begin
-  update private.credential_batches set status = 'reviewed', reviewed_by = actor, reviewed_at = now()
+  select * into batch from private.credential_batches where id = p_batch_id for update;
+  if not found or batch.status <> 'draft' then raise exception 'Draft not found or not reviewable' using errcode = '22023'; end if;
+  select count(*) into duplicate_count from (
+    select lower(trim(e.value->>'name')) as name from jsonb_array_elements(batch.entries) e
+    group by lower(trim(e.value->>'name')) having count(*) > 1
+    union
+    select distinct lower(trim(e.value->>'name')) from jsonb_array_elements(batch.entries) e
+      join private.credentials c on lower(c.recipient_name) = lower(trim(e.value->>'name'))
+      join private.credential_templates t on t.id = batch.template_id and t.category = c.category
+  ) duplicates;
+  if duplicate_count > 0 and not coalesce(p_acknowledge_duplicates,false) then
+    raise exception 'Potential duplicate recipient names require review' using errcode = '23505', detail = duplicate_count::text;
+  end if;
+  update private.credential_batches set status = 'reviewed', reviewed_by = actor, reviewed_at = now(),
+    duplicates_acknowledged = coalesce(p_acknowledge_duplicates,false)
     where id = p_batch_id and status = 'draft';
-  if not found then raise exception 'Draft not found or not reviewable' using errcode = '22023'; end if;
-  insert into private.credential_audit_logs(actor, action, batch_id) values (actor, 'batch_reviewed', p_batch_id);
+  insert into private.credential_audit_logs(actor, action, batch_id, details)
+    values (actor, 'batch_reviewed', p_batch_id, jsonb_build_object('potential_duplicate_names', duplicate_count, 'acknowledged', coalesce(p_acknowledge_duplicates,false)));
 end;
 $$;
 
@@ -180,6 +203,13 @@ begin
     raise exception 'Batch requires a reviewed, verified preview before issuance' using errcode = '22023';
   end if;
   select * into strict t from private.credential_templates where id = b.template_id;
+  -- Recheck under a category-level lock so two concurrent batches cannot both
+  -- pass review and silently issue the same name without acknowledgement.
+  perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended('credential-duplicates:' || t.category, 0));
+  if not b.duplicates_acknowledged and exists (
+    select 1 from jsonb_array_elements(b.entries) e join private.credentials c
+      on lower(c.recipient_name) = lower(trim(e.value->>'name')) and c.category = t.category
+  ) then raise exception 'Potential duplicate appeared after review; create a new reviewed draft' using errcode = '23505'; end if;
   total := jsonb_array_length(b.entries); yr := extract(year from b.issue_date)::integer;
   insert into private.credential_counters(category, issue_year, last_sequence) values (t.category, yr, total)
     on conflict (category, issue_year) do update set last_sequence = private.credential_counters.last_sequence + excluded.last_sequence
@@ -187,9 +217,9 @@ begin
   for item in select value, ordinality from jsonb_array_elements(b.entries) with ordinality loop
     seq := first_seq + item.ordinality::integer - 1;
     insert into private.credentials(batch_id, batch_entry, certificate_number, recipient_name, category, subtype,
-      issue_date, issuing_authority, template_id, template_snapshot, recipient_snapshot, created_by)
+      issue_date, issuing_authority, signature_key, template_id, template_snapshot, recipient_snapshot, created_by)
     values (b.id, item.ordinality, 'EML-' || t.category || '-' || yr || '-' || lpad(seq::text, 6, '0'),
-      trim(item.value->>'name'), t.category, t.subtype, b.issue_date, b.issuing_authority, t.id,
+      trim(item.value->>'name'), t.category, t.subtype, b.issue_date, b.issuing_authority, b.signature_key, t.id,
       jsonb_build_object('version', t.version, 'text_content', t.text_content), item.value, actor);
   end loop;
   update private.credential_batches set status = 'issued', issued_at = now() where id = b.id;
@@ -203,16 +233,40 @@ $$;
 -- Only the trusted rendering worker may attest successful preview and layout
 -- checks. No public/client RPC grants this privilege. The worker implementation
 -- and its visual checks are not yet built, so issuance remains fail-closed.
-create function public.attest_credential_preview(p_batch_id uuid) returns void
+create function public.attest_credential_preview(p_batch_id uuid, p_actor uuid) returns void
 language plpgsql security definer set search_path = '' as $$
 begin
+  if p_actor is null or not coalesce(public.is_superme_platform_admin(p_actor), false)
+    or not exists (select 1 from public.profiles where user_id = p_actor and account_status = 'active') then
+    raise exception 'Superme platform administrator required' using errcode = '42501';
+  end if;
   update private.credential_batches set preview_verified_at = now()
     where id = p_batch_id and status = 'reviewed';
   if not found then raise exception 'Reviewed batch not found' using errcode = '22023'; end if;
+  insert into private.credential_audit_logs(actor, action, batch_id) values (p_actor, 'preview_verified', p_batch_id);
 end;
 $$;
-revoke all on function public.attest_credential_preview(uuid) from public, anon, authenticated;
-grant execute on function public.attest_credential_preview(uuid) to service_role;
+revoke all on function public.attest_credential_preview(uuid,uuid) from public, anon, authenticated;
+grant execute on function public.attest_credential_preview(uuid,uuid) to service_role;
+
+create function public.get_credential_render_data(p_batch_id uuid, p_credential_id uuid default null) returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare actor uuid := private.require_credential_admin(); result jsonb;
+begin
+  if p_batch_id is null then raise exception 'Batch required' using errcode = '22023'; end if;
+  select jsonb_build_object('id', b.id, 'status', b.status, 'entries', b.entries, 'issue_date', b.issue_date,
+    'issuing_authority', b.issuing_authority, 'signature_key', b.signature_key, 'category', t.category, 'subtype', t.subtype,
+    'template', t.text_content, 'template_version', t.version,
+    'credentials', (select coalesce(jsonb_agg(to_jsonb(c) order by c.batch_entry), '[]'::jsonb)
+      from (select id, batch_entry, certificate_number, status, recipient_snapshot, template_snapshot
+        from private.credentials where batch_id = b.id and (p_credential_id is null or id = p_credential_id)) c))
+    into result from private.credential_batches b join private.credential_templates t on t.id = b.template_id where b.id = p_batch_id;
+  if result is null then raise exception 'Batch not found' using errcode = '22023'; end if;
+  return result;
+end;
+$$;
+revoke all on function public.get_credential_render_data(uuid,uuid) from public, anon, authenticated;
+grant execute on function public.get_credential_render_data(uuid,uuid) to authenticated;
 
 create function public.revoke_credential(p_credential_id uuid, p_reason text) returns void
 language plpgsql security definer set search_path = '' as $$
@@ -246,22 +300,61 @@ begin
       from (select id, category, subtype, version, text_content, created_at from private.credential_templates order by created_at desc limit 100) t),
     'credentials', (select coalesce(jsonb_agg(to_jsonb(c) order by c.created_at desc, c.id desc), '[]'::jsonb)
       from (select id, batch_id, certificate_number, recipient_name, category, subtype, issue_date, issuing_authority,
-        signatory_title, template_snapshot, recipient_snapshot, status, created_at, revoked_at, revocation_reason
+        signatory_title, signature_key, template_snapshot, recipient_snapshot, status, created_at, revoked_at, revocation_reason
         from private.credentials where p_before is null or (created_at, id) < (p_before, p_before_id)
         order by created_at desc, id desc limit p_limit) c),
     'batches', (select coalesce(jsonb_agg(to_jsonb(b) order by b.created_at desc), '[]'::jsonb)
-      from (select id, template_id, entries, issue_date, issuing_authority, status, created_at, reviewed_at, issued_at
+      from (select id, template_id, entries, issue_date, issuing_authority, signature_key, status, created_at, reviewed_at, preview_verified_at, issued_at
         from private.credential_batches order by created_at desc limit p_limit) b)
   );
 end;
 $$;
 
-revoke all on function public.create_credential_template(text,text,jsonb), public.create_credential_draft(uuid,uuid,date,text,jsonb),
-  public.review_credential_draft(uuid), public.issue_credential_batch(uuid), public.revoke_credential(uuid,text),
-  public.list_credential_admin_data(integer,timestamptz,uuid)
+create function public.list_credential_audit_logs(p_limit integer default 100, p_before_id bigint default null)
+returns table (id bigint, actor uuid, action text, batch_id uuid, credential_id uuid, details jsonb, created_at timestamptz)
+language plpgsql stable security definer set search_path = '' as $$
+declare caller uuid := private.require_credential_admin();
+begin
+  if p_limit is null or p_limit not between 1 and 100 then raise exception 'Invalid page size' using errcode = '22023'; end if;
+  return query select l.id, l.actor, l.action, l.batch_id, l.credential_id, l.details, l.created_at from private.credential_audit_logs l
+    where p_before_id is null or l.id < p_before_id order by l.id desc limit p_limit;
+end;
+$$;
+
+create function public.search_credential_records(p_query text default '', p_category text default null,
+  p_department text default '', p_from date default null, p_to date default null,
+  p_before timestamptz default null, p_before_id uuid default null, p_limit integer default 50)
+returns table (id uuid, batch_id uuid, certificate_number text, recipient_name text, category text, subtype text,
+  issue_date date, signature_key text, status text, created_at timestamptz, recipient_snapshot jsonb)
+language plpgsql stable security definer set search_path = '' as $$
+declare caller uuid := private.require_credential_admin();
+begin
+  if p_limit is null or p_limit not between 1 and 100 or (p_before is null) <> (p_before_id is null)
+    or length(coalesce(p_query,'')) > 200 or length(coalesce(p_department,'')) > 200
+    or (p_category is not null and p_category not in ('MEM','PAR','CON','LEA','DIS'))
+    or (p_from is not null and p_to is not null and p_from > p_to) then
+    raise exception 'Invalid search filter' using errcode = '22023';
+  end if;
+  return query select c.id,c.batch_id,c.certificate_number,c.recipient_name,c.category,c.subtype,c.issue_date,
+    c.signature_key,c.status,c.created_at,c.recipient_snapshot from private.credentials c
+    where (coalesce(trim(p_query),'') = '' or position(lower(trim(p_query)) in lower(c.recipient_name)) > 0
+      or position(lower(trim(p_query)) in lower(c.certificate_number)) > 0)
+      and (p_category is null or c.category = p_category)
+      and (coalesce(trim(p_department),'') = '' or position(lower(trim(p_department)) in lower(coalesce(c.recipient_snapshot->>'department',''))) > 0)
+      and (p_from is null or c.issue_date >= p_from) and (p_to is null or c.issue_date <= p_to)
+      and (p_before is null or (c.created_at,c.id) < (p_before,p_before_id))
+    order by c.created_at desc,c.id desc limit p_limit;
+end;
+$$;
+
+revoke all on function public.create_credential_template(text,text,jsonb), public.create_credential_draft(uuid,uuid,date,text,jsonb,text),
+  public.review_credential_draft(uuid,boolean), public.issue_credential_batch(uuid), public.revoke_credential(uuid,text),
+  public.list_credential_admin_data(integer,timestamptz,uuid), public.list_credential_audit_logs(integer,bigint),
+  public.search_credential_records(text,text,text,date,date,timestamptz,uuid,integer)
   from public, anon, authenticated;
-grant execute on function public.create_credential_template(text,text,jsonb), public.create_credential_draft(uuid,uuid,date,text,jsonb),
-  public.review_credential_draft(uuid), public.issue_credential_batch(uuid), public.revoke_credential(uuid,text),
-  public.list_credential_admin_data(integer,timestamptz,uuid) to authenticated;
+grant execute on function public.create_credential_template(text,text,jsonb), public.create_credential_draft(uuid,uuid,date,text,jsonb,text),
+  public.review_credential_draft(uuid,boolean), public.issue_credential_batch(uuid), public.revoke_credential(uuid,text),
+  public.list_credential_admin_data(integer,timestamptz,uuid), public.list_credential_audit_logs(integer,bigint),
+  public.search_credential_records(text,text,text,date,date,timestamptz,uuid,integer) to authenticated;
 
 commit;

@@ -36,6 +36,21 @@ with tempfile.TemporaryDirectory(prefix="em-cred-", dir="/tmp") as directory:
         assert results[:12] == results[12:], "Retry returned different certificates"
         count, distinct_numbers, maximum = map(int, sql("select count(*),count(distinct c.certificate_number),max(s.last_sequence) from private.credentials c cross join private.credential_counters s where c.category='PAR' and c.issue_date='2028-01-01' and s.category='PAR' and s.issue_year=2028;").split("|"))
         assert (count, distinct_numbers, maximum) == (12, 12, 12), (count, distinct_numbers, maximum)
-        print("PASS: concurrent batches and duplicate submissions allocated exactly 12 distinct numbers")
+        same_name_batches = []
+        for number in range(2):
+            key = f"30000000-0000-0000-0000-{number:012d}"
+            batch = sql(f"set role authenticated; set request.jwt.claim.sub='{ACTOR}'; select public.create_credential_draft('{key}','{template}','2029-01-01','EconMind Founder Team','[{{\"name\":\"Same Person\"}}]');")
+            sql(f"set role authenticated; set request.jwt.claim.sub='{ACTOR}'; select public.review_credential_draft('{batch}'); select public.test_attest_credential_preview('{batch}');")
+            same_name_batches.append(batch)
+
+        def try_issue(batch):
+            query = f"set role authenticated; set request.jwt.claim.sub='{ACTOR}'; select public.issue_credential_batch('{batch}');"
+            return subprocess.run(command + ["-c", query], cwd=ROOT, text=True, capture_output=True).returncode
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+            codes = list(pool.map(try_issue, same_name_batches))
+        assert sorted(codes) == [0, 1], codes
+        assert sql("select count(*) from private.credentials where recipient_name='Same Person';") == '1'
+        print("PASS: concurrent numbering, idempotency, and duplicate-name race checks")
     finally:
         subprocess.run(["pg_ctl", "-D", db, "-m", "immediate", "stop"], check=True, stdout=subprocess.DEVNULL)

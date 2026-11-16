@@ -32,6 +32,7 @@
     "pdfjs-dist": "6.3.289",
     "react": "19.2.7",
     "react-dom": "19.2.7",
+    "read-excel-file": "9.3.17",
     "recharts": "3.10.0",
     "sanitize-html": "2.18.1"
   },

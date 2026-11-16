@@ -9,6 +9,7 @@ create table public.organization_directory (
   organizational_group text not null check (organizational_group in
     ('founding-team','regional-leadership','communications-team','technology-team','leadership-group','academic-team')),
   region text,
+  legacy_name text,
   description text,
   focus jsonb not null default '[]'::jsonb check (jsonb_typeof(focus) = 'array'),
   portrait_path text check (portrait_path is null or portrait_path like '/images/team/%'),
@@ -16,6 +17,8 @@ create table public.organization_directory (
   public_visible boolean not null default false,
   updated_at timestamptz not null default now()
 );
+create unique index organization_directory_legacy_appointment_unique
+  on public.organization_directory (organizational_group, legacy_name) where legacy_name is not null;
 alter table public.organization_directory enable row level security;
 revoke all on public.organization_directory from public, anon, authenticated;
 grant select on public.organization_directory to anon, authenticated;
@@ -34,7 +37,7 @@ language sql stable security definer set search_path = '' as $$
   select jsonb_build_object(
     'activated', (select activated from private.organization_directory_settings where singleton),
     'appointments', (select coalesce(jsonb_agg(to_jsonb(d) order by d.sort_order, d.id), '[]'::jsonb)
-      from (select id, name, title, organizational_group, region, description, focus, portrait_path, sort_order, updated_at
+      from (select id, name, title, organizational_group, region, legacy_name, description, focus, portrait_path, sort_order, updated_at
         from public.organization_directory where public_visible) d)
   )
 $$;
@@ -67,13 +70,13 @@ begin
   if p_id is not null and not exists(select 1 from public.organization_directory where id = p_id) then
     raise exception 'Appointment not found' using errcode = '22023';
   end if;
-  insert into public.organization_directory(id, name, title, organizational_group, region, description, focus,
+  insert into public.organization_directory(id, name, title, organizational_group, region, legacy_name, description, focus,
     portrait_path, sort_order, public_visible)
   values (coalesce(p_id, gen_random_uuid()), trim(p_data->>'name'), trim(p_data->>'title'), p_data->>'organizational_group',
-    p_data->>'region', p_data->>'description', coalesce(p_data->'focus', '[]'::jsonb), p_data->>'portrait_path',
+    p_data->>'region', p_data->>'legacy_name', p_data->>'description', coalesce(p_data->'focus', '[]'::jsonb), p_data->>'portrait_path',
     coalesce((p_data->>'sort_order')::integer, 0), coalesce((p_data->>'public_visible')::boolean, false))
   on conflict (id) do update set name = excluded.name, title = excluded.title, organizational_group = excluded.organizational_group,
-    region = excluded.region, description = excluded.description, focus = excluded.focus, portrait_path = excluded.portrait_path,
+    region = excluded.region, legacy_name = excluded.legacy_name, description = excluded.description, focus = excluded.focus, portrait_path = excluded.portrait_path,
     sort_order = excluded.sort_order, public_visible = excluded.public_visible, updated_at = now()
   returning id into new_id;
   insert into private.credential_audit_logs(actor, action, details)

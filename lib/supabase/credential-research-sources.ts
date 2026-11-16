@@ -37,3 +37,33 @@ export async function listCredentialResearchSources(): Promise<CredentialResearc
     if (page.length < 100) return result;
   }
 }
+
+/** Realtime is an invalidation signal; the guarded RPC remains authoritative. */
+export function watchCredentialResearchSources(onUpdate: (rows: CredentialResearchSource[]) => void, onError: (error: Error) => void): () => void {
+  const client = requireSupabaseBrowserClient();
+  let disposed = false;
+  let running = false;
+  let queued = false;
+  async function refresh() {
+    if (disposed) return;
+    if (running) { queued = true; return; }
+    running = true;
+    try {
+      const rows = await listCredentialResearchSources();
+      if (!disposed) onUpdate(rows);
+    } catch (error) {
+      if (!disposed) onError(error instanceof Error ? error : new Error("Could not load research sources."));
+    } finally {
+      running = false;
+      if (queued && !disposed) { queued = false; void refresh(); }
+    }
+  }
+  const channel = client.channel("credential-research-source-revision")
+    .on("postgres_changes", { event: "*", schema: "public", table: "credential_source_revisions" }, () => { void refresh(); })
+    .subscribe(status => { if (status === "SUBSCRIBED") void refresh(); });
+  void refresh();
+  const timer = window.setInterval(() => { if (document.visibilityState === "visible") void refresh(); }, 15000);
+  const visibility = () => { if (document.visibilityState === "visible") void refresh(); };
+  document.addEventListener("visibilitychange", visibility);
+  return () => { disposed = true; window.clearInterval(timer); document.removeEventListener("visibilitychange", visibility); void client.removeChannel(channel); };
+}
