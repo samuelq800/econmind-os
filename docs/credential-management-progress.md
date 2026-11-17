@@ -80,9 +80,16 @@ job leases, recovery and PDF retry. On 2026-11-16 the focused frontend suite
 passed 11 tests, the private renderer passed 11 tests with no skips, all five
 disposable PostgreSQL suites passed, and both concurrency suites passed.
 The signature-switch image check confines pixel changes to the signature area.
-The private renderer's baseline matches
-pixel-for-pixel on the local Mac, with single-page A4 output. The current root
-security gate reports an existing moderate minimatch advisory in a development
-dependency; a targeted candidate passed isolated lint and audit but has not
-been authorized or applied. No production database, worker or site deployment
-was performed.
+The private renderer's baseline matches pixel-for-pixel on the local Mac, with
+single-page A4 output.
+
+On 2026-11-17 the user authorized a scoped development dependency fix and a
+Next.js security update. This branch updates Next.js and its matching ESLint
+configuration from 16.4.2 to 16.4.5, and overrides the TypeScript ESLint
+parser's minimatch to 11.0.1. The root security check reports zero raw
+advisories. Under the pinned Node 24.22.1, the focused ESLint run, six frontend
+test files (11 tests), the private renderer suite (11 tests) and the isolated
+Next.js build/browser test pass. Five disposable PostgreSQL suites also pass.
+The isolated build is not a full-site or production integration test; the
+complete release pipeline remains to be verified.
+No production database, worker or site deployment was performed.
