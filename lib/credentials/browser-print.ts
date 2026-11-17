@@ -64,7 +64,7 @@ export function printLayoutProblems(doc: Document): string[] {
   const certificate = doc.querySelector(".certificate");
   if (!certificate) return ["The certificate page is missing."];
   const page = certificate.getBoundingClientRect();
-  for (const selector of [".award-name", ".award-role", ".award-copy", ".cert-heading", ".scope", ".footer-value", "#issuingAuthority"]) {
+  for (const selector of [".award-name", ".award-role", ".award-copy", ".cert-heading", ".title-main", ".scope", ".footer-value", "#issuingAuthority"]) {
     doc.querySelectorAll(selector).forEach(el => {
       const bounds = el.getBoundingClientRect();
       let baselineVertical = 0;

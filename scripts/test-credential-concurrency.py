@@ -66,6 +66,20 @@ with tempfile.TemporaryDirectory(prefix="em-cred-", dir="/tmp") as directory:
             replacement_codes = list(pool.map(try_issue, replacements))
         assert sorted(replacement_codes) == [0, 1], replacement_codes
         assert sql(f"select count(*) from private.credentials where replaces_id='{original_id}';") == '1'
-        print("PASS: concurrent numbering, idempotency, duplicate-name and replacement races")
+        # V2 batches must still use the exact V1 issuance transaction and counters.
+        subprocess.run(command + ["-f", "supabase/migrations/20261117000000_credential_visual_editor.sql"], cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
+        editor_batches = []
+        for number in range(6):
+            key = f"80000000-0000-0000-0000-{number:012d}"
+            query = f"set role authenticated; set request.jwt.claim.sub='{ACTOR}'; select public.save_credential_editor_draft(null,0,'{key}','DIS','V2 Concurrent','2032-01-01','EconMind Founder Team','samuel_qian_v1','[{{\"name\":\"Editor {number}\"}}]','[{{\"title\":\"Certificate\",\"certification_statement\":\"Verified text\"}}]','[{{}}]','[{{}}]')->>'id';"
+            batch = sql(query)
+            sql(f"set role authenticated; set request.jwt.claim.sub='{ACTOR}'; select public.review_credential_editor_draft('{batch}',1); select public.test_attest_credential_preview('{batch}');")
+            editor_batches.append(batch)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
+            outputs = list(pool.map(issue, editor_batches + editor_batches))
+        assert outputs[:6] == outputs[6:], 'V2 retry returned different certificates'
+        count, distinct_numbers, maximum = map(int, sql("select count(*),count(distinct c.certificate_number),max(s.last_sequence) from private.credentials c cross join private.credential_counters s where c.category='DIS' and c.issue_date='2032-01-01' and s.category='DIS' and s.issue_year=2032;").split("|"))
+        assert (count, distinct_numbers, maximum) == (6, 6, 6), (count, distinct_numbers, maximum)
+        print("PASS: concurrent numbering, idempotency, duplicate-name and replacement races, including V2")
     finally:
         subprocess.run(["pg_ctl", "-D", db, "-m", "immediate", "stop"], check=True, stdout=subprocess.DEVNULL)
