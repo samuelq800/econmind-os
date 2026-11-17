@@ -1,7 +1,4 @@
 "use client";
-/* Authorized previews use revocable blob URLs, which cannot use image optimization. */
-/* eslint-disable @next/next/no-img-element */
-
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { CredentialSignatureSelect } from "./credential-signature-select";
@@ -9,6 +6,7 @@ import { CREDENTIAL_SIGNATURES, type CredentialSignatureKey } from "@/lib/creden
 import { parseCredentialCsv, recipientsFromRows, type ImportedRecipient } from "@/lib/credentials/import";
 import { requireSupabaseBrowserClient } from "@/lib/supabase/client";
 import { watchCredentialResearchSources, type CredentialResearchSource } from "@/lib/supabase/credential-research-sources";
+import { certificatePrintHtml, printLayoutProblems, type RenderBatch, type VisualAssets } from "@/lib/credentials/browser-print";
 
 type Template = { id: string; category: string; subtype: string; version: number; active: boolean };
 type Batch = { id: string; template_id: string; status: string; issue_date: string; issuing_authority: string; signature_key: string; preview_verified_at: string | null; entries: ImportedRecipient[] };
@@ -16,9 +14,6 @@ type Credential = { id: string; batch_id: string; template_id: string; replaces_
 type Snapshot = { counts: { issued: number; issued_this_month: number; revoked: number }; pending: number; templates: Template[]; batches: Batch[]; credentials: Credential[] };
 type OrganizationSource = { id: string; name: string; title: string; organizational_group: string; public_visible: boolean };
 type AuditEvent = { id: number; actor: string; action: string; batch_id: string | null; credential_id: string | null; created_at: string; details: Record<string, unknown> };
-type ExportJob = { id: string; batch_id: string; state: string; total: number; completed: number; failed: number };
-type ExportDetail = { id: string; items: { number: string; state: string; failure: string | null }[] };
-type VerificationDetail = { id: string; items: { index: number; state: string; failure: string | null }[] };
 const field = "mt-2 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 py-2.5 text-sm text-[var(--ink)]";
 const button = "rounded-lg bg-[var(--accent)] px-4 py-2.5 text-sm font-bold text-[var(--canvas)] disabled:opacity-50";
 
@@ -57,11 +52,9 @@ function CredentialWorkspace() {
   const [organization, setOrganization] = useState<OrganizationSource[]>([]);
   const [audit, setAudit] = useState<AuditEvent[]>([]);
   const [moreAudit, setMoreAudit] = useState(false);
-  const [exports, setExports] = useState<ExportJob[]>([]);
-  const [exportDetail, setExportDetail] = useState<ExportDetail | null>(null);
-  const [verifications, setVerifications] = useState<ExportJob[]>([]);
-  const [verificationDetail, setVerificationDetail] = useState<VerificationDetail | null>(null);
-  const [preview, setPreview] = useState<{ url: string; title: string } | null>(null);
+  const [preview, setPreview] = useState<{ html: string; title: string; batchId: string; index: number | null; credentialId: string | null } | null>(null);
+  const [previewProblem, setPreviewProblem] = useState("");
+  const previewFrame = useRef<HTMLIFrameElement>(null);
   const [previewIndex, setPreviewIndex] = useState<Record<string, number>>({});
   const [previewedEntries, setPreviewedEntries] = useState<Record<string, number[]>>({});
   const [search, setSearch] = useState("");
@@ -72,12 +65,8 @@ function CredentialWorkspace() {
   const [results, setResults] = useState<Credential[] | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const request = useRef<string | null>(null);
-  const exportRequests = useRef<Record<string, string>>({});
-  const verificationRequests = useRef<Record<string, string>>({});
+  const visualAssets = useRef<Promise<VisualAssets> | null>(null);
   const auditExpanded = useRef(false);
-  const rendererUrl = process.env.NEXT_PUBLIC_CREDENTIAL_RENDERER_URL;
-
-  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview.url); }, [preview]);
 
   const loadSnapshot = useCallback(async () => {
     const { data, error: failure } = await requireSupabaseBrowserClient().rpc("list_credential_admin_data");
@@ -93,26 +82,36 @@ function CredentialWorkspace() {
     if (!snapshot) return;
     const client = requireSupabaseBrowserClient();
     let active = true;
+    let organizationGeneration = 0;
     const loadOrganization = async () => {
-      const { data, error: failure } = await client.rpc("list_credential_organization_sources");
-      if (active && !failure && Array.isArray(data)) setOrganization(data as OrganizationSource[]);
+      const generation = ++organizationGeneration;
+      try {
+        const all: OrganizationSource[] = [];
+        let cursor: string | null = null;
+        for (;;) {
+          const { data, error: failure } = await client.rpc("list_credential_organization_page", { p_after_id: cursor, p_limit: 100 });
+          if (failure) throw failure;
+          if (!Array.isArray(data)) throw new Error("Invalid organization source response.");
+          const page = data as OrganizationSource[];
+          for (const person of page) {
+            if (!person.id || (cursor !== null && person.id <= cursor)) throw new Error("Invalid organization pagination order.");
+            all.push(person); cursor = person.id;
+          }
+          if (page.length < 100) break;
+        }
+        if (active && generation === organizationGeneration) setOrganization(all);
+      } catch {
+        if (active && generation === organizationGeneration) { setOrganization([]); setError("Organization sources could not be loaded."); }
+      }
     };
     const loadAudit = async () => {
       if (auditExpanded.current) return;
       const { data, error: failure } = await client.rpc("list_credential_audit_logs");
       if (active && !failure && Array.isArray(data)) { setAudit(data as AuditEvent[]); setMoreAudit(data.length === 100); }
     };
-    const loadExports = async () => {
-      const { data, error: failure } = await client.rpc("list_credential_exports");
-      if (active && !failure && Array.isArray(data)) setExports(data as ExportJob[]);
-    };
-    const loadVerifications = async () => {
-      const { data, error: failure } = await client.rpc("list_credential_verifications");
-      if (active && !failure && Array.isArray(data)) setVerifications(data as ExportJob[]);
-    };
     const loadBatchState = async () => {
       try { const current = await loadSnapshot(); if (active) setSnapshot(current); }
-      catch { if (active) { setSnapshot(null); setResearch([]); setOrganization([]); setAudit([]); setExports([]); setVerifications([]); setError("Administrator access could not be verified. Reload to try again."); } }
+      catch { if (active) { setSnapshot(null); setResearch([]); setOrganization([]); setAudit([]); setPreview(null); setError("Administrator access could not be verified. Reload to try again."); } }
     };
     let running = false;
     let queued = false;
@@ -120,7 +119,7 @@ function CredentialWorkspace() {
       if (!active) return;
       if (running) { queued = true; return; }
       running = true;
-      try { await Promise.allSettled([loadAudit(), loadExports(), loadVerifications(), loadBatchState()]); }
+      try { await Promise.allSettled([loadAudit(), loadBatchState()]); }
       finally { running = false; if (queued && active) { queued = false; void refreshManagement(); } }
     };
     const channel = client.channel("credential-organization-sources")
@@ -144,7 +143,7 @@ function CredentialWorkspace() {
     }
     finally { setBusy(false); }
   }
-  function addSource(name: string) { setNames(previous => [previous.trim(), name].filter(Boolean).join("\n")); }
+  function addSource(entry: ImportedRecipient) { setImported(previous => [...previous, entry]); setAllowDuplicates(false); }
   async function importFile(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -186,46 +185,57 @@ function CredentialWorkspace() {
       setSubtype(""); setTitle(""); setTemplateStatement(""); setTemplateRole(""); setTemplateContribution(""); setTemplatePeriod("");
     });
   }
+  function createStarterTemplates() {
+    void action(async () => {
+      const { error: failure } = await requireSupabaseBrowserClient().rpc("ensure_credential_starter_templates");
+      if (failure) throw failure;
+    });
+  }
   function toggleTemplate(item: Template) {
     void action(async () => {
       const { error: failure } = await requireSupabaseBrowserClient().rpc("set_credential_template_active", { p_template_id: item.id, p_active: !item.active });
       if (failure) throw failure;
     });
   }
-  async function renderRequest(path: string, body: Record<string, unknown>) {
-    if (!rendererUrl) throw new Error("Private certificate renderer is not configured.");
-    const endpoint = new URL(rendererUrl);
-    if (endpoint.protocol !== "https:" && !(endpoint.protocol === "http:" && ["localhost", "127.0.0.1"].includes(endpoint.hostname))) throw new Error("The certificate renderer must use HTTPS.");
-    const { data: { session } } = await requireSupabaseBrowserClient().auth.getSession();
-    if (!session?.access_token) throw new Error("Sign in again before continuing.");
-    const response = await fetch(new URL(path, endpoint), { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify(body) });
-    if (!response.ok) { const detail = await response.json().catch(() => ({})); throw new Error(detail.error || "The private renderer could not complete the request."); }
-    return response;
+  async function openCertificate(batchId: string, index: number | null, credentialId?: string) {
+    const client = requireSupabaseBrowserClient();
+    if (!visualAssets.current) visualAssets.current = (async () => {
+      const { data, error: failure } = await client.rpc("get_credential_visual_assets");
+      if (failure) throw failure;
+      return data as VisualAssets;
+    })().catch(cause => { visualAssets.current = null; throw cause; });
+    const [assets, batchResult] = await Promise.all([
+      visualAssets.current,
+      client.rpc("get_credential_render_data", { p_batch_id: batchId, p_credential_id: credentialId || null }),
+    ]);
+    if (batchResult.error) throw batchResult.error;
+    const batch = batchResult.data as RenderBatch & { status: string; entries: ImportedRecipient[]; credentials: { id: string; status: string; recipient_snapshot: ImportedRecipient; certificate_number: string }[] };
+    const credential = credentialId ? batch.credentials.find(row => row.id === credentialId && row.status === "issued") : null;
+    if (credentialId && (!credential || batch.status !== "issued")) throw new Error("The issued certificate is no longer available.");
+    const entry = credential ? credential.recipient_snapshot : batch.entries[index ?? -1];
+    if (!entry) throw new Error("Recipient not found.");
+    const html = await certificatePrintHtml(assets, batch, entry, credential?.certificate_number || null);
+    setPreviewProblem("Loading preview…");
+    setPreview({ html, title: credential ? `${entry.name} · ${credential.certificate_number}` : entry.name, batchId, index, credentialId: credential?.id ?? null });
   }
   function previewBatch(batch: Batch) {
-    void action(async () => {
-      const index = previewIndex[batch.id] ?? 0;
-      const response = await renderRequest("/preview", { batchId: batch.id, index });
-      setPreview({ url: URL.createObjectURL(await response.blob()), title: batch.entries[index]?.name ?? "Certificate" });
-      setPreviewedEntries(old => ({ ...old, [batch.id]: [...new Set([...(old[batch.id] ?? []), index])] }));
-    });
+    const index = previewIndex[batch.id] ?? 0;
+    void action(async () => { await openCertificate(batch.id, index); });
   }
   function batchOperation(batch: Batch, operation: "review" | "verify" | "issue") {
+    if (operation === "verify" && !window.confirm("I have personally reviewed every certificate preview for this batch, including the text, signature, and print layout.")) return;
     if (operation === "issue" && !window.confirm(`Issue ${batch.entries.length} official certificate(s) with ${batch.signature_key}? This assigns permanent certificate numbers.`)) return;
     void action(async () => {
       const client = requireSupabaseBrowserClient();
       if (operation === "verify") {
-        const key = verificationRequests.current[batch.id] ?? crypto.randomUUID();
-        verificationRequests.current[batch.id] = key;
-        const { error: failure } = await client.rpc("enqueue_credential_verification", { p_batch_id: batch.id, p_request_key: key });
+        const { error: failure } = await client.rpc("confirm_credential_print_review", { p_batch_id: batch.id, p_confirm: true });
         if (failure) throw failure;
-        delete verificationRequests.current[batch.id];
         return;
       }
       if (operation === "review") {
         const first = await client.rpc("review_credential_draft", { p_batch_id: batch.id, p_acknowledge_duplicates: false });
         if (first.error?.code === "23505") {
-          if (!window.confirm("Potential duplicate names exist within this batch or in previous certificates of the same category. Check the recipient identities and prior records before confirming. Continue?")) return;
+          if (!window.confirm("Potential duplicate names exist. Check identities and previous certificates before continuing.")) return;
           const retry = await client.rpc("review_credential_draft", { p_batch_id: batch.id, p_acknowledge_duplicates: true });
           if (retry.error) throw retry.error;
         } else if (first.error) throw first.error;
@@ -233,26 +243,40 @@ function CredentialWorkspace() {
       }
       const { error: failure } = await client.rpc("issue_credential_batch", { p_batch_id: batch.id });
       if (failure) throw failure;
-      const key = exportRequests.current[batch.id] ?? crypto.randomUUID();
-      exportRequests.current[batch.id] = key;
-      const queued = await client.rpc("enqueue_credential_export", { p_batch_id: batch.id, p_request_key: key });
-      if (queued.error) throw new Error("Certificates were issued, but the PDF job could not be queued. Use Prepare ZIP to retry.");
-      delete exportRequests.current[batch.id];
-    });
-  }
-  function downloadCredential(item: Credential) {
-    void action(async () => {
-      const response = await renderRequest("/pdf", { batchId: item.batch_id, credentialId: item.id });
-      const url = URL.createObjectURL(await response.blob());
-      const link = document.createElement("a"); link.href = url; link.download = `${item.certificate_number}.pdf`; link.click();
-      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     });
   }
   function viewCredential(item: Credential) {
+    void action(async () => { await openCertificate(item.batch_id, null, item.id); });
+  }
+  function printCredential() {
+    const current = preview;
+    if (!current?.credentialId || previewProblem) return;
     void action(async () => {
-      const response = await renderRequest("/view", { batchId: item.batch_id, credentialId: item.id });
-      setPreview({ url: URL.createObjectURL(await response.blob()), title: `${item.recipient_name} · ${item.certificate_number} · ${item.status}` });
+      const { data, error: failure } = await requireSupabaseBrowserClient().rpc("get_credential_render_data", { p_batch_id: current.batchId, p_credential_id: current.credentialId });
+      if (failure) { setPreview(null); throw failure; }
+      const records = (data as { credentials?: { id: string; status: string }[] }).credentials ?? [];
+      if (!records.some(item => item.id === current.credentialId && item.status === "issued")) { setPreview(null); throw new Error("This credential is no longer available for printing."); }
+      previewFrame.current?.contentWindow?.focus();
+      previewFrame.current?.contentWindow?.print();
     });
+  }
+  function previewLoaded() {
+    const frame = previewFrame.current, current = preview;
+    if (!frame?.contentDocument || !current) return;
+    void (async () => {
+      const doc = frame.contentDocument!;
+      try {
+        await doc.fonts.ready;
+        await Promise.all([...doc.images].map(image => image.decode()));
+        if (previewFrame.current !== frame || frame.contentDocument !== doc) return;
+        const problems = printLayoutProblems(doc);
+        if (problems.length) { setPreviewProblem(`Text exceeds the approved certificate layout: ${problems.join(", ")}`); return; }
+        setPreviewProblem("");
+        if (current.index !== null) setPreviewedEntries(old => ({ ...old, [current.batchId]: [...new Set([...(old[current.batchId] ?? []), current.index!])] }));
+      } catch {
+        if (previewFrame.current === frame && frame.contentDocument === doc) setPreviewProblem("The certificate images could not be loaded. Reload the preview before continuing.");
+      }
+    })();
   }
   function prepareCorrection(item: Credential) {
     const original = snapshot?.templates.find(value => value.id === item.template_id);
@@ -285,48 +309,12 @@ function CredentialWorkspace() {
       if (failure) throw failure;
     });
   }
-  function enqueueExport(batch: Pick<Batch, "id">) {
-    void action(async () => {
-      const key = exportRequests.current[batch.id] ?? crypto.randomUUID();
-      exportRequests.current[batch.id] = key;
-      const { error: failure } = await requireSupabaseBrowserClient().rpc("enqueue_credential_export", { p_batch_id: batch.id, p_request_key: key });
-      if (failure) throw failure;
-      delete exportRequests.current[batch.id];
-    });
-  }
-  function manageExport(job: ExportJob, operation: "details" | "retry" | "download") {
-    void action(async () => {
-      const client = requireSupabaseBrowserClient();
-      if (operation === "retry") {
-        const { error: failure } = await client.rpc("retry_credential_export", { p_job_id: job.id });
-        if (failure) throw failure;
-      } else if (operation === "details") {
-        const { data, error: failure } = await client.rpc("get_credential_export", { p_job_id: job.id });
-        if (failure) throw failure;
-        setExportDetail(data as ExportDetail);
-      } else {
-        const response = await renderRequest("/zip", { jobId: job.id });
-        const url = URL.createObjectURL(await response.blob());
-        const link = document.createElement("a"); link.href = url; link.download = `EconMind_Credentials_${job.id}.zip`; link.click();
-        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-      }
-      const { data, error: failure } = await client.rpc("list_credential_exports");
-      if (!failure && Array.isArray(data)) setExports(data as ExportJob[]);
-    });
-  }
-  function showVerification(job: ExportJob) {
-    void action(async () => {
-      const { data, error: failure } = await requireSupabaseBrowserClient().rpc("get_credential_verification", { p_job_id: job.id });
-      if (failure) throw failure;
-      setVerificationDetail(data as VerificationDetail);
-    });
-  }
   function revoke(item: Credential) {
     const reason = window.prompt(`Reason for revoking ${item.certificate_number}:`)?.trim();
     if (!reason || !window.confirm(`Revoke ${item.certificate_number}? The number will never be reused.`)) return;
     void action(async () => {
       const { error: failure } = await requireSupabaseBrowserClient().rpc("revoke_credential", { p_credential_id: item.id, p_reason: reason });
-      if (failure) throw failure; setResults(null);
+      if (failure) throw failure; setResults(null); setPreview(null);
     });
   }
   function searchRecords(more = false) {
@@ -375,18 +363,16 @@ function CredentialWorkspace() {
         <label className="block text-sm font-semibold">Issue date *<input required type="date" className={field} value={issueDate} onChange={e => setIssueDate(e.target.value)} /></label>
         <label className="block text-sm font-semibold">Issuing authority *<select className={field} value={authority} onChange={e => setAuthority(e.target.value)}><option>EconMind Founder Team</option><option>EconMind Leadership Group</option></select></label>
         <CredentialSignatureSelect value={signature} onChange={setSignature} />
-        <p className="text-sm text-[var(--ink-muted)]">A draft does not allocate a certificate number. A verified preview is required before issuance.</p><button disabled={busy} className={button}>Save draft</button>
+        <p className="text-sm text-[var(--ink-muted)]">A draft does not allocate a certificate number. Review every preview and the browser print layout before issuance.</p><button disabled={busy} className={button}>Save draft</button>
       </form>
-      <div className="space-y-6"><form onSubmit={createTemplate} className="space-y-4 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6"><h2 className="text-2xl font-bold">Text template</h2><label className="block text-sm font-semibold">Category *<select className={field} value={category} onChange={e => setCategory(e.target.value)}>{["MEM","PAR","CON","LEA","DIS"].map(code => <option key={code}>{code}</option>)}</select></label><label className="block text-sm font-semibold">Subtype *<input required className={field} value={subtype} onChange={e => setSubtype(e.target.value)} /></label><label className="block text-sm font-semibold">Certificate title *<input required className={field} value={title} onChange={e => setTitle(e.target.value)} /></label><label className="block text-sm font-semibold">Certification statement<textarea className={field} value={templateStatement} onChange={e => setTemplateStatement(e.target.value)} /></label><label className="block text-sm font-semibold">Default role description<input className={field} value={templateRole} onChange={e => setTemplateRole(e.target.value)} /></label><label className="block text-sm font-semibold">Default contribution paragraph<textarea className={field} value={templateContribution} onChange={e => setTemplateContribution(e.target.value)} /></label><label className="block text-sm font-semibold">Default service period text<input className={field} value={templatePeriod} onChange={e => setTemplatePeriod(e.target.value)} /></label><button disabled={busy} className={button}>Create template version</button><div className="space-y-2 border-t border-[var(--line)] pt-4"><p className="text-sm font-semibold">Template versions</p>{snapshot.templates.map(item => <div className="flex flex-wrap items-center justify-between gap-2 text-sm" key={item.id}><span>{item.category} · {item.subtype} · v{item.version} · {item.active ? "active" : "inactive"}</span><button type="button" disabled={busy} className={button} onClick={() => toggleTemplate(item)}>{item.active ? "Deactivate" : "Activate"}</button></div>)}</div></form>
-        <section className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6"><h2 className="text-2xl font-bold">Organization sources</h2><p className="mt-2 text-sm text-[var(--ink-muted)]">Select an appointment to add its displayed name. Verify identity and contribution before issuing.</p><div className="mt-3 max-h-60 overflow-auto">{organization.map(person => <button type="button" key={person.id} onClick={() => addSource(person.name)} className="block w-full border-b border-[var(--line)] py-2 text-left text-sm">{person.name} · {person.title} · {person.organizational_group}</button>)}</div></section>
-        <section className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6"><h2 className="text-2xl font-bold">Research sources</h2><p className="mt-2 text-sm text-[var(--ink-muted)]">Author names are shown as submitted; uploaders and unverified coauthor text are not treated as verified authors.</p><div className="mt-3 max-h-60 overflow-auto">{research.map(paper => <button type="button" key={paper.paper_id} onClick={() => addSource(paper.author_display_name)} className="block w-full border-b border-[var(--line)] py-2 text-left text-sm">{paper.author_display_name} · {paper.title} · {paper.status}</button>)}</div></section>
+      <div className="space-y-6"><form onSubmit={createTemplate} className="space-y-4 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6"><h2 className="text-2xl font-bold">Text template</h2>{snapshot.templates.length === 0 && <button type="button" disabled={busy} className={button} onClick={createStarterTemplates}>Add standard templates</button>}<label className="block text-sm font-semibold">Category *<select className={field} value={category} onChange={e => setCategory(e.target.value)}>{["MEM","PAR","CON","LEA","DIS"].map(code => <option key={code}>{code}</option>)}</select></label><label className="block text-sm font-semibold">Subtype *<input required className={field} value={subtype} onChange={e => setSubtype(e.target.value)} /></label><label className="block text-sm font-semibold">Certificate title *<input required className={field} value={title} onChange={e => setTitle(e.target.value)} /></label><label className="block text-sm font-semibold">Certification statement<textarea className={field} value={templateStatement} onChange={e => setTemplateStatement(e.target.value)} /></label><label className="block text-sm font-semibold">Default role description<input className={field} value={templateRole} onChange={e => setTemplateRole(e.target.value)} /></label><label className="block text-sm font-semibold">Default contribution paragraph<textarea className={field} value={templateContribution} onChange={e => setTemplateContribution(e.target.value)} /></label><label className="block text-sm font-semibold">Default service period text<input className={field} value={templatePeriod} onChange={e => setTemplatePeriod(e.target.value)} /></label><button disabled={busy} className={button}>Create template version</button><div className="space-y-2 border-t border-[var(--line)] pt-4"><p className="text-sm font-semibold">Template versions</p>{snapshot.templates.map(item => <div className="flex flex-wrap items-center justify-between gap-2 text-sm" key={item.id}><span>{item.category} · {item.subtype} · v{item.version} · {item.active ? "active" : "inactive"}</span><button type="button" disabled={busy} className={button} onClick={() => toggleTemplate(item)}>{item.active ? "Deactivate" : "Activate"}</button></div>)}</div></form>
+        <section className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6"><h2 className="text-2xl font-bold">Organization sources</h2><p className="mt-2 text-sm text-[var(--ink-muted)]">Select an appointment to add its displayed name, role and group. Verify identity and contribution before issuing.</p><button type="button" disabled={busy || organization.length === 0} className={button + " mt-3"} onClick={() => { setImported(old => [...old, ...organization.map(person => ({ name: person.name, role: person.title, department: person.organizational_group, project: "", contribution: "", service_period: "" }))]); setAllowDuplicates(false); }}>Add all organization entries</button>{organization.length === 0 && <p className="mt-3 text-sm text-[var(--ink-muted)]">No shared organization records are available.</p>}<div className="mt-3 max-h-60 overflow-auto">{organization.map(person => <button type="button" key={person.id} onClick={() => addSource({ name: person.name, role: person.title, department: person.organizational_group, project: "", contribution: "", service_period: "" })} className="block w-full border-b border-[var(--line)] py-2 text-left text-sm">{person.name} · {person.title} · {person.organizational_group}</button>)}</div></section>
+        <section className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6"><h2 className="text-2xl font-bold">Research sources</h2><p className="mt-2 text-sm text-[var(--ink-muted)]">Author names are shown as submitted; uploaders and unverified coauthor text are not treated as verified authors.</p><button type="button" disabled={busy || research.length === 0} className={button + " mt-3"} onClick={() => { setImported(old => [...old, ...research.filter(paper => paper.author_display_name?.trim()).map(paper => ({ name: paper.author_display_name, role: "", department: "", project: paper.title, contribution: "", service_period: "" }))]); setAllowDuplicates(false); }}>Add all research author entries</button><div className="mt-3 max-h-60 overflow-auto">{research.map(paper => <button type="button" key={paper.paper_id} onClick={() => addSource({ name: paper.author_display_name, role: "", department: "", project: paper.title, contribution: "", service_period: "" })} className="block w-full border-b border-[var(--line)] py-2 text-left text-sm">{paper.author_display_name} · {paper.title} · {paper.status}</button>)}</div></section>
       </div>
     </div>
-    <section className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6"><h2 className="text-2xl font-bold">Recent batches</h2>{!rendererUrl && <p className="mt-2 text-sm text-[var(--ink-muted)]">The private rendering service is not configured; issuance remains disabled.</p>}{snapshot.batches.map(batch => <div className="border-t border-[var(--line)] py-3 text-sm" key={batch.id}><p>{batch.issue_date} · {batch.entries.length} recipients · {batch.status} · {batch.signature_key}</p><div className="mt-3 flex flex-wrap gap-2"><select className={field + " !mt-0 !w-auto"} value={previewIndex[batch.id] ?? 0} onChange={e => setPreviewIndex(old => ({ ...old, [batch.id]: Number(e.target.value) }))}>{batch.entries.map((entry, index) => <option key={index} value={index}>{entry.name}</option>)}</select><button type="button" disabled={busy || !rendererUrl} className={button} onClick={() => previewBatch(batch)}>Preview</button>{["draft","reviewed"].includes(batch.status) && <><button type="button" disabled={busy} className={button} onClick={() => reviseDraft(batch)}>Revise as new draft</button><button type="button" disabled={busy} className={button} onClick={() => cancelDraft(batch)}>Cancel draft</button></>}{batch.status === "draft" && <button type="button" disabled={busy || (previewedEntries[batch.id]?.length ?? 0) !== batch.entries.length} className={button} onClick={() => batchOperation(batch, "review")}>Mark reviewed</button>}{batch.status === "reviewed" && !batch.preview_verified_at && <button type="button" disabled={busy || !rendererUrl || verifications.some(job => job.batch_id === batch.id && ["queued","running"].includes(job.state))} className={button} onClick={() => batchOperation(batch, "verify")}>Verify all layouts</button>}{batch.status === "reviewed" && batch.preview_verified_at && <button type="button" disabled={busy} className={button} onClick={() => batchOperation(batch, "issue")}>Issue certificates</button>}{batch.status === "issued" && <button type="button" disabled={busy} className={button} onClick={() => enqueueExport(batch)}>Prepare ZIP</button>}</div></div>)}</section>
-    {preview && <section className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6"><div className="flex items-center justify-between"><h2 className="text-2xl font-bold">Preview · {preview.title}</h2><button type="button" onClick={() => setPreview(null)}>Close</button></div>{/* The image is a short-lived, authorized response from the private renderer. */}<img className="mt-4 h-auto w-full" src={preview.url} alt={`Certificate preview for ${preview.title}`} /></section>}
-    <section className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6"><h2 className="text-2xl font-bold">Issued records</h2><form className="my-4 grid gap-3 sm:grid-cols-3" onSubmit={e => { e.preventDefault(); searchRecords(); }}><label className="text-sm">Name or number<input className={field} value={search} onChange={e => { setSearch(e.target.value); setResults(null); }} /></label><label className="text-sm">Category<select className={field} value={filterCategory} onChange={e => { setFilterCategory(e.target.value); setResults(null); }}><option value="">All</option>{["MEM","PAR","CON","LEA","DIS"].map(code => <option key={code}>{code}</option>)}</select></label><label className="text-sm">Department<input className={field} value={filterDepartment} onChange={e => { setFilterDepartment(e.target.value); setResults(null); }} /></label><label className="text-sm">From<input type="date" className={field} value={filterFrom} onChange={e => { setFilterFrom(e.target.value); setResults(null); }} /></label><label className="text-sm">To<input type="date" className={field} value={filterTo} onChange={e => { setFilterTo(e.target.value); setResults(null); }} /></label><div className="flex items-end"><button className={button} disabled={busy}>Search all records</button></div></form>{results === null && <p className="text-sm text-[var(--ink-muted)]">Showing recent records. Search to query the full history.</p>}{(results ?? snapshot.credentials).map(item => <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--line)] py-3 text-sm" key={item.id}><span>{item.certificate_number} · {item.recipient_name} · {item.status} · {item.signature_key}</span><div className="flex gap-2"><button type="button" disabled={busy || !rendererUrl} className={button} onClick={() => viewCredential(item)}>View</button><button type="button" disabled={busy || !rendererUrl || item.status !== "issued"} className={button} onClick={() => downloadCredential(item)}>Download PDF</button><button type="button" disabled={busy || item.status !== "issued"} className={button} onClick={() => enqueueExport({ id: item.batch_id })}>Prepare batch ZIP</button><button type="button" disabled={busy || item.status !== "issued"} className={button} onClick={() => revoke(item)}>Revoke</button>{item.status === "revoked" && <button type="button" disabled={busy} className={button} onClick={() => prepareCorrection(item)}>Correct</button>}</div></div>)}{results && results.length === 0 && <p className="py-3 text-sm">No matching records.</p>}{results && hasMore && <button type="button" disabled={busy} onClick={() => searchRecords(true)} className={button}>Load more</button>}</section>
+    <section className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6"><h2 className="text-2xl font-bold">Recent batches</h2><p className="mt-2 text-sm text-[var(--ink-muted)]">Preview each certificate, confirm a manual layout review, then issue. Use the browser print dialog to print or save as PDF.</p>{snapshot.batches.map(batch => <div className="border-t border-[var(--line)] py-3 text-sm" key={batch.id}><p>{batch.issue_date} · {batch.entries.length} recipients · {batch.status} · {batch.signature_key}</p><div className="mt-3 flex flex-wrap gap-2"><select className={field + " !mt-0 !w-auto"} value={previewIndex[batch.id] ?? 0} onChange={e => setPreviewIndex(old => ({ ...old, [batch.id]: Number(e.target.value) }))}>{batch.entries.map((entry, index) => <option key={index} value={index}>{entry.name}</option>)}</select><button type="button" disabled={busy} className={button} onClick={() => previewBatch(batch)}>Preview</button>{["draft","reviewed"].includes(batch.status) && <><button type="button" disabled={busy} className={button} onClick={() => reviseDraft(batch)}>Revise as new draft</button><button type="button" disabled={busy} className={button} onClick={() => cancelDraft(batch)}>Cancel draft</button></>}{batch.status === "draft" && <button type="button" disabled={busy || (previewedEntries[batch.id]?.length ?? 0) !== batch.entries.length} className={button} onClick={() => batchOperation(batch, "review")}>Mark reviewed</button>}{batch.status === "reviewed" && !batch.preview_verified_at && <button type="button" disabled={busy || (previewedEntries[batch.id]?.length ?? 0) !== batch.entries.length} className={button} onClick={() => batchOperation(batch, "verify")}>Confirm manual layout review</button>}{batch.status === "reviewed" && batch.preview_verified_at && <button type="button" disabled={busy} className={button} onClick={() => batchOperation(batch, "issue")}>Issue certificates</button>}</div></div>)}</section>
+    {preview && <section className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-2xl font-bold">Preview · {preview.title}</h2><div className="flex gap-2">{preview.credentialId && <button type="button" disabled={busy || Boolean(previewProblem)} className={button} onClick={printCredential}>Print / Save PDF</button>}<button type="button" onClick={() => setPreview(null)}>Close</button></div></div><p className="mt-3 text-sm text-[var(--ink-muted)]">Before issuing or printing, check the preview and your browser print dialog. Choose A4 landscape and enable background graphics.</p>{previewProblem && <p role="alert" className="mt-3 text-[var(--red)]">{previewProblem}</p>}<div className="mt-4 overflow-auto"><iframe ref={previewFrame} title="Certificate preview" sandbox="allow-same-origin allow-modals" className="border-0 bg-white" style={{ width: 1123, height: 794 }} srcDoc={preview.html} onLoad={previewLoaded} /></div></section>}
+    <section className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6"><h2 className="text-2xl font-bold">Issued records</h2><form className="my-4 grid gap-3 sm:grid-cols-3" onSubmit={e => { e.preventDefault(); searchRecords(); }}><label className="text-sm">Name or number<input className={field} value={search} onChange={e => { setSearch(e.target.value); setResults(null); }} /></label><label className="text-sm">Category<select className={field} value={filterCategory} onChange={e => { setFilterCategory(e.target.value); setResults(null); }}><option value="">All</option>{["MEM","PAR","CON","LEA","DIS"].map(code => <option key={code}>{code}</option>)}</select></label><label className="text-sm">Department<input className={field} value={filterDepartment} onChange={e => { setFilterDepartment(e.target.value); setResults(null); }} /></label><label className="text-sm">From<input type="date" className={field} value={filterFrom} onChange={e => { setFilterFrom(e.target.value); setResults(null); }} /></label><label className="text-sm">To<input type="date" className={field} value={filterTo} onChange={e => { setFilterTo(e.target.value); setResults(null); }} /></label><div className="flex items-end"><button className={button} disabled={busy}>Search all records</button></div></form>{results === null && <p className="text-sm text-[var(--ink-muted)]">Showing recent records. Search to query the full history.</p>}{(results ?? snapshot.credentials).map(item => <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--line)] py-3 text-sm" key={item.id}><span>{item.certificate_number} · {item.recipient_name} · {item.status} · {item.signature_key}</span><div className="flex gap-2"><button type="button" disabled={busy || item.status !== "issued"} className={button} onClick={() => viewCredential(item)}>View / Print</button><button type="button" disabled={busy || item.status !== "issued"} className={button} onClick={() => revoke(item)}>Revoke</button>{item.status === "revoked" && <button type="button" disabled={busy} className={button} onClick={() => prepareCorrection(item)}>Correct</button>}</div></div>)}{results && results.length === 0 && <p className="py-3 text-sm">No matching records.</p>}{results && hasMore && <button type="button" disabled={busy} onClick={() => searchRecords(true)} className={button}>Load more</button>}</section>
     <section className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6"><h2 className="text-2xl font-bold">Audit history</h2>{audit.map(event => <details className="border-t border-[var(--line)] py-3 text-sm" key={event.id}><summary>{event.created_at} · {event.action} · {event.actor}</summary><pre className="mt-3 overflow-auto text-xs">{JSON.stringify({ batch_id: event.batch_id, credential_id: event.credential_id, ...event.details }, null, 2)}</pre></details>)}{moreAudit && <button type="button" disabled={busy} className={button} onClick={loadMoreAudit}>Load older events</button>}</section>
-    <section className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6"><h2 className="text-2xl font-bold">Layout verification</h2>{verifications.map(job => <div key={job.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--line)] py-3 text-sm"><span>{job.state} · {job.completed}/{job.total} complete · {job.failed} failed</span><button type="button" disabled={busy} className={button} onClick={() => showVerification(job)}>Details</button></div>)}{verificationDetail && <div className="mt-5"><h3 className="font-bold">Verification details</h3>{verificationDetail.items.map(item => <p key={item.index} className="mt-1 text-sm">Recipient {item.index + 1} · {item.state}{item.failure ? ` · ${item.failure}` : ""}</p>)}</div>}</section>
-    <section className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6"><h2 className="text-2xl font-bold">Batch exports</h2>{exports.map(job => <div key={job.id} className="border-t border-[var(--line)] py-3 text-sm"><p>{job.state} · {job.completed}/{job.total} complete · {job.failed} failed</p><div className="mt-2 flex flex-wrap gap-2"><button type="button" disabled={busy} className={button} onClick={() => manageExport(job,"details")}>Details</button>{job.state === "partial" && <button type="button" disabled={busy} className={button} onClick={() => manageExport(job,"retry")}>Retry failed</button>}{["complete","partial"].includes(job.state) && <button type="button" disabled={busy || !rendererUrl || Number(job.completed) === 0} className={button} onClick={() => manageExport(job,"download")}>Download ZIP</button>}</div></div>)}{exportDetail && <div className="mt-5"><h3 className="font-bold">Export details</h3>{exportDetail.items.map(item => <p key={item.number} className="mt-1 text-sm">{item.number} · {item.state}{item.failure ? ` · ${item.failure}` : ""}</p>)}</div>}</section>
   </main>;
 }

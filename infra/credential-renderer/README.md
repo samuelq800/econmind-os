@@ -1,5 +1,10 @@
 # Private credential renderer — development draft
 
+This is retained only as a local visual-test reference. The current release
+uses browser printing, and its former export/verification job migrations were
+removed. Do not deploy or enable this service as part of the browser-print
+release; the instructions below describe an unfinished future option.
+
 This remains a draft: do not deploy until the migrations, private bucket
 policies, authorization, concurrency and live integration have been reviewed
 and verified against the target Supabase environment. The service and worker
