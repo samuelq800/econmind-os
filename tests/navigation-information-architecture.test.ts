@@ -90,4 +90,10 @@ describe("Phase 2 information architecture", () => {
       expect(simulationNavigation).toContain(label);
     }
   });
+
+  it("places credential management in the account menu after the superme access check", () => {
+    expect(navbar).toContain('client.rpc("is_credential_source_observer")');
+    expect(navbar).toContain('worldSupervisor && user?.id === credentialAdminUserId && <Link href="/admin/credentials"');
+    expect(navbar.indexOf('href="/admin/credentials"')).toBeGreaterThan(navbar.indexOf("Signed in"));
+  });
 });

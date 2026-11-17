@@ -27,7 +27,9 @@ create policy "Public organizational appointments" on public.organization_direct
 
 create table private.organization_directory_settings (
   singleton boolean primary key default true check (singleton),
-  activated boolean not null default false
+  activated boolean not null default false,
+  activation_method text check (activation_method in ('admin','deployment')),
+  activated_at timestamptz
 );
 insert into private.organization_directory_settings(singleton) values (true);
 revoke all on private.organization_directory_settings from public, anon, authenticated;
@@ -95,7 +97,9 @@ begin
   if p_active and not exists (select 1 from public.organization_directory where public_visible) then
     raise exception 'The public directory cannot be activated while empty' using errcode = '22023';
   end if;
-  update private.organization_directory_settings set activated = p_active where singleton;
+  update private.organization_directory_settings set activated = p_active,
+    activation_method = case when p_active then 'admin' else null end,
+    activated_at = case when p_active then now() else null end where singleton;
   insert into private.credential_audit_logs(actor, action, details)
     values (actor, 'organization_directory_activation_changed', jsonb_build_object('active', p_active));
 end;

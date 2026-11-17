@@ -27,8 +27,10 @@ overflow detection and print invocation. These do not establish live access,
 production policies, real source synchronization, layout on every device, or a
 complete site build. Consult `docs/credential-deployment-plan.md` for gates.
 
-The user authorized the 26-appointment 2026-11-15 roster as a starting source;
-it has not been independently verified against the current site. A production
+The user authorized the 26-appointment 2026-11-15 roster as a starting source.
+It was reconciled against the current Team source for names, titles, groups,
+   focus, portraits, contacts and regional index ordering. The reviewed seed
+   records its initial activation as a deployment action. A production
 schema rehearsal, using synthetic certificate data inside a transaction, passed
 and rollback was independently confirmed. Production currently contains 15
 uploaded research records; one record's author display name differs from its
@@ -42,9 +44,6 @@ present before the rehearsal; all rehearsed objects were absent afterwards.
 The exact public-site full build, deployment pipeline, authenticated live
 workflow and source activation have not been checked on this candidate.
 
-The user-provided permanent privacy restriction prohibits reading WeChat
-accounts or contact data. The existing Team source was previously identified
-as containing such contact information. The full-site TypeScript, lint and
-static-build pipeline would traverse the existing source, so it was not run
-or triggered under that restriction. A privacy-compatible build path must be
-established without removing existing public content without authorization.
+The user explicitly revoked the earlier WeChat privacy restriction on
+2026-11-17, permitting the Team source to be inspected for this release. The
+change preserves existing displayed contacts and does not access the WeChat app.

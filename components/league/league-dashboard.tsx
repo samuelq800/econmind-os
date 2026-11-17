@@ -799,6 +799,7 @@ export function LeagueDashboard({
                     <p className="text-[10px] font-extrabold uppercase tracking-[.16em] text-[var(--accent)]">Superme Platform Admin</p>
                     <p className="mt-2 text-sm font-bold">You can review and change the roles of other Platform Admins.</p>
                     <p className="mt-1 text-xs leading-5 text-[var(--ink-muted)]">The two designated Superme accounts are protected from tier changes. Every platform-role change is recorded in the moderation audit.</p>
+                    <Link href="/admin/credentials" className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-bold text-[var(--canvas)]">Credential management <ArrowRight size={15} /></Link>
                   </>
                 ) : (
                   <>

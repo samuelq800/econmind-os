@@ -1,5 +1,5 @@
--- Candidate snapshot from the public Team page collected 2026-11-15.
--- Reconcile against the current Team page before running; this does not activate it.
+-- Starting snapshot approved by the user and reconciled against the Team page.
+-- Activating it is part of the reviewed credential deployment.
 begin;
 insert into public.organization_directory (name, title, organizational_group, region, legacy_name, focus, sort_order, public_visible)
 values
@@ -30,4 +30,6 @@ values
   ('David', 'Technology Department', 'technology-team', 'Technology Department', 'David', '[]'::jsonb, 24, true),
   ('Samuel', 'Technology Department', 'technology-team', 'Technology Department', 'Samuel', '[]'::jsonb, 25, true)
 on conflict (organizational_group, legacy_name) where legacy_name is not null do nothing;
+update private.organization_directory_settings
+set activated=true,activation_method='deployment',activated_at=now() where singleton;
 commit;

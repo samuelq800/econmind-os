@@ -25,11 +25,11 @@ recorded as such and does not assert a server-side pixel-perfect verification.
    the original assets using `scripts/provision-credential-print-assets.py` with
    protected environment variables and a verified database connection. Never
    put private assets or a service-role key into public website files.
-3. The user authorized the 2026-11-15, 26-appointment sanitized roster as the
-   starting source. Import it without representing it as independently verified
-   current membership. Test actual Research Library and organization-source
-   refreshes and role boundaries. Public Team-page activation remains a separate
-   step after checking its effects on presentation.
+3. The user authorized the 2026-11-15, 26-appointment roster as the starting
+   source; it was reconciled against the current Team source with a regression
+   test for roles, portraits, contacts and regional ordering. The reviewed seed
+   activates the shared directory as a recorded deployment action. Verify its
+   state and test Research Library and organization-source refreshes and roles.
 4. In a real authenticated browser, test draft creation, CSV/XLSX import,
    source selection, both signatures, multiple recipients, long text, manual
    preview/review, issuance, non-reused numbering, print/save PDF, revocation,

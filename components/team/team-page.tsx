@@ -8,7 +8,7 @@ import { withBasePath } from "@/lib/base-path";
 import { LeadershipDataTables } from "./leadership-data-tables";
 import type { DirectoryMember } from "@/lib/admin/leadership-tables";
 import { watchOrganizationDirectory, type OrganizationDirectory } from "@/lib/supabase/organization-directory";
-import { resolveDirectoryMembers } from "@/lib/team/directory-model";
+import { resolveDirectoryMembers, resolveDirectoryRegions } from "@/lib/team/directory-model";
 import {
   COMMUNICATIONS_TEAM,
   FOUNDING_TEAM,
@@ -33,10 +33,7 @@ export function TeamPage() {
   const technology = members("technology-team", TECHNOLOGY_TEAM);
   const leadership = members("leadership-group", []);
   const academic = members("academic-team", []);
-  const regionIndex = active ? Object.entries(directory.appointments.reduce<Record<string, string[]>>((acc, item) => {
-    if (item.organizational_group === "regional-leadership" && item.region) (acc[item.region] ??= []).push(item.name);
-    return acc;
-  }, {})).map(([region, leads]) => ({ region, leads })) : REGIONAL_NETWORK;
+  const regionIndex = active ? resolveDirectoryRegions(directory.appointments, REGIONAL_NETWORK) : REGIONAL_NETWORK;
   return (
     <div className="min-h-screen bg-[var(--canvas)]">
       <main>

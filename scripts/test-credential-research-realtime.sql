@@ -6,10 +6,12 @@ create schema private;
 set role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000002',false);
 do $$ begin
+  if public.is_credential_source_observer() then raise exception 'ordinary user passed credential access check'; end if;
   if (select count(*) from public.credential_source_revisions) <> 0 then raise exception 'non-superme can see research events'; end if;
 end $$;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000003',false);
 do $$ begin
+  if public.is_credential_source_observer() then raise exception 'suspended user passed credential access check'; end if;
   if (select count(*) from public.credential_source_revisions) <> 0 then raise exception 'suspended superme can see research events'; end if;
 end $$;
 reset role;
@@ -17,6 +19,7 @@ update public.research_papers set title = 'Changed' where id = '10000000-0000-00
 set role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000001',false);
 do $$ begin
+  if not public.is_credential_source_observer() then raise exception 'active superme failed credential access check'; end if;
   if (select revision from public.credential_source_revisions where source='research') <> 1 then
     raise exception 'research changes did not update the revision';
   end if;
