@@ -14,6 +14,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  credential-editor-database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: disposable-test-only
+          POSTGRES_DB: credential_editor_test
+        ports: [5432:5432]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify V1 compatibility, V2 access and draft snapshots
+        env:
+          PGPASSWORD: disposable-test-only
+        run: psql -X -v ON_ERROR_STOP=1 -h localhost -U postgres -d credential_editor_test -f scripts/test-credential-visual-editor.sql
+
   direct-registration-database:
     runs-on: ubuntu-latest
     timeout-minutes: 10

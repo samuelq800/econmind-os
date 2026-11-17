@@ -154,6 +154,12 @@ jobs:
           SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
         run: node scripts/check-credential-backend.mjs
 
+      - name: Verify credential editor V2 prerequisites (read-only)
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+        run: node scripts/check-credential-editor-ready.mjs
+
       - name: Apply Season 1 World Chat read API
         if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.frontend_only) && !contains(github.event.head_commit.message, '[frontend-only]') }}
         env:
