@@ -27,7 +27,9 @@ The isolated browser regression uses the real protected HTML and synthetic
 people. It compares the pixels of the edited canvas and the existing print
 renderer with identical dynamic text, exercises editing, untrusted content,
 long text, both source types, both signers, CSV/XLSX, saved drafts, review, and
-one landscape A4 browser PDF. The private visual assets are required locally
+one landscape A4 browser PDF. It separately compares normalized certificate
+markup, embedded assets, and the original stylesheets against a V1 renderer
+baseline using the same test values. The private visual assets are required locally
 via the existing protected locations or `CREDENTIAL_PRIVATE_TEMPLATE` and
 `CREDENTIAL_PRIVATE_YALE_SIGNATURE`; they must never be committed or logged.
 

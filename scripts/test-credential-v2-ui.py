@@ -68,6 +68,18 @@ export function requireSupabaseBrowserClient(){return fake as unknown as Supabas
 export function throwIfSupabaseError(e:unknown){if(e)throw e}
 ''')
     (tmp / 'app/layout.tsx').write_text('import "./globals.css"; export default function RootLayout({children}:{children:React.ReactNode}){return <html className="dark"><body>{children}</body></html>}\n')
+    (tmp / 'app/baseline').mkdir()
+    (tmp / 'app/baseline/page.tsx').write_text('''
+"use client";
+import {useEffect,useState} from "react";
+import assets from "@/lib/supabase/test-assets.json";
+import {certificatePrintHtml} from "@/lib/credentials/browser-print";
+export default function Baseline(){
+ const [html,setHtml]=useState("");
+ useEffect(()=>{void certificatePrintHtml(assets,{issue_date:"2027-02-28",issuing_authority:"EconMind Founder Team",signature_key:"samuel_qian_v1",category:"LEA",subtype:"Initial Founder",template:{title:"EDITED TITLE",certification_statement:"Edited directly in the original certificate."}},{name:"Edited In Certificate",role:"Synthetic Lead",department:"",project:"",contribution:"",service_period:""},null).then(setHtml)},[]);
+ return html?<iframe title="V1 print baseline" sandbox="allow-same-origin" srcDoc={html} style={{width:1180,height:1100}}/>:null;
+}
+''')
     (tmp / 'package.json').write_text('{"name":"credential-v2-isolated-test","private":true,"version":"0.0.0"}\n')
     (tmp / 'tsconfig.json').write_text('{"compilerOptions":{"target":"ES2022","lib":["dom","dom.iterable","esnext"],"skipLibCheck":true,"strict":true,"noEmit":true,"esModuleInterop":true,"module":"esnext","moduleResolution":"bundler","jsx":"react-jsx","baseUrl":".","paths":{"@/*":["./*"]}},"include":["**/*.ts","**/*.tsx",".next/types/**/*.ts"],"exclude":["node_modules"]}\n')
     os.symlink(ROOT / 'node_modules', tmp / 'node_modules')
@@ -140,6 +152,14 @@ try {
  await page.waitForTimeout(250);
  await page.locator('iframe[title="Live certificate canvas"]').evaluate(el=>{el.style.height='1100px';el.contentWindow.scrollTo(0,0)});
  await f.locator('.certificate').evaluate(async el=>{await el.ownerDocument.fonts.ready;await Promise.all([...el.ownerDocument.images].map(img=>img.decode()));});
+ const baselinePage=await browser.newPage({viewport:{width:1800,height:1200}});
+ await baselinePage.goto(BASELINE_URL,{waitUntil:'domcontentloaded'});
+ const original=baselinePage.frameLocator('iframe[title="V1 print baseline"]');
+ await original.locator('.award-name').getByText('Edited In Certificate').waitFor();
+ const normalized=el=>{const copy=el.cloneNode(true);for(const span of [...copy.querySelectorAll('.award-copy > span[contenteditable]')])span.replaceWith(...span.childNodes);for(const node of copy.querySelectorAll('[contenteditable]')){node.removeAttribute('contenteditable');node.removeAttribute('role');node.removeAttribute('aria-label');node.removeAttribute('tabindex');node.style.removeProperty('cursor');if(!node.getAttribute('style'))node.removeAttribute('style');}copy.normalize();return {markup:copy.outerHTML,css:[...el.ownerDocument.querySelectorAll('style')].map(style=>style.textContent).filter(text=>!text.includes('[contenteditable="plaintext-only"]:focus'))}};
+ const [editorSource,baselineSource]=await Promise.all([f.locator('.certificate').evaluate(normalized),original.locator('.certificate').evaluate(normalized)]);
+ if(JSON.stringify(editorSource)!==JSON.stringify(baselineSource))throw new Error('Editor certificate structure, assets or CSS differ from the V1 print baseline');
+ await baselinePage.close();
  const filledState=await f.locator('.certificate').evaluate(el=>{const name=el.querySelector('.award-name'),range=el.ownerDocument.createRange();range.selectNodeContents(name);return {active:el.ownerDocument.activeElement?.outerHTML.slice(0,100),title:el.querySelector('.title-main')?.textContent,copy:el.querySelector('.award-copy')?.textContent,name:range.getBoundingClientRect().toJSON(),selection:el.ownerDocument.getSelection()?.toString()}});
  const filled=await f.locator('.certificate').screenshot();
  await page.getByRole('button',{name:'Final Review'}).click();
@@ -279,7 +299,7 @@ try {
  console.log('PASS: approved visual regression, inline editing, draft recovery, source selection, and bulk isolation');
 } catch(error) { if(page){console.error('SYNTHETIC_PAGE_STATE', (await page.locator('body').innerText()).slice(0,5000));console.error('SYNTHETIC_LABELS',await page.locator('label').evaluateAll(items=>items.map(x=>({text:x.textContent,control:x.control?.outerHTML.slice(0,250)}))));} throw error; }
 finally {await browser.close()}
-'''.replace('PLAYWRIGHT_PATH',json.dumps(PLAYWRIGHT.as_uri())).replace('BASE_URL',json.dumps(f'http://127.0.0.1:{port}/admin/credentials')).replace('XLSX_PATH',json.dumps(str(ROOT / 'tests/fixtures/credential-import.xlsx'))).replace('SCREENSHOT_PATH',json.dumps(os.environ.get('CREDENTIAL_UI_SCREENSHOT','')))
+'''.replace('PLAYWRIGHT_PATH',json.dumps(PLAYWRIGHT.as_uri())).replace('BASE_URL',json.dumps(f'http://127.0.0.1:{port}/admin/credentials')).replace('BASELINE_URL',json.dumps(f'http://127.0.0.1:{port}/baseline')).replace('XLSX_PATH',json.dumps(str(ROOT / 'tests/fixtures/credential-import.xlsx'))).replace('SCREENSHOT_PATH',json.dumps(os.environ.get('CREDENTIAL_UI_SCREENSHOT','')))
         test = tmp / 'run-ui.mjs'; test.write_text(script)
         subprocess.run(['node',str(test)],cwd=tmp,env=env,check=True,timeout=180)
     finally:
