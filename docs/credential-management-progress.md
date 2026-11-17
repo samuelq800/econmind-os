@@ -41,3 +41,10 @@ superme administrators. No credential or organization-directory objects were
 present before the rehearsal; all rehearsed objects were absent afterwards.
 The exact public-site full build, deployment pipeline, authenticated live
 workflow and source activation have not been checked on this candidate.
+
+The user-provided permanent privacy restriction prohibits reading WeChat
+accounts or contact data. The existing Team source was previously identified
+as containing such contact information. The full-site TypeScript, lint and
+static-build pipeline would traverse the existing source, so it was not run
+or triggered under that restriction. A privacy-compatible build path must be
+established without removing existing public content without authorization.
