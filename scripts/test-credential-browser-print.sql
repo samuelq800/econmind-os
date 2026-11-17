@@ -44,7 +44,7 @@ do $$ declare t uuid; b uuid; result jsonb; begin
   perform public.ensure_credential_starter_templates();
   if jsonb_array_length(public.list_credential_admin_data()->'templates') <> 6 then raise exception 'starter templates not idempotent'; end if;
   t := public.create_credential_template('CON','Test','{"title":"Contribution"}');
-  b := public.create_credential_draft('10000000-0000-0000-0000-000000000001',t,'2026-01-01','EconMind Founder Team','[{"name":"Test"}]');
+  b := public.create_credential_draft('10000000-0000-0000-0000-000000000001',t,'2026-01-01','EconMind Founder Team','[{"name":"Test","user_id":"00000000-0000-0000-0000-000000000002"}]');
   begin perform public.confirm_credential_print_review(b,true); raise exception 'unreviewed draft accepted';
   exception when invalid_parameter_value then null; end;
   perform public.review_credential_draft(b);
@@ -53,5 +53,12 @@ do $$ declare t uuid; b uuid; result jsonb; begin
   perform public.confirm_credential_print_review(b,true);
   result := public.issue_credential_batch(b);
   if result->0->>'number' <> 'EML-CON-2026-000001' then raise exception 'numbering failed'; end if;
+  if public.get_credential_render_data(b)->'credentials'->0->'recipient_snapshot'->>'user_id' <> '00000000-0000-0000-0000-000000000002' then raise exception 'linked account snapshot missing'; end if;
   if not exists (select 1 from public.list_credential_audit_logs() where action='manual_print_review_confirmed') then raise exception 'manual review not audited'; end if;
+end $$;
+reset role;
+do $$ begin
+  if not exists(select 1 from private.credentials where recipient_name='Test' and user_id='00000000-0000-0000-0000-000000000002') then
+    raise exception 'linked account missing from issued credential';
+  end if;
 end $$;

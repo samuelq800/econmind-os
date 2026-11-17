@@ -49,6 +49,7 @@ create table private.credentials (
   batch_entry integer not null,
   certificate_number text not null unique,
   replaces_id uuid references private.credentials(id),
+  user_id uuid references public.profiles(user_id) on delete set null,
   recipient_name text not null,
   category text not null,
   subtype text not null,
@@ -160,6 +161,10 @@ begin
         or jsonb_typeof(f.value) <> 'string' or length(f.value #>> '{}') > 4000) then
       raise exception 'Invalid recipient field' using errcode = '22023';
     end if;
+    if entry ? 'user_id' and (entry->>'user_id' !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+      or not exists (select 1 from public.profiles where user_id=(entry->>'user_id')::uuid)) then
+      raise exception 'Linked recipient account does not exist' using errcode='22023';
+    end if;
     if entry ? 'replaces_id' and (entry->>'replaces_id' !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
       or not exists (select 1 from private.credentials c join private.credential_templates t on t.id=p_template_id
         where c.id=(entry->>'replaces_id')::uuid and c.status='revoked' and c.category=t.category)) then
@@ -260,9 +265,9 @@ begin
     returning last_sequence - total + 1 into first_seq;
   for item in select value, ordinality from jsonb_array_elements(b.entries) with ordinality loop
     seq := first_seq + item.ordinality::integer - 1;
-    insert into private.credentials(batch_id, batch_entry, certificate_number, replaces_id, recipient_name, category, subtype,
+    insert into private.credentials(batch_id, batch_entry, certificate_number, replaces_id, user_id, recipient_name, category, subtype,
       issue_date, issuing_authority, signature_key, template_id, template_snapshot, recipient_snapshot, created_by)
-    values (b.id, item.ordinality, 'EML-' || t.category || '-' || yr || '-' || lpad(seq::text, 6, '0'), (item.value->>'replaces_id')::uuid,
+    values (b.id, item.ordinality, 'EML-' || t.category || '-' || yr || '-' || lpad(seq::text, 6, '0'), (item.value->>'replaces_id')::uuid, (item.value->>'user_id')::uuid,
       trim(item.value->>'name'), t.category, t.subtype, b.issue_date, b.issuing_authority, b.signature_key, t.id,
       jsonb_build_object('version', t.version, 'text_content', t.text_content), item.value, actor);
     if item.value ? 'replaces_id' then

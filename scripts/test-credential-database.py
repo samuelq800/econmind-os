@@ -12,6 +12,7 @@ TESTS = [
     "scripts/test-organization-directory.sql",
     "scripts/test-credential-research-realtime.sql",
     "scripts/test-credential-browser-print.sql",
+    "scripts/test-credential-directory-seed.sql",
 ]
 
 for index, script in enumerate(TESTS):

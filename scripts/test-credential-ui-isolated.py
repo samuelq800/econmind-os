@@ -36,7 +36,7 @@ const fake = {
     if(name === "create_credential_draft") { (window as unknown as {testDraft:unknown}).testDraft=params; return {data:null,error:null}; }
     if(name === "get_credential_visual_assets") { const state=window as unknown as {assetLoads?:number}; state.assetLoads=(state.assetLoads||0)+1; return {data:assets,error:null}; }
     if(name === "list_credential_organization_page") return {data:[{id:"org-1",name:"Synthetic Leader",title:"Director",organizational_group:"technology-team",public_visible:true}],error:null};
-    if(name === "list_credential_research_sources") return {data:[{paper_id:"00000000-0000-4000-8000-000000000004",author_display_name:"Synthetic Author",title:"Synthetic Research",status:"published"}],error:null};
+    if(name === "list_credential_research_sources") return {data:[{paper_id:"00000000-0000-4000-8000-000000000004",uploader_user_id:"00000000-0000-4000-8000-000000000005",owner_name_matches:false,author_display_name:"Synthetic Author",title:"Synthetic Research",status:"published"}],error:null};
     if(name === "get_credential_render_data") {
       const request=params as {p_credential_id?:string};
       if(request.p_credential_id) return {data:{...batch,status:"issued",credentials:[{id:request.p_credential_id,status:"issued",certificate_number:"EML-CON-2026-000001",recipient_snapshot:entry}]},error:null};
@@ -84,9 +84,15 @@ try {{
  await page.locator('input[type="file"]').setInputFiles({str((ROOT / "tests/fixtures/credential-import.xlsx").as_posix())!r});
  await page.getByText("Imported recipients · 1").waitFor();
  await page.getByRole("button",{{name:"Add all organization entries"}}).click();
+ page.once("dialog", async dialog => {{ if(!dialog.message().includes("differs")) throw new Error("Missing mismatch warning"); await dialog.accept() }});
  await page.getByRole("button",{{name:"Add all research author entries"}}).click();
  await page.getByText("Imported recipients · 3").waitFor();
  if(await page.getByLabel("role",{{exact:true}}).nth(1).inputValue()!=="Director" || await page.getByLabel("project",{{exact:true}}).nth(2).inputValue()!=="Synthetic Research") throw new Error("Source fields were not preserved");
+ await page.evaluate(() => {{window.testDraft=null}});
+ await page.getByRole("button",{{name:"Save draft"}}).click();
+ await page.waitForFunction(() => Boolean(window.testDraft));
+ const linked=await page.evaluate(() => window.testDraft.p_entries.find(item => item.name==='Synthetic Author'));
+ if(linked?.user_id!=="00000000-0000-4000-8000-000000000005") throw new Error("Research account linkage was lost");
  await page.getByRole("button",{{name:"Preview",exact:true}}).click();
  await page.frameLocator('iframe[title="Certificate preview"]').locator('.award-name').getByText("Synthetic Preview").waitFor();
  await page.getByRole("button",{{name:"Mark reviewed"}}).waitFor({{state:"visible"}});

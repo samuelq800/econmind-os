@@ -7,7 +7,7 @@ create function auth.uid() returns uuid language sql stable as $$
 $$;
 grant usage on schema auth to anon, authenticated;
 grant execute on function auth.uid() to anon, authenticated;
-create table public.profiles (user_id uuid primary key, account_status text not null, superme boolean not null);
+create table public.profiles (user_id uuid primary key, account_status text not null, superme boolean not null, display_name text not null default 'Author');
 create function public.is_superme_platform_admin(p_user uuid) returns boolean language sql stable security definer as $$
   select exists(select 1 from public.profiles where user_id=p_user and superme)
 $$;
@@ -54,6 +54,9 @@ do $$ declare first_count integer; rest_count integer; begin
   if not exists(select 1 from public.list_credential_research_sources(null,100) where status='unpublished' and author_display_name='Author' and coauthors_text='Names supplied by author') then
     raise exception 'source fields or unpublished upload were lost';
   end if;
+  if not exists(select 1 from public.list_credential_research_sources(null,1) where owner_name_matches is true and uploader_user_id='00000000-0000-0000-0000-000000000002') then
+    raise exception 'source account or author-name comparison lost';
+  end if;
   begin perform * from public.list_credential_research_sources(null,101); raise exception 'invalid limit accepted';
   exception when invalid_parameter_value then null; end;
 end $$;
@@ -61,7 +64,7 @@ reset role;
 update public.research_papers set author_display_name='Updated' where id='10000000-0000-0000-0000-000000000001';
 set role authenticated;
 do $$ begin
-  if not exists(select 1 from public.list_credential_research_sources(null,1) where author_display_name='Updated') then
+  if not exists(select 1 from public.list_credential_research_sources(null,1) where author_display_name='Updated' and owner_name_matches is false) then
     raise exception 'source update was not reflected';
   end if;
 end $$;

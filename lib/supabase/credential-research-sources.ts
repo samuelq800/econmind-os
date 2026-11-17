@@ -5,6 +5,7 @@ export type CredentialResearchSource = {
   paper_id: string;
   uploader_user_id: string;
   author_display_name: string;
+  owner_name_matches: boolean | null;
   coauthors_text: string | null;
   title: string;
   subject: string;
