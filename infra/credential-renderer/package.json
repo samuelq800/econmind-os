@@ -1,0 +1,13 @@
+{
+  "name": "@econmind/credential-renderer",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "archiver": "8.0.0",
+    "playwright": "1.62.1"
+  }
+}

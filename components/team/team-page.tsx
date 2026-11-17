@@ -1,8 +1,14 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, MessageCircleMore, Network, Phone } from "lucide-react";
 import { withBasePath } from "@/lib/base-path";
 import { LeadershipDataTables } from "./leadership-data-tables";
+import type { DirectoryMember } from "@/lib/admin/leadership-tables";
+import { watchOrganizationDirectory, type OrganizationDirectory } from "@/lib/supabase/organization-directory";
+import { resolveDirectoryMembers, resolveDirectoryRegions } from "@/lib/team/directory-model";
 import {
   COMMUNICATIONS_TEAM,
   FOUNDING_TEAM,
@@ -14,6 +20,20 @@ import {
 } from "@/lib/team/team-data";
 
 export function TeamPage() {
+  const [directory, setDirectory] = useState<OrganizationDirectory | null>(null);
+  useEffect(() => watchOrganizationDirectory(setDirectory, () => {}), []);
+  const active = directory?.activated === true;
+  function members(group: string, fallback: readonly TeamMember[]): readonly DirectoryMember[] {
+    if (!active) return fallback;
+    return resolveDirectoryMembers(directory.appointments, group, fallback);
+  }
+  const founders = members("founding-team", FOUNDING_TEAM);
+  const regional = members("regional-leadership", REGIONAL_LEADERS);
+  const communications = members("communications-team", COMMUNICATIONS_TEAM);
+  const technology = members("technology-team", TECHNOLOGY_TEAM);
+  const leadership = members("leadership-group", []);
+  const academic = members("academic-team", []);
+  const regionIndex = active ? resolveDirectoryRegions(directory.appointments, REGIONAL_NETWORK) : REGIONAL_NETWORK;
   return (
     <div className="min-h-screen bg-[var(--canvas)]">
       <main>
@@ -26,7 +46,7 @@ export function TeamPage() {
             <div className="mt-12 flex max-w-2xl flex-wrap gap-x-8 gap-y-4 border-t border-[var(--line)] pt-5 text-[10px] font-extrabold uppercase tracking-[.14em] text-[var(--ink-faint)]">
               <span>Student-led</span><span>Cross-regional</span><span>Built for the League</span>
             </div>
-            <LeadershipDataTables />
+            <LeadershipDataTables sections={active ? [["Founding Team", founders], ["Regional Leadership", regional], ["Communications Department", communications], ["Technology Department", technology], ["Leadership Group", leadership], ["Academic Department", academic]] : undefined} network={regionIndex} />
           </div>
         </section>
 
@@ -47,7 +67,7 @@ export function TeamPage() {
                 <p className="mt-5 max-w-xl font-serif text-3xl leading-tight tracking-[-.045em] sm:text-4xl">Product and research developed in partnership.</p>
               </div>
               <div className="mt-12 grid gap-9 border-t border-[var(--line)] pt-7 sm:grid-cols-2">
-                {FOUNDING_TEAM.map((member) => <FounderProfile key={member.name} member={member} />)}
+                {founders.map((member) => <FounderProfile key={member.name} member={member} />)}
               </div>
             </div>
           </article>
@@ -64,7 +84,7 @@ export function TeamPage() {
             </div>
 
             <div className="mt-10 grid gap-x-4 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
-              {REGIONAL_LEADERS.map((member) => <TeamMemberCard key={member.name} member={member} />)}
+              {regional.map((member) => <TeamMemberCard key={member.name} member={member} />)}
             </div>
           </div>
         </section>
@@ -74,7 +94,7 @@ export function TeamPage() {
           eyebrow="Communications Department"
           title="The team shaping our public voice."
           description="From short-form platforms and the official account to creative direction and design, this team helps make EconMind visible, approachable and connected."
-          members={COMMUNICATIONS_TEAM}
+          members={communications}
           badge="Comms"
           headingId="communications-team"
         />
@@ -84,11 +104,14 @@ export function TeamPage() {
           eyebrow="Technology Department"
           title="The team building the platform."
           description="The technology team supports the product infrastructure, implementation and ongoing development behind the EconMind experience."
-          members={TECHNOLOGY_TEAM}
+          members={technology}
           badge="Tech"
           headingId="technology-team"
           tone="subtle"
         />
+
+        {leadership.length > 0 && <DepartmentSection index="05" eyebrow="Leadership Group" title="Leadership Group." description="Organizational leadership appointments." members={leadership} badge="Leadership" headingId="leadership-group" />}
+        {academic.length > 0 && <DepartmentSection index="06" eyebrow="Academic Department" title="Academic development." description="Academic and curriculum appointments." members={academic} badge="Academic" headingId="academic-team" />}
 
         <section className="mx-auto max-w-[1360px] px-5 py-20 sm:px-8 lg:px-12 lg:py-28" aria-labelledby="regional-index">
           <div className="grid gap-12 lg:grid-cols-[.8fr_1.2fr]">
@@ -99,7 +122,7 @@ export function TeamPage() {
               <p className="mt-5 max-w-md text-sm leading-7 text-[var(--ink-muted)]">Regional leadership keeps the network connected without placing its direction in a single school or city.</p>
             </div>
             <ol className="border-y border-[var(--line)]">
-              {REGIONAL_NETWORK.map((node, index) => <li key={node.region} className="grid gap-2 border-b border-[var(--line)] py-5 last:border-b-0 sm:grid-cols-[3rem_1fr_auto] sm:items-baseline"><span className="text-[10px] font-extrabold tracking-[.14em] text-[var(--accent)]">{String(index + 1).padStart(2, "0")}</span><strong className="text-base tracking-[-.025em]">{node.region}</strong><span className="text-sm text-[var(--ink-muted)]">{node.leads.join(" · ")}</span></li>)}
+              {regionIndex.map((node, index) => <li key={node.region} className="grid gap-2 border-b border-[var(--line)] py-5 last:border-b-0 sm:grid-cols-[3rem_1fr_auto] sm:items-baseline"><span className="text-[10px] font-extrabold tracking-[.14em] text-[var(--accent)]">{String(index + 1).padStart(2, "0")}</span><strong className="text-base tracking-[-.025em]">{node.region}</strong><span className="text-sm text-[var(--ink-muted)]">{node.leads.join(" · ")}</span></li>)}
             </ol>
           </div>
         </section>
@@ -121,7 +144,7 @@ export function TeamPage() {
   );
 }
 
-function FounderProfile({ member }: { member: TeamMember }) {
+function FounderProfile({ member }: { member: DirectoryMember }) {
   return <section>
     <h3 className="text-2xl font-bold tracking-[-.04em]">{member.name}</h3>
     <p className="mt-1 text-sm text-[var(--ink-muted)]">{member.role}</p>
@@ -146,7 +169,7 @@ function DepartmentSection({
   eyebrow: string;
   title: string;
   description: string;
-  members: readonly TeamMember[];
+  members: readonly DirectoryMember[];
   badge: string;
   headingId: string;
   tone?: "subtle";
@@ -167,7 +190,7 @@ function DepartmentSection({
   </section>;
 }
 
-function TeamMemberCard({ member, badge = "Lead" }: { member: TeamMember; badge?: string }) {
+function TeamMemberCard({ member, badge = "Lead" }: { member: DirectoryMember; badge?: string }) {
   return <article className="group border-b border-[var(--line)] pb-6">
     <Portrait member={member} />
     <div className="mt-5 flex items-start justify-between gap-4">
@@ -181,7 +204,7 @@ function TeamMemberCard({ member, badge = "Lead" }: { member: TeamMember; badge?
   </article>;
 }
 
-function Portrait({ member }: { member: TeamMember }) {
+function Portrait({ member }: { member: DirectoryMember }) {
   if (!member.image) {
     return <div className="relative grid aspect-[4/5] place-items-center overflow-hidden bg-[var(--surface-subtle)]"><span aria-hidden="true" className="text-6xl font-serif text-[var(--line-strong)]">{member.name.slice(0, 1)}</span><span className="absolute bottom-4 left-4 text-[9px] font-extrabold uppercase tracking-[.15em] text-[var(--ink-faint)]">Portrait forthcoming</span></div>;
   }
@@ -191,7 +214,7 @@ function Portrait({ member }: { member: TeamMember }) {
   </div>;
 }
 
-function Contact({ member, className = "" }: { member: TeamMember; className?: string }) {
+function Contact({ member, className = "" }: { member: DirectoryMember; className?: string }) {
   const contacts = [member.contact, member.secondaryContact].filter((contact): contact is NonNullable<typeof contact> => Boolean(contact));
 
   return <div className={`flex flex-wrap items-center gap-x-3 gap-y-2 ${className}`}>

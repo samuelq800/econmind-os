@@ -237,8 +237,8 @@ describe("complete admin page tables", () => {
     expect(tables).toContain("disabled={stale || !table.rows.length}");
     expect(tables).toContain("downloadTableCsv(table)");
     expect(tables).not.toMatch(/getSupabase|\.rpc\(|\.channel\(|setInterval/);
-    expect(readFileSync("components/team/team-page.tsx", "utf8")).toContain(
-      "<LeadershipDataTables />",
-    );
+    const teamPage = readFileSync("components/team/team-page.tsx", "utf8");
+    expect(teamPage).toContain("<LeadershipDataTables sections={active ?");
+    expect(teamPage).toContain("network={regionIndex}");
   });
 });

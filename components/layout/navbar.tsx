@@ -3,11 +3,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { BookOpen, ChevronDown, ClipboardCheck, Cloud, Eye, Gamepad2, Gavel, GraduationCap, KeyRound, LoaderCircle, LogIn, LogOut, Mail, Menu, Moon, ShieldCheck, Sun, UserRound, X } from "lucide-react";
+import { Award, BookOpen, ChevronDown, ClipboardCheck, Cloud, Eye, Gamepad2, Gavel, GraduationCap, KeyRound, LoaderCircle, LogIn, LogOut, Mail, Menu, Moon, ShieldCheck, Sun, UserRound, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { GlobalSearch } from "@/components/layout/global-search";
 import { getDesignatedAccountAccessStatus, setDesignatedAccountAccess } from "@/lib/supabase/account-moderation";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { availableNavigationSections, isNavigationSectionActive } from "@/lib/platform/feature-flags";
 import { canHostLiveSession } from "@/lib/platform/live-session-access";
 import { withBasePath } from "@/lib/base-path";
@@ -24,6 +25,7 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
   const [mobileSection, setMobileSection] = useState<string | null>(null);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [credentialAdminUserId, setCredentialAdminUserId] = useState<string | null>(null);
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [moderationOpen, setModerationOpen] = useState(false);
   const [moderationLoading, setModerationLoading] = useState(false);
@@ -36,6 +38,18 @@ export function Navbar() {
   const designatedAccountModerator = user?.id === DESIGNATED_ACCOUNT_MODERATOR_ID && worldSupervisor;
   const liveSessionHost = canHostLiveSession(role, platformRole);
   const accountName = profileDisplayName || "My account";
+
+  useEffect(() => {
+    const id = user?.id;
+    if (!accountOpen || !id || !worldSupervisor) return;
+    const client = getSupabaseBrowserClient();
+    if (!client) return;
+    let active = true;
+    void Promise.resolve(client.rpc("is_credential_source_observer")).then(({ data, error }) => {
+      if (active) setCredentialAdminUserId(!error && data === true ? id : null);
+    }).catch(() => { if (active) setCredentialAdminUserId(null); });
+    return () => { active = false; };
+  }, [accountOpen, user?.id, worldSupervisor]);
 
   useEffect(() => {
     if (!open) return;
@@ -163,7 +177,7 @@ export function Navbar() {
               <button
                 type="button"
                 aria-label={`Open account menu for ${accountName}`}
-                onClick={() => setAccountOpen((current) => !current)}
+                onClick={() => { setCredentialAdminUserId(null); setAccountOpen((current) => !current); }}
                 className="flex h-9 max-w-48 items-center gap-2 rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 text-xs font-bold"
               >
                 <span className="grid size-5 shrink-0 place-items-center rounded-full bg-[var(--accent-soft)] text-[var(--accent)]"><UserRound size={12} /></span>
@@ -188,7 +202,7 @@ export function Navbar() {
               </button>
             )}
             {(user || viewerAccess) && accountOpen && (
-              <div className="absolute right-0 top-11 w-64 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-xl">
+              <div className="absolute right-0 top-11 max-h-[calc(100dvh-5rem)] w-64 overflow-y-auto rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-xl">
                 <div className="border-b border-[var(--line)] px-3 py-2">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--ink-faint)]">{viewerAccess ? "Invitation viewer" : "Signed in"}</p>
                   <p className="mt-1 truncate text-xs font-semibold">{viewerAccess ? viewerAccess.label ?? "Read-only access" : accountName}</p>
@@ -219,6 +233,7 @@ export function Navbar() {
                 {worldSupervisor && <Link href="/admin/viewer-invitations" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"><KeyRound size={14} /> Viewing invitations</Link>}
                 {worldSupervisor && <Link href="/admin/governance" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"><ShieldCheck size={14} /> Governance requests</Link>}
                 {worldSupervisor && <Link href="/admin/mail" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"><Mail size={14} /> Mail Terminal</Link>}
+                {worldSupervisor && user?.id === credentialAdminUserId && <Link href="/admin/credentials" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"><Award size={14} /> Credential Management</Link>}
                 {liveSessionHost && <Link href="/admin/live-world" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"><Gamepad2 size={14} /> Live World rooms</Link>}
                 {liveSessionHost && <Link href="/admin/live-auction" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"><Gavel size={14} /> Live Auction rooms</Link>}
                 {worldSupervisor && <Link href="/learn/research/admin" onClick={() => setAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"><ShieldCheck size={14} /> Research Submissions</Link>}

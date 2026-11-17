@@ -4,17 +4,23 @@ import {
   REGIONAL_LEADERS,
   REGIONAL_NETWORK,
   TECHNOLOGY_TEAM,
+  type TeamMember,
 } from "@/lib/team/team-data";
 import type { PageTable } from "./page-tables";
 
+export type DirectoryMember = Omit<TeamMember, "contact"> & { contact?: TeamMember["contact"] };
+export type DirectorySection = readonly [string, readonly DirectoryMember[]];
+export type DirectoryRegion = { region: string; leads: readonly string[] };
+
 /** Same authoritative directory arrays as /team, one row per appointment, not per person. */
-export function leadershipTables(): PageTable[] {
-  const sections = [
+export function leadershipTables(input?: { sections: readonly DirectorySection[]; network: readonly DirectoryRegion[] }): PageTable[] {
+  const sections: readonly DirectorySection[] = input?.sections ?? [
     ["Founding Team", FOUNDING_TEAM],
     ["Regional Leadership", REGIONAL_LEADERS],
     ["Communications Department", COMMUNICATIONS_TEAM],
     ["Technology Department", TECHNOLOGY_TEAM],
-  ] as const;
+  ];
+  const network = input?.network ?? REGIONAL_NETWORK;
   const columns = [
     { key: "department", label: "Department" },
     { key: "name", label: "Name" },
@@ -32,14 +38,14 @@ export function leadershipTables(): PageTable[] {
       department,
       name: member.name,
       role: member.role,
-      regions: REGIONAL_NETWORK.filter((node) =>
+      regions: network.filter((node) =>
         (node.leads as readonly string[]).includes(member.name),
       )
         .map((node) => node.region)
         .join("; "),
       focus: member.focus?.join("; "),
-      contactType: member.contact.type,
-      contact: member.contact.value,
+      contactType: member.contact?.type,
+      contact: member.contact?.value,
       secondaryType: member.secondaryContact?.type,
       secondaryContact: member.secondaryContact?.value,
       portrait: member.image,
@@ -76,7 +82,7 @@ export function leadershipTables(): PageTable[] {
         { key: "region", label: "Region" },
         { key: "leads", label: "Leads" },
       ],
-      rows: REGIONAL_NETWORK.map((node) => ({
+      rows: network.map((node) => ({
         region: node.region,
         leads: node.leads.join("; "),
       })),
