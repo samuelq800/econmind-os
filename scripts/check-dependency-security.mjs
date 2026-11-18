@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { checkBracesPatch } from "./check-braces-patch.mjs";
+import { checkPicomatchPatch } from "./check-picomatch-patch.mjs";
 
 assert.ok(process.env.npm_execpath, "Run through pnpm security:check");
 const result = spawnSync(
@@ -21,26 +22,38 @@ assert.ok(
   "Audit response missing evidence",
 );
 const advisories = Object.values(audit.advisories);
+const worker = process.argv.includes("--admin-mail-tooling");
+const picomatchVersions = worker ? ["4.0.7"] : ["2.3.2", "4.0.7"];
 for (const advisory of advisories) {
-  // The registry has no upstream release for this advisory. Keep the raw finding
-  // visible; accept only this version with our installed, regression-tested patch.
-  assert.equal(
-    advisory.github_advisory_id,
-    "GHSA-vfj7-8cjw-p6xm",
-    advisory.url,
-  );
-  assert.equal(advisory.module_name, "braces");
   assert.ok(advisory.findings.length > 0);
-  for (const finding of advisory.findings) {
-    assert.equal(finding.version, "3.0.3");
-    assert.equal(finding.dev, true);
+  if (advisory.github_advisory_id === "GHSA-fc5q-39xc-vjpf") {
+    assert.equal(advisory.module_name, "picomatch");
+    for (const finding of advisory.findings) {
+      assert.ok(picomatchVersions.includes(finding.version), advisory.url);
+      assert.equal(finding.dev, true, advisory.url);
+    }
+  } else {
+    assert.ok(!worker, advisory.url);
+    assert.equal(
+      advisory.github_advisory_id,
+      "GHSA-vfj7-8cjw-p6xm",
+      advisory.url,
+    );
+    assert.equal(advisory.module_name, "braces");
+    for (const finding of advisory.findings) {
+      assert.equal(finding.version, "3.0.3");
+      assert.equal(finding.dev, true);
+    }
   }
 }
-assert.match(
-  readFileSync(new URL("../pnpm-workspace.yaml", import.meta.url), "utf8"),
-  /braces@3\.0\.3: patches\/braces@3\.0\.3\.patch/,
-);
-checkBracesPatch();
+if (!worker) {
+  assert.match(
+    readFileSync(new URL("../pnpm-workspace.yaml", import.meta.url), "utf8"),
+    /braces@3\.0\.3: patches\/braces@3\.0\.3\.patch/,
+  );
+  checkBracesPatch();
+}
+checkPicomatchPatch(picomatchVersions);
 console.log(
   JSON.stringify({
     result: "PASS",

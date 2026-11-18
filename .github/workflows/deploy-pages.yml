@@ -47,7 +47,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Verify dependency security and local braces mitigation
+      - name: Verify dependency security and local tooling mitigations
         run: pnpm security:check
 
       - name: Verify source

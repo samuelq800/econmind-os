@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "security:check": "node ../../../scripts/check-dependency-security.mjs --admin-mail-tooling",
     "typegen": "wrangler types --include-runtime false",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

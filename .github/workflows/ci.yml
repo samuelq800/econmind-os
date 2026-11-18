@@ -79,7 +79,11 @@ jobs:
         working-directory: infra/cloudflare/${{ matrix.workspace }}
         run: |
           pnpm install --frozen-lockfile
-          pnpm audit
+          if [ "${{ matrix.workspace }}" = "admin-mail-worker" ]; then
+            pnpm security:check
+          else
+            pnpm audit
+          fi
           pnpm typegen
           git diff --exit-code -- worker-configuration.d.ts
           pnpm typecheck
@@ -524,7 +528,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Verify dependency security and local braces mitigation
+      - name: Verify dependency security and local tooling mitigations
         run: pnpm security:check
 
       - name: Validate workflow formatting
