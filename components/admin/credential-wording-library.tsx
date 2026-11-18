@@ -43,21 +43,21 @@ export function CredentialWordingLibrary({ catalog, versions, legacy, refresh, r
     event.preventDefault();
     void run(async () => {
       const { error } = await requireSupabaseBrowserClient().rpc("create_credential_wording_version", { p_category: category, p_subtype: subtype, p_template_name: name, p_text_content: content });
-      if (error) throw error;
+      if (error) throw new Error(error.message);
       setMessage("Draft wording saved. It is not approved.");
     });
   }
-  function status(id: string, value: "reviewed" | "approved" | "archived") {
+  function status(id: string, value: "approved" | "archived") {
     if (value === "approved" && !window.confirm("Approve this exact wording version for use after verifying the claims and intended recipients?")) return;
     void run(async () => {
       const { error } = await requireSupabaseBrowserClient().rpc("set_credential_wording_status", { p_id: id, p_status: value });
-      if (error) throw error;
+      if (error) throw new Error(error.message);
     });
   }
   function toggleLegacy(item: LegacyTemplate) {
     void run(async () => {
       const { error } = await requireSupabaseBrowserClient().rpc("set_credential_template_active", { p_template_id: item.id, p_active: !item.active });
-      if (error) throw error;
+      if (error) throw new Error(error.message);
       await refreshLegacy();
     });
   }
@@ -83,7 +83,7 @@ export function CredentialWordingLibrary({ catalog, versions, legacy, refresh, r
       <div className="space-y-5">
         <section className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-5"><h3 className="text-lg font-bold">Versions · {subtype}</h3>
           {matching.length === 0 && <p className="mt-3 text-sm text-[var(--ink-muted)]">Official wording not configured.</p>}
-          {matching.map(item => <div key={item.id} className="border-t border-[var(--line)] py-3 text-sm"><p className="font-semibold">{item.template_name} · v{item.version} · {item.status.toUpperCase()}</p><p className="mt-1 text-[var(--ink-muted)]">{item.text_content.title || "[Certificate Title]"}</p><div className="mt-2 flex gap-2">{item.status === "draft" && <button type="button" className={button} disabled={busy} onClick={() => status(item.id,"reviewed")}>Mark reviewed</button>}{item.status === "reviewed" && <button type="button" className={button} disabled={busy} onClick={() => status(item.id,"approved")}>Approve</button>}{item.status !== "archived" && <button type="button" className="rounded-lg border border-[var(--line)] px-3 py-2" disabled={busy} onClick={() => status(item.id,"archived")}>Archive</button>}<button type="button" className="rounded-lg border border-[var(--line)] px-3 py-2" onClick={() => { setName(item.template_name); setContent(wordingFrom(item.text_content)); }}>Use as new draft</button></div></div>)}
+          {matching.map(item => <div key={item.id} className="border-t border-[var(--line)] py-3 text-sm"><p className="font-semibold">{item.template_name} · v{item.version} · {item.status.toUpperCase()}</p><p className="mt-1 text-[var(--ink-muted)]">{item.text_content.title || "[Certificate Title]"}</p><div className="mt-2 flex gap-2">{(item.status === "draft" || item.status === "reviewed") && <button type="button" className={button} disabled={busy} onClick={() => status(item.id,"approved")}>Approve</button>}{item.status !== "archived" && <button type="button" className="rounded-lg border border-[var(--line)] px-3 py-2" disabled={busy} onClick={() => status(item.id,"archived")}>Archive</button>}<button type="button" className="rounded-lg border border-[var(--line)] px-3 py-2" onClick={() => { setName(item.template_name); setContent(wordingFrom(item.text_content)); }}>Use as new draft</button></div></div>)}
         </section>
         <section className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-5"><h3 className="text-lg font-bold">Compare versions</h3><div className="grid gap-3 sm:grid-cols-2">{[[left,setLeft],[right,setRight]].map(([value,setter],index) => <select aria-label={index ? "Compare with" : "Compare version"} key={index} className={input} value={value as string} onChange={e => (setter as (value: string) => void)(e.target.value)}><option value="">Choose version</option>{comparable.map(item => <option key={item.id} value={item.id}>{item.template_name} · v{item.version} · {item.status}</option>)}</select>)}</div>
           {selectedLeft && selectedRight && <div className="mt-4 space-y-3">{WORDING_FIELDS.map(field => <div key={field.key}><p className="text-xs font-bold uppercase tracking-wide">{field.label}</p><div className="mt-1 grid gap-2 text-sm sm:grid-cols-2"><p className="whitespace-pre-wrap rounded bg-[var(--canvas)] p-2">{selectedLeft.text_content[field.key] || "—"}</p><p className="whitespace-pre-wrap rounded bg-[var(--canvas)] p-2">{selectedRight.text_content[field.key] || "—"}</p></div></div>)}</div>}

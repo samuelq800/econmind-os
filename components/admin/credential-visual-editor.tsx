@@ -45,6 +45,12 @@ function layoutField(problem: string) {
     .replaceAll(".footer-value", "Date / certificate number").replaceAll("#issuingAuthority", "Issuing authority");
 }
 
+function defaultTemplate(versions: WordingVersion[], category: CategoryCode, subtype: string) {
+  const candidates=versions.filter(item => item.category===category && item.subtype===subtype && item.status==="approved"
+    && !item.template_name.startsWith("PERS-") && !item.text_content.certification_statement?.includes("{paper_title}"));
+  return candidates.length===1 ? candidates[0] : undefined;
+}
+
 export function CredentialVisualEditor({ bulk, visible, loadAssets, versions, presets, batches, legacy, organization, research, onRefreshResearch, initial, onLoaded, onSaved, onRecords, onSaveWording }: Props) {
   const [category,setCategory] = useState<CategoryCode>(() => initial?.category ?? "LEA"); const [subtype,setSubtype] = useState(() => initial?.subtype ?? "Initial Founder");
   const [templateId,setTemplateId] = useState(() => initial?.wordingRef?.id ?? ""); const [authority,setAuthority] = useState(() => initial?.authority ?? "EconMind Founder Team");
@@ -67,7 +73,8 @@ export function CredentialVisualEditor({ bulk, visible, loadAssets, versions, pr
   const autoApplied = useRef("");
   const group = CREDENTIAL_CATEGORIES.find(item => item.code===category)!;
   const choices = [
-    ...versions.filter(item => item.category===category && item.subtype===subtype),
+    ...versions.filter(item => item.category===category && item.subtype===subtype && (item.status!=="archived" || item.id===templateId))
+      .sort((a,b) => Number(b.status==="approved")-Number(a.status==="approved")),
     ...legacy.filter(item => item.category===category && item.subtype===subtype && (item.active || item.id===templateId)).map(item => ({...item,template_name:item.active?"Existing active version":"Existing inactive version",status:"legacy" as const})),
   ];
   const researchTemplate = versions.find(item => item.template_name === "CON-R-LIVE" && item.status === "approved") ?? versions.find(item => item.template_name === "CON-R-LIVE" && ["draft","reviewed"].includes(item.status));
@@ -100,7 +107,7 @@ export function CredentialVisualEditor({ bulk, visible, loadAssets, versions, pr
   },[loadAssets]);
   useEffect(() => {
     if (initial || batchId || templateId || rows.some(row => Object.values(row.wording).some(Boolean))) return;
-    const firstApproved = versions.find(item => item.category === category && item.subtype === subtype && item.status === "approved");
+    const firstApproved = defaultTemplate(versions, category, subtype);
     if (!firstApproved || autoApplied.current === firstApproved.id) return;
     let active = true;
     void Promise.resolve().then(() => {
@@ -148,7 +155,7 @@ export function CredentialVisualEditor({ bulk, visible, loadAssets, versions, pr
   }
   function chooseSubtype(categoryValue: CategoryCode, subtypeValue: string) {
     setCategory(categoryValue); setSubtype(subtypeValue);
-    const approved = versions.find(item => item.category === categoryValue && item.subtype === subtypeValue && item.status === "approved");
+    const approved = defaultTemplate(versions, categoryValue, subtypeValue);
     setTemplateId(approved?.id ?? ""); applyWord(approved ? wordingFrom(approved.text_content) : blankWording(), true, approved ? {type:"library",id:approved.id,modified:false} : {}); setWarnings({});
   }
   function chooseCategory(value:CategoryCode) {chooseSubtype(value,CREDENTIAL_CATEGORIES.find(item=>item.code===value)!.subtypes[0]);}
@@ -275,7 +282,7 @@ export function CredentialVisualEditor({ bulk, visible, loadAssets, versions, pr
         <label className="block text-sm font-semibold">Category<select className={input} value={category} onChange={e=>chooseCategory(e.target.value as CategoryCode)}>{CREDENTIAL_CATEGORIES.map(item=><option key={item.code} value={item.code}>{item.label}</option>)}</select></label>
         {(group.subtypes.length > 1 || group.subtypes[0] !== subtype) && <label className="block text-sm font-semibold">Subtype<select className={input} value={subtype} onChange={e=>chooseSubtype(category,e.target.value)}>{group.subtypes.map(item=><option key={item}>{item}</option>)}{!group.subtypes.some(item=>item===subtype)&&<option>{subtype}</option>}</select></label>}
         <label className="block text-sm font-semibold">Wording template<select className={input} value={templateId} onChange={e=>chooseTemplate(e.target.value)}><option value="">Unconfigured · manual wording</option>{choices.map(item=><option key={item.id} value={item.id}>{item.template_name} · v{item.version} · {item.status}</option>)}</select></label>
-        {!selected&&<p className="text-sm text-[var(--ink-muted)]">Official wording not configured.</p>}{selected?.status==="draft"&&<p className="text-sm text-amber-500">Draft wording is not an approved template.</p>}{selected?.status==="archived"&&<p className="text-sm text-amber-500">This wording version is archived.</p>}{selected?.status==="legacy"&&<p className="text-sm text-[var(--ink-muted)]">Existing version; separate V2 approval has not been recorded.</p>}
+        {!selected&&<p className="text-sm text-[var(--ink-muted)]">{choices.length ? "Choose a wording template." : "Official wording not configured."}</p>}{selected?.status==="draft"&&<p className="text-sm text-amber-500">Draft wording is not an approved template.</p>}{selected?.status==="archived"&&<p className="text-sm text-amber-500">This wording version is archived.</p>}{selected?.status==="legacy"&&<p className="text-sm text-[var(--ink-muted)]">Existing version; separate V2 approval has not been recorded.</p>}
         {selectedRow.wordingRef.modified && <p className="text-sm text-[var(--ink-muted)]">This certificate has edits based on the selected version; the template remains unchanged.</p>}
         <div className="flex flex-wrap gap-2"><button type="button" className={ghost} disabled={!selected} onClick={()=>applyWord(baseWording,bulk,selected?{type:selected.status==="legacy"?"legacy":"library",id:selected.id,modified:false}:{})}>Apply Template</button><button type="button" className={ghost} onClick={()=>applyWord(baseWording,bulk,selected?{type:selected.status==="legacy"?"legacy":"library",id:selected.id,modified:false}:{})}>Reset to Template</button><button type="button" className={ghost} onClick={()=>onSaveWording({category,subtype,wording:selectedRow.wording})}>Save as Draft Wording</button></div>
         <p className="text-xs text-[var(--ink-muted)]">Edit Current Wording below. Changes affect this certificate draft, not the official template.</p>

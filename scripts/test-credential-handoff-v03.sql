@@ -89,3 +89,41 @@ select public.import_credential_handoff_catalog(:'handoff_catalog'::jsonb);
  if (select count(*) from private.credential_wording_versions where template_name not in ('Official','Not Ready'))<>46 then raise exception 'seed rerun duplicated entries'; end if;
  if not exists(select 1 from private.credential_wording_versions where template_name='S01' and status='approved') then raise exception 'seed rerun reset approval'; end if;
  end $$;
+
+-- The successor allows complete wording to be approved directly.
+create temp table credential_history_before_approval as
+select (select jsonb_agg(to_jsonb(c) order by c.id) from private.credentials c) as credentials,
+  (select jsonb_agg(to_jsonb(k) order by k.category,k.issue_year) from private.credential_counters k) as counters;
+\ir ../supabase/migrations/20261118010000_credential_direct_wording_approval.sql
+set role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000002',false);
+do $$ begin
+  begin perform public.set_credential_wording_status('00000000-0000-0000-0000-000000000001','approved');
+    raise exception 'ordinary account approved wording';
+  exception when insufficient_privilege then null; end;
+end $$;
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000001',false);
+do $$ declare wording uuid; incomplete uuid; begin
+  wording:=public.create_credential_wording_version('MEM','Registered Member','Direct approval fixture',
+    '{"title":"Synthetic certificate","certification_statement":"Synthetic membership wording."}');
+  perform public.set_credential_wording_status(wording,'approved');
+  perform public.set_credential_wording_status(wording,'approved');
+  if not exists(select 1 from public.list_credential_wording_versions() where id=wording and status='approved' and approved_by=auth.uid()) then
+    raise exception 'direct approval did not make the template available';
+  end if;
+  incomplete:=public.create_credential_wording_version('MEM','Registered Member','Incomplete fixture',
+    '{"title":"Synthetic certificate","certification_statement":"[Certification Statement]"}');
+  begin perform public.set_credential_wording_status(incomplete,'approved'); raise exception 'incomplete wording was approved';
+  exception when invalid_parameter_value then null; end;
+  perform public.set_credential_wording_status(wording,'archived');
+  begin perform public.set_credential_wording_status(wording,'approved'); raise exception 'unscoped archived wording was restored';
+  exception when invalid_parameter_value then null; end;
+end $$;
+reset role;
+do $$ begin
+  if exists(select 1 from credential_history_before_approval
+    where credentials is distinct from (select jsonb_agg(to_jsonb(c) order by c.id) from private.credentials c)
+      or counters is distinct from (select jsonb_agg(to_jsonb(k) order by k.category,k.issue_year) from private.credential_counters k)) then
+    raise exception 'wording status changed issued history';
+  end if;
+end $$;

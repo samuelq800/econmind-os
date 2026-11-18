@@ -205,7 +205,6 @@ try {
  await page.getByLabel('Template name').fill('Draft Test');
  await page.getByRole('button',{name:'Save draft version'}).click();
  await page.getByText('Draft wording saved. It is not approved.').waitFor();
- await page.getByRole('button',{name:'Mark reviewed',exact:true}).click();
  page.once('dialog',dialog=>dialog.accept());
  await page.getByRole('button',{name:'Approve',exact:true}).click();
  await page.getByRole('button',{name:'Certificate Editor',exact:true}).click();

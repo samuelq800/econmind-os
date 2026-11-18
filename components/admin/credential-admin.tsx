@@ -186,7 +186,7 @@ function CredentialWorkspace() {
       const client = requireSupabaseBrowserClient();
       if (operation === "verify") {
         const { error: failure } = await client.rpc("confirm_credential_print_review", { p_batch_id: batch.id, p_confirm: true });
-        if (failure) throw failure;
+        if (failure) throw new Error(failure.message);
         return;
       }
       if (operation === "review") {
@@ -196,12 +196,12 @@ function CredentialWorkspace() {
         if (first.error?.code === "23505") {
           if (!window.confirm("Potential duplicate names exist. Check identities and previous certificates before continuing.")) return;
           const retry = await client.rpc("review_credential_editor_draft", { p_batch_id: batch.id, p_expected_revision: expected, p_acknowledge_duplicates: true });
-          if (retry.error) throw retry.error;
-        } else if (first.error) throw first.error;
+          if (retry.error) throw new Error(retry.error.message);
+        } else if (first.error) throw new Error(first.error.message);
         return;
       }
       const { error: failure } = await client.rpc("issue_credential_batch", { p_batch_id: batch.id });
-      if (failure) throw failure;
+      if (failure) throw new Error(failure.message);
     });
   }
   function viewCredential(item: Credential) {
