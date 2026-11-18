@@ -8,7 +8,7 @@ import type { CredentialSignatureKey } from "@/lib/credentials/signatures";
 import type { ImportedRecipient } from "@/lib/credentials/import";
 import { requireSupabaseBrowserClient } from "@/lib/supabase/client";
 import { watchCredentialResearchSources, listCredentialResearchSources, type CredentialResearchSource } from "@/lib/supabase/credential-research-sources";
-import { certificatePrintHtml, printLayoutProblems, type RenderBatch, type VisualAssets } from "@/lib/credentials/browser-print";
+import { certificatePrintHtml, certificateStandalonePrintHtml, printLayoutProblems, type RenderBatch, type VisualAssets } from "@/lib/credentials/browser-print";
 
 type Template = { id: string; category: string; subtype: string; version: number; active: boolean; text_content: Partial<WordingContent> };
 type Batch = { id: string; template_id: string; status: string; issue_date: string; issuing_authority: string; signature_key: string; preview_verified_at: string | null; entries: ImportedRecipient[] };
@@ -232,13 +232,39 @@ function CredentialWorkspace() {
   function printCredential() {
     const current = preview;
     if (!current?.credentialId || previewProblem) return;
+    // Open during the click: Safari can block a tab opened after an RPC.
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      setError("Allow pop-ups for this site, then try printing again.");
+      return;
+    }
+    printWindow.opener = null;
+    printWindow.document.body.textContent = "Preparing certificate…";
+
     void action(async () => {
-      const { data, error: failure } = await requireSupabaseBrowserClient().rpc("get_credential_render_data", { p_batch_id: current.batchId, p_credential_id: current.credentialId });
-      if (failure) { setPreview(null); throw failure; }
-      const records = (data as { credentials?: { id: string; status: string }[] }).credentials ?? [];
-      if (!records.some(item => item.id === current.credentialId && item.status === "issued")) { setPreview(null); throw new Error("This credential is no longer available for printing."); }
-      previewFrame.current?.contentWindow?.focus();
-      previewFrame.current?.contentWindow?.print();
+      try {
+        const { data, error: failure } = await requireSupabaseBrowserClient().rpc("get_credential_render_data", { p_batch_id: current.batchId, p_credential_id: current.credentialId });
+        if (failure) throw new Error(failure.message);
+        const records = (data as { credentials?: { id: string; status: string }[] }).credentials ?? [];
+        if (!records.some(item => item.id === current.credentialId && item.status === "issued")) {
+          setPreview(null);
+          throw new Error("This credential is no longer available for printing.");
+        }
+        if (printWindow.closed) return;
+        const doc = printWindow.document;
+        doc.open();
+        doc.write(certificateStandalonePrintHtml(current.html));
+        doc.close();
+        await doc.fonts.ready;
+        await Promise.all([...doc.images].map(image => image.decode()));
+        if (!printWindow.closed) {
+          printWindow.focus();
+          printWindow.print();
+        }
+      } catch (cause) {
+        printWindow.close();
+        throw cause;
+      }
     });
   }
   function previewLoaded() {
@@ -339,7 +365,7 @@ function CredentialWorkspace() {
     {tab === "wording" && <CredentialWordingLibrary catalog={catalog} versions={wordingVersions} legacy={snapshot.templates} refresh={refreshWordings} refreshLegacy={savedEditor} seed={wordingSeed} />}
     {tab === "records" && <>
     <section className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6"><h2 className="text-2xl font-bold">Recent batches</h2><p className="mt-2 text-sm text-[var(--ink-muted)]">Preview each certificate, confirm a manual layout review, then issue. Use the browser print dialog to print or save as PDF.</p>{snapshot.batches.map(batch => <div className="border-t border-[var(--line)] py-3 text-sm" key={batch.id}><p>{batch.issue_date} · {batch.entries.length} recipients · {batch.status} · {batch.signature_key}</p><div className="mt-3 flex flex-wrap gap-2"><select className={field + " !mt-0 !w-auto"} value={previewIndex[batch.id] ?? 0} onChange={e => setPreviewIndex(old => ({ ...old, [batch.id]: Number(e.target.value) }))}>{batch.entries.map((entry, index) => <option key={index} value={index}>{entry.name}</option>)}</select><button type="button" disabled={busy} className={button} onClick={() => previewBatch(batch)}>Preview</button>{["draft","reviewed"].includes(batch.status) && <><button type="button" disabled={busy} className={button} onClick={() => reviseDraft(batch)}>{batch.status === "draft" ? "Edit draft" : "Revise as new draft"}</button><button type="button" disabled={busy} className={button} onClick={() => cancelDraft(batch)}>Cancel draft</button></>}{batch.status === "issued" && process.env.NEXT_PUBLIC_CREDENTIAL_RENDERER_URL && <button type="button" disabled={busy} className={button} onClick={() => exportBatch(batch.id)}>Download PDFs as ZIP</button>}{batch.status === "draft" && <button type="button" disabled={busy || (previewedEntries[batch.id]?.indexes.length ?? 0) !== batch.entries.length} className={button} onClick={() => batchOperation(batch, "review")}>Mark reviewed</button>}{batch.status === "reviewed" && !batch.preview_verified_at && <button type="button" disabled={busy || (previewedEntries[batch.id]?.indexes.length ?? 0) !== batch.entries.length} className={button} onClick={() => batchOperation(batch, "verify")}>Confirm manual layout review</button>}{batch.status === "reviewed" && batch.preview_verified_at && <button type="button" disabled={busy} className={button} onClick={() => batchOperation(batch, "issue")}>Issue certificates</button>}</div></div>)}</section>
-    {preview && <section className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-2xl font-bold">Preview · {preview.title}</h2><div className="flex gap-2">{preview.credentialId && <button type="button" disabled={busy || Boolean(previewProblem)} className={button} onClick={printCredential}>Print / Save PDF</button>}<button type="button" onClick={() => setPreview(null)}>Close</button></div></div><p className="mt-3 text-sm text-[var(--ink-muted)]">Before issuing or printing, check the preview and your browser print dialog. Choose A4 landscape and enable background graphics.</p>{previewProblem && <p role="alert" className="mt-3 text-[var(--red)]">{previewProblem}</p>}<div className="mt-4 overflow-auto"><iframe ref={previewFrame} title="Certificate preview" sandbox="allow-same-origin allow-modals" className="border-0 bg-white" style={{ width: 1123, height: 794 }} srcDoc={preview.html} onLoad={previewLoaded} /></div></section>}
+    {preview && <section className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-2xl font-bold">Preview · {preview.title}</h2><div className="flex gap-2">{preview.credentialId && <button type="button" disabled={busy || Boolean(previewProblem)} className={button} onClick={printCredential}>Print / Save PDF</button>}<button type="button" onClick={() => setPreview(null)}>Close</button></div></div><p className="mt-3 text-sm text-[var(--ink-muted)]">Printing opens a separate tab. If your print dialog overrides the page settings, select A4, Landscape, and enable background graphics.</p>{previewProblem && <p role="alert" className="mt-3 text-[var(--red)]">{previewProblem}</p>}<div className="mt-4 overflow-auto"><iframe ref={previewFrame} title="Certificate preview" sandbox="allow-same-origin allow-modals" className="border-0 bg-white" style={{ width: 1123, height: 794 }} srcDoc={preview.html} onLoad={previewLoaded} /></div></section>}
     <section className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6"><h2 className="text-2xl font-bold">Issued records</h2><form className="my-4 grid gap-3 sm:grid-cols-3" onSubmit={e => { e.preventDefault(); searchRecords(); }}><label className="text-sm">Name or number<input className={field} value={search} onChange={e => { setSearch(e.target.value); setResults(null); }} /></label><label className="text-sm">Category<select className={field} value={filterCategory} onChange={e => { setFilterCategory(e.target.value); setResults(null); }}><option value="">All</option>{["MEM","PAR","CON","LEA","DIS"].map(code => <option key={code}>{code}</option>)}</select></label><label className="text-sm">Department<input className={field} value={filterDepartment} onChange={e => { setFilterDepartment(e.target.value); setResults(null); }} /></label><label className="text-sm">From<input type="date" className={field} value={filterFrom} onChange={e => { setFilterFrom(e.target.value); setResults(null); }} /></label><label className="text-sm">To<input type="date" className={field} value={filterTo} onChange={e => { setFilterTo(e.target.value); setResults(null); }} /></label><div className="flex items-end"><button className={button} disabled={busy}>Search all records</button></div></form>{results === null && <p className="text-sm text-[var(--ink-muted)]">Showing recent records. Search to query the full history.</p>}{(results ?? snapshot.credentials).map(item => <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--line)] py-3 text-sm" key={item.id}><span>{item.certificate_number} · {item.recipient_name} · {item.status} · {item.signature_key}</span><div className="flex gap-2"><button type="button" disabled={busy || item.status !== "issued"} className={button} onClick={() => viewCredential(item)}>View / Print</button><button type="button" disabled={busy || item.status !== "issued"} className={button} onClick={() => revoke(item)}>Revoke</button>{item.status === "revoked" && <button type="button" disabled={busy} className={button} onClick={() => prepareCorrection(item)}>Correct</button>}</div></div>)}{results && results.length === 0 && <p className="py-3 text-sm">No matching records.</p>}{results && hasMore && <button type="button" disabled={busy} onClick={() => searchRecords(true)} className={button}>Load more</button>}</section>
     </>}
     {tab === "audit" &&     <section className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6"><h2 className="text-2xl font-bold">Audit history</h2>{audit.map(event => <details className="border-t border-[var(--line)] py-3 text-sm" key={event.id}><summary>{event.created_at} · {event.action} · {event.actor}</summary><pre className="mt-3 overflow-auto text-xs">{JSON.stringify({ batch_id: event.batch_id, credential_id: event.credential_id, ...event.details }, null, 2)}</pre></details>)}{moreAudit && <button type="button" disabled={busy} className={button} onClick={loadMoreAudit}>Load older events</button>}</section>}

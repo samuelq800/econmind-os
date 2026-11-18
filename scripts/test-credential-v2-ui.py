@@ -40,7 +40,7 @@ import assets from "./test-assets.json";
 type Any = Record<string,any>;
 const channel={on(){return this},subscribe(){return this}};
 const issuedEntry={name:"Synthetic Issued",role:"Researcher",department:"Research",project:"Synthetic",contribution:"",service_period:""};
-const issued={id:"issued-1",batch_id:"issued-batch",template_id:"legacy",certificate_number:"EML-CON-2026-000001",recipient_name:issuedEntry.name,status:"issued",signature_key:"samuel_qian_v1",created_at:"2026-01-01",recipient_snapshot:issuedEntry,template_snapshot:{text_content:{title:"CONTRIBUTION",certification_statement:"Synthetic issued wording."}}};
+const issued={id:"issued-1",batch_id:"issued-batch",template_id:"legacy",certificate_number:"EML-CON-2026-000001",recipient_name:issuedEntry.name,status:"issued",signature_key:"samuel_qian_v1",created_at:"2026-01-01",recipient_snapshot:issuedEntry,template_snapshot:{text_content:{title:"Certificate of Contribution",certification_statement:"Synthetic issued wording."}}};
 const issuedBatch={id:"issued-batch",template_id:"legacy",status:"issued",issue_date:"2026-01-01",issuing_authority:"EconMind Founder Team",signature_key:"samuel_qian_v1",preview_verified_at:"2026-01-01",entries:[issuedEntry],category:"CON",subtype:"Contribution",template:{title:"CONTRIBUTION"},credentials:[issued]};
 const state:Any={batches:[issuedBatch],editors:{},last:null,versions:[],credentials:[issued],assetLoads:0};
 if(typeof window!=="undefined"){(window as unknown as {testState:Any}).testState=state;(window as unknown as {testYale:string}).testYale=assets.yale_signature;}
@@ -222,15 +222,38 @@ try {
  await page.getByRole('button',{name:'View / Print',exact:true}).click();
  const printFrame=page.frameLocator('iframe[title="Certificate preview"]');
  await printFrame.locator('.award-name').getByText('Synthetic Issued').waitFor();
- await page.locator('iframe[title="Certificate preview"]').evaluate(el=>{el.contentWindow.print=()=>{window.testPrinted=true}});
+ const previewSignature=await printFrame.locator('.signature-image').getAttribute('src');
+ await page.evaluate(()=>{
+   const open=window.open.bind(window);
+   window.open=(...args)=>{
+     const popup=open(...args);
+     if(popup) popup.print=()=>{popup.document.documentElement.dataset.printRequested='true'};
+     return popup;
+   };
+ });
+ const popupEvent=page.waitForEvent('popup');
  await page.getByRole('button',{name:'Print / Save PDF'}).click();
- await page.waitForFunction(()=>window.testPrinted===true);
- const printable=await printFrame.locator('html').evaluate(el=>'<!doctype html>'+el.outerHTML);
- const printPage=await browser.newPage();await printPage.setContent(printable,{waitUntil:'load'});
- const pdf=await printPage.pdf({path:'synthetic-certificate.pdf',format:'A4',landscape:true,printBackground:true,preferCSSPageSize:true});
+ const printPage=await popupEvent;
+ await printPage.waitForFunction(()=>document.documentElement.dataset.printRequested==='true');
+ if(await printPage.locator('.toolbar').count())throw new Error('Standalone print window includes template controls');
+ if(await printPage.locator('.title-first').innerText()!=='Certificate of'||(await printPage.locator('.title-main').innerText()).trim()!=='Contribution')throw new Error('Full certificate title was duplicated or lost');
+ if(await printPage.locator('.award-name').innerText()!=='Synthetic Issued'||await printPage.locator('.signature-image').getAttribute('src')!==previewSignature)throw new Error('The issued recipient or signature changed in print');
+ if(!await printPage.getByText('EML-CON-2026-000001',{exact:true}).count()||!await printPage.getByText('Synthetic issued wording.',{exact:true}).count())throw new Error('The issued snapshot or number was lost');
+ await printPage.emulateMedia({media:'print'});
+ const printStyle=await printPage.locator('.certificate').evaluate(el=>({
+   paper:getComputedStyle(el,'::before').backgroundImage,
+   signature:getComputedStyle(el.querySelector('.signature-image')).mixBlendMode,
+ }));
+ if(printStyle.paper!=='none'||printStyle.signature!=='normal')throw new Error('Print-specific compositing is not active');
+ const pdf=await printPage.pdf({path:'synthetic-certificate.pdf',preferCSSPageSize:true});
  if(pdf.length<10000||pdf.subarray(0,4).toString()!=='%PDF')throw new Error('Print PDF output is invalid');
  const info=execFileSync('pdfinfo',['synthetic-certificate.pdf'],{encoding:'utf8'});
  if(!/Pages:\s+1\b/.test(info)||!/Page size:\s+84[01](\.\d+)? x 59[45](\.\d+)? pts/.test(info))throw new Error('PDF is not one A4 landscape page');
+ if(process.env.CREDENTIAL_PRINT_TEST_OUTPUT){
+   const fs=await import('node:fs/promises');
+   await fs.writeFile(process.env.CREDENTIAL_PRINT_TEST_OUTPUT+'.pdf',pdf);
+   await fs.writeFile(process.env.CREDENTIAL_PRINT_TEST_OUTPUT+'.html',await printPage.content());
+ }
  await printPage.close();
  await page.getByRole('button',{name:'Edit draft'}).click();
  await page.getByText('Draft opened for editing.').waitFor();

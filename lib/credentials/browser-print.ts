@@ -58,6 +58,47 @@ export async function certificatePrintHtml(assets: VisualAssets, batch: RenderBa
   return `<!DOCTYPE html>${doc.documentElement.outerHTML}`;
 }
 
+/**
+ * A standalone print document avoids using the admin iframe as the paper box.
+ * Give Quartz a solid paper layer and a source-over signature when printing.
+ */
+export function certificateStandalonePrintHtml(html: string): string {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  doc.querySelector(".toolbar")?.remove();
+
+  // The stock template already displays “Certificate of” in its script line.
+  // Keep the prefix once, in the script line, when it is part of the stored title.
+  const scriptTitle = doc.querySelector(".title-first");
+  const mainTitle = doc.querySelector(".title-main");
+  const mainText = mainTitle && [...mainTitle.childNodes].find(node => node.nodeType === Node.TEXT_NODE);
+  const prefix = scriptTitle && mainText?.textContent?.match(/^(Certificate of)\s+(.+)$/i);
+  if (scriptTitle && mainText && prefix && scriptTitle.textContent?.trim().toLowerCase() === "certificate of") {
+    scriptTitle.textContent = prefix[1];
+    mainText.textContent = prefix[2];
+  }
+
+  const style = doc.createElement("style");
+  style.textContent = `
+    @page { size: A4 landscape; margin: 0; }
+    @media print {
+      html, body { width: 297mm; margin: 0; padding: 0; background: white; }
+      .centerer { display: block; margin: 0; padding: 0; overflow: visible; }
+      .paper-frame, .certificate { width: 297mm; height: 210mm; break-inside: avoid; }
+      .certificate {
+        background: var(--paper);
+        isolation: auto;
+        z-index: 0;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+      .certificate::before { background: var(--paper); }
+      .signature-image { mix-blend-mode: normal; }
+    }
+  `;
+  doc.head.append(style);
+  return `<!DOCTYPE html>${doc.documentElement.outerHTML}`;
+}
+
 /** Return explicit problems; the administrator must also inspect print preview. */
 export function printLayoutProblems(doc: Document): string[] {
   const problems: string[] = [];
