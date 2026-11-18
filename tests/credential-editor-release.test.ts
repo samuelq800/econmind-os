@@ -9,11 +9,15 @@ describe("credential V2 release gate", () => {
       return [{ verified: true }];
     });
     await expect(checkCredentialEditorReady(request)).resolves.toBeUndefined();
-    expect(request).toHaveBeenCalledTimes(2);
+    expect(request).toHaveBeenCalledTimes(3);
   });
   it("blocks release when the v0.3 migration is missing", async () => {
     const request = vi.fn().mockResolvedValueOnce([{ verified: true }]).mockResolvedValueOnce([{ verified: false }]);
     await expect(checkCredentialEditorReady(request)).rejects.toThrow("v0.3 database prerequisites");
+  });
+  it("blocks the updated editor without the direct wording approval migration", async () => {
+    const request = vi.fn().mockResolvedValueOnce([{ verified: true }]).mockResolvedValueOnce([{ verified: true }]).mockResolvedValueOnce([{ verified: false }]);
+    await expect(checkCredentialEditorReady(request)).rejects.toThrow("direct wording approval");
   });
   it.each([null, [], [{ verified: false }], [{ verified:true }, { verified:true }]])("blocks absent or ambiguous evidence", async rows => {
     await expect(checkCredentialEditorReady(async () => rows)).rejects.toThrow("prerequisites are missing");

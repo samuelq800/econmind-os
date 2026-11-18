@@ -12,6 +12,10 @@ export async function checkCredentialEditorReady(request) {
   if (!Array.isArray(handoff) || handoff.length !== 1 || handoff[0]?.verified !== true) {
     throw new Error("Credential v0.3 database prerequisites are missing or unverified");
   }
+  const approval = await request("select to_regprocedure('private.credential_direct_wording_approval_ready()') is not null as verified");
+  if (!Array.isArray(approval) || approval.length !== 1 || approval[0]?.verified !== true) {
+    throw new Error("Credential direct wording approval prerequisites are missing or unverified");
+  }
 }
 export async function main() {
   const project = "vimksjrhaxdpnkvgsavz";
