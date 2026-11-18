@@ -78,3 +78,53 @@ test("ZIP streaming checks authorization and includes only active completed cred
     assert.equal(bytes.includes(Buffer.from("EML-CON-2026-000001.pdf")), true);
   } finally { await new Promise(resolve => server.close(resolve)); }
 });
+
+test("batch ZIP uses immutable issued wording and denies revoked or non-admin requests", async () => {
+  const revokedId = "00000000-0000-4000-8000-000000000010";
+  const number = "EML-SUP-2026-000001";
+  let state = "issued";
+  let revokeDuringRender = false;
+  const calls = [];
+  const server = createCredentialService({ ...config, serviceKey: undefined }, {
+    fetch: async (url, options) => {
+      calls.push(options.headers.authorization);
+      if (url.pathname === "/auth/v1/user") return Response.json({ id: user });
+      if (options.headers.authorization !== "Bearer valid") return new Response("{}", { status: 403 });
+      return Response.json({ id: batchId, status: "issued", signature_key: "samuel_qian_v1", category: "SUP",
+        subtype: "Supervisor", issue_date: "2026-11-18", issuing_authority: "EconMind Founder Team",
+        template: { title: "Mutable wording" }, credentials: [
+          { id: credentialId, status: state, certificate_number: number, recipient_snapshot: { name: "Synthetic" },
+            template_snapshot: { text_content: { title: "Frozen wording", certification_statement: "Frozen copy." } } },
+          { id: revokedId, status: "revoked", certificate_number: "EML-SUP-2026-000002" },
+        ],
+      });
+    },
+    verifyBaseline: async () => {},
+    render: async ({ fields, output }) => {
+      assert.equal(fields.titleMain, "Frozen wording");
+      assert.equal(fields.description, "Frozen copy.");
+      assert.equal(output, "pdf");
+      if (revokeDuringRender) state = "revoked";
+      return Buffer.from("%PDF-1.7 synthetic test");
+    },
+  });
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  try {
+    const request = token => fetch(`http://127.0.0.1:${server.address().port}/batch-zip`, {
+      method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json", origin: config.allowedOrigin },
+      body: JSON.stringify({ batchId }),
+    });
+    assert.equal((await request("ordinary")).status, 403);
+    const result = await request("valid");
+    assert.equal(result.status, 200);
+    assert.equal(result.headers.get("content-type"), "application/zip");
+    const bytes = Buffer.from(await result.arrayBuffer());
+    assert.equal(bytes.subarray(0, 2).toString(), "PK");
+    assert.ok(bytes.includes(`${number}.pdf`));
+    assert.ok(!bytes.includes("000002.pdf"));
+    revokeDuringRender = true;
+    assert.equal((await request("valid")).status, 409);
+    assert.equal((await request("valid")).status, 404);
+    assert.ok(calls.every(token => token !== "Bearer service-key"));
+  } finally { await new Promise(resolve => server.close(resolve)); }
+});

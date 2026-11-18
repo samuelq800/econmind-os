@@ -1,0 +1,27 @@
+diff --git a/lib/parse.js b/lib/parse.js
+--- a/lib/parse.js
++++ b/lib/parse.js
+@@ -356,6 +356,11 @@
+ const parse = (input, options) => {
+   if (typeof input !== 'string') {
+     throw new TypeError('Expected a string');
++  }
++
++  // This build tool only accepts non-repeating extended globs.
++  if (input.includes('*(') || input.includes('+(')) {
++    throw new SyntaxError('Repeated extglobs are disabled by the local tooling policy');
+   }
+ 
+   input = REPLACEMENTS[input] || input;
+@@ -1344,6 +1349,11 @@
+     throw new SyntaxError(`Input length: ${len}, exceeds maximum allowed length: ${max}`);
+   }
+ 
++  // This build tool only accepts non-repeating extended globs.
++  if (input.includes('*(') || input.includes('+(')) {
++    throw new SyntaxError('Repeated extglobs are disabled by the local tooling policy');
++  }
++
+   input = REPLACEMENTS[input] || input;
+ 
+   // create constants based on platform, for windows or posix

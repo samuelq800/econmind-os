@@ -14,6 +14,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  credential-editor-database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: disposable-test-only
+          POSTGRES_DB: credential_editor_test
+        ports: [5432:5432]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify V1 compatibility, V2 access and draft snapshots
+        env:
+          PGPASSWORD: disposable-test-only
+        run: |
+          psql -X -v ON_ERROR_STOP=1 -h localhost -U postgres -d credential_editor_test \
+            -v handoff_catalog="$(cat tests/fixtures/credential-handoff-v03.json)" \
+            -f scripts/test-credential-handoff-v03.sql
+
   direct-registration-database:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -56,7 +79,11 @@ jobs:
         working-directory: infra/cloudflare/${{ matrix.workspace }}
         run: |
           pnpm install --frozen-lockfile
-          pnpm audit
+          if [ "${{ matrix.workspace }}" = "admin-mail-worker" ]; then
+            pnpm security:check
+          else
+            pnpm audit
+          fi
           pnpm typegen
           git diff --exit-code -- worker-configuration.d.ts
           pnpm typecheck
@@ -501,7 +528,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Verify dependency security and local braces mitigation
+      - name: Verify dependency security and local tooling mitigations
         run: pnpm security:check
 
       - name: Validate workflow formatting

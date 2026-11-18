@@ -7,6 +7,9 @@ settings:
 overrides:
   miniflare>undici: 7.30.1
 
+patchedDependencies:
+  picomatch@4.0.7: 830f02904a83c2e26dec5614e24d4b03fa032e0cd8293d42ff3dee7c2e5c8d1c
+
 importers:
   .:
     dependencies:
@@ -1941,9 +1944,9 @@ snapshots:
 
   expect-type@1.4.0: {}
 
-  fdir@6.5.0(picomatch@4.0.7):
+  fdir@6.5.0(picomatch@4.0.7(patch_hash=830f02904a83c2e26dec5614e24d4b03fa032e0cd8293d42ff3dee7c2e5c8d1c)):
     optionalDependencies:
-      picomatch: 4.0.7
+      picomatch: 4.0.7(patch_hash=830f02904a83c2e26dec5614e24d4b03fa032e0cd8293d42ff3dee7c2e5c8d1c)
 
   fsevents@2.3.3:
     optional: true
@@ -2001,7 +2004,7 @@ snapshots:
 
   picocolors@1.1.1: {}
 
-  picomatch@4.0.7: {}
+  picomatch@4.0.7(patch_hash=830f02904a83c2e26dec5614e24d4b03fa032e0cd8293d42ff3dee7c2e5c8d1c): {}
 
   postal-mime@4.0.8: {}
 
@@ -2098,8 +2101,8 @@ snapshots:
 
   tinyglobby@0.2.17:
     dependencies:
-      fdir: 6.5.0(picomatch@4.0.7)
-      picomatch: 4.0.7
+      fdir: 6.5.0(picomatch@4.0.7(patch_hash=830f02904a83c2e26dec5614e24d4b03fa032e0cd8293d42ff3dee7c2e5c8d1c))
+      picomatch: 4.0.7(patch_hash=830f02904a83c2e26dec5614e24d4b03fa032e0cd8293d42ff3dee7c2e5c8d1c)
 
   tinyrainbow@3.2.0: {}
 
@@ -2119,8 +2122,8 @@ snapshots:
   vite@7.3.7(@types/node@22.20.1):
     dependencies:
       esbuild: 0.28.2
-      fdir: 6.5.0(picomatch@4.0.7)
-      picomatch: 4.0.7
+      fdir: 6.5.0(picomatch@4.0.7(patch_hash=830f02904a83c2e26dec5614e24d4b03fa032e0cd8293d42ff3dee7c2e5c8d1c))
+      picomatch: 4.0.7(patch_hash=830f02904a83c2e26dec5614e24d4b03fa032e0cd8293d42ff3dee7c2e5c8d1c)
       postcss: 8.5.31
       rollup: 4.64.12
       tinyglobby: 0.2.17
@@ -2142,7 +2145,7 @@ snapshots:
       magic-string: 0.30.21
       obug: 2.2.1
       pathe: 2.0.3
-      picomatch: 4.0.7
+      picomatch: 4.0.7(patch_hash=830f02904a83c2e26dec5614e24d4b03fa032e0cd8293d42ff3dee7c2e5c8d1c)
       std-env: 4.3.0
       tinybench: 2.9.0
       tinyexec: 1.3.1

@@ -47,7 +47,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Verify dependency security and local braces mitigation
+      - name: Verify dependency security and local tooling mitigations
         run: pnpm security:check
 
       - name: Verify source
@@ -154,6 +154,12 @@ jobs:
           SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
         run: node scripts/check-credential-backend.mjs
 
+      - name: Verify credential editor V2 prerequisites (read-only)
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+        run: node scripts/check-credential-editor-ready.mjs
+
       - name: Apply Season 1 World Chat read API
         if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.frontend_only) && !contains(github.event.head_commit.message, '[frontend-only]') }}
         env:
@@ -209,6 +215,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_SUPABASE_PROXY_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_PROXY_URL }}
+          NEXT_PUBLIC_CREDENTIAL_RENDERER_URL: ${{ vars.NEXT_PUBLIC_CREDENTIAL_RENDERER_URL }}
           NEXT_PUBLIC_ENABLE_CONTINUOUS_WORLD: ${{ vars.NEXT_PUBLIC_ENABLE_CONTINUOUS_WORLD }}
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
