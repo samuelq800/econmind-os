@@ -1,13 +1,120 @@
-/** Categories reserve structure only. They do not create awards or approved wording. */
+/** Category and subtype labels are navigation, independent of private wording. */
 export const CREDENTIAL_CATEGORIES = [
-  { code: "MEM", label: "Membership", subtypes: ["Registered Member", "Affiliated Society Member"] },
-  { code: "PAR", label: "Participation", subtypes: ["World Simulation Participant", "Event Participant", "League Participant"] },
-  { code: "CON", label: "Contribution", subtypes: ["Technical Contribution", "Academic Contribution", "Communications Contribution", "Operational Contribution"] },
-  { code: "LEA", label: "Leadership", subtypes: ["Initial Founder", "Co-founder", "Leadership Group Member", "Regional Lead", "Department Head", "Project Lead", "Society President", "Founder Team Member"] },
-  { code: "DIS", label: "Distinction", subtypes: ["Outstanding Contribution", "Project Excellence", "Exceptional Leadership"] },
-] as const;
+  {
+    "code": "MEM",
+    "label": "Membership",
+    "subtypes": [
+      "Registered Member",
+      "Department Member",
+      "Affiliated Society Member"
+    ]
+  },
+  {
+    "code": "PAR",
+    "label": "Participation",
+    "subtypes": [
+      "World Simulation",
+      "Season 1",
+      "Event Participant",
+      "League Participant"
+    ]
+  },
+  {
+    "code": "CON",
+    "label": "Contribution",
+    "subtypes": [
+      "Technical Contribution",
+      "Design Coordination",
+      "Multi-platform Communications",
+      "Video Production & Editing",
+      "WeChat Official Account",
+      "Douyin Publicity",
+      "Academic Contribution",
+      "Communications Contribution",
+      "Operational Contribution",
+      "Research Authorship · Live Library"
+    ]
+  },
+  {
+    "code": "LEA",
+    "label": "Leadership",
+    "subtypes": [
+      "Initial Founder",
+      "Co-founder",
+      "Regional Lead",
+      "Department Lead",
+      "School Society President",
+      "Leadership Group Member",
+      "Department Head",
+      "Project Lead",
+      "Society President",
+      "Founder Team Member"
+    ]
+  },
+  {
+    "code": "SUP",
+    "label": "Supervisor",
+    "subtypes": [
+      "Supervisor"
+    ]
+  },
+  {
+    "code": "CLB",
+    "label": "School Econ / Business Club",
+    "subtypes": [
+      "Economics Club",
+      "Business Club",
+      "Affiliated Club"
+    ]
+  },
+  {
+    "code": "DIS",
+    "label": "Distinction",
+    "subtypes": [
+      "Outstanding Academic Contribution",
+      "Research Excellence",
+      "Outstanding Technical Development",
+      "Economic Simulation Innovation",
+      "Platform Engineering Excellence",
+      "Outstanding Communications Achievement",
+      "Digital Media Excellence",
+      "Editorial Excellence",
+      "Official Badge Design",
+      "Brand Identity Development",
+      "Official Certificate Design",
+      "Outstanding Organizational Contribution",
+      "School Network Development",
+      "Leadership Excellence",
+      "Outstanding Community Impact",
+      "Interdisciplinary Collaboration Excellence",
+      "Project Excellence",
+      "Outstanding Contribution",
+      "Exceptional Leadership"
+    ]
+  },
+  {
+    "code": "PRT",
+    "label": "Partner",
+    "subtypes": [
+      "Partner"
+    ]
+  },
+  {
+    "code": "GSP",
+    "label": "Guest Speaker",
+    "subtypes": [
+      "Guest Speaker"
+    ]
+  }
+];
+export type CategoryCode = "MEM" | "PAR" | "CON" | "LEA" | "DIS" | "SUP" | "CLB" | "PRT" | "GSP";
+export type WordingCatalog = {
+  imported: boolean;
+  presets: { template_id: string; recipient_name: string; data_mode: "personal_preset" }[];
+  archive: { legacy_id: string; subtype: string; statement: string }[];
+};
+export const EMPTY_WORDING_CATALOG: WordingCatalog = { imported: false, presets: [], archive: [] };
 
-export type CategoryCode = (typeof CREDENTIAL_CATEGORIES)[number]["code"];
 export type WordingContent = {
   title: string;
   certification_statement: string;
@@ -21,7 +128,7 @@ export type WordingVersion = {
   subtype: string;
   template_name: string;
   version: number;
-  status: "draft" | "approved" | "archived";
+  status: "draft" | "reviewed" | "approved" | "archived";
   text_content: WordingContent;
   created_at: string;
 };

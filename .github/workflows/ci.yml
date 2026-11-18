@@ -32,7 +32,10 @@ jobs:
       - name: Verify V1 compatibility, V2 access and draft snapshots
         env:
           PGPASSWORD: disposable-test-only
-        run: psql -X -v ON_ERROR_STOP=1 -h localhost -U postgres -d credential_editor_test -f scripts/test-credential-visual-editor.sql
+        run: |
+          psql -X -v ON_ERROR_STOP=1 -h localhost -U postgres -d credential_editor_test \
+            -v handoff_catalog="$(cat tests/fixtures/credential-handoff-v03.json)" \
+            -f scripts/test-credential-handoff-v03.sql
 
   direct-registration-database:
     runs-on: ubuntu-latest

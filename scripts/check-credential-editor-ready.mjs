@@ -8,6 +8,10 @@ export async function checkCredentialEditorReady(request) {
   if (!Array.isArray(rows) || rows.length !== 1 || rows[0]?.verified !== true) {
     throw new Error("Credential V2 database prerequisites are missing or unverified");
   }
+  const handoff = await request("select to_regprocedure('private.credential_handoff_v03_version()') is not null as verified");
+  if (!Array.isArray(handoff) || handoff.length !== 1 || handoff[0]?.verified !== true) {
+    throw new Error("Credential v0.3 database prerequisites are missing or unverified");
+  }
 }
 export async function main() {
   const project = "vimksjrhaxdpnkvgsavz";

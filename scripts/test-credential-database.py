@@ -14,6 +14,7 @@ TESTS = [
     "scripts/test-credential-browser-print.sql",
     "scripts/test-credential-directory-seed.sql",
     "scripts/test-credential-visual-editor.sql",
+    "scripts/test-credential-handoff-v03.sql",
 ]
 
 for index, script in enumerate(TESTS):
@@ -23,7 +24,11 @@ for index, script in enumerate(TESTS):
         subprocess.run(["initdb", "-D", db, "-A", "trust", "-U", "postgres"], check=True, stdout=subprocess.DEVNULL)
         subprocess.run(["pg_ctl", "-D", db, "-o", f"-k {directory} -p {port} -c listen_addresses=", "-w", "start"], check=True, stdout=subprocess.DEVNULL)
         try:
-            subprocess.run(["psql", "-h", directory, "-p", port, "-U", "postgres", "-v", "ON_ERROR_STOP=1", "-q", "-f", script], cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
+            variables = []
+            if script.endswith("test-credential-handoff-v03.sql"):
+                catalog = Path(os.environ.get("CREDENTIAL_HANDOFF_TEST_CATALOG", ROOT / "tests/fixtures/credential-handoff-v03.json"))
+                variables = ["-v", f"handoff_catalog={catalog.read_text()}"]
+            subprocess.run(["psql", "-h", directory, "-p", port, "-U", "postgres", "-v", "ON_ERROR_STOP=1", "-q", *variables, "-f", script], cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
             if script.endswith("test-credential-browser-print.sql"):
                 template = Path('/Users/samuel/Documents/Codex/2026-11-16/referenced-chatgpt-conversation-this-is-an/outputs/EconMind_Certificate_Integration_Handoff/EconMind_League_Yale_Founding_Leadership_Certificate.html')
                 signature = Path('/Users/samuel/.codex/private/econmind-credentials/signatures/yale-chen.png')

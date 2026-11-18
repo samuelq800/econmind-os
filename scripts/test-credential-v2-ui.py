@@ -28,7 +28,7 @@ with tempfile.TemporaryDirectory(prefix='em-v2-ui-', dir='/tmp') as folder:
     files = ['components/admin/credential-admin.tsx','components/admin/credential-canvas.tsx','components/admin/credential-visual-editor.tsx',
              'components/admin/credential-wording-library.tsx','components/admin/credential-signature-select.tsx',
              'lib/credentials/import.ts','lib/credentials/wording.ts','lib/credentials/date.ts','lib/credentials/signatures.ts','lib/credentials/browser-print.ts',
-             'lib/supabase/credential-research-sources.ts','app/admin/credentials/page.tsx','app/globals.css','postcss.config.mjs']
+             'lib/supabase/credential-research-sources.ts','lib/credentials/research-source.ts','lib/team/team-data.ts','app/admin/credentials/page.tsx','app/globals.css','postcss.config.mjs']
     for name in files:
         dest = tmp / name; dest.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(ROOT / name, dest)
     (tmp / 'components/auth').mkdir(parents=True)
@@ -47,9 +47,12 @@ if(typeof window!=="undefined"){(window as unknown as {testState:Any}).testState
 const fake={async rpc(name:string, p:Any={}){
  if(name==="list_credential_admin_data")return {data:{counts:{issued:1,issued_this_month:0,revoked:0},pending:state.batches.filter((b:Any)=>b.status==='draft').length,templates:[],batches:state.batches,credentials:state.credentials},error:null};
  if(name==="get_credential_visual_assets") {state.assetLoads++;return {data:assets,error:null};}
+ if(name==="get_credential_handoff_catalog")return {data:{imported:false,presets:[],archive:[]},error:null};
  if(name==="list_credential_wording_versions")return {data:structuredClone(state.versions),error:null};
- if(name==="list_credential_organization_page")return {data:[{id:"org-1",name:"Synthetic Leader",title:"Director",organizational_group:"technology-team"}],error:null};
- if(name==="list_credential_research_sources")return {data:[{paper_id:"paper-1",uploader_user_id:"00000000-0000-4000-8000-000000000005",owner_name_matches:false,author_display_name:"Synthetic Author",title:"Synthetic Research",status:"published"},{paper_id:"paper-2",uploader_user_id:"00000000-0000-4000-8000-000000000006",owner_name_matches:true,author_display_name:"Matched Author",title:"Linked Research",status:"published"}],error:null};
+ if(name==="list_credential_organization_identities")return {data:[{id:"org-1",name:"Synthetic Leader",title:"Director",organizational_group:"technology-team"}],error:null};
+ const papers=[{paper_id:"paper-1",uploader_user_id:"00000000-0000-4000-8000-000000000005",owner_name_matches:false,author_display_name:"Synthetic Author",title:"Synthetic Research",status:"published"},{paper_id:"paper-2",uploader_user_id:"00000000-0000-4000-8000-000000000006",owner_name_matches:true,author_display_name:"Matched Author",title:"Linked Research",status:"published"}].map(row=>({...row,updated_at:"2026-01-01T00:00:00Z"}));
+ if(name==="list_credential_research_sources")return {data:papers,error:null};
+ if(name==="get_credential_research_source")return {data:papers.find(row=>row.paper_id===p.p_paper_id),error:null};
  if(name==="save_credential_editor_draft"){
   const id=p.p_batch_id||"batch-"+(state.batches.length+1); const rev=(state.editors[id]?.revision||0)+1;
   const batch={id,template_id:"base",status:"draft",issue_date:p.p_issue_date,issuing_authority:p.p_issuing_authority,signature_key:p.p_signature_key,preview_verified_at:null,entries:p.p_entries,category:p.p_category,subtype:p.p_subtype,template:{},credentials:[]};
@@ -202,6 +205,8 @@ try {
  await page.getByLabel('Template name').fill('Draft Test');
  await page.getByRole('button',{name:'Save draft version'}).click();
  await page.getByText('Draft wording saved. It is not approved.').waitFor();
+ await page.getByRole('button',{name:'Mark reviewed',exact:true}).click();
+ page.once('dialog',dialog=>dialog.accept());
  await page.getByRole('button',{name:'Approve',exact:true}).click();
  await page.getByRole('button',{name:'Certificate Editor',exact:true}).click();
  if(await page.getByRole('textbox',{name:'Recipient name',exact:true}).inputValue()!=='Edited In Certificate')throw new Error('Editor state lost when opening wording library');
@@ -248,6 +253,7 @@ try {
  await page.waitForFunction(()=>[...document.querySelectorAll('select')].some(item=>item.value==='wording-1'));
  await page.getByRole('button',{name:'Choose sources',exact:true}).click();
  await page.getByText('Synthetic Author · Synthetic Research',{exact:false}).click();
+ await page.getByLabel('I verified this exact person against the paper byline.').check();
  await page.getByRole('button',{name:'Add selected · 1'}).click();
  if(await page.getByLabel('Recipient Name 1').inputValue()!=='Synthetic Author')throw new Error('Source selection failed');
  await page.getByLabel('Recipient Name 1').fill('Synthetic Alias');
@@ -275,6 +281,7 @@ try {
  await page.waitForFunction(()=>[...document.querySelectorAll('input')].some(input=>input.value==='Synthetic Leader'));
  await page.getByRole('button',{name:'Choose sources',exact:true}).click();
  await page.getByText('Matched Author · Linked Research',{exact:false}).click();
+ await page.getByLabel('I verified this exact person against the paper byline.').check();
  await page.getByRole('button',{name:'Add selected · 1'}).click();
  const matchedInput=page.locator('input[aria-label^="Recipient Name"]').last();
  if(await matchedInput.inputValue()!=='Matched Author')throw new Error('Linked research author not added');
@@ -288,6 +295,7 @@ try {
  const countBefore=await page.locator('input[aria-label^="Recipient Name"]').count();
  await page.getByRole('button',{name:'Choose sources',exact:true}).click();
  await page.getByText('Synthetic Author · Synthetic Research',{exact:false}).click();
+ await page.getByLabel('I verified this exact person against the paper byline.').check();
  await page.getByText('Synthetic Leader · Director',{exact:false}).click();
  await page.getByRole('button',{name:'Add selected · 2'}).click();
  if(await page.locator('input[aria-label^="Recipient Name"]').count()!==countBefore+2)throw new Error('Multiple selected sources were not added');

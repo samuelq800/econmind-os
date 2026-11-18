@@ -39,6 +39,12 @@ export async function listCredentialResearchSources(): Promise<CredentialResearc
   }
 }
 
+export async function getCredentialResearchSource(paperId: string): Promise<CredentialResearchSource | null> {
+  const { data, error } = await requireSupabaseBrowserClient().rpc("get_credential_research_source", { p_paper_id: paperId });
+  throwIfSupabaseError(error);
+  return data as CredentialResearchSource | null;
+}
+
 /** Realtime is an invalidation signal; the guarded RPC remains authoritative. */
 export function watchCredentialResearchSources(onUpdate: (rows: CredentialResearchSource[]) => void, onError: (error: Error) => void): () => void {
   const client = requireSupabaseBrowserClient();

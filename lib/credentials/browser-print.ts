@@ -2,7 +2,7 @@ import type { ImportedRecipient } from "./import";
 
 const TEMPLATE_HASH = "591e6c0d67eec9b59ed856f060eca4d3ad5ed8d041b91bf3f67361cf0da6a358";
 const YALE_HASH = "587af46f950be365383eb8505e77ec072472df5dbc77f6aba734f8ebdf161c53";
-const categories: Record<string, string> = { MEM: "MEMBERSHIP", PAR: "PARTICIPATION", CON: "CONTRIBUTION", LEA: "LEADERSHIP", DIS: "DISTINCTION" };
+const categories: Record<string, string> = { MEM: "MEMBERSHIP", PAR: "PARTICIPATION", CON: "CONTRIBUTION", LEA: "LEADERSHIP", DIS: "DISTINCTION", SUP: "SUPERVISOR", CLB: "SCHOOL ECON / BUSINESS CLUB", PRT: "PARTNER", GSP: "GUEST SPEAKER" };
 
 export type VisualAssets = { template_html: string; yale_signature: string };
 export type RenderBatch = { issue_date: string; issuing_authority: string; signature_key: string; category: string; subtype: string; template: Record<string, string> };

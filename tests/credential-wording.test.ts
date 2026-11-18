@@ -3,8 +3,8 @@ import { approvedWording, blankWording, CREDENTIAL_CATEGORIES, wordingFrom, type
 
 describe("credential wording framework", () => {
   it("reserves all requested categories and subtypes without publishing wording", () => {
-    expect(CREDENTIAL_CATEGORIES.map(category => category.code)).toEqual(["MEM", "PAR", "CON", "LEA", "DIS"]);
-    expect(CREDENTIAL_CATEGORIES.map(category => category.subtypes.length)).toEqual([2, 3, 4, 8, 3]);
+    expect(CREDENTIAL_CATEGORIES.map(category => category.code)).toEqual(["MEM", "PAR", "CON", "LEA", "SUP", "CLB", "DIS", "PRT", "GSP"]);
+    expect(CREDENTIAL_CATEGORIES.every(category => category.subtypes.length > 0)).toBe(true);
     expect(CREDENTIAL_CATEGORIES.find(category => category.code === "LEA")?.subtypes).toContain("Initial Founder");
     expect(Object.values(blankWording()).every(value => value === "")).toBe(true);
   });

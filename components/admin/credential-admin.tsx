@@ -3,18 +3,18 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { CredentialVisualEditor } from "./credential-visual-editor";
 import { CredentialWordingLibrary, type WordingSeed } from "./credential-wording-library";
-import type { CategoryCode, WordingContent, WordingVersion } from "@/lib/credentials/wording";
+import { EMPTY_WORDING_CATALOG, type WordingCatalog, type CategoryCode, type WordingContent, type WordingVersion } from "@/lib/credentials/wording";
 import type { CredentialSignatureKey } from "@/lib/credentials/signatures";
 import type { ImportedRecipient } from "@/lib/credentials/import";
 import { requireSupabaseBrowserClient } from "@/lib/supabase/client";
-import { watchCredentialResearchSources, type CredentialResearchSource } from "@/lib/supabase/credential-research-sources";
+import { watchCredentialResearchSources, listCredentialResearchSources, type CredentialResearchSource } from "@/lib/supabase/credential-research-sources";
 import { certificatePrintHtml, printLayoutProblems, type RenderBatch, type VisualAssets } from "@/lib/credentials/browser-print";
 
 type Template = { id: string; category: string; subtype: string; version: number; active: boolean; text_content: Partial<WordingContent> };
 type Batch = { id: string; template_id: string; status: string; issue_date: string; issuing_authority: string; signature_key: string; preview_verified_at: string | null; entries: ImportedRecipient[] };
 type Credential = { id: string; batch_id: string; template_id: string; replaces_id: string | null; certificate_number: string; recipient_name: string; status: string; signature_key: string; created_at: string; recipient_snapshot: Record<string, unknown> };
 type Snapshot = { counts: { issued: number; issued_this_month: number; revoked: number }; pending: number; templates: Template[]; batches: Batch[]; credentials: Credential[] };
-type OrganizationSource = { id: string; name: string; title: string; organizational_group: string; public_visible: boolean };
+type OrganizationSource = { id: string; name: string; title: string; organizational_group: string };
 type AuditEvent = { id: number; actor: string; action: string; batch_id: string | null; credential_id: string | null; created_at: string; details: Record<string, unknown> };
 type EditorInitial = { id?: string; recipient?: ImportedRecipient; category?: CategoryCode; subtype?: string; wording?: Partial<WordingContent>; source?: {kind?: string;id?: string;label?: string;linked_name?: string}; wordingRef?: {type?: "library"|"legacy";id?: string;modified?: boolean}; signature?: CredentialSignatureKey; authority?: string } | null;
 const field = "mt-2 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 py-2.5 text-sm text-[var(--ink)]";
@@ -37,6 +37,7 @@ function CredentialWorkspace() {
   const [singleSession, setSingleSession] = useState(0); const [bulkSession, setBulkSession] = useState(0);
   const [singleInitial, setSingleInitial] = useState<EditorInitial>(null); const [bulkInitial, setBulkInitial] = useState<EditorInitial>(null);
   const [wordingSeed, setWordingSeed] = useState<WordingSeed | null>(null);
+  const [catalog, setCatalog] = useState<WordingCatalog>(EMPTY_WORDING_CATALOG);
   const [wordingVersions, setWordingVersions] = useState<WordingVersion[]>([]);
   const [research, setResearch] = useState<CredentialResearchSource[]>([]);
   const [organization, setOrganization] = useState<OrganizationSource[]>([]);
@@ -71,10 +72,14 @@ function CredentialWorkspace() {
     return data as Snapshot;
   }, []);
   const refreshWordings = useCallback(async () => {
-    const { data, error: failure } = await requireSupabaseBrowserClient().rpc("list_credential_wording_versions");
-    if (failure) throw failure;
-    if (!Array.isArray(data)) throw new Error("Invalid wording library response.");
-    setWordingVersions(data as WordingVersion[]);
+    const client = requireSupabaseBrowserClient();
+    const [versions, nextCatalog] = await Promise.all([
+      client.rpc("list_credential_wording_versions"), client.rpc("get_credential_handoff_catalog"),
+    ]);
+    if (versions.error) throw versions.error;
+    if (nextCatalog.error) throw nextCatalog.error;
+    setWordingVersions((versions.data ?? []) as WordingVersion[]);
+    setCatalog(nextCatalog.data as WordingCatalog);
   }, []);
   useEffect(() => {
     if (!snapshot) return;
@@ -99,7 +104,7 @@ function CredentialWorkspace() {
         const all: OrganizationSource[] = [];
         let cursor: string | null = null;
         for (;;) {
-          const { data, error: failure } = await client.rpc("list_credential_organization_page", { p_after_id: cursor, p_limit: 100 });
+          const { data, error: failure } = await client.rpc("list_credential_organization_identities", { p_after_id: cursor, p_limit: 100 });
           if (failure) throw failure;
           if (!Array.isArray(data)) throw new Error("Invalid organization source response.");
           const page = data as OrganizationSource[];
@@ -201,6 +206,28 @@ function CredentialWorkspace() {
   }
   function viewCredential(item: Credential) {
     void action(async () => { await openCertificate(item.batch_id, null, item.id); });
+  }
+  function exportBatch(batchId: string) {
+    void action(async () => {
+      const configured = process.env.NEXT_PUBLIC_CREDENTIAL_RENDERER_URL;
+      if (!configured) throw new Error("The private batch PDF renderer has not been configured.");
+      const endpoint = new URL("/batch-zip", configured);
+      if (endpoint.protocol !== "https:") throw new Error("The private renderer requires HTTPS.");
+      const { data: { session }, error } = await requireSupabaseBrowserClient().auth.getSession();
+      if (error || !session) throw new Error("Sign in again before exporting certificates.");
+      const response = await fetch(endpoint, {
+        method: "POST", headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ batchId }), redirect: "error", signal: AbortSignal.timeout(15 * 60 * 1000),
+      });
+      if (!response.ok || response.headers.get("Content-Type") !== "application/zip") {
+        const failure = await response.json().catch(() => null);
+        throw new Error(failure?.error || "The batch PDF export failed.");
+      }
+      const url = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = url; link.download = `EconMind_Credentials_${batchId}.zip`; link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
   }
   function printCredential() {
     const current = preview;
@@ -307,11 +334,11 @@ function CredentialWorkspace() {
       {([["dashboard","Dashboard"],["editor","Certificate Editor"],["bulk","Bulk Issuance"],["wording","Wording Library"],["records","Records & Batches"],["audit","Audit History"]] as const).map(([id,label]) => <button type="button" key={id} aria-pressed={tab === id} onClick={() => { setWordingSeed(null); if (id === "editor") setSingleVisited(true); if (id === "bulk") setBulkVisited(true); setTab(id); }} className={tab === id ? button : "rounded-lg border border-[var(--line)] px-4 py-2.5 text-sm font-semibold"}>{label}</button>)}
     </nav>
     {tab === "dashboard" && <section className="mt-8 space-y-6"><div className="grid gap-3 sm:grid-cols-4">{[["Issued",snapshot.counts.issued],["Issued this month",snapshot.counts.issued_this_month],["Drafts / reviewed",snapshot.pending],["Revoked",snapshot.counts.revoked]].map(([label,value]) => <div key={label} className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-5"><p className="text-sm text-[var(--ink-muted)]">{label}</p><p className="mt-2 text-3xl font-bold">{value}</p></div>)}</div><div className="flex flex-wrap gap-3"><button type="button" className={button} onClick={() => { setSingleInitial(null); setSingleVisited(true); setSingleSession(value => value + 1); setTab("editor"); }}>Create certificate</button><button type="button" className={button} onClick={() => { setBulkInitial(null); setBulkVisited(true); setBulkSession(value => value + 1); setTab("bulk"); }}>Prepare batch</button><button type="button" className={button} onClick={() => setTab("records")}>View records</button></div></section>}
-    {singleVisited && <div hidden={tab !== "editor"}><CredentialVisualEditor key={singleSession} bulk={false} visible={tab === "editor"} loadAssets={loadVisualAssets} versions={wordingVersions} batches={snapshot.batches} legacy={snapshot.templates} organization={organization} research={research} initial={singleInitial} onLoaded={clearSingleInitial} onSaved={savedEditor} onRecords={() => setTab("records")} onSaveWording={seed => { setWordingSeed(seed); setTab("wording"); }} /></div>}
-    {bulkVisited && <div hidden={tab !== "bulk"}><CredentialVisualEditor key={bulkSession} bulk visible={tab === "bulk"} loadAssets={loadVisualAssets} versions={wordingVersions} batches={snapshot.batches} legacy={snapshot.templates} organization={organization} research={research} initial={bulkInitial} onLoaded={clearBulkInitial} onSaved={savedEditor} onRecords={() => setTab("records")} onSaveWording={seed => { setWordingSeed(seed); setTab("wording"); }} /></div>}
-    {tab === "wording" && <CredentialWordingLibrary versions={wordingVersions} legacy={snapshot.templates} refresh={refreshWordings} refreshLegacy={savedEditor} seed={wordingSeed} />}
+    {singleVisited && <div hidden={tab !== "editor"}><CredentialVisualEditor key={singleSession} bulk={false} visible={tab === "editor"} loadAssets={loadVisualAssets} versions={wordingVersions} presets={catalog.presets} batches={snapshot.batches} legacy={snapshot.templates} organization={organization} research={research} onRefreshResearch={async () => { const latest = await listCredentialResearchSources(); setResearch(latest); return latest; }} initial={singleInitial} onLoaded={clearSingleInitial} onSaved={savedEditor} onRecords={() => setTab("records")} onSaveWording={seed => { setWordingSeed(seed); setTab("wording"); }} /></div>}
+    {bulkVisited && <div hidden={tab !== "bulk"}><CredentialVisualEditor key={bulkSession} bulk visible={tab === "bulk"} loadAssets={loadVisualAssets} versions={wordingVersions} presets={catalog.presets} batches={snapshot.batches} legacy={snapshot.templates} organization={organization} research={research} onRefreshResearch={async () => { const latest = await listCredentialResearchSources(); setResearch(latest); return latest; }} initial={bulkInitial} onLoaded={clearBulkInitial} onSaved={savedEditor} onRecords={() => setTab("records")} onSaveWording={seed => { setWordingSeed(seed); setTab("wording"); }} /></div>}
+    {tab === "wording" && <CredentialWordingLibrary catalog={catalog} versions={wordingVersions} legacy={snapshot.templates} refresh={refreshWordings} refreshLegacy={savedEditor} seed={wordingSeed} />}
     {tab === "records" && <>
-    <section className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6"><h2 className="text-2xl font-bold">Recent batches</h2><p className="mt-2 text-sm text-[var(--ink-muted)]">Preview each certificate, confirm a manual layout review, then issue. Use the browser print dialog to print or save as PDF.</p>{snapshot.batches.map(batch => <div className="border-t border-[var(--line)] py-3 text-sm" key={batch.id}><p>{batch.issue_date} · {batch.entries.length} recipients · {batch.status} · {batch.signature_key}</p><div className="mt-3 flex flex-wrap gap-2"><select className={field + " !mt-0 !w-auto"} value={previewIndex[batch.id] ?? 0} onChange={e => setPreviewIndex(old => ({ ...old, [batch.id]: Number(e.target.value) }))}>{batch.entries.map((entry, index) => <option key={index} value={index}>{entry.name}</option>)}</select><button type="button" disabled={busy} className={button} onClick={() => previewBatch(batch)}>Preview</button>{["draft","reviewed"].includes(batch.status) && <><button type="button" disabled={busy} className={button} onClick={() => reviseDraft(batch)}>{batch.status === "draft" ? "Edit draft" : "Revise as new draft"}</button><button type="button" disabled={busy} className={button} onClick={() => cancelDraft(batch)}>Cancel draft</button></>}{batch.status === "draft" && <button type="button" disabled={busy || (previewedEntries[batch.id]?.indexes.length ?? 0) !== batch.entries.length} className={button} onClick={() => batchOperation(batch, "review")}>Mark reviewed</button>}{batch.status === "reviewed" && !batch.preview_verified_at && <button type="button" disabled={busy || (previewedEntries[batch.id]?.indexes.length ?? 0) !== batch.entries.length} className={button} onClick={() => batchOperation(batch, "verify")}>Confirm manual layout review</button>}{batch.status === "reviewed" && batch.preview_verified_at && <button type="button" disabled={busy} className={button} onClick={() => batchOperation(batch, "issue")}>Issue certificates</button>}</div></div>)}</section>
+    <section className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6"><h2 className="text-2xl font-bold">Recent batches</h2><p className="mt-2 text-sm text-[var(--ink-muted)]">Preview each certificate, confirm a manual layout review, then issue. Use the browser print dialog to print or save as PDF.</p>{snapshot.batches.map(batch => <div className="border-t border-[var(--line)] py-3 text-sm" key={batch.id}><p>{batch.issue_date} · {batch.entries.length} recipients · {batch.status} · {batch.signature_key}</p><div className="mt-3 flex flex-wrap gap-2"><select className={field + " !mt-0 !w-auto"} value={previewIndex[batch.id] ?? 0} onChange={e => setPreviewIndex(old => ({ ...old, [batch.id]: Number(e.target.value) }))}>{batch.entries.map((entry, index) => <option key={index} value={index}>{entry.name}</option>)}</select><button type="button" disabled={busy} className={button} onClick={() => previewBatch(batch)}>Preview</button>{["draft","reviewed"].includes(batch.status) && <><button type="button" disabled={busy} className={button} onClick={() => reviseDraft(batch)}>{batch.status === "draft" ? "Edit draft" : "Revise as new draft"}</button><button type="button" disabled={busy} className={button} onClick={() => cancelDraft(batch)}>Cancel draft</button></>}{batch.status === "issued" && process.env.NEXT_PUBLIC_CREDENTIAL_RENDERER_URL && <button type="button" disabled={busy} className={button} onClick={() => exportBatch(batch.id)}>Download PDFs as ZIP</button>}{batch.status === "draft" && <button type="button" disabled={busy || (previewedEntries[batch.id]?.indexes.length ?? 0) !== batch.entries.length} className={button} onClick={() => batchOperation(batch, "review")}>Mark reviewed</button>}{batch.status === "reviewed" && !batch.preview_verified_at && <button type="button" disabled={busy || (previewedEntries[batch.id]?.indexes.length ?? 0) !== batch.entries.length} className={button} onClick={() => batchOperation(batch, "verify")}>Confirm manual layout review</button>}{batch.status === "reviewed" && batch.preview_verified_at && <button type="button" disabled={busy} className={button} onClick={() => batchOperation(batch, "issue")}>Issue certificates</button>}</div></div>)}</section>
     {preview && <section className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-2xl font-bold">Preview · {preview.title}</h2><div className="flex gap-2">{preview.credentialId && <button type="button" disabled={busy || Boolean(previewProblem)} className={button} onClick={printCredential}>Print / Save PDF</button>}<button type="button" onClick={() => setPreview(null)}>Close</button></div></div><p className="mt-3 text-sm text-[var(--ink-muted)]">Before issuing or printing, check the preview and your browser print dialog. Choose A4 landscape and enable background graphics.</p>{previewProblem && <p role="alert" className="mt-3 text-[var(--red)]">{previewProblem}</p>}<div className="mt-4 overflow-auto"><iframe ref={previewFrame} title="Certificate preview" sandbox="allow-same-origin allow-modals" className="border-0 bg-white" style={{ width: 1123, height: 794 }} srcDoc={preview.html} onLoad={previewLoaded} /></div></section>}
     <section className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-6"><h2 className="text-2xl font-bold">Issued records</h2><form className="my-4 grid gap-3 sm:grid-cols-3" onSubmit={e => { e.preventDefault(); searchRecords(); }}><label className="text-sm">Name or number<input className={field} value={search} onChange={e => { setSearch(e.target.value); setResults(null); }} /></label><label className="text-sm">Category<select className={field} value={filterCategory} onChange={e => { setFilterCategory(e.target.value); setResults(null); }}><option value="">All</option>{["MEM","PAR","CON","LEA","DIS"].map(code => <option key={code}>{code}</option>)}</select></label><label className="text-sm">Department<input className={field} value={filterDepartment} onChange={e => { setFilterDepartment(e.target.value); setResults(null); }} /></label><label className="text-sm">From<input type="date" className={field} value={filterFrom} onChange={e => { setFilterFrom(e.target.value); setResults(null); }} /></label><label className="text-sm">To<input type="date" className={field} value={filterTo} onChange={e => { setFilterTo(e.target.value); setResults(null); }} /></label><div className="flex items-end"><button className={button} disabled={busy}>Search all records</button></div></form>{results === null && <p className="text-sm text-[var(--ink-muted)]">Showing recent records. Search to query the full history.</p>}{(results ?? snapshot.credentials).map(item => <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--line)] py-3 text-sm" key={item.id}><span>{item.certificate_number} · {item.recipient_name} · {item.status} · {item.signature_key}</span><div className="flex gap-2"><button type="button" disabled={busy || item.status !== "issued"} className={button} onClick={() => viewCredential(item)}>View / Print</button><button type="button" disabled={busy || item.status !== "issued"} className={button} onClick={() => revoke(item)}>Revoke</button>{item.status === "revoked" && <button type="button" disabled={busy} className={button} onClick={() => prepareCorrection(item)}>Correct</button>}</div></div>)}{results && results.length === 0 && <p className="py-3 text-sm">No matching records.</p>}{results && hasMore && <button type="button" disabled={busy} onClick={() => searchRecords(true)} className={button}>Load more</button>}</section>
     </>}
