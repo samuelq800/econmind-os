@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { certificatePrintHtml, printLayoutProblems, type RenderBatch, type VisualAssets } from "@/lib/credentials/browser-print";
+import { certificatePrintHtml, certificateTitlePrefix, printLayoutProblems, type RenderBatch, type VisualAssets } from "@/lib/credentials/browser-print";
 import type { ImportedRecipient } from "@/lib/credentials/import";
 import type { WordingContent } from "@/lib/credentials/wording";
 import { parseCertificateDate } from "@/lib/credentials/date";
@@ -131,7 +131,12 @@ export function CredentialCanvas(props: Props) {
     };
     editable(doc.querySelector(".award-name"), "Recipient name", value => latest.current.onRecipient("name", value), {placeholder:"[Recipient Name]"});
     editable(doc.querySelector(".award-role"), "Role / position", value => latest.current.onRecipient("role", value), {placeholder:"[Role / Position]"});
-    editable(doc.querySelector(".title-main"), "Certificate title", value => latest.current.onWording("title", value), {placeholder:"[Certificate Title]"});
+    const titlePrefix = certificateTitlePrefix(latest.current.model.wording.title);
+    editable(doc.querySelector(".title-main"), "Certificate title", value => {
+      // Inline editing changes the lower line. The form retains the complete title.
+      const fullTitle = titlePrefix && value.trim() && !certificateTitlePrefix(value) ? titlePrefix + value : value;
+      latest.current.onWording("title", fullTitle.slice(0, 4000));
+    }, {placeholder:"[Certificate Title]"});
     editable(doc.querySelector(".footer-cell:nth-child(1) .footer-value"), "Issue date", value => latest.current.onDate(value), { date: true });
     const copy = doc.querySelector<HTMLElement>(".award-copy");
     if (copy && latest.current.mode === "filled") {

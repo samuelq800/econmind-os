@@ -11,6 +11,11 @@ async function sha256(bytes: BufferSource): Promise<string> {
   return [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))].map(x => x.toString(16).padStart(2, "0")).join("");
 }
 
+/** The first line of the approved layout already supplies this prefix. */
+export function certificateTitlePrefix(title: string): string {
+  return title.match(/^\s*certificate\s+of\s+(?=\S)/i)?.[0] ?? "";
+}
+
 /** Only the approved original may be displayed, and recipient values are text. */
 export async function certificatePrintHtml(assets: VisualAssets, batch: RenderBatch, entry: ImportedRecipient, number: string | null): Promise<string> {
   if (await sha256(new TextEncoder().encode(assets.template_html)) !== TEMPLATE_HASH) throw new Error("The certificate template does not match the approved original.");
@@ -44,7 +49,11 @@ export async function certificatePrintHtml(assets: VisualAssets, batch: RenderBa
   const title = doc.querySelector(".title-main");
   const titleText = title && [...title.childNodes].find(node => node.nodeType === Node.TEXT_NODE);
   if (!titleText) throw new Error("Missing certificate title.");
-  titleText.textContent = batch.template.title || categories[batch.category] || "";
+  const fullTitle = batch.template.title || categories[batch.category] || "";
+  const firstLine = doc.querySelector(".title-first")?.textContent?.trim().toLowerCase();
+  titleText.textContent = firstLine === "certificate of"
+    ? fullTitle.slice(certificateTitlePrefix(fullTitle).length)
+    : fullTitle;
   text(".title-main .gold", ""); text(".title-sub", "");
   const scope = doc.querySelector(".scope");
   const nodes = scope && [...scope.childNodes].filter(node => node.nodeType === Node.TEXT_NODE);
@@ -67,16 +76,6 @@ export function certificateStandalonePrintHtml(html: string): string {
   doc.querySelector(".toolbar")?.remove();
 
   // The stock template already displays “Certificate of” in its script line.
-  // Keep the prefix once, in the script line, when it is part of the stored title.
-  const scriptTitle = doc.querySelector(".title-first");
-  const mainTitle = doc.querySelector(".title-main");
-  const mainText = mainTitle && [...mainTitle.childNodes].find(node => node.nodeType === Node.TEXT_NODE);
-  const prefix = scriptTitle && mainText?.textContent?.match(/^(Certificate of)\s+(.+)$/i);
-  if (scriptTitle && mainText && prefix && scriptTitle.textContent?.trim().toLowerCase() === "certificate of") {
-    scriptTitle.textContent = prefix[1];
-    mainText.textContent = prefix[2];
-  }
-
   const style = doc.createElement("style");
   style.textContent = `
     @page { size: A4 landscape; margin: 0; }
