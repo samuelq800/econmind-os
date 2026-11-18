@@ -20,8 +20,8 @@ repository contains synthetic test copy only.
 
 Review a wording, then explicitly approve it before use. Archived reference
 wordings have no approval or issuance controls. Existing legacy records and
-ordinary V1 template history remain accessible. For a Distinction, enter the
-verified achievement and approval record for each recipient in the editor.
+ordinary V1 template history remain accessible. For a Distinction, you can add an
+achievement or approval reference for each recipient in the editor.
 Review every preview and use the existing confirmation and issuance controls
 only after recipient eligibility and issuance authorization are established.
 

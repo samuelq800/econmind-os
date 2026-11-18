@@ -297,7 +297,7 @@ export function CredentialVisualEditor({ bulk, visible, loadAssets, versions, pr
         <CredentialSignatureSelect value={signature} onChange={value=>{setSignature(value);setWarnings({});}} />
         {duplicates&&<label className="block text-sm text-amber-500"><input type="checkbox" checked={allowDuplicates} onChange={e=>setAllowDuplicates(e.target.checked)} /> I verified these duplicate names are intended.</label>}
         {changedLinkedNames>0&&<label className="block text-sm text-amber-500"><input type="checkbox" checked={verifiedLinkedNames} onChange={e=>setVerifiedLinkedNames(e.target.checked)} /> I verified that {changedLinkedNames} changed display name(s) still identify the linked account(s).</label>}
-        {category === "DIS" && <label className="block text-sm font-semibold">Verified distinction evidence
+        {category === "DIS" && <label className="block text-sm font-semibold">Distinction evidence (optional)
           <textarea className={input} maxLength={1000} value={selectedRow.source.distinction_evidence ?? ""} onChange={e => {
             const evidence = e.target.value;
             updateRow(index,row => ({...row,source:{...row.source,distinction_evidence:evidence}}));
