@@ -127,3 +127,34 @@ do $$ begin
     raise exception 'wording status changed issued history';
   end if;
 end $$;
+
+\ir ../supabase/migrations/20261118020000_credential_optional_distinction_evidence.sql
+do $$ begin
+  if exists(select 1 from credential_history_before_approval
+    where credentials is distinct from (select jsonb_agg(to_jsonb(c) order by c.id) from private.credentials c)
+      or counters is distinct from (select jsonb_agg(to_jsonb(k) order by k.category,k.issue_year) from private.credential_counters k)) then
+    raise exception 'optional evidence migration changed issued history';
+  end if;
+end $$;
+select id as previously_reviewed_distinction from private.credential_batches
+  where request_key='88888888-0000-0000-0000-000000000010' \gset
+set role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000002',false);
+select set_config('test.distinction_batch', :'previously_reviewed_distinction', false);
+do $$ begin
+  begin perform public.issue_credential_batch(current_setting('test.distinction_batch')::uuid);
+    raise exception 'ordinary account issued a Distinction';
+  exception when insufficient_privilege then null; end;
+end $$;
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000001',false);
+do $$ declare b uuid; issued jsonb; begin
+  b:=current_setting('test.distinction_batch')::uuid;
+  issued:=public.issue_credential_batch(b);
+  if jsonb_array_length(issued)<>1 or issued->0->>'number' is distinct from 'EML-DIS-2027-000001' then
+    raise exception 'reviewed Distinction without evidence did not issue with the expected number';
+  end if;
+  if issued is distinct from public.issue_credential_batch(b) then
+    raise exception 'retry duplicated the Distinction';
+  end if;
+end $$;
+reset role;

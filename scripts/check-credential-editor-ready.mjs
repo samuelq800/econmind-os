@@ -16,6 +16,11 @@ export async function checkCredentialEditorReady(request) {
   if (!Array.isArray(approval) || approval.length !== 1 || approval[0]?.verified !== true) {
     throw new Error("Credential direct wording approval prerequisites are missing or unverified");
   }
+  const distinction = await request(`select coalesce(position('Distinction requires the verified achievement and approval record'
+    in pg_get_functiondef(to_regprocedure('private.snapshot_credential_editor_data()'))) = 0, false) as verified`);
+  if (!Array.isArray(distinction) || distinction.length !== 1 || distinction[0]?.verified !== true) {
+    throw new Error("Credential optional Distinction evidence prerequisites are missing or unverified");
+  }
 }
 export async function main() {
   const project = "vimksjrhaxdpnkvgsavz";
