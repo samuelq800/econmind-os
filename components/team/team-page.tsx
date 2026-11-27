@@ -31,7 +31,12 @@ export function TeamPage() {
   const regional = members("regional-leadership", REGIONAL_LEADERS);
   const communications = members("communications-team", COMMUNICATIONS_TEAM);
   const technology = members("technology-team", TECHNOLOGY_TEAM);
-  const leadership = members("leadership-group", []);
+  const leadership = members("leadership-group", [{
+    name: "Flora",
+    role: "Inter-School Program Coordinator",
+    image: "/images/team/flora.jpg",
+    contact: { type: "wechat", value: "wmdhcg5114422" },
+  }]);
   const academic = members("academic-team", []);
   const regionIndex = active ? resolveDirectoryRegions(directory.appointments, REGIONAL_NETWORK) : REGIONAL_NETWORK;
   return (
